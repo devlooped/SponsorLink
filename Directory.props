@@ -1,0 +1,11 @@
+<Project>
+
+  <PropertyGroup>
+    <UserSecretsId>A85AC898-E41C-4D9D-AD9B-52ED748D9901</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectProperty Include="UserSecretsId" />
+  </ItemGroup>
+  
+</Project>
