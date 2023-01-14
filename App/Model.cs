@@ -1,5 +1,14 @@
-﻿namespace App;
+﻿namespace Devlooped.SponsorLink;
 
-public record User(string Login, string AccessToken);
+public record User(int Id, string Login, string Email, string AccessToken);
 
-public record UserEmail(string Email, string Login);
+public record Sponsorship(
+    int SponsorableId,
+    int SponsorId, 
+    string SponsorableLogin, 
+    string SponsorLogin,
+    int Amount, 
+    DateOnly CreatedAt, 
+    DateOnly? ExpiresAt);
+
+public record EmailUser(string Email, int Id);

@@ -1,6 +1,7 @@
-﻿using System;
+﻿using System.Diagnostics;
 using App;
 using Devlooped;
+using Devlooped.SponsorLink;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 [assembly: FunctionsStartup(typeof(DependencyStartup))]
 
 public class DependencyStartup : FunctionsStartup
-{
+{ 
     public override void ConfigureAppConfiguration(IFunctionsConfigurationBuilder builder)
     {
         builder.ConfigurationBuilder.AddUserSecrets(ThisAssembly.Project.UserSecretsId);
@@ -16,6 +17,7 @@ public class DependencyStartup : FunctionsStartup
 
     public override void Configure(IFunctionsHostBuilder builder)
     {
+        builder.Services.AddServices();
         builder.Services.AddHttpClient();
 
         var storage = Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") == "Development"
@@ -30,7 +32,7 @@ public class DependencyStartup : FunctionsStartup
         builder.Services.AddSingleton(sp => TablePartition.Create<User>(
             sp.GetRequiredService<CloudStorageAccount>(), "Sponsor", "User", x => x.Login));
 
-        builder.Services.AddSingleton(sp => TablePartition.Create<UserEmail>(
+        builder.Services.AddSingleton(sp => TablePartition.Create<EmailUser>(
             sp.GetRequiredService<CloudStorageAccount>(), "Sponsor", "Email", x => x.Email));
     }
 }
