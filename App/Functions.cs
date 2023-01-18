@@ -1,8 +1,6 @@
-using Azure.Messaging.EventGrid;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -41,21 +39,19 @@ public class Functions
     {
         var appKind = Enum.Parse<AppKind>(kind, true);
         var code = req.Query["code"].ToString();
-        var installation = req.Query["installation_id"].ToString();
-        await manager.AuthorizeAsync(appKind, long.Parse(installation), code);
+        
+        // TODO: the installation id can be used to request an installation token to perform actions 
+        // authorized to the app on behalf of the authorizing user.
+        // This will be necessary for the sponsorable account if we ever figure out how to run GraphQL 
+        // queries, but for now, it's impossible.
+        //var installation = req.Query["installation_id"].ToString();
+        
+        await manager.AuthorizeAsync(appKind, code);
+
         return new RedirectResult("https://devlooped.com");
     }
 
-    //[FunctionName("sponsorable_auth")]
-    public async Task<IActionResult> AuthorizeAdminAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "sponsorable")] HttpRequest req)
-    {
-        var code = req.Query["code"].ToString();
-        var installation = req.Query["installation_id"].ToString();
-        await manager.AuthorizeAsync(AppKind.Sponsorable, long.Parse(installation), code);
-        return new RedirectResult("https://devlooped.com");
-    }
-
-    [FunctionName("app_webhook")]
+    [FunctionName("app")]
     public async Task<IActionResult> AppHookAsync(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "app/{kind}")] HttpRequest req, string kind)
     {
@@ -67,7 +63,7 @@ public class Functions
 
         string action = payload.action;
         var appKind = Enum.Parse<AppKind>(kind, true);
-        var id = new AccountId((int)payload.installation.account.id, (string)payload.installation.account.node_id, (string)payload.installation.account.login);
+        var id = new AccountId((string)payload.installation.account.node_id, (string)payload.installation.account.login);
         var note = $"App {appKind} {action} on {payload.installation.account.login} by {payload.sender.login}";
 
         await (action switch
@@ -82,7 +78,7 @@ public class Functions
         return new OkObjectResult(note);
     }
 
-    [FunctionName("sponsorable_webhook")]
+    [FunctionName("sponsorable")]
     public async Task<IActionResult> SponsorHookAsync(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "sponsors/{account}")] HttpRequest req, string account)
     {
@@ -93,15 +89,15 @@ public class Functions
             return new BadRequestObjectResult("Could not deserialize payload as JSON");
 
         string action = payload.action;
-        var sponsorable = new AccountId((int)payload.sponsorable.id, (string)payload.sponsorable.node_id, (string)payload.sponsorable.login);
-        var sponsor = new AccountId((int)payload.sponsor.id, (string)payload.sponsor.node_id, (string)payload.sponsor.login);
+        var sponsorable = new AccountId((string)payload.sponsorable.node_id, (string)payload.sponsorable.login);
+        var sponsor = new AccountId((string)payload.sponsor.node_id, (string)payload.sponsor.login);
         int amount = payload.sponsorship.tier.monthly_price_in_dollars;
         bool oneTime = payload.sponsorship.tier.is_one_time;
         DateTime date = payload.sponsorship.created_at;
 
         if (action == "created")
         {
-            var note = $"{sponsor.Login} > {sponsorable.Login} : ${amount}";
+            var note = $"{sponsor.Login} started sponsoring {sponsorable.Login} with ${amount}";
             if (oneTime)
                 note += " (one-time)";
 
@@ -111,12 +107,12 @@ public class Functions
         {
             DateTime cancelAt = payload.effective_date;
             await manager.UnsponsorAsync(sponsorable, sponsor, DateOnly.FromDateTime(cancelAt),
-                $"{sponsor.Login} x {sponsorable.Login} by ${DateOnly.FromDateTime(cancelAt)}");
+                $"{sponsor.Login} is cancelling sponsorship of {sponsorable.Login} by ${DateOnly.FromDateTime(cancelAt)}");
         }
         else if (action == "tier_changed")
         {
             int from = payload.changes.tier.from.monthly_price_in_dollars;
-            var note = $"{sponsor.Login} > {sponsorable.Login} : ${from} > ${amount}";
+            var note = $"{sponsor.Login} updated sponsorship of {sponsorable.Login} from ${from} to ${amount}";
 
             await manager.SponsorUpdateAsync(sponsorable, sponsor, amount, note);
         }

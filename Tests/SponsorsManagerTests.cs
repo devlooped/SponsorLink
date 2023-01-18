@@ -4,9 +4,9 @@ using ScenarioTests;
 
 namespace Devlooped.SponsorLink;
 
-public partial class SponsorsManagerTests : IDisposable
+public sealed partial class SponsorsManagerTests : IDisposable
 {
-    TableConnection connection = new(CloudStorageAccount.DevelopmentStorageAccount, nameof(SponsorsManagerTests));
+    readonly TableConnection connection = new(CloudStorageAccount.DevelopmentStorageAccount, nameof(SponsorsManagerTests));
 
     public ITestOutputHelper Output { get; }
 
@@ -30,17 +30,30 @@ public partial class SponsorsManagerTests : IDisposable
     [Fact]
     public async Task SaveEmail()
     {
-        var partition = DocumentPartition.Create<AccountEmail>(connection, includeProperties: true);
-        await partition.PutAsync(new(new AccountId(1234, "asdf", "kzu"), "kzu@github.com"));
+        var byEmail = TableRepository.Create<AccountEmail>(
+            CloudStorageAccount.DevelopmentStorageAccount,
+            partitionKey: x => x.Email,
+            rowKey: x => x.Account);
 
-        Assert.NotNull(await partition.GetAsync("1234"));
+        var byAccount = TableRepository.Create<AccountEmail>(
+            CloudStorageAccount.DevelopmentStorageAccount,
+            partitionKey: x => x.Account,
+            rowKey: x => x.Email);
+
+        var account = new AccountEmail("asdf", "kzu", "kzu@github.com");
+
+        await byEmail.PutAsync(account);
+        await byAccount.PutAsync(account);
+
+        Assert.NotNull(await byEmail.GetAsync("kzu@github.com", "asdf"));
+        Assert.NotNull(await byAccount.GetAsync("asdf", "kzu@github.com"));
     }
 
     [Scenario(NamingPolicy = ScenarioTestMethodNamingPolicy.Test)]
     public async Task AppUsage(ScenarioContext scenario)
     {
         var config = new ConfigurationBuilder().AddUserSecrets(ThisAssembly.Project.UserSecretsId).Build();
-        var repo = DocumentPartition.Create<Account>(connection, "Sponsorable", includeProperties: true);
+        var repo = TablePartition.Create<Installation>(connection, "Sponsorable");
 
         var manager = new SponsorsManager(
             Mock.Of<IHttpClientFactory>(),
@@ -48,68 +61,49 @@ public partial class SponsorsManagerTests : IDisposable
             connection.StorageAccount, connection,
             Mock.Of<IEventStream>());
 
-        var id = new AccountId(1234, "w_a", "kzu");
+        var id = new AccountId("1234", "kzu");
 
         await manager.AppInstallAsync(AppKind.Sponsorable, id);
 
         await scenario.Fact("App is inactive when first installed", async () =>
         {
-            var account = await repo.GetAsync(id.Id.ToString());
+            var account = await repo.GetAsync(id.Id);
 
-            Assert.NotNull(account?.Id);
+            Assert.NotNull(account);
             Assert.Equal(AppState.Installed, account.State);
-            Assert.False(account.IsActive);
         });
 
         scenario.Fact("Suspending non-installed app throws", async () =>
-            await Assert.ThrowsAsync<ArgumentException>(() => manager.AppSuspendAsync(AppKind.Sponsorable, new AccountId(456, "asdf", "asdf")))
+            await Assert.ThrowsAsync<ArgumentException>(() => manager.AppSuspendAsync(AppKind.Sponsorable, new AccountId("456", "asdf")))
         );
 
         scenario.Fact("Uninstalled non-installed app throws", async () =>
-            await Assert.ThrowsAsync<ArgumentException>(() => manager.AppUninstallAsync(AppKind.Sponsorable, new AccountId(456, "asdf", "asdf")))
+            await Assert.ThrowsAsync<ArgumentException>(() => manager.AppUninstallAsync(AppKind.Sponsorable, new AccountId("456", "asdf")))
         );
 
         await manager.AppSuspendAsync(AppKind.Sponsorable, id);
 
         await scenario.Fact("App is inactive and suspended when suspending", async () =>
         {
-            var account = await repo.GetAsync(id.Id.ToString());
+            var account = await repo.GetAsync(id.Id);
 
             Assert.Equal(AppState.Suspended, account!.State);
-            Assert.False(account.IsActive);
         });
 
         await manager.AppUnsuspendAsync(AppKind.Sponsorable, id);
 
         await scenario.Fact("App is installed when unsuspended", async () =>
         {
-            var account = await repo.GetAsync(id.Id.ToString());
+            var account = await repo.GetAsync(id.Id);
 
             Assert.Equal(AppState.Installed, account!.State);
-        });
-
-        // Fake authorizing
-        //await manager.AuthorizeAsync(AppKind.Sponsorable, 1234, "asdf");
-        var entity = await repo.GetAsync(id.Id.ToString());
-        Assert.NotNull(entity);
-        await repo.PutAsync(entity with
-        {
-            AccessToken = "asdfasdf",
-            Authorized = true,
-        });
-
-        await scenario.Fact("App is active when installed and authorized", async () =>
-        {
-            var account = await repo.GetAsync(id.Id.ToString());
-
-            Assert.True(account!.IsActive);
         });
 
         await manager.AppUninstallAsync(AppKind.Sponsorable, id);
 
         await scenario.Fact("App is marked deleted when uninstalled", async () =>
         {
-            var account = await repo.GetAsync(id.Id.ToString());
+            var account = await repo.GetAsync(id.Id);
 
             Assert.Equal(AppState.Deleted, account!.State);
         });

@@ -8,43 +8,41 @@ public enum AppKind { Sponsor, Sponsorable}
 public enum AppState { Installed, Suspended, Deleted }
 
 /// <summary>
-/// Accounts have basically three pieces of IDs, depending on which APIs 
+/// Accounts have basically two pieces of IDs, depending on which APIs 
 /// you're using. The account ID is mostly used in REST APIs, and the NodeId 
 /// on GraphQL. The login is sometimes the only allowed identifier in some 
 /// REST APIs, but since it can be changed by the user, isn't as reliable 
 /// as the other two.
 /// </summary>
-public record AccountId(long Id, string NodeId, string Login)
+public record AccountId(string Id, string Login)
 {
     public static implicit operator string(AccountId account) => $"{account.Login}.{account.Id}";
 }
 
-public record Account([property: Browsable(false)] AccountId Id, AppState State, bool Authorized)
-{
-    public string? AccessToken { get; init; }
-    [JsonIgnore]
-    public bool IsActive => State == AppState.Installed && Authorized;
+[PartitionKey(nameof(Authorization))]
+public record Authorization([property: RowKey] string Account, string AccessToken, string Login);
 
-    [JsonIgnore]
-    [RowKey]
-    public string AccountId => Id.Id.ToString();
-
-    [JsonIgnore]
-    public string Login => Id.Login;
-
-    [JsonIgnore]
-    public string NodeId => Id.NodeId;
-}
+public record Installation([RowKey] string Account, string Login, AppState State);
 
 [Table("Email")]
-public record AccountEmail([property: Browsable(false)] AccountId Id, string Email)
+public record AccountEmail(string Account, string Login, string Email);
+
+public record Sponsorship(
+    [property: Browsable(false)] AccountId Sponsorable, 
+    [property: Browsable(false)] AccountId Sponsor, 
+    int Amount)
 {
-    [JsonIgnore]
-    public string AccountId => Id.Id.ToString();
+    public DateOnly? ExpiresAt { get; init; }
 
     [JsonIgnore]
-    public string Login => Id.Login;
+    public string SponsorableId => Sponsorable.Id;
 
     [JsonIgnore]
-    public string NodeId => Id.NodeId;
+    public string SponsorableLogin => Sponsorable.Login;
+
+    [JsonIgnore]
+    public string SponsorId => Sponsor.Id;
+
+    [JsonIgnore]
+    public string SponsorLogin => Sponsor.Login;
 }
