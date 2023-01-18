@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
+using Azure.Data.Tables;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Octokit;
@@ -11,8 +12,8 @@ namespace Devlooped.SponsorLink;
 [Service]
 public class SponsorsManager
 {
-    static readonly ProductInfoHeaderValue httpProduct = new ProductInfoHeaderValue("SponsorLink", new Version(ThisAssembly.Info.Version).ToString(2));
-    static readonly Octokit.ProductHeaderValue octoProduct = new Octokit.ProductHeaderValue("SponsorLink", new Version(ThisAssembly.Info.Version).ToString(2));
+    static readonly ProductInfoHeaderValue httpProduct = new("SponsorLink", new Version(ThisAssembly.Info.Version).ToString(2));
+    static readonly Octokit.ProductHeaderValue octoProduct = new("SponsorLink", new Version(ThisAssembly.Info.Version).ToString(2));
 
     readonly IHttpClientFactory httpFactory;
     readonly SecurityManager security;
@@ -24,7 +25,7 @@ public class SponsorsManager
         => (this.httpFactory, this.security, this.storageAccount, this.tableConnection, this.events) 
         = (httpFactory, security, storageAccount, tableConnection, events);
 
-    public async Task AuthorizeAsync(AppKind kind, long installation, string code)
+    public async Task AuthorizeAsync(AppKind kind, string code)
     {
         var auth = security.CreateAuthorization(kind, code);
         var jwt = security.IssueToken(kind);
@@ -46,90 +47,78 @@ public class SponsorsManager
         };
 
         var user = await octo.User.Current();
-        var id = new AccountId(user.Id, user.NodeId, user.Login);
-        var partition = DocumentPartition.Create<Account>(tableConnection,
-            kind == AppKind.Sponsorable ? "Sponsorable" : "Sponsor", includeProperties: true);
+        var partition = TablePartition.Create<Authorization>(tableConnection);
 
-        var account = await partition.GetAsync(user.Id.ToString());
-        // This might happen if the processing of the app install somehow didn't finish 
-        // before we do, which is highly unlikely
-        if (account == null)
-            // Note we infer an app install at this point, since there's no other way we got 
-            // to the authorize without an app install
-            account = new Account(id, AppState.Installed, true);
-
-        await partition.PutAsync(account with
-        {
-            AccessToken = accessToken,
-            Authorized = true,
-        });
+        await partition.PutAsync(new Authorization(user.NodeId, accessToken, user.Login));
     }
 
     public async Task RefreshAccountAsync(AccountId account)
     {
         // TODO: cache/externalize as table connection?
-        var byEmail = DocumentRepository.Create<AccountEmail>(
-            tableConnection.StorageAccount,
-            partitionKey: x => x.Email,
-            rowKey: x => x.AccountId,
-            includeProperties: true);
+        //var byEmail = DocumentRepository.Create<AccountEmail>(
+        //    tableConnection.StorageAccount,
+        //    partitionKey: x => x.Email,
+        //    rowKey: x => x.Id.Id,
+        //    includeProperties: true);
 
-        var byAccount = DocumentRepository.Create<AccountEmail>(
-            tableConnection.StorageAccount,
-            partitionKey: x => x.Email,
-            rowKey: x => x.AccountId,
-            includeProperties: true);
+        //var byAccount = DocumentRepository.Create<AccountEmail>(
+        //    tableConnection.StorageAccount,
+        //    partitionKey: x => x.Id.Id,
+        //    rowKey: x => x.Email,
+        //    includeProperties: true);
 
-        // We refresh emails for both sponsorable and sponsor accounts with the given 
-        // user id, since we want to also verify sponsorships from sponsorable accounts.
-        var partition = DocumentPartition.Create<Account>(tableConnection, "Sponsorable");
+        //// We refresh emails for both sponsorable and sponsor accounts with the given 
+        //// user id, since we want to also verify sponsorships from sponsorable accounts.
+        //var partition = DocumentPartition.Create<Installation>(tableConnection, "Sponsorable");
 
-        var entity = await partition.GetAsync(account.Id.ToString());
-        if (entity?.AccessToken != null)
-        {
-            var octo = new GitHubClient(octoProduct)
-            {
-                Credentials = new Credentials(entity.AccessToken)
-            };
+        //var entity = await partition.GetAsync(account.Id.ToString());
+        //if (entity?.AccessToken != null)
+        //{
+        //    var octo = new GitHubClient(octoProduct)
+        //    {
+        //        Credentials = new Credentials(entity.AccessToken)
+        //    };
 
-            var allmail = await octo.User.Email.GetAll();
-            var verified = allmail.Where(x => x.Verified && !x.Email.EndsWith("@users.noreply.github.com"))
-                .Select(x => new AccountEmail(account, x.Email)).ToArray();
+        //    var allmail = await octo.User.Email.GetAll();
+        //    var verified = allmail.Where(x => x.Verified && !x.Email.EndsWith("@users.noreply.github.com"))
+        //        .Select(x => new AccountEmail(account, x.Email)).ToArray();
 
-            // Allows locating by email (all accounts, there may be more than one?)
-            // and by account (fetch all emails for it).
-            foreach (var email in verified)
-            {
-                await byEmail.PutAsync(email);
-                await byAccount.PutAsync(email);
-            }
-        }
+        //    // Allows locating by email (all accounts, there may be more than one?)
+        //    // and by account (fetch all emails for it).
+        //    foreach (var email in verified)
+        //    {
+        //        await byEmail.PutAsync(email);
+        //        await byAccount.PutAsync(email);
+        //    }
+        //}
     }
 
     public async Task AppInstallAsync(AppKind kind, AccountId account, string? note = default)
     {
-        var partition = DocumentPartition.Create<Account>(tableConnection, 
-            kind == AppKind.Sponsorable ? "Sponsorable" : "Sponsor", includeProperties: true);
+        var partition = TablePartition.Create<Installation>(tableConnection, 
+            kind == AppKind.Sponsorable ? "Sponsorable" : "Sponsor");
 
-        await partition.PutAsync(new Account(account, AppState.Installed, false));
+        var installation = new Installation(account.Id, account.Login, AppState.Installed);
+        
+        await partition.PutAsync(installation);
         await events.PushAsync(new AppInstalled(account, kind, note));
     }
 
     public async Task AppSuspendAsync(AppKind kind, AccountId account, string? note = default)
     {
-        await ChangeState(kind, account, AppState.Suspended, note);
+        await ChangeState(kind, account, AppState.Suspended);
         await events.PushAsync(new AppSuspended(account, kind, note));
     }
 
     public async Task AppUnsuspendAsync(AppKind kind, AccountId account, string? note = default)
     {
-        await ChangeState(kind, account, AppState.Installed, note);
+        await ChangeState(kind, account, AppState.Installed);
         await events.PushAsync(new AppSuspended(account, kind, note));
     }
 
     public async Task AppUninstallAsync(AppKind kind, AccountId account, string? note = default)
     {
-        await ChangeState(kind, account, AppState.Deleted, note);
+        await ChangeState(kind, account, AppState.Deleted);
         await events.PushAsync(new AppUninstalled(account, kind, note));
     }
 
@@ -142,7 +131,7 @@ public class SponsorsManager
     {
     }
 
-    public async Task UnsponsorAsync(AccountId sponsorable, AccountId sponsor, DateOnly cancelAt, string? note = default)
+    public async Task UnsponsorAsync(AccountId sponsorable, AccountId sponsor, DateOnly expiresAt, string? note = default)
     {
         
     }
@@ -151,18 +140,15 @@ public class SponsorsManager
     {
     }
 
-    async Task ChangeState(AppKind kind, AccountId account, AppState state, string? note)
+    async Task ChangeState(AppKind kind, AccountId account, AppState state)
     {
-        var partition = DocumentPartition.Create<Account>(tableConnection,
-            kind == AppKind.Sponsorable ? "Sponsorable" : "Sponsor", includeProperties: true);
+        var partition = TablePartition.Create<Installation>(tableConnection,
+            kind == AppKind.Sponsorable ? "Sponsorable" : "Sponsor");
 
-        var installed = await partition.GetAsync(account.Id.ToString());
-
+        var installed = await partition.GetAsync(account.Id);
         if (installed == null)
             throw new ArgumentException($"{kind} app is not installed for account {account.Login}.");
 
-        installed = installed with { State = state };
-
-        await partition.PutAsync(installed);
+        await partition.PutAsync(installed with { State = state });
     }
 }

@@ -65,6 +65,9 @@ public record Misc(ITestOutputHelper Output)
             .Build();
 
         var accessToken = config["AccessToken"];
+
+        if (string.IsNullOrEmpty(accessToken))
+            return;
         
         var octo = new GitHubClient(new Octokit.ProductHeaderValue("SponsorLink", new Version(ThisAssembly.Info.Version).ToString(2)))
         {
