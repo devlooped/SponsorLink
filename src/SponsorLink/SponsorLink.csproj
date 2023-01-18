@@ -7,14 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="sponsorlink-admin.pem" />
-    <None Remove="sponsorlink-client.pem" />
+    <None Remove="sponsorlink-sponsor.pem" />
+    <None Remove="sponsorlink-sponsorable.pem" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="sponsorlink-admin.pem" Kind="Text" />
-    <EmbeddedResource Include="sponsorlink-client.pem" Kind="Text" />
-    <InternalsVisibleTo Include="Tests"/>
+    <EmbeddedResource Include="sponsorlink-sponsorable.pem" Kind="Text" />
+    <EmbeddedResource Include="sponsorlink-sponsor.pem" Kind="Text" />
+    <InternalsVisibleTo Include="Tests" />
   </ItemGroup>
 
   <ItemGroup>

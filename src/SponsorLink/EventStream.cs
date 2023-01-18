@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.EventGrid;
 using Microsoft.Azure.EventGrid.Models;
 using Microsoft.Extensions.Configuration;
@@ -16,7 +17,7 @@ public interface IEventStream
 }
 
 [Service]
-public record EventStream(IConfiguration Configuration, TelemetryClient Telemetry)
+public class EventStream : IEventStream
 {
     static readonly string dataVersion = new Version(ThisAssembly.Info.Version).ToString(2);
     static readonly JsonSerializerSettings settings = new JsonSerializerSettings
@@ -34,6 +35,15 @@ public record EventStream(IConfiguration Configuration, TelemetryClient Telemetr
         Formatting = Formatting.Indented,
         NullValueHandling = NullValueHandling.Ignore,
     };
+
+    readonly IConfiguration configuration;
+    readonly TelemetryClient telemetry;
+
+    public EventStream(IConfiguration configuration, TelemetryConfiguration telemetry)
+    {
+        this.configuration = configuration;
+        this.telemetry = new TelemetryClient(telemetry);
+    }
 
     public async Task PushAsync<T>(T item, CancellationToken cancellationToken = default)
         where T : class
@@ -68,10 +78,10 @@ public record EventStream(IConfiguration Configuration, TelemetryClient Telemetr
             te.Properties[prop.Name] = JsonConvert.SerializeObject(prop.GetValue(item), settings).Trim('"');
         }
 
-        Telemetry.TrackEvent(te);
+        telemetry.TrackEvent(te);
 
-        var domain = Configuration["EventGridDomain"];
-        var key = Configuration["EventGridAccessKey"];
+        var domain = configuration["EventGridDomain"];
+        var key = configuration["EventGridAccessKey"];
         if (domain == null || key == null)
             return;
 

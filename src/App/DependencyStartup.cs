@@ -1,5 +1,7 @@
-﻿using Devlooped;
-using Devlooped.SponsorLink;
+﻿using System;
+using Devlooped;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,5 +31,9 @@ public class DependencyStartup : FunctionsStartup
 
         builder.Services.AddSingleton(sp => new TableConnection(
             sp.GetRequiredService<CloudStorageAccount>(), "SponsorLink"));
+
+        var config = builder.Services.FirstOrDefault(d => d.ServiceType == typeof(TelemetryConfiguration));
+
+        Console.WriteLine(config?.ImplementationInstance);
     }
 }
