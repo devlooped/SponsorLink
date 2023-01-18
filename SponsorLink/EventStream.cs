@@ -29,6 +29,7 @@ public class EventStream : IEventStream
                 DateTimeFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffK",
                 DateTimeStyles = DateTimeStyles.AdjustToUniversal
             },
+            new StringEnumConverter()
         },
         DateFormatHandling = DateFormatHandling.IsoDateFormat,
         DateFormatString = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffK",
