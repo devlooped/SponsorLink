@@ -4,6 +4,15 @@ namespace Devlooped.SponsorLink;
 
 public static class HttpClientExtensions
 {
+    public static Task<HttpResponseMessage> GetAsync(this HttpClient http, string? requestUri, string? bearerToken)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        if (!string.IsNullOrEmpty(bearerToken))
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+
+        return http.SendAsync(request);
+    }
+
     public static Task<HttpResponseMessage> PostAsync(this HttpClient http, string? requestUri, HttpContent? content, string? bearerToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, requestUri);

@@ -8,12 +8,12 @@ using System.Text.Json;
 namespace Devlooped.SponsorLink;
 
 [Service]
-public record Security(IConfiguration Configuration)
+public record SecurityManager(IConfiguration Configuration)
 {
     static readonly RSA clientKey;
     static readonly RSA adminKey;
 
-    static Security()
+    static SecurityManager()
     {
         clientKey = RSA.Create();
         clientKey.ImportFromPem(ThisAssembly.Resources.sponsorlink_client.Text);
@@ -29,8 +29,8 @@ public record Security(IConfiguration Configuration)
     {
         var prefix = kind switch
         {
-            AppKind.Admin => "GitHub:Admin:",
-            AppKind.Client => "GitHub:Client:",
+            AppKind.Sponsorable => "GitHub:Admin:",
+            AppKind.Sponsor => "GitHub:Client:",
             _ => throw new ArgumentException($"Unknown app kind {kind}.")
         };
 
@@ -48,8 +48,8 @@ public record Security(IConfiguration Configuration)
     {
         var prefix = kind switch
         {
-            AppKind.Admin => "GitHub:Admin:",
-            AppKind.Client => "GitHub:Client:",
+            AppKind.Sponsorable => "GitHub:Admin:",
+            AppKind.Sponsor => "GitHub:Client:",
             _ => throw new ArgumentException($"Unknown app kind {kind}.")
         };
 
@@ -57,8 +57,8 @@ public record Security(IConfiguration Configuration)
 
         var key = kind switch
         {
-            AppKind.Admin => adminKey,
-            AppKind.Client => clientKey,
+            AppKind.Sponsorable => adminKey,
+            AppKind.Sponsor => clientKey,
             _ => throw new ArgumentException($"Unknown app kind {kind}.")
         };
 

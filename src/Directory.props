@@ -5,6 +5,7 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <UserSecretsId>A85AC898-E41C-4D9D-AD9B-52ED748D9901</UserSecretsId>
     <ImplicitUsings>true</ImplicitUsings>
+    <RestoreSources>https://api.nuget.org/v3/index.json;https://pkg.kzu.io/index.json</RestoreSources>
   </PropertyGroup>
 
   <ItemGroup>
