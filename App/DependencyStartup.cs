@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using App;
-using Devlooped;
+﻿using Devlooped;
 using Devlooped.SponsorLink;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
@@ -29,10 +27,7 @@ public class DependencyStartup : FunctionsStartup
 
         builder.Services.AddSingleton(storage);
 
-        builder.Services.AddSingleton(sp => TablePartition.Create<User>(
-            sp.GetRequiredService<CloudStorageAccount>(), "Sponsor", "User", x => x.Login));
-
-        builder.Services.AddSingleton(sp => TablePartition.Create<EmailUser>(
-            sp.GetRequiredService<CloudStorageAccount>(), "Sponsor", "Email", x => x.Email));
+        builder.Services.AddSingleton(sp => new TableConnection(
+            sp.GetRequiredService<CloudStorageAccount>(), "SponsorLink"));
     }
 }

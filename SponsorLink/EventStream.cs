@@ -10,6 +10,11 @@ using Newtonsoft.Json.Converters;
 
 namespace Devlooped.SponsorLink;
 
+public interface IEventStream
+{
+    Task PushAsync<T>(T item, CancellationToken cancellationToken = default) where T : class;
+}
+
 [Service]
 public record EventStream(IConfiguration Configuration, TelemetryClient Telemetry)
 {

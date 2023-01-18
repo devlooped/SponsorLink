@@ -27,7 +27,7 @@
     "repositories_url": "https://api.github.com/installation/repositories",
     "html_url": "https://github.com/settings/installations/32997332",
     "app_id": 279204,
-    "app_slug": "devlooped-sponsor",
+    "app_slug": "SponsorLink",
     "target_id": 52431064,
     "target_type": "User",
     "permissions": {

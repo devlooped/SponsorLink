@@ -5,10 +5,10 @@ using Octokit;
 
 namespace Devlooped.SponsorLink;
 
-public record AppClient(Repository Repository, Security Security, IHttpClientFactory HttpFactory)
+public record AppClient(SponsorsRepository Repository, SecurityManager Security, IHttpClientFactory HttpFactory)
 {
-    static readonly ProductInfoHeaderValue userAgent = new ProductInfoHeaderValue("Devlooped-Sponsor", new Version(ThisAssembly.Info.Version).ToString(2));
-    static readonly Octokit.ProductHeaderValue octoAgent = new Octokit.ProductHeaderValue("Devlooped-Sponsor", new Version(ThisAssembly.Info.Version).ToString(2));
+    static readonly ProductInfoHeaderValue userAgent = new ProductInfoHeaderValue("SponsorLink", new Version(ThisAssembly.Info.Version).ToString(2));
+    static readonly Octokit.ProductHeaderValue octoAgent = new Octokit.ProductHeaderValue("SponsorLink", new Version(ThisAssembly.Info.Version).ToString(2));
 
     public async Task<Uri> AuthorizeAsync(AppKind kind, string code)
     {
