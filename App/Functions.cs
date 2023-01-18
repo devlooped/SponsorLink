@@ -36,17 +36,18 @@ public class Functions
     public async Task CheckExpirationsAsync([TimerTrigger("0 0 0 * * *")] TimerInfo timer)
         => await manager.CheckExpirationsAsync();
 
-    [FunctionName("appauth")]
-    public async Task<IActionResult> AuthorizeAppAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "authorize/sponsor")] HttpRequest req)
+    [FunctionName("authorize")]
+    public async Task<IActionResult> AuthorizeAppAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "authorize/{kind}")] HttpRequest req, string kind)
     {
+        var appKind = Enum.Parse<AppKind>(kind, true);
         var code = req.Query["code"].ToString();
         var installation = req.Query["installation_id"].ToString();
-        await manager.AuthorizeAsync(AppKind.Sponsor, long.Parse(installation), code);
+        await manager.AuthorizeAsync(appKind, long.Parse(installation), code);
         return new RedirectResult("https://devlooped.com");
     }
 
-    [FunctionName("adminauth")]
-    public async Task<IActionResult> AuthorizeAdminAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "authorize/sponsorable")] HttpRequest req)
+    //[FunctionName("sponsorable_auth")]
+    public async Task<IActionResult> AuthorizeAdminAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "sponsorable")] HttpRequest req)
     {
         var code = req.Query["code"].ToString();
         var installation = req.Query["installation_id"].ToString();
@@ -54,20 +55,20 @@ public class Functions
         return new RedirectResult("https://devlooped.com");
     }
 
-    [FunctionName("apphook")]
+    [FunctionName("app_webhook")]
     public async Task<IActionResult> AppHookAsync(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "app/{kind}")] HttpRequest req, string kind)
     {
         using var reader = new StreamReader(req.Body);
-        dynamic? payload = new Newtonsoft.Json.JsonSerializer().Deserialize(new JsonTextReader(reader));
+        dynamic? payload = new JsonSerializer().Deserialize(new JsonTextReader(reader));
 
         if (payload == null)
             return new BadRequestObjectResult("Could not deserialize payload as JSON");
 
         string action = payload.action;
-        var appKind = Enum.Parse<AppKind>(kind);
-        var id = new AccountId(payload.installation.account.id, payload.installation.account.node_id, payload.installation.account.login);
-        var note = $"{action} {kind} on {id.Id} by {id.Login}";
+        var appKind = Enum.Parse<AppKind>(kind, true);
+        var id = new AccountId((int)payload.installation.account.id, (string)payload.installation.account.node_id, (string)payload.installation.account.login);
+        var note = $"App {appKind} {action} on {payload.installation.account.login} by {payload.sender.login}";
 
         await (action switch
         {
@@ -81,7 +82,7 @@ public class Functions
         return new OkObjectResult(note);
     }
 
-    [FunctionName("sponsorhook")]
+    [FunctionName("sponsorable_webhook")]
     public async Task<IActionResult> SponsorHookAsync(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "sponsors/{account}")] HttpRequest req, string account)
     {
@@ -92,8 +93,8 @@ public class Functions
             return new BadRequestObjectResult("Could not deserialize payload as JSON");
 
         string action = payload.action;
-        var sponsorable = new AccountId(payload.sponsorable.id, payload.sponsorable.node_id, payload.sponsorable.login);
-        var sponsor = new AccountId(payload.sponsor.id, payload.sponsor.node_id, payload.sponsor.login);
+        var sponsorable = new AccountId((int)payload.sponsorable.id, (string)payload.sponsorable.node_id, (string)payload.sponsorable.login);
+        var sponsor = new AccountId((int)payload.sponsor.id, (string)payload.sponsor.node_id, (string)payload.sponsor.login);
         int amount = payload.sponsorship.tier.monthly_price_in_dollars;
         bool oneTime = payload.sponsorship.tier.is_one_time;
         DateTime date = payload.sponsorship.created_at;
@@ -167,21 +168,21 @@ public class Functions
         return new OkResult();
     }
 
-    [FunctionName("sponsor")]
-    public async Task Sponsors([EventGridTrigger] EventGridEvent e)
-    {
-        // Event path is: webhook/[topic:devlooped]/[subject:sponsors]/[event:sponsorship]
-        // As configured on the dashboard at https://github.com/sponsors/devlooped/dashboard/webhooks/396006910/edit
-        if (!e.Topic.EndsWith("/devlooped") ||
-            e.EventType != "sponsorship" ||
-            e.Subject != "sponsors")
-            return;
+    //[FunctionName("sponsor")]
+    //public async Task Sponsors([EventGridTrigger] EventGridEvent e)
+    //{
+    //    // Event path is: webhook/[topic:devlooped]/[subject:sponsors]/[event:sponsorship]
+    //    // As configured on the dashboard at https://github.com/sponsors/devlooped/dashboard/webhooks/396006910/edit
+    //    if (!e.Topic.EndsWith("/devlooped") ||
+    //        e.EventType != "sponsorship" ||
+    //        e.Subject != "sponsors")
+    //        return;
 
-        using var reader = new StreamReader(e.Data.ToStream());
-        var payload = await reader.ReadToEndAsync();
+    //    using var reader = new StreamReader(e.Data.ToStream());
+    //    var payload = await reader.ReadToEndAsync();
 
-        File.WriteAllText($"sponsor-{DateTimeOffset.Now.ToQuaranTimeSeconds()}.json", payload);
-    }
+    //    File.WriteAllText($"sponsor-{DateTimeOffset.Now.ToQuaranTimeSeconds()}.json", payload);
+    //}
 
     //[FunctionName("sponsor")]
     //public static async Task<IActionResult> Sponsors(

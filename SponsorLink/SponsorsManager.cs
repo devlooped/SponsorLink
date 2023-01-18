@@ -130,6 +130,7 @@ public class SponsorsManager
     public async Task AppUninstallAsync(AppKind kind, AccountId account, string? note = default)
     {
         await ChangeState(kind, account, AppState.Deleted, note);
+        await events.PushAsync(new AppUninstalled(account, kind, note));
     }
 
     public async Task SponsorAsync(AccountId sponsorable, AccountId sponsor, int amount, DateOnly? expiresAt = null, string? note = default)

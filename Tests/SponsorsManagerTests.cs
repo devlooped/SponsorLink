@@ -115,4 +115,16 @@ public partial class SponsorsManagerTests : IDisposable
         });
     }
 
+    [Scenario(NamingPolicy = ScenarioTestMethodNamingPolicy.Test)]
+    public async Task SponsorsUsage(ScenarioContext scenario)
+    {
+        var config = new ConfigurationBuilder().AddUserSecrets(ThisAssembly.Project.UserSecretsId).Build();
+        var manager = new SponsorsManager(
+            Mock.Of<IHttpClientFactory>(),
+            new SecurityManager(config),
+            connection.StorageAccount, connection,
+            Mock.Of<IEventStream>());
+
+
+    }
 }

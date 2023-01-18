@@ -10,16 +10,16 @@ namespace Devlooped.SponsorLink;
 [Service]
 public record SecurityManager(IConfiguration Configuration)
 {
-    static readonly RSA clientKey;
-    static readonly RSA adminKey;
+    static readonly RSA sponsorKey;
+    static readonly RSA sponsorableKey;
 
     static SecurityManager()
     {
-        clientKey = RSA.Create();
-        clientKey.ImportFromPem(ThisAssembly.Resources.sponsorlink_client.Text);
+        sponsorKey = RSA.Create();
+        sponsorKey.ImportFromPem(ThisAssembly.Resources.sponsorlink_sponsor.Text);
 
-        adminKey = RSA.Create();
-        adminKey.ImportFromPem(ThisAssembly.Resources.sponsorlink_admin.Text);
+        sponsorableKey = RSA.Create();
+        sponsorableKey.ImportFromPem(ThisAssembly.Resources.sponsorlink_sponsorable.Text);
     }
 
     /// <summary>
@@ -27,13 +27,7 @@ public record SecurityManager(IConfiguration Configuration)
     /// </summary>
     public string CreateAuthorization(AppKind kind, string code)
     {
-        var prefix = kind switch
-        {
-            AppKind.Sponsorable => "GitHub:Admin:",
-            AppKind.Sponsor => "GitHub:Client:",
-            _ => throw new ArgumentException($"Unknown app kind {kind}.")
-        };
-
+        var prefix = $"GitHub:{kind}:";
         var client_id = Configuration[prefix + "ClientId"] ?? throw new InvalidOperationException($"Missing {prefix}ClientId");
         var client_secret = Configuration[prefix + "ClientSecret"] ?? throw new InvalidOperationException($"Missing {prefix}ClientSecret");
         var redirect_uri = Configuration[prefix + "RedirectUri"] ?? throw new InvalidOperationException($"Missing {prefix}RedirectUri");
@@ -46,19 +40,11 @@ public record SecurityManager(IConfiguration Configuration)
     /// </summary>
     public string IssueToken(AppKind kind)
     {
-        var prefix = kind switch
-        {
-            AppKind.Sponsorable => "GitHub:Admin:",
-            AppKind.Sponsor => "GitHub:Client:",
-            _ => throw new ArgumentException($"Unknown app kind {kind}.")
-        };
-
-        var app_id = Configuration[prefix + "AppId"] ?? throw new InvalidOperationException($"Missing {prefix}AppId");
-
+        var app_id = Configuration[$"GitHub:{kind}:AppId"] ?? throw new InvalidOperationException($"Missing GitHub:{kind}:AppId");
         var key = kind switch
         {
-            AppKind.Sponsorable => adminKey,
-            AppKind.Sponsor => clientKey,
+            AppKind.Sponsorable => sponsorableKey,
+            AppKind.Sponsor => sponsorKey,
             _ => throw new ArgumentException($"Unknown app kind {kind}.")
         };
 
