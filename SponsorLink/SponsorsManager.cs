@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
-using Azure.Data.Tables;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Octokit;
@@ -50,6 +49,7 @@ public class SponsorsManager
         var partition = TablePartition.Create<Authorization>(tableConnection);
 
         await partition.PutAsync(new Authorization(user.NodeId, accessToken, user.Login));
+        await events.PushAsync(new UserAuthorized(user.NodeId, user.Login, kind));
     }
 
     public async Task RefreshAccountAsync(AccountId account)
@@ -93,47 +93,77 @@ public class SponsorsManager
         //}
     }
 
+    public Task<Installation?> FindAppAsync(AppKind kind, AccountId account)
+    {
+        var partition = TablePartition.Create<Installation>(tableConnection,
+            kind == AppKind.Sponsorable ? "Sponsorable" : "Sponsor");
+
+        return partition.GetAsync(account.Id);
+    }
+
     public async Task AppInstallAsync(AppKind kind, AccountId account, string? note = default)
     {
         var partition = TablePartition.Create<Installation>(tableConnection, 
             kind == AppKind.Sponsorable ? "Sponsorable" : "Sponsor");
 
-        var installation = new Installation(account.Id, account.Login, AppState.Installed);
+        var installation = new Installation(account.Id, account.Login, AppState.Installed, Guid.NewGuid().ToString());
         
         await partition.PutAsync(installation);
-        await events.PushAsync(new AppInstalled(account, kind, note));
+        await events.PushAsync(new AppInstalled(account.Id, account.Login, kind, note));
     }
 
     public async Task AppSuspendAsync(AppKind kind, AccountId account, string? note = default)
     {
         await ChangeState(kind, account, AppState.Suspended);
-        await events.PushAsync(new AppSuspended(account, kind, note));
+        await events.PushAsync(new AppSuspended(account.Id, account.Login, kind, note));
     }
 
     public async Task AppUnsuspendAsync(AppKind kind, AccountId account, string? note = default)
     {
         await ChangeState(kind, account, AppState.Installed);
-        await events.PushAsync(new AppSuspended(account, kind, note));
+        await events.PushAsync(new AppSuspended(account.Id, account.Login, kind, note));
     }
 
     public async Task AppUninstallAsync(AppKind kind, AccountId account, string? note = default)
     {
         await ChangeState(kind, account, AppState.Deleted);
-        await events.PushAsync(new AppUninstalled(account, kind, note));
+        await events.PushAsync(new AppUninstalled(account.Id, account.Login, kind, note));
     }
 
     public async Task SponsorAsync(AccountId sponsorable, AccountId sponsor, int amount, DateOnly? expiresAt = null, string? note = default)
     {
-        
+        var partition = TablePartition.Create<Sponsorship>(tableConnection);
+        var sponsorship = new Sponsorship(sponsorable, sponsor, amount)
+        {
+            ExpiresAt = expiresAt,
+        };
+
+        await partition.PutAsync(sponsorship);
+        await events.PushAsync(new SponsorshipCreated(sponsorable.Id, sponsor.Id, amount, expiresAt, note));
     }
 
     public async Task SponsorUpdateAsync(AccountId sponsorable, AccountId sponsor, int amount, string? note = default)
     {
+        var partition = TablePartition.Create<Sponsorship>(tableConnection);
+        var sponsorship = await partition.GetAsync("");
+        if (sponsorship == null)
+            // TODO: log error
+            return;
+
+        await partition.PutAsync(sponsorship with { Amount = amount });
+        await events.PushAsync(new SponsorshipChanged(sponsorable.Id, sponsor.Id, amount, note));
     }
 
     public async Task UnsponsorAsync(AccountId sponsorable, AccountId sponsor, DateOnly expiresAt, string? note = default)
     {
-        
+        var partition = TablePartition.Create<Sponsorship>(tableConnection);
+        var sponsorship = await partition.GetAsync("");
+        if (sponsorship == null)
+            // TODO: log error
+            return;
+
+        await partition.PutAsync(sponsorship with {  ExpiresAt = expiresAt });
+        await events.PushAsync(new SponsorshipCancelled(sponsorable.Id, sponsor.Id, expiresAt, note));
     }
 
     public async Task CheckExpirationsAsync()
