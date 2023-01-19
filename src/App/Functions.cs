@@ -4,6 +4,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Devlooped.SponsorLink;
 
@@ -12,12 +13,12 @@ public class Functions
     readonly SponsorsManager manager;
     readonly IConfiguration configuration;
     readonly IHttpClientFactory clientFactory;
+    readonly IEventStream events;
+    readonly ITablePartition<Webhook> webhooks;
 
-    readonly EventStream events;
-
-    public Functions(SponsorsManager manager, IConfiguration configuration, IHttpClientFactory clientFactory, EventStream events)
-        => (this.manager, this.configuration, this.clientFactory, this.events)
-        = (manager, configuration, clientFactory, events);
+    public Functions(SponsorsManager manager, IConfiguration configuration, IHttpClientFactory clientFactory, IEventStream events, CloudStorageAccount account)
+        => (this.manager, this.configuration, this.clientFactory, this.events, webhooks)
+        = (manager, configuration, clientFactory, events, TablePartition.Create<Webhook>(account, "Webhook", "SponsorLink", x => x.Id));
 
     record EmailInfo(string email, bool verified);
 
@@ -53,13 +54,20 @@ public class Functions
 
     [FunctionName("app")]
     public async Task<IActionResult> AppHookAsync(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "app/{kind}")] HttpRequest req, string kind)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "app/{kind}")] HttpRequestMessage req, string kind)
     {
-        using var reader = new StreamReader(req.Body);
-        dynamic? payload = new JsonSerializer().Deserialize(new JsonTextReader(reader));
+        var body = await req.Content!.ReadAsStringAsync();
 
+        if (!SecurityManager.VerifySignature(body, configuration["GitHub:WebhookSecret"], req.Headers.GetValues("x-hub-signature-256").FirstOrDefault()))
+            return new BadRequestResult();
+
+        dynamic? payload = JsonConvert.DeserializeObject(body);
         if (payload == null)
             return new BadRequestObjectResult("Could not deserialize payload as JSON");
+
+        await webhooks.PutAsync(new(
+            req.Headers.GetValues("X-GitHub-Delivery").FirstOrDefault() ?? Guid.NewGuid().ToString(),
+            ((JToken)payload).ToString(Formatting.Indented)));
 
         string action = payload.action;
         var appKind = Enum.Parse<AppKind>(kind, true);
@@ -78,13 +86,12 @@ public class Functions
         return new OkObjectResult(note);
     }
 
-    [FunctionName("sponsorable")]
+    [FunctionName("sponsor")]
     public async Task<IActionResult> SponsorHookAsync(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "sponsors/{account}")] HttpRequest req, string account)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "sponsor/{account}")] HttpRequestMessage req, string account)
     {
-        using var reader = new StreamReader(req.Body);
-        dynamic? payload = new Newtonsoft.Json.JsonSerializer().Deserialize(new JsonTextReader(reader));
-
+        var body = await req.Content!.ReadAsStringAsync();        
+        dynamic? payload = JsonConvert.DeserializeObject(body);
         if (payload == null)
             return new BadRequestObjectResult("Could not deserialize payload as JSON");
 
@@ -94,6 +101,19 @@ public class Functions
         int amount = payload.sponsorship.tier.monthly_price_in_dollars;
         bool oneTime = payload.sponsorship.tier.is_one_time;
         DateTime date = payload.sponsorship.created_at;
+
+        var installation = await manager.FindAppAsync(AppKind.Sponsorable, sponsorable);
+        if (installation == null)
+            return new BadRequestObjectResult($"No SponsorLink Admin installation found for {sponsorable}. See https://github.com/apps/sponsorlink-admin");
+
+        // We require the installation to be present and enabled to receive sponsorships
+        if (installation == null ||
+            !SecurityManager.VerifySignature(body, installation.Secret, req.Headers.GetValues("x-hub-signature-256").FirstOrDefault()))
+            return new BadRequestObjectResult($"Could not verify signature payload signature. See https://github.com/apps/sponsorlink-admin");
+
+        await webhooks.PutAsync(new(
+            req.Headers.GetValues("X-GitHub-Delivery").FirstOrDefault() ?? Guid.NewGuid().ToString(),
+            ((JToken)payload).ToString(Formatting.Indented)));
 
         if (action == "created")
         {
@@ -116,79 +136,11 @@ public class Functions
 
             await manager.SponsorUpdateAsync(sponsorable, sponsor, amount, note);
         }
-
+        
         // TODO: if sponsorable has not installed the admin app or is 
         // not sponsoring devlooped with at least $x, return OK with content explaining 
         // this and that checks won't work until they do.
 
-
-        //var body = await new StreamReader(req.Body).ReadToEndAsync();
-        //var json = JToken.Parse(body).ToString(Formatting.Indented);
-
-        //var id = req.Headers["X-GitHub-Delivery"].ToString();
-        //// The delivery identifier is the most precise. But if we happen to not get the 
-        //// webhook from GH, we just generate a unique identifier based on the payload itself
-        //// This avoids duplicating entries even from retries.
-        //if (string.IsNullOrEmpty(id))
-        //    id = Base62.Encode(BigInteger.Abs(new BigInteger(SHA1.HashData(Encoding.UTF8.GetBytes(body)))));
-
-        //var type = req.Headers["X-GitHub-Event"].ToString();
-        //if (string.IsNullOrEmpty(type))
-        //    type = "general";
-
-        //subject ??= "general";
-
-        //await repository.PutAsync(new TableEntity($"{topic}.{subject}", $"{type}.{id}")
-        //{
-        //    ["body"] = json
-        //});
-
-        //var key = configuration["EventGridAccessKey"];
-        //var domain = configuration["EventGridDomain"];
-        //if (key != null && domain != null)
-        //{
-        //    using var client = new EventGridClient(new TopicCredentials(key));
-        //    await client.PublishEventsAsync(domain, new List<EventGridEvent>
-        //    {
-        //        new EventGridEvent(
-        //            id: id,
-        //            subject: subject,
-        //            topic: topic,
-        //            data: json,
-        //            eventType: type,
-        //            eventTime: DateTime.UtcNow,
-        //            dataVersion: "1.0")
-        //    });
-        //}
-
         return new OkResult();
     }
-
-    //[FunctionName("sponsor")]
-    //public async Task Sponsors([EventGridTrigger] EventGridEvent e)
-    //{
-    //    // Event path is: webhook/[topic:devlooped]/[subject:sponsors]/[event:sponsorship]
-    //    // As configured on the dashboard at https://github.com/sponsors/devlooped/dashboard/webhooks/396006910/edit
-    //    if (!e.Topic.EndsWith("/devlooped") ||
-    //        e.EventType != "sponsorship" ||
-    //        e.Subject != "sponsors")
-    //        return;
-
-    //    using var reader = new StreamReader(e.Data.ToStream());
-    //    var payload = await reader.ReadToEndAsync();
-
-    //    File.WriteAllText($"sponsor-{DateTimeOffset.Now.ToQuaranTimeSeconds()}.json", payload);
-    //}
-
-    //[FunctionName("sponsor")]
-    //public static async Task<IActionResult> Sponsors(
-    //    [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req)
-    //{
-    //    using var reader = new StreamReader(req.Body);
-    //    var payload = await reader.ReadToEndAsync();
-
-    //    File.WriteAllText($"sponsor-{DateTimeOffset.Now.ToQuaranTimeSeconds()}.json", payload);
-
-    //    return new OkResult();
-    //}
 }

@@ -14,15 +14,12 @@ public enum AppState { Installed, Suspended, Deleted }
 /// REST APIs, but since it can be changed by the user, isn't as reliable 
 /// as the other two.
 /// </summary>
-public record AccountId(string Id, string Login)
-{
-    public static implicit operator string(AccountId account) => $"{account.Login}.{account.Id}";
-}
+public record AccountId(string Id, string Login);
 
 [PartitionKey(nameof(Authorization))]
 public record Authorization([property: RowKey] string Account, string AccessToken, string Login);
 
-public record Installation([RowKey] string Account, string Login, AppState State);
+public record Installation([RowKey] string Account, string Login, AppState State, string Secret);
 
 [Table("Email")]
 public record AccountEmail(string Account, string Login, string Email);
@@ -46,3 +43,5 @@ public record Sponsorship(
     [JsonIgnore]
     public string SponsorLogin => Sponsor.Login;
 }
+
+public record Webhook(string Id, string Payload);

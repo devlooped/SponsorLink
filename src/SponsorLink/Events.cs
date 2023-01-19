@@ -3,29 +3,32 @@
 /// <summary>
 /// The given app was installed to the given <see cref="Account"/>.
 /// </summary>
-public record AppInstalled(string Account, AppKind Kind, string? Note = null);
+public record AppInstalled(string Account, string Login, AppKind Kind, string? Note = null);
 
 /// <summary>
 /// The given app was installed to the given <see cref="Account"/>.
 /// </summary>
-public record AppSuspended(string Account, AppKind Kind, string? Note = null);
+public record AppSuspended(string Account, string Login, AppKind Kind, string? Note = null);
 
 /// <summary>
 /// The given app was installed to the given <see cref="Account"/>.
 /// </summary>
-public record AppUnsuspended(string Account, AppKind Kind, string? Note = null);
+public record AppUnsuspended(string Account, string Login, AppKind Kind, string? Note = null);
 
 /// <summary>
 /// The given app was uninstalled from the given <see cref="Account"/>.
 /// </summary>
-public record AppUninstalled(string Account, AppKind Kind, string? Note = null);
+public record AppUninstalled(string Account, string Login, AppKind Kind, string? Note = null);
 
-//- Admin.Installed(Id, Note)       
-//- Admin.Removed(Id, Note)
-//- User.Authorized(Id, AccessToken, Note)
-//- User.Updated(Id, Emails[], Note)
-//- Sponsorship.Created(SponsorableId, SponsorId, Amount, ExpiresAt, Note) // [sponsor] > [sponsorable] : $1
-//- Sponsorship.Changed(SponsorableId, SponsorId, Amount, Note)            // [sponsor] > [sponsorable] : $1 > $2
-//- Sponsorship.Cancelled(SponsorableId, SponsorId, CancelAt, Note)        // [sponsor] x [sponsorable] on [date]
-//- Sponsorship.Expired(SponsorableId, SponsorId, Note)                    // [sponsor] x [sponsorable]  > cancelled+date expiration
+/// <summary>
+/// The given account has authorized a SponsorLink app.
+/// </summary>
+public record UserAuthorized(string Account, string Login, AppKind Kind, string? Note = null);
 
+public record SponsorshipCreated(string Sponsorable, string Sponsor, int Amount, DateOnly? ExpiresAt = null, string? Note = null);
+
+public record SponsorshipChanged(string Sponsorable, string Sponsor, int Amount, string? Note = null);
+
+public record SponsorshipCancelled(string Sponsorable, string Sponsor, DateOnly ExpiresAt, string? Note = null);
+
+public record SponsorshipExpired(string Sponsorable, string Sponsor, string? Note = null);
