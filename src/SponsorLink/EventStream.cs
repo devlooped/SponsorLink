@@ -1,9 +1,9 @@
 ﻿using System.Globalization;
+using Azure.Messaging.EventGrid;
+using Azure;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.Azure.EventGrid;
-using Microsoft.Azure.EventGrid.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -86,11 +86,19 @@ public class EventStream : IEventStream
         if (domain == null || key == null)
             return;
 
-        var credentials = new TopicCredentials(key);   // From Access keys pane
-        using var client = new EventGridClient(credentials);
-        var ge = new EventGridEvent(
-            id, subject, JsonConvert.SerializeObject(item, settings), type, now.UtcDateTime, dataVersion, topic);
+        var client = new EventGridPublisherClient(
+            new Uri($"https://{domain}/api/events"),
+            new AzureKeyCredential(key));
 
-        await client.PublishEventsAsync(domain, new List<EventGridEvent> { ge }, cancellationToken: cancellationToken);
+        var ge = new EventGridEvent(
+            subject,
+            type,
+            dataVersion,
+            BinaryData.FromString(JsonConvert.SerializeObject(item, settings)))
+        {
+            Topic = topic
+        };
+
+        await client.SendEventAsync(ge, cancellationToken);
     }
 }

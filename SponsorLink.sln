@@ -10,9 +10,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4647FAB9-797D-4EAF-9488-DA68A030D6F9}"
 	ProjectSection(SolutionItems) = preProject
 		src\Directory.props = src\Directory.props
+		readme.md = readme.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SponsorLink", "src\SponsorLink\SponsorLink.csproj", "{C04E6EF3-CD66-4E4C-8A55-77B31DFBDF88}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SponsorLink", "src\SponsorLink\SponsorLink.csproj", "{C04E6EF3-CD66-4E4C-8A55-77B31DFBDF88}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
