@@ -64,47 +64,6 @@ public class SponsorsManager
         }
     }
 
-    public async Task RefreshAccountAsync(AccountId account)
-    {
-        // TODO: cache/externalize as table connection?
-        //var byEmail = DocumentRepository.Create<AccountEmail>(
-        //    tableConnection.StorageAccount,
-        //    partitionKey: x => x.Email,
-        //    rowKey: x => x.Id.Id,
-        //    includeProperties: true);
-
-        //var byAccount = DocumentRepository.Create<AccountEmail>(
-        //    tableConnection.StorageAccount,
-        //    partitionKey: x => x.Id.Id,
-        //    rowKey: x => x.Email,
-        //    includeProperties: true);
-
-        //// We refresh emails for both sponsorable and sponsor accounts with the given 
-        //// user id, since we want to also verify sponsorships from sponsorable accounts.
-        //var partition = DocumentPartition.Create<Installation>(tableConnection, "Sponsorable");
-
-        //var entity = await partition.GetAsync(account.Id.ToString());
-        //if (entity?.AccessToken != null)
-        //{
-        //    var octo = new GitHubClient(octoProduct)
-        //    {
-        //        Credentials = new Credentials(entity.AccessToken)
-        //    };
-
-        //    var allmail = await octo.User.Email.GetAll();
-        //    var verified = allmail.Where(x => x.Verified && !x.Email.EndsWith("@users.noreply.github.com"))
-        //        .Select(x => new AccountEmail(account, x.Email)).ToArray();
-
-        //    // Allows locating by email (all accounts, there may be more than one?)
-        //    // and by account (fetch all emails for it).
-        //    foreach (var email in verified)
-        //    {
-        //        await byEmail.PutAsync(email);
-        //        await byAccount.PutAsync(email);
-        //    }
-        //}
-    }
-
     public Task<Installation?> FindAppAsync(AppKind kind, AccountId account)
     {
         var partition = TablePartition.Create<Installation>(tableConnection,
@@ -149,7 +108,7 @@ public class SponsorsManager
             ExpiresAt = expiresAt
         };
 
-        await StoreSponsorshipAsync(sponsorship);
+        await SaveSponsorshipAndExpirationAsync(sponsorship);
         await events.PushAsync(new SponsorshipCreated(sponsorable.Id, sponsor.Id, amount, expiresAt, note));
 
         // NOTE: we persist above so a quick Enable/Disable of the admin app can successfully 
@@ -165,7 +124,7 @@ public class SponsorsManager
         // If there is an existing one, this should merge/update. 
         // Otherwise, this will create a new entry. This can be used to 
         // "refresh" an existing sponsor from before the app was installed.
-        await StoreSponsorshipAsync(sponsorship);
+        await SaveSponsorshipAndExpirationAsync(sponsorship);
         await events.PushAsync(new SponsorshipChanged(sponsorable.Id, sponsor.Id, amount, note));
 
         // NOTE: we persist above so a quick Enable/Disable of the admin app can successfully 
@@ -198,13 +157,32 @@ public class SponsorsManager
             ExpiresAt = DateOnly.FromDateTime(DateTime.Today),
         };
 
-        await StoreSponsorshipAsync(sponsorship);
+        await SaveSponsorshipAndExpirationAsync(sponsorship);
         await events.PushAsync(new SponsorshipCancelled(sponsorable.Id, sponsor.Id, note));
 
         // This means sponsorables need to be active to also *unregister* sponsors
         await VerifySponsorableAsync(sponsorable);
 
         await registry.UnregisterSponsorAsync(sponsorable, sponsor);
+    }
+
+    public async Task UnsponsorExpiredAsync(DateOnly date)
+    {
+        var expirations = TableRepository.Create(sponsorshipsConnection);
+
+        await foreach (var expiration in expirations.EnumerateAsync($"Expiration-{date:O}"))
+        {
+            var ids = expiration.RowKey.Split('|');
+            var sponsorship = await TablePartition
+                .Create<Sponsorship>(sponsorshipsConnection, $"Sponsorable-{ids[0]}", x => x.SponsorId)
+                .GetAsync(ids[1]);
+
+            if (sponsorship != null)
+                // Sets the expired flag, but does not refresh the expiration records
+                await SaveSponsorshipAsync(sponsorship with { Expired = true });
+
+            await expirations.DeleteAsync(expiration);
+        }
     }
 
     async Task VerifySponsorableAsync(AccountId sponsorable)
@@ -228,19 +206,15 @@ public class SponsorsManager
             throw new ArgumentException($"SponsorLink usage requires an active sponsorship from {sponsorable.Login} to @{Constants.DevloopedLogin}.", nameof(sponsorable));
     }
 
-    async Task StoreSponsorshipAsync(Sponsorship sponsorship)
+    async Task SaveSponsorshipAndExpirationAsync(Sponsorship sponsorship)
     {
-        // Dual store for easier scanning
-        var bySponsorable = TablePartition.Create<Sponsorship>(sponsorshipsConnection, 
-            $"Sponsorable-{sponsorship.SponsorableId}", x => x.SponsorId, Azure.Data.Tables.TableUpdateMode.Replace);
-        var bySponsor = TablePartition.Create<Sponsorship>(sponsorshipsConnection,
-            $"Sponsor-{sponsorship.SponsorId}", x => x.SponsorableId, Azure.Data.Tables.TableUpdateMode.Replace);
-
         var expirations = TableRepository.Create(sponsorshipsConnection);
+        var sponsorables = TablePartition.Create<Sponsorship>(sponsorshipsConnection,
+            $"Sponsorable-{sponsorship.SponsorableId}", x => x.SponsorId, Azure.Data.Tables.TableUpdateMode.Replace);
 
         // first retrieve existing, to see if there was a previous scheduled expiration 
         // from a prior one-time sponsorship that is being turned into a monthly one
-        var existing = await bySponsorable.GetAsync(sponsorship.SponsorId);
+        var existing = await sponsorables.GetAsync(sponsorship.SponsorId);
         if (existing?.ExpiresAt != null)
         {
             // Delete existing expiration record if present
@@ -251,9 +225,21 @@ public class SponsorsManager
         {
             // Schedule expiration for the daily check to pick up.
             await expirations.PutAsync(new($"Expiration-{sponsorship.ExpiresAt:O}", $"{sponsorship.SponsorableId}|{sponsorship.SponsorId}"));
+
         }
 
-        // NOTE: we *replace* existing expiration if it was present.
+        await SaveSponsorshipAsync(sponsorship);
+    }
+
+    async Task SaveSponsorshipAsync(Sponsorship sponsorship)
+    {
+        // Dual store for easier scanning
+        var bySponsorable = TablePartition.Create<Sponsorship>(sponsorshipsConnection,
+            $"Sponsorable-{sponsorship.SponsorableId}", x => x.SponsorId, Azure.Data.Tables.TableUpdateMode.Replace);
+        var bySponsor = TablePartition.Create<Sponsorship>(sponsorshipsConnection,
+            $"Sponsor-{sponsorship.SponsorId}", x => x.SponsorableId, Azure.Data.Tables.TableUpdateMode.Replace);
+
+        // NOTE: we *replace* existing expiration if it was present, so we can potentially delete an existing expiration.
         await bySponsorable.PutAsync(sponsorship);
         await bySponsor.PutAsync(sponsorship);
     }

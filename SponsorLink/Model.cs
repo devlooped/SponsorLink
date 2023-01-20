@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using System.Text.Json.Serialization;
-
-namespace Devlooped.SponsorLink;
+﻿namespace Devlooped.SponsorLink;
 
 public enum AppKind { Sponsor, Sponsorable}
 

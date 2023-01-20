@@ -110,16 +110,19 @@ public sealed partial class SponsorsManagerTests : IDisposable
         });
     }
 
-    [Scenario(NamingPolicy = ScenarioTestMethodNamingPolicy.Test)]
-    public async Task SponsorsUsage(ScenarioContext scenario)
-    {
-        //var config = new ConfigurationBuilder().AddUserSecrets(ThisAssembly.Project.UserSecretsId).Build();
-        //var manager = new SponsorsManager(
-        //    Mock.Of<IHttpClientFactory>(),
-        //    new SecurityManager(config),
-        //    connection.StorageAccount, connection,
-        //    Mock.Of<IEventStream>());
+    //[Scenario(NamingPolicy = ScenarioTestMethodNamingPolicy.Test)]
+    //public async Task SponsorsUsage(ScenarioContext scenario)
+    //{
+    //    var config = new ConfigurationBuilder().AddUserSecrets(ThisAssembly.Project.UserSecretsId).Build();
+    //    if (!CloudStorageAccount.TryParse(config["RealStorageAccountForTests"], out var account))
+    //        return;
 
-        await Task.CompletedTask;
-    }
+    //    var manager = new SponsorsManager(
+    //        Mock.Of<IHttpClientFactory>(),
+    //        new SecurityManager(config),
+    //        connection.StorageAccount, connection,
+    //        Mock.Of<IEventStream>());
+
+    //    await Task.CompletedTask;
+    //}
 }
