@@ -31,9 +31,9 @@ public class Functions
         return new OkObjectResult("pong");
     }
 
-    [FunctionName("expirations")]
-    public async Task CheckExpirationsAsync([TimerTrigger("0 0 0 * * *")] TimerInfo timer)
-        => await manager.CheckExpirationsAsync();
+    //[FunctionName("expirations")]
+    //public async Task CheckExpirationsAsync([TimerTrigger("0 0 0 * * *")] TimerInfo timer)
+    //    => await manager.CheckExpirationsAsync();
 
     [FunctionName("authorize")]
     public async Task<IActionResult> AuthorizeAppAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "authorize/{kind}")] HttpRequest req, string kind)
@@ -96,8 +96,11 @@ public class Functions
             return new BadRequestObjectResult("Could not deserialize payload as JSON");
 
         string action = payload.action;
-        var sponsorable = new AccountId((string)payload.sponsorable.node_id, (string)payload.sponsorable.login);
-        var sponsor = new AccountId((string)payload.sponsor.node_id, (string)payload.sponsor.login);
+        if (action == null)
+            return new OkObjectResult("Nothing to do :)");
+
+        var sponsorable = new AccountId((string)payload.sponsorship.sponsorable.node_id, (string)payload.sponsorship.sponsorable.login);
+        var sponsor = new AccountId((string)payload.sponsorship.sponsor.node_id, (string)payload.sponsorship.sponsor.login);
         int amount = payload.sponsorship.tier.monthly_price_in_dollars;
         bool oneTime = payload.sponsorship.tier.is_one_time;
         DateTime date = payload.sponsorship.created_at;
@@ -123,11 +126,10 @@ public class Functions
 
             await manager.SponsorAsync(sponsorable, sponsor, amount, oneTime ? DateOnly.FromDateTime(date).AddDays(30) : null, note);
         }
-        else if (action == "pending_cancellation")
+        else if (action == "cancelled")
         {
-            DateTime cancelAt = payload.effective_date;
-            await manager.UnsponsorAsync(sponsorable, sponsor, DateOnly.FromDateTime(cancelAt),
-                $"{sponsor.Login} is cancelling sponsorship of {sponsorable.Login} by ${DateOnly.FromDateTime(cancelAt)}");
+            await manager.UnsponsorAsync(sponsorable, sponsor,
+                $"{sponsor.Login} cancelled sponsorship of {sponsorable.Login}.");
         }
         else if (action == "tier_changed")
         {
