@@ -31,9 +31,9 @@ public class Functions
         return new OkObjectResult("pong");
     }
 
-    //[FunctionName("expirations")]
-    //public async Task CheckExpirationsAsync([TimerTrigger("0 0 0 * * *")] TimerInfo timer)
-    //    => await manager.CheckExpirationsAsync();
+    [FunctionName("expirations")]
+    public async Task CheckExpirationsAsync([TimerTrigger("0 0 0 * * *")] TimerInfo timer)
+        => await manager.UnsponsorExpiredAsync(DateOnly.FromDateTime(DateTime.Today));
 
     [FunctionName("authorize")]
     public async Task<IActionResult> AuthorizeAppAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "authorize/{kind}")] HttpRequest req, string kind)
