@@ -201,8 +201,10 @@ public class SponsorsManager
         await StoreSponsorshipAsync(sponsorship);
         await events.PushAsync(new SponsorshipCancelled(sponsorable.Id, sponsor.Id, note));
 
+        // This means sponsorables need to be active to also *unregister* sponsors
         await VerifySponsorableAsync(sponsorable);
-        await UpdateRegistryAsync(sponsorable, sponsor);
+
+        await registry.UnregisterSponsorAsync(sponsorable, sponsor);
     }
 
     async Task VerifySponsorableAsync(AccountId sponsorable)
