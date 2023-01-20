@@ -23,8 +23,8 @@ public class DependencyStartup : FunctionsStartup
         var storage = Environment.GetEnvironmentVariable("AZURE_FUNCTIONS_ENVIRONMENT") == "Development"
             ? CloudStorageAccount.DevelopmentStorageAccount
             : CloudStorageAccount.Parse(
-                Environment.GetEnvironmentVariable("AppStorage") ??
                 builder.GetContext().Configuration["AppStorage"] ??
+                builder.GetContext().Configuration["AzureWebJobsStorage"] ??
                 throw new InvalidOperationException("Missing AppStorage configuration."));
 
         builder.Services.AddSingleton(storage);
