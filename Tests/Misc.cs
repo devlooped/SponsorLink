@@ -4,6 +4,9 @@ using System.Net.Http.Json;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
+using Azure;
+using Devlooped;
+using Devlooped.SponsorLink;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Octokit;
@@ -14,6 +17,45 @@ namespace Tests;
 
 public record Misc(ITestOutputHelper Output)
 {
+    [Fact]
+    public async Task UnsponsorRegistry()
+    {
+        var config = new ConfigurationBuilder().AddUserSecrets(ThisAssembly.Project.UserSecretsId).Build();
+        if (!CloudStorageAccount.TryParse(config["RealStorageAccountForTests"], out var account))
+            return;
+
+        var container = account.CreateBlobServiceClient().GetBlobContainerClient("sponsorlink");
+        
+        try
+        {
+            while (true)
+            {
+                try
+                {
+                    await container.CreateIfNotExistsAsync(Azure.Storage.Blobs.Models.PublicAccessType.Blob);
+                    break;
+                }
+                catch (RequestFailedException ex) when (ex.Status == 409 && ex.ErrorCode == "ContainerBeingDeleted")
+                {
+                    // Allow some time for the blob container deletion to complete, across test runs.
+                    Thread.Sleep(100);
+                }
+            }
+            
+            var sponsorable = new AccountId("MDEyOk9yZ2FuaXphdGlvbjYxNTMzODE4", "devlooped");
+            var sponsor = new AccountId("MDQ6VXNlcjg3OTU5NTQx", "devlooped-bot");
+            var registry = new SponsorsRegistry(account);
+
+            await registry.RegisterSponsorAsync(sponsorable, sponsor, new[] { "kzu@github.com", "test@github.com" });
+
+            await registry.UnregisterSponsorAsync(sponsorable, sponsor);
+        }
+        finally
+        {
+            await container.DeleteIfExistsAsync();
+        }
+    }
+
     [Fact]
     public void EncodeTicks()
     {

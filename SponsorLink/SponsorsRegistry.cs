@@ -20,16 +20,27 @@ public class SponsorsRegistry
         var headers = new BlobHttpHeaders { ContentType = "text/plain" };
         var tags = new Dictionary<string, string>
         {
-            { "X-Sponsorable", sponsorable.Id } ,
-            { "X-Sponsorable-Login", sponsorable.Login } ,
-            { "X-Sponsor", sponsor.Id } ,
-            { "X-Sponsor-Login", sponsor.Login } ,
+            { "Sponsorable", sponsorable.Id } ,
+            { "SponsorableLogin", sponsorable.Login } ,
+            { "Sponsor", sponsor.Id } ,
+            { "SponsorLogin", sponsor.Login } ,
         };
 
         foreach (var email in emails)
         {
-            await container.GetBlobClient($"{sponsorable.Login}/{email}")
-                .UploadAsync(new MemoryStream(), headers, tags);
+            var blob = container.GetBlobClient($"{sponsorable.Login}/{email}");
+            await blob.UploadAsync(new MemoryStream(), headers);
+            await blob.SetTagsAsync(tags);
+        }
+    }
+
+    public async Task UnregisterSponsorAsync(AccountId sponsorable, AccountId sponsor)
+    {        
+        var container = blobService.GetBlobContainerClient("sponsorlink");
+
+        await foreach (var blob in blobService.FindBlobsByTagsAsync($"@container='sponsorlink' AND Sponsorable='{sponsorable.Id}' AND Sponsor='{sponsor.Id}'"))
+        {
+            await container.DeleteBlobAsync(blob.BlobName);
         }
     }
 }
