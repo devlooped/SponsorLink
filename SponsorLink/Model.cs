@@ -25,23 +25,12 @@ public record Installation([RowKey] string Account, string Login, AppState State
 public record AccountEmail(string Account, string Login, string Email);
 
 public record Sponsorship(
-    [property: Browsable(false)] AccountId Sponsorable, 
-    [property: Browsable(false)] AccountId Sponsor, 
+    string SponsorableId, string SponsorableLogin,
+    string SponsorId, string SponsorLogin,
     int Amount)
 {
     public DateOnly? ExpiresAt { get; init; }
-
-    [JsonIgnore]
-    public string SponsorableId => Sponsorable.Id;
-
-    [JsonIgnore]
-    public string SponsorableLogin => Sponsorable.Login;
-
-    [JsonIgnore]
-    public string SponsorId => Sponsor.Id;
-
-    [JsonIgnore]
-    public string SponsorLogin => Sponsor.Login;
+    public bool Expired { get; init; } = false;
 }
 
 public record Webhook(string Id, string Payload);

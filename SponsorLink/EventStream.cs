@@ -81,8 +81,8 @@ public class EventStream : IEventStream
 
         telemetry.TrackEvent(te);
 
-        var domain = configuration["EventGridDomain"];
-        var key = configuration["EventGridAccessKey"];
+        var domain = configuration["EventGrid:Domain"];
+        var key = configuration["EventGrid:AccessKey"];
         if (domain == null || key == null)
             return;
 

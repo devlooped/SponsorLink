@@ -29,6 +29,6 @@ public record SponsorshipCreated(string Sponsorable, string Sponsor, int Amount,
 
 public record SponsorshipChanged(string Sponsorable, string Sponsor, int Amount, string? Note = null);
 
-public record SponsorshipCancelled(string Sponsorable, string Sponsor, DateOnly ExpiresAt, string? Note = null);
+public record SponsorshipCancelled(string Sponsorable, string Sponsor, string? Note = null);
 
 public record SponsorshipExpired(string Sponsorable, string Sponsor, string? Note = null);
