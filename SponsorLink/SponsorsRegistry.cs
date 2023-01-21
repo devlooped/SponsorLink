@@ -8,9 +8,11 @@ namespace Devlooped.SponsorLink;
 public class SponsorsRegistry
 {
     readonly BlobServiceClient blobService;
-
-    public SponsorsRegistry(CloudStorageAccount storageAccount)
-        => blobService = storageAccount.CreateBlobServiceClient();
+    readonly IEventStream events;
+    
+    public SponsorsRegistry(CloudStorageAccount storageAccount, IEventStream events)
+        => (blobService, this.events)
+        = (storageAccount.CreateBlobServiceClient(), events);
 
     public async Task RegisterSponsorAsync(AccountId sponsorable, AccountId sponsor, IEnumerable<string> emails)
     {
@@ -31,6 +33,7 @@ public class SponsorsRegistry
             var blob = container.GetBlobClient($"{sponsorable.Login}/{email}");
             await blob.UploadAsync(new MemoryStream(), headers);
             await blob.SetTagsAsync(tags);
+            await events.PushAsync(new SponsorRegistered(sponsorable.Id, sponsor.Id, email));
         }
     }
 
@@ -41,6 +44,7 @@ public class SponsorsRegistry
         await foreach (var blob in blobService.FindBlobsByTagsAsync($"@container='sponsorlink' AND Sponsorable='{sponsorable.Id}' AND Sponsor='{sponsor.Id}'"))
         {
             await container.DeleteBlobAsync(blob.BlobName);
+            await events.PushAsync(new SponsorUnregistered(sponsorable.Id, sponsor.Id, blob.BlobName[(blob.BlobName.LastIndexOf('/')+1)..]));
         }
     }
 }
