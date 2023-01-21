@@ -60,7 +60,7 @@ public sealed partial class SponsorsManagerTests : IDisposable
             new SecurityManager(config),
             connection.StorageAccount, connection,
             Mock.Of<IEventStream>(), 
-            new SponsorsRegistry(connection.StorageAccount));
+            new SponsorsRegistry(connection.StorageAccount, Mock.Of<IEventStream>()));
 
         var id = new AccountId("1234", "kzu");
 

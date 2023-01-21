@@ -151,14 +151,16 @@ public record ManualSponsors(ITestOutputHelper Output)
         if (!CloudStorageAccount.TryParse(config["ProductionStorageAccount"], out var account))
             Assert.Fail("Did not find a user secret named 'ProductionStorageAccount' to run the query against.");
 
+        var events = new EventStream(config, new Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration());
+
         var manager = new SponsorsManager(
             Mock.Of<IHttpClientFactory>(),
             new SecurityManager(config),
             account,
             new TableConnection(account, "SponsorLink"),
             //new EventStream(config, new Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration()),
-            new EventStream(config, new Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration()),
-            new SponsorsRegistry(account));
+            events,
+            new SponsorsRegistry(account, events));
 
         if (result.Data.Organization != null)
         {
