@@ -158,6 +158,8 @@ public class Functions
         if (message.Attempt >= 3)
             return;
 
-        await manager.SyncSponsorAsync(new AccountId(message.Account, message.Login), message.Sponsorable, message.Unregister);
+        var done = await manager.SyncSponsorAsync(new AccountId(message.Account, message.Login), message.Sponsorable, message.Unregister);
+        if (!done)
+            await events.PushAsync(message with { Attempt = message.Attempt + 1 });
     }
 }
