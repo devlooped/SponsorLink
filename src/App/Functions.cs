@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Microsoft.Azure.EventGrid.Models;
 
 namespace Devlooped.SponsorLink;
 
@@ -144,5 +146,18 @@ public class Functions
         // this and that checks won't work until they do.
 
         return new OkResult();
+    }
+
+    [FunctionName("refresh")]
+    public async Task RefreshUserAsync([EventGridTrigger] EventGridEvent e)
+    {
+        var message = JsonConvert.DeserializeObject<UserRefreshPending>((string)e.Data);
+        if (message == null)
+            return;
+        
+        if (message.Attempt >= 3)
+            return;
+
+        await manager.SyncSponsorAsync(new AccountId(message.Account, message.Login), message.Sponsorable, message.Unregister);
     }
 }

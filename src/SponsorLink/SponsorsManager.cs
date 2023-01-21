@@ -41,12 +41,16 @@ public class SponsorsManager
         var resp = await http.PostAsync("https://github.com/login/oauth/access_token",
             new StringContent(auth, Encoding.UTF8, "application/json"), jwt);
 
-        dynamic data = JsonConvert.DeserializeObject(await resp.Content.ReadAsStringAsync()) ??
-            throw new InvalidOperationException("Failed to deserialize OAuth response as JSON.");
+        var payload = await resp.Content.ReadAsStringAsync();
+        dynamic data = JsonConvert.DeserializeObject(payload) ??
+            throw new InvalidOperationException("Failed to deserialize OAuth response as JSON:\r\n" + payload);
 
         try
         {
             string accessToken = data.access_token;
+            if (string.IsNullOrEmpty(accessToken))
+                throw new InvalidOperationException("OAuth response did not contain an access token:\r\n" + payload);
+
             var octo = new GitHubClient(octoProduct)
             {
                 Credentials = new Credentials(accessToken)
@@ -57,10 +61,12 @@ public class SponsorsManager
 
             await partition.PutAsync(new Authorization(user.NodeId, accessToken, user.Login));
             await events.PushAsync(new UserAuthorized(user.NodeId, user.Login, kind));
+            // Due to timing between AppInstall and Authorize, we need to do this refresh async
+            await events.PushAsync(new UserRefreshPending(user.NodeId, user.Login, 0, "User installed SponsorLink"));
         }
         catch (RuntimeBinderException)
         {
-            throw new ArgumentException("Invalid authorization code", nameof(code));
+            throw new InvalidOperationException("OAuth response did not contain an access token:\r\n" + payload);
         }
     }
 
@@ -87,18 +93,88 @@ public class SponsorsManager
     {
         await ChangeState(kind, account, AppState.Suspended);
         await events.PushAsync(new AppSuspended(account.Id, account.Login, kind, note));
+        if (kind == AppKind.Sponsor)
+        {
+            // TODO: Unregister sponsor at this point
+
+        }
+        else if (kind == AppKind.Sponsorable)
+        {
+            // TODO: Unregister ALL sponsors at this point.
+        }
     }
 
     public async Task AppUnsuspendAsync(AppKind kind, AccountId account, string? note = default)
     {
         await ChangeState(kind, account, AppState.Installed);
         await events.PushAsync(new AppSuspended(account.Id, account.Login, kind, note));
+        if (kind == AppKind.Sponsor)
+        {
+            await events.PushAsync(new UserRefreshPending(account.Id, account.Login, 0, note));
+        }
+        else if (kind == AppKind.Sponsorable)
+        {
+            await SyncSponsorableAsync(account);
+        }
     }
 
     public async Task AppUninstallAsync(AppKind kind, AccountId account, string? note = default)
     {
         await ChangeState(kind, account, AppState.Deleted);
         await events.PushAsync(new AppUninstalled(account.Id, account.Login, kind, note));
+        if (kind == AppKind.Sponsor)
+        {
+            // TODO: Unregister sponsor at this point
+        }
+        else if (kind == AppKind.Sponsorable)
+        {
+            // TODO: Unregister ALL sponsors at this point.
+        }
+    }
+
+    public async Task<bool> SyncSponsorAsync(AccountId sponsor, string? sponsorableId, bool unregister)
+    {
+        var bySponsor = TablePartition.Create<Sponsorship>(sponsorshipsConnection,
+            $"Sponsor-{sponsor.Id}", x => x.SponsorableId);
+
+        var done = true;
+
+        await foreach (var sponsorship in bySponsor.EnumerateAsync())
+        {
+            // If we're filtering y sponsorable, skip non-matches.
+            if (sponsorableId != null && sponsorship.SponsorableId != sponsorableId)
+                continue;
+
+            var sponsorable = new AccountId(sponsorship.SponsorableId, sponsorship.SponsorableLogin);
+            if (!unregister)
+                // When unregistering, we always clear stuff, regardless of sponsorable verification.
+                await VerifySponsorableAsync(sponsorable);
+
+            if (unregister)
+                await registry.UnregisterSponsorAsync(sponsorable, sponsor);
+            else
+                done &= await UpdateRegistryAsync(sponsorable, sponsor);
+        }
+
+        return done;
+    }
+
+    public async Task SyncSponsorableAsync(AccountId sponsorable, bool unregister)
+    {
+        await VerifySponsorableAsync(sponsorable);
+
+        var bySponsorable = TablePartition.Create<Sponsorship>(sponsorshipsConnection,
+            $"Sponsorable-{sponsorable.Id}", x => x.SponsorId);
+
+        await foreach (var sponsorship in bySponsorable.EnumerateAsync())
+        {
+            // Schedules refresh for the given sponsor, but only for our sponsorable
+            await events.PushAsync(new UserRefreshPending(sponsorship.SponsorId, sponsorship.SponsorLogin, 0)
+            {
+                Sponsorable = sponsorable.Id,
+                Unregister = unregister
+            });
+        }
     }
 
     public async Task SponsorAsync(AccountId sponsorable, AccountId sponsor, int amount, DateOnly? expiresAt = null, string? note = default)
@@ -178,7 +254,7 @@ public class SponsorsManager
                 .GetAsync(ids[1]);
 
             if (sponsorship != null)
-                // Sets the expired flag, but does not refresh the expiration records
+                // Sets the expired flag, but does not refresh the expiration date column
                 await SaveSponsorshipAsync(sponsorship with { Expired = true });
 
             await expirations.DeleteAsync(expiration);
@@ -224,8 +300,11 @@ public class SponsorsManager
         if (sponsorship.ExpiresAt != null)
         {
             // Schedule expiration for the daily check to pick up.
-            await expirations.PutAsync(new($"Expiration-{sponsorship.ExpiresAt:O}", $"{sponsorship.SponsorableId}|{sponsorship.SponsorId}"));
-
+            await expirations.PutAsync(new($"Expiration-{sponsorship.ExpiresAt:O}", $"{sponsorship.SponsorableId}|{sponsorship.SponsorId}")
+            {
+                { "SponsorableLogin", sponsorship.SponsorableLogin },
+                { "SponsorLogin", sponsorship.SponsorLogin },
+            });
         }
 
         await SaveSponsorshipAsync(sponsorship);
@@ -244,20 +323,20 @@ public class SponsorsManager
         await bySponsor.PutAsync(sponsorship);
     }
 
-    async Task UpdateRegistryAsync(AccountId sponsorable, AccountId sponsor)
+    async Task<bool> UpdateRegistryAsync(AccountId sponsorable, AccountId sponsor)
     {
         var app = await FindAppAsync(AppKind.Sponsor, sponsor);
         if (app == null || app.State != AppState.Installed)
             // TODO: new sponsor but no app installed (or suspended)... should be fine?
             // This is basically a sponsor that doesn't necessarily need or use the library
-            return;
+            return false;
 
         var auth = await TablePartition.Create<Authorization>(tableConnection)
             .GetAsync(sponsor.Id);
 
         // Should be fine too if they cancelled somehow before auth completed?
         if (auth == null)
-            return;
+            return false;
 
         var emails = await new GitHubClient(octoProduct)
         {
@@ -267,6 +346,8 @@ public class SponsorsManager
         await registry.RegisterSponsorAsync(
             sponsorable, sponsor,
             emails.Where(x => x.Verified && !x.Email.EndsWith("@users.noreply.github.com")).Select(x => x.Email));
+
+        return true;
     }
 
     async Task ChangeState(AppKind kind, AccountId account, AppState state)
