@@ -95,12 +95,14 @@ public class SponsorsManager
         await events.PushAsync(new AppSuspended(account.Id, account.Login, kind, note));
         if (kind == AppKind.Sponsor)
         {
-            // TODO: Unregister sponsor at this point
-
+            await events.PushAsync(new UserRefreshPending(account.Id, account.Login, 0, note) 
+            { 
+                Unregister = true 
+            });
         }
         else if (kind == AppKind.Sponsorable)
         {
-            // TODO: Unregister ALL sponsors at this point.
+            await SyncSponsorableAsync(account, true);
         }
     }
 
@@ -114,7 +116,7 @@ public class SponsorsManager
         }
         else if (kind == AppKind.Sponsorable)
         {
-            await SyncSponsorableAsync(account);
+            await SyncSponsorableAsync(account, false);
         }
     }
 
@@ -124,11 +126,14 @@ public class SponsorsManager
         await events.PushAsync(new AppUninstalled(account.Id, account.Login, kind, note));
         if (kind == AppKind.Sponsor)
         {
-            // TODO: Unregister sponsor at this point
+            await events.PushAsync(new UserRefreshPending(account.Id, account.Login, 0, note)
+            {
+                Unregister = true
+            });
         }
         else if (kind == AppKind.Sponsorable)
         {
-            // TODO: Unregister ALL sponsors at this point.
+            await SyncSponsorableAsync(account, true);
         }
     }
 

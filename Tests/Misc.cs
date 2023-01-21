@@ -8,6 +8,7 @@ using Azure;
 using Devlooped;
 using Devlooped.SponsorLink;
 using Microsoft.Extensions.Configuration;
+using Moq;
 using Newtonsoft.Json;
 using Octokit;
 
@@ -44,7 +45,7 @@ public record Misc(ITestOutputHelper Output)
             
             var sponsorable = new AccountId("MDEyOk9yZ2FuaXphdGlvbjYxNTMzODE4", "devlooped");
             var sponsor = new AccountId("MDQ6VXNlcjg3OTU5NTQx", "devlooped-bot");
-            var registry = new SponsorsRegistry(account);
+            var registry = new SponsorsRegistry(account, Mock.Of<IEventStream>());
 
             await registry.RegisterSponsorAsync(sponsorable, sponsor, new[] { "kzu@github.com", "test@github.com" });
 
