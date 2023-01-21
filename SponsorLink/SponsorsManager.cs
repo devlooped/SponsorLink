@@ -137,12 +137,19 @@ public class SponsorsManager
         }
     }
 
-    public async Task<bool> SyncSponsorAsync(AccountId sponsor, string? sponsorableId, bool unregister)
+    public async Task<bool> SyncUserAsync(AccountId account, string? sponsorableId, bool unregister)
     {
         var bySponsor = TablePartition.Create<Sponsorship>(sponsorshipsConnection,
-            $"Sponsor-{sponsor.Id}", x => x.SponsorableId);
+            $"Sponsor-{account.Id}", x => x.SponsorableId);
 
         var done = true;
+
+        if (sponsorableId == null)
+        {
+            // If we're not doing sponsorable-based refresh, we need to sync the app 
+            // registration for the user account too.
+            done &= await UpdateAppRegistryAsync(account);   
+        }
 
         await foreach (var sponsorship in bySponsor.EnumerateAsync())
         {
@@ -156,11 +163,11 @@ public class SponsorsManager
                 await VerifySponsorableAsync(sponsorable);
 
             if (unregister)
-                await registry.UnregisterSponsorAsync(sponsorable, sponsor);
+                await registry.UnregisterSponsorAsync(sponsorable, account);
             else
-                done &= await UpdateRegistryAsync(sponsorable, sponsor);
+                done &= await UpdateSponsorRegistryAsync(sponsorable, account);
         }
-
+        
         return done;
     }
 
@@ -195,7 +202,7 @@ public class SponsorsManager
         // NOTE: we persist above so a quick Enable/Disable of the admin app can successfully 
         // re-establish all current sponsors.
         await VerifySponsorableAsync(sponsorable);
-        await UpdateRegistryAsync(sponsorable, sponsor);
+        await UpdateSponsorRegistryAsync(sponsorable, sponsor);
     }
 
     public async Task SponsorUpdateAsync(AccountId sponsorable, AccountId sponsor, int amount, string? note = default)
@@ -211,7 +218,7 @@ public class SponsorsManager
         // NOTE: we persist above so a quick Enable/Disable of the admin app can successfully 
         // re-establish all current sponsors.
         await VerifySponsorableAsync(sponsorable);
-        await UpdateRegistryAsync(sponsorable, sponsor);
+        await UpdateSponsorRegistryAsync(sponsorable, sponsor);
     }
 
     public async Task UnsponsorAsync(AccountId sponsorable, AccountId sponsor, string? note = default)
@@ -328,7 +335,7 @@ public class SponsorsManager
         await bySponsor.PutAsync(sponsorship);
     }
 
-    async Task<bool> UpdateRegistryAsync(AccountId sponsorable, AccountId sponsor)
+    async Task<bool> UpdateSponsorRegistryAsync(AccountId sponsorable, AccountId sponsor)
     {
         var app = await FindAppAsync(AppKind.Sponsor, sponsor);
         if (app == null || app.State != AppState.Installed)
@@ -351,6 +358,36 @@ public class SponsorsManager
         await registry.RegisterSponsorAsync(
             sponsorable, sponsor,
             emails.Where(x => x.Verified && !x.Email.EndsWith("@users.noreply.github.com")).Select(x => x.Email));
+
+        return true;
+    }
+
+    async Task<bool> UpdateAppRegistryAsync(AccountId account)
+    {
+        var app = await FindAppAsync(AppKind.Sponsor, account);
+        if (app == null || app.State != AppState.Installed)
+        {
+            // In this case, we won't be able to retrieve users' emails since the 
+            // installation is disabled or not uninstalled at all, so just unregister 
+            // with all emails we had (if any)
+            await registry.UnregisterAppAsync(account);
+            return true;
+        }
+
+        var auth = await TablePartition.Create<Authorization>(tableConnection)
+            .GetAsync(account.Id);
+
+        // We'll need to retry until authorization works since we need the emails
+        if (auth == null)
+            return false;
+
+        var emails = await new GitHubClient(octoProduct)
+        {
+            Credentials = new Credentials(auth.AccessToken)
+        }.User.Email.GetAll();
+
+        var verified = emails.Where(x => x.Verified && !x.Email.EndsWith("@users.noreply.github.com")).Select(x => x.Email);
+        await registry.RegisterAppAsync(account, verified);
 
         return true;
     }
