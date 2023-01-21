@@ -151,7 +151,7 @@ public class Functions
     [FunctionName("refresh")]
     public async Task RefreshUserAsync([EventGridTrigger] EventGridEvent e)
     {
-        var message = JsonConvert.DeserializeObject<UserRefreshPending>((string)e.Data);
+        var message = JsonConvert.DeserializeObject<UserRefreshPending>(e.Data.ToString() ?? "{ }");
         if (message == null)
             return;
         
