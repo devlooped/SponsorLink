@@ -54,3 +54,7 @@ public record SponsorshipExpired(string Sponsorable, string Sponsor, string? Not
 public record SponsorRegistered(string Sponsorable, string Sponsor, string Email);
 
 public record SponsorUnregistered(string Sponsorable, string Sponsor, string Email);
+
+public record AppRegistered(string Account, string Login, string Email);
+
+public record AppUnregistered(string Account, string Login, string Email);
