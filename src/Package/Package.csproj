@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <Target Name="Obfuscate" AfterTargets="Build" DependsOnTargets="Build">
-    <Exec Command="$(Obfuscar) $(MSBuildThisFileDirectory)Obfuscar.xml" />
+    <Exec Command="$(Obfuscar) $(MSBuildThisFileDirectory)Obfuscar.$(Configuration).xml" />
   </Target>
 
   <Target Name="AddObfuscated" BeforeTargets="GetPackageContents" DependsOnTargets="Obfuscate">

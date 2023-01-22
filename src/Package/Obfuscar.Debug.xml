@@ -3,5 +3,5 @@
   <Var name="OutPath" value="$(InPath)\obfuscated" />
   <Var name="UseUnicodeNames" value="true" />
   <AssemblySearchPath path="bin\Debug\netstandard2.0" />
-  <Module file="$(InPath)/Devlooped.SponsorLink.dll" />
+  <Module file="$(InPath)\Devlooped.SponsorLink.dll" />
 </Obfuscator>
