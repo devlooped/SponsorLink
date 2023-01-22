@@ -1,0 +1,10 @@
+<Project>
+
+  <ItemGroup>
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="SourceItemType" />
+    <AdditionalFiles Include="$(MSBuildProjectFullPath)" SourceItemType="MSBuildProject" Visible="false" InProject="false" />
+    <CompilerVisibleProperty Include="DesignTimeBuild" />
+    <CompilerVisibleProperty Include="BuildingInsideVisualStudio" />
+  </ItemGroup>
+
+</Project>
