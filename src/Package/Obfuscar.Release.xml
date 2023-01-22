@@ -1,7 +1,0 @@
-<Obfuscator>
-  <Var name="InPath" value="bin\Release\netstandard2.0" />
-  <Var name="OutPath" value="$(InPath)\obfuscated" />
-  <Var name="UseUnicodeNames" value="true" />
-  <AssemblySearchPath path="bin\Release\netstandard2.0" />
-  <Module file="$(InPath)\Devlooped.SponsorLink.dll" />
-</Obfuscator>
