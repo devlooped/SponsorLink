@@ -10,20 +10,18 @@ namespace Devlooped;
 /// account that consumes SponsorLink. 
 /// </summary>
 /// <remarks>
-/// Intended usage is for the library author to add roslyn analyzer/source 
-/// generator to the package, which implements <see cref="IIncrementalGenerator"/> 
-/// and instantiates <see cref="SponsorLink"/> with the sponsorable account 
-/// in its constructor. In the <see cref="IIncrementalGenerator.Initialize(IncrementalGeneratorInitializationContext)"/>, 
-/// the library generator should invoke <see cref="Initialize(IncrementalGeneratorInitializationContext)"/> 
-/// in turn.
+/// Intended usage is for the library author to add a Roslyn source 
+/// generator to the package, and initialize a new instance of this class 
+/// with both the sponsorable account and the product name to use for the checks.
 /// </remarks>
 public class SponsorLink
 {
     static readonly HttpClient http = new();
     static readonly Random rnd = new();
-
-    string sponsorable;
-    string product;
+    
+    readonly string sponsorable;
+    readonly string product;
+    readonly DiagnosticDescriptor thanksDescriptor;
 
     /// <summary>
     /// Creates the sponsor link instance for the given sponsorable account, used to 
@@ -33,8 +31,25 @@ public class SponsorLink
     /// <param name="sponsorable">A sponsorable account that has been properly provisioned with SponsorLink.</param>
     /// <param name="product">The product developed by <paramref name="sponsorable"/> that is checking the sponsorship link.</param>
     public SponsorLink(string sponsorable, string product)
-        => (this.sponsorable, this.product)
-        = (sponsorable, product);
+    {
+        (this.sponsorable, this.product) = (sponsorable, product);
+
+        thanksDescriptor = new DiagnosticDescriptor(
+            "SL01",
+            "SponsorLink",
+            "Thank you for supporting {0} development with your sponsorship of {1} 💟!",
+            "SponsorLink",
+            DiagnosticSeverity.Info,
+            true,
+            $"{product} uses SponsorLink to attribute your support via GitHub Sponsors.",
+            $"https://github.com/sponsors/{sponsorable}",
+            "DoesNotSupportF1Help");
+
+        //SupportedDiagnostics = ImmutableArray.Create(thanksDescriptor,
+        //    // If we don't have at least one warning, we're not invoked at all :(
+        //    new DiagnosticDescriptor(
+        //        "SL00", "Dummy", "Dummy", "Dummy", DiagnosticSeverity.Warning, true));
+    }
 
     /// <summary>
     /// Initializes the sponsor link checks during builds.
@@ -68,22 +83,22 @@ public class SponsorLink
 
     }
 
-    void CheckSponsor(SourceProductionContext spc, ImmutableArray<State> states)
+    void CheckSponsor(SourceProductionContext context, ImmutableArray<State> states)
     {
-        if (bool.TryParse(Environment.GetEnvironmentVariable("DEBUG_SPONSORLINK"), out var debug) && debug)
-            Debugger.Launch();
+        var tags = new[] { "DoesNotSupportF1Help" };
 
         if (states.IsDefaultOrEmpty || states[0].InsideEditor == null)
         {
             // Broken state
-            spc.ReportDiagnostic(Diagnostic.Create(
-                "SL01", "SponsorLink",
+            context.ReportDiagnostic(Diagnostic.Create(
+                "SL02", "SponsorLink",
                 "Invalid SponsorLink configuration",
                 DiagnosticSeverity.Error, DiagnosticSeverity.Error,
                 true, 0, false,
                 "Invalid SponsorLink configuration",
                 "SponsorLink has been incorrectly configured.",
-                "https://devlooped.com/sponsorlink/SL01.html"));
+                "https://devlooped.com/sponsorlink/SL02.html", 
+                customTags: tags));
 
             return;
         }
@@ -100,30 +115,7 @@ public class SponsorLink
         if (!NetworkInterface.GetIsNetworkAvailable())
             return;
 
-        string? email = null;
-
-        try
-        {
-            var proc = Process.Start(new ProcessStartInfo("git", "config --get user.email")
-            {
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WorkingDirectory = states[0].Path
-            });
-            proc.WaitForExit();
-
-            // Couldn't run git config, so we can't check for sponsorship, no email to check.
-            if (proc.ExitCode != 0)
-                return;
-
-            email = proc.StandardOutput.ReadToEnd().Trim();
-        }
-        catch
-        {
-            // Git not even installed.
-        }
-
+        var email = GetEmail(states[0].Path);
         if (string.IsNullOrEmpty(email))
         {
             // No email configured in git. Weird.
@@ -131,8 +123,8 @@ public class SponsorLink
         }
 
         // Check app install and sponsoring status
-        var installed = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/apps/{email}", spc.CancellationToken);
-        var sponsoring = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/devlooped/{email}", spc.CancellationToken);
+        var installed = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/apps/{email}", context.CancellationToken);
+        var sponsoring = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/devlooped/{email}", context.CancellationToken);
 
         if (installed == null || sponsoring == null)
         {
@@ -142,41 +134,65 @@ public class SponsorLink
 
         if (installed == false)
         {
-            spc.ReportDiagnostic(Diagnostic.Create(
-                "SL02", "SponsorLink",
-                $"{product} uses SponsorLink to properly attribute your sponsorship with {sponsorable}. Please install the GitHub app.",
+            context.ReportDiagnostic(Diagnostic.Create(
+                "SL03", "SponsorLink",
+                $"{product} uses SponsorLink to properly attribute your sponsorship with {sponsorable}. Please install the GitHub app at https://github.com/apps/sponsorlink.",
                 DiagnosticSeverity.Warning, DiagnosticSeverity.Warning,
                 true, 1, false,
-                $"{product} uses SponsorLink to properly attribute your sponsorship with {sponsorable}. Please install the GitHub app.",
-                helpLink: "https://github.com/apps/sponsorlink"));
+                $"{product} uses SponsorLink to properly attribute your sponsorship with {sponsorable}. Please install the GitHub app at https://github.com/apps/sponsorlink.",
+                helpLink: "https://github.com/apps/sponsorlink",
+                customTags: tags));
 
             Thread.Sleep(rnd.Next(1000, 3000));
         }
         else if (sponsoring == false)
         {
-            spc.ReportDiagnostic(Diagnostic.Create(
-                "SL02", "SponsorLink",
-                $"Please consider supporting {product} development by sponsoring {sponsorable} on GitHub.",
+            context.ReportDiagnostic(Diagnostic.Create(
+                "SL04", "SponsorLink",
+                $"Please consider supporting {product} development at https://github.com/sponsors/{sponsorable}.",
                 DiagnosticSeverity.Warning, DiagnosticSeverity.Warning,
                 true, 1, false,
-                $"Please consider supporting {product} development by sponsoring {sponsorable} on GitHub.",
-                helpLink: $"https://github.com/sponsors/{sponsorable}"));
+                $"Please consider supporting {product} development at https://github.com/sponsors/{sponsorable}.",
+                helpLink: $"https://github.com/sponsors/{sponsorable}",
+                customTags: tags));
 
             Thread.Sleep(rnd.Next(1000, 3000));
         }
         else
         {
-            spc.ReportDiagnostic(Diagnostic.Create(
-                "SL02", "SponsorLink",
-                $"Thank you for supporting {product} development with your sponsorship of {sponsorable} 💟!",
-                DiagnosticSeverity.Info, DiagnosticSeverity.Info,
-                true, 2, false,
-                $"Thank you for supporting {product} development with your sponsorship of {sponsorable} 💟!",
-                helpLink: $"https://github.com/sponsors/{sponsorable}"));
+            context.ReportDiagnostic(Diagnostic.Create(
+                thanksDescriptor, null, product, sponsorable));
         }
     }
 
-    bool? UrlExists(string url, CancellationToken cancellation)
+    static string? GetEmail(string workingDirectory)
+    {
+        try
+        {
+            var proc = Process.Start(new ProcessStartInfo("git", "config --get user.email")
+            {
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = workingDirectory
+            });
+            proc.WaitForExit();
+
+            // Couldn't run git config, so we can't check for sponsorship, no email to check.
+            if (proc.ExitCode != 0)
+                return null;
+
+            return proc.StandardOutput.ReadToEnd().Trim();
+        }
+        catch
+        {
+            // Git not even installed.
+        }
+
+        return null;
+    }
+
+    static bool? UrlExists(string url, CancellationToken cancellation)
     {
         var ev = new ManualResetEventSlim();
         bool? exists = null;
@@ -206,4 +222,61 @@ public class SponsorLink
         public bool? InsideEditor { get; }
         public bool? DesignTimeBuild { get; }
     }
+
+    /*
+    /// <summary>
+    /// Gets the supported diagnostics.
+    /// </summary>
+    public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; }
+
+    /// <summary>
+    /// Initializes the sponsor link checks during builds.
+    /// </summary>
+    public void InitializeAnalyzer(AnalysisContext context)
+    {
+        // Just in case the caller doesn't do this (recommended) action already.
+        context.EnableConcurrentExecution();
+        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+        context.RegisterCompilationAction(ThankSponsor);
+    }
+
+    void ThankSponsor(CompilationAnalysisContext context)
+    {
+        var opt = context.Options.AnalyzerConfigOptionsProvider.GlobalOptions;
+        var insideEditor =
+            !opt.TryGetValue("build_property.BuildingInsideVisualStudio", out var value) ||
+            !bool.TryParse(value, out var bv) ? null : (bool?)bv;
+
+        // Override value if we detect R#/Rider in use.
+        if (Environment.GetEnvironmentVariables().Keys.Cast<string>().Any(k => k.StartsWith("RESHARPER")))
+            insideEditor = true;
+
+        var dtb =
+            !opt.TryGetValue("build_property.DesignTimeBuild", out value) ||
+            !bool.TryParse(value, out bv) ? null : (bool?)bv;
+
+        if (!opt.TryGetValue("build_property.MSBuildProjectFullPath", out var path))
+            return;
+
+        // Make DTB, CLI and offline builds quick. No need to thank in this case.
+        if (dtb == true || insideEditor == false ||
+            !NetworkInterface.GetIsNetworkAvailable())
+            return;
+
+        var email = GetEmail(Path.GetDirectoryName(path));
+        if (string.IsNullOrEmpty(email))
+        {
+            // No email configured in git. Weird.
+            return;
+        }
+
+        // Check app install and sponsoring status
+        var installed = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/apps/{email}", context.CancellationToken);
+        var sponsoring = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/devlooped/{email}", context.CancellationToken);
+
+        if (installed == true && sponsoring == true)
+            context.ReportDiagnostic(Diagnostic.Create(thanksDescriptor, Location.Create(path, 
+                new TextSpan(0, 0), new LinePositionSpan()), product, sponsorable));
+    }
+    */
 }
