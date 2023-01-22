@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net.NetworkInformation;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Devlooped;
 
@@ -76,7 +77,7 @@ public class SponsorLink
                     !opt.TryGetValue("build_property.DesignTimeBuild", out value) ||
                     !bool.TryParse(value, out bv) ? null : (bool?)bv;
 
-                return new State(Path.GetDirectoryName(x.Left.Path), insideEditor, dtb);
+                return new State(x.Left.Path, insideEditor, dtb);
             });
 
         context.RegisterSourceOutput(dirs.Collect(), CheckSponsor);
@@ -85,7 +86,14 @@ public class SponsorLink
 
     void CheckSponsor(SourceProductionContext context, ImmutableArray<State> states)
     {
+        if (bool.TryParse(Environment.GetEnvironmentVariable("DEBUG_SPONSORLINK"), out var debug) && debug)
+            if (Debugger.IsAttached)
+                Debugger.Break();
+            else
+                Debugger.Launch();
+        
         var tags = new[] { "DoesNotSupportF1Help" };
+        var location = Location.Create(states[0].Path, new TextSpan(0, 0), new LinePositionSpan());
 
         if (states.IsDefaultOrEmpty || states[0].InsideEditor == null)
         {
@@ -96,8 +104,9 @@ public class SponsorLink
                 DiagnosticSeverity.Error, DiagnosticSeverity.Error,
                 true, 0, false,
                 "Invalid SponsorLink configuration",
-                "SponsorLink has been incorrectly configured.",
-                "https://devlooped.com/sponsorlink/SL02.html", 
+                "SponsorLink has been incorrectly configured. See https://devlooped.com/sponsorlink/SL02.html.",
+                location: location,
+                helpLink: "https://devlooped.com/sponsorlink/SL02.html", 
                 customTags: tags));
 
             return;
@@ -115,7 +124,7 @@ public class SponsorLink
         if (!NetworkInterface.GetIsNetworkAvailable())
             return;
 
-        var email = GetEmail(states[0].Path);
+        var email = GetEmail(Path.GetDirectoryName(states[0].Path));
         if (string.IsNullOrEmpty(email))
         {
             // No email configured in git. Weird.
@@ -139,8 +148,10 @@ public class SponsorLink
                 $"{product} uses SponsorLink to properly attribute your sponsorship with {sponsorable}. Please install the GitHub app at https://github.com/apps/sponsorlink.",
                 DiagnosticSeverity.Warning, DiagnosticSeverity.Warning,
                 true, 1, false,
-                $"{product} uses SponsorLink to properly attribute your sponsorship with {sponsorable}. Please install the GitHub app at https://github.com/apps/sponsorlink.",
+                $"{product} uses SponsorLink to properly attribute your sponsorship with {sponsorable}.",
+                $"Please install the GitHub app at https://github.com/apps/sponsorlink.",
                 helpLink: "https://github.com/apps/sponsorlink",
+                location: location,
                 customTags: tags));
 
             Thread.Sleep(rnd.Next(1000, 3000));
@@ -153,7 +164,9 @@ public class SponsorLink
                 DiagnosticSeverity.Warning, DiagnosticSeverity.Warning,
                 true, 1, false,
                 $"Please consider supporting {product} development at https://github.com/sponsors/{sponsorable}.",
+                $"SponsorLink allows {product} to attribute your sponsorship with {sponsorable}.",
                 helpLink: $"https://github.com/sponsors/{sponsorable}",
+                location: location,
                 customTags: tags));
 
             Thread.Sleep(rnd.Next(1000, 3000));
@@ -161,7 +174,9 @@ public class SponsorLink
         else
         {
             context.ReportDiagnostic(Diagnostic.Create(
-                thanksDescriptor, null, product, sponsorable));
+                thanksDescriptor,
+                location: location,
+                product, sponsorable));
         }
     }
 
