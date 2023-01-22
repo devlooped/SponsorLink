@@ -7,6 +7,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackBuildOutput>false</PackBuildOutput>
+    <Description>Enables library authors to attribute GitHub sponsorships to their Sponsors account.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,13 +17,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="@(None)" CopyToOutputDirectory="PreserveNewest" />
     <PackageFile Include="$(MSBuildThisFileDirectory)_._" PackagePath="lib/netstandard2.0/_._" />
     <PackageFile Include="*.props;*.targets" PackagePath="buildTransitive\$(TargetFramework)\%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <Target Name="Obfuscate" AfterTargets="Build" DependsOnTargets="Build">
-    <Exec Command="$(Obfuscar) $(MSBuildThisFileDirectory)Obfuscar.$(Configuration).xml" />
+  <Target Name="Obfuscate" AfterTargets="Build" DependsOnTargets="Build" Condition="'$(dotnet-nugetize)' == ''">
+    <Exec Command="$(Obfuscar) $(MSBuildThisFileDirectory)Obfuscar.xml" WorkingDirectory="$(MSBuildProjectDirectory)\$(OutputPath)" />
   </Target>
 
   <Target Name="AddObfuscated" BeforeTargets="GetPackageContents" DependsOnTargets="Obfuscate">

@@ -1,0 +1,7 @@
+<Obfuscator>
+  <Var name="InPath" value="." />
+  <Var name="OutPath" value=".\..\obfuscated" />
+  <Var name="UseUnicodeNames" value="true" />
+  <!--<AssemblySearchPath path="." />-->
+  <Module file="$(InPath)\Devlooped.SponsorLink.dll" />
+</Obfuscator>
