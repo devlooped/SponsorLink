@@ -1,0 +1,7 @@
+<Project>
+
+  <PropertyGroup>
+    <BuildingInsideVisualStudio>false</BuildingInsideVisualStudio>
+  </PropertyGroup>
+
+</Project>
