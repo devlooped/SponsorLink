@@ -10,7 +10,7 @@ on:
 env:
   DOTNET_NOLOGO: true
   Configuration: Release
-
+  
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -23,9 +23,6 @@ jobs:
 
       - name: 🙏 build
         run: dotnet build -m:1 -p:version=${GITHUB_REF#refs/*/v}
-
-      - name: 🧪 test
-        uses: ./.github/workflows/test
 
       - name: 📦 pack
         run: dotnet pack -m:1 -p:version=${GITHUB_REF#refs/*/v}
