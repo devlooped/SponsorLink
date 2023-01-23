@@ -22,9 +22,11 @@ public class Generator : IIncrementalGenerator
 {
     readonly SponsorLink link;
 
-    public Generator() => link = new SponsorLink("[SPONSORABLE]", "[PROJECT]");
+    public Generator() 
+        => link = new SponsorLink("[SPONSORABLE]", "[PROJECT]");
 
-    public void Initialize(IncrementalGeneratorInitializationContext context) => link.Initialize(context);
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+        => link.Initialize(context);
 }
 ```
 
@@ -50,7 +52,7 @@ Just Work™. An example analyzer project referenced by your main library is typic
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="0.9.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
-    <PackageReference Include="Devlooped.SponsorLink" Version="42.42.42" GeneratePathProperty="true" />
+    <PackageReference Include="Devlooped.SponsorLink" Version="0.1.0" />
   </ItemGroup>
 
 </Project>
