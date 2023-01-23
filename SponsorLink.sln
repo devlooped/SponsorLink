@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "App", "src\App\App.csproj", "{B906B3E1-E58C-4F30-9449-EB1DD219485A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "src\Tests\Tests.csproj", "{638E2879-1321-495B-828B-785B6B5E9921}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E2813343-FDF5-4870-9DA5-35A1A3EB2CA6} = {E2813343-FDF5-4870-9DA5-35A1A3EB2CA6}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4647FAB9-797D-4EAF-9488-DA68A030D6F9}"
 	ProjectSection(SolutionItems) = preProject
