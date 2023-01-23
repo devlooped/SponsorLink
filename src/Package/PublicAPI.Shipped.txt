@@ -1,4 +1,6 @@
 ﻿#nullable enable
 Devlooped.SponsorLink
 Devlooped.SponsorLink.Initialize(Microsoft.CodeAnalysis.IncrementalGeneratorInitializationContext context) -> void
-Devlooped.SponsorLink.SponsorLink(string! sponsorable, string! product, int pauseMin = 2000, int pauseMax = 4000) -> void
+Devlooped.SponsorLink.SponsorLink(string! sponsorable, string! product) -> void
+Devlooped.SponsorLink.SponsorLink(string! sponsorable, string! product, int pauseMin, int pauseMax) -> void
+Devlooped.SponsorLink.SponsorLink(string! sponsorable, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, string!>! notInstalled, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, string!>! nonSponsor, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, string!>! activeSponsor) -> void
