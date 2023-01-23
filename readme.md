@@ -131,11 +131,12 @@ Packing and installing the resulting nuget package will result in the following 
 experience:
 
 1. User does not have the [GitHub SponsorLink](https://github.com/apps/sponsorlink) (user) 
-   app installed in his personal account.
+   app installed in his personal account. [Warning SL02](/docs/SL02.md):
 
-   ![Screenshot of build warning SL03 stating app is not installed](/assets/img/vs-sl03.png)
+   ![Screenshot of build warning SL02 stating app is not installed](/assets/img/vs-sl03.png)
 
-2. User installed the app, but is not sponsoring the sponsorable account:
+2. User installed the app, but is not sponsoring the sponsorable account. 
+   [Warning SL03](/docs/SL03.md):
 
    ![Screenshot of build warning SL04 stating user is not a sponsor](/assets/img/vs-sl04.png)
 
