@@ -24,6 +24,9 @@ public class SponsorLink
     readonly string product;
     readonly DiagnosticDescriptor thanksDescriptor;
 
+    readonly int pauseMin;
+    readonly int pauseMax;
+
     /// <summary>
     /// Creates the sponsor link instance for the given sponsorable account, used to 
     /// check for active installation and sponsorships for the current user (given 
@@ -31,9 +34,12 @@ public class SponsorLink
     /// </summary>
     /// <param name="sponsorable">A sponsorable account that has been properly provisioned with SponsorLink.</param>
     /// <param name="product">The product developed by <paramref name="sponsorable"/> that is checking the sponsorship link.</param>
-    public SponsorLink(string sponsorable, string product)
+    /// <param name="pauseMin">Min random milliseconds to apply during build for non-sponsored users. Use 0 for no pause.</param>
+    /// <param name="pauseMax">Max random milliseconds to apply during build for non-sponsored users. Use 0 for no pause.</param>
+    public SponsorLink(string sponsorable, string product, int pauseMin = 2000, int pauseMax = 4000)
     {
-        (this.sponsorable, this.product) = (sponsorable, product);
+        (this.sponsorable, this.product, this.pauseMin, this.pauseMax) = 
+            (sponsorable, product, pauseMin, pauseMax);
 
         thanksDescriptor = new DiagnosticDescriptor(
             "SL01",
@@ -154,7 +160,7 @@ public class SponsorLink
                 location: location,
                 customTags: tags));
 
-            Thread.Sleep(rnd.Next(1000, 3000));
+            Thread.Sleep(rnd.Next(pauseMin, pauseMax));
         }
         else if (sponsoring == false)
         {
@@ -169,13 +175,14 @@ public class SponsorLink
                 location: location,
                 customTags: tags));
 
-            Thread.Sleep(rnd.Next(1000, 3000));
+            Thread.Sleep(rnd.Next(pauseMin, pauseMax));
         }
         else
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 thanksDescriptor,
-                location: location,
+                null,
+                //location: location,
                 product, sponsorable));
         }
     }
