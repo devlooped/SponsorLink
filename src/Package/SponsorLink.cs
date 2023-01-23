@@ -128,7 +128,9 @@ public class SponsorLink
                     !bool.TryParse(value, out var bv) ? null : (bool?)bv;
 
                 // Override value if we detect R#/Rider in use.
-                if (Environment.GetEnvironmentVariables().Keys.Cast<string>().Any(k => k.StartsWith("RESHARPER")))
+                if (Environment.GetEnvironmentVariables().Keys.Cast<string>().Any(k => 
+                        k.StartsWith("RESHARPER") || 
+                        k.StartsWith("IDEA_")))
                     insideEditor = true;
 
                 var dtb =
