@@ -5,7 +5,6 @@
     <AdditionalFiles Include="$(MSBuildProjectFullPath)" SourceItemType="MSBuildProject" Visible="false" InProject="false" />
     <CompilerVisibleProperty Include="DesignTimeBuild" />
     <CompilerVisibleProperty Include="BuildingInsideVisualStudio" />
-    <CompilerVisibleProperty Include="MSBuildProjectFullPath" />
   </ItemGroup>
 
 </Project>
