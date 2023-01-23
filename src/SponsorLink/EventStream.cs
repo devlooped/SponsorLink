@@ -20,7 +20,7 @@ public interface IEventStream
 public class EventStream : IEventStream
 {
     static readonly string dataVersion = new Version(ThisAssembly.Info.Version).ToString(2);
-    static readonly JsonSerializerSettings settings = new JsonSerializerSettings
+    static readonly JsonSerializerSettings settings = new()
     {
         Converters =
         {

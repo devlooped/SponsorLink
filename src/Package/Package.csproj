@@ -14,6 +14,7 @@
     <PackageReference Include="NuGetizer" Version="0.9.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
     <PackageReference Include="Obfuscar" Version="2.2.37" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" Pack="false" />
   </ItemGroup>
 
   <ItemGroup>

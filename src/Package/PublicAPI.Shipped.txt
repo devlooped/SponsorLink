@@ -1,0 +1,4 @@
+﻿#nullable enable
+Devlooped.SponsorLink
+Devlooped.SponsorLink.Initialize(Microsoft.CodeAnalysis.IncrementalGeneratorInitializationContext context) -> void
+Devlooped.SponsorLink.SponsorLink(string! sponsorable, string! product, int pauseMin = 2000, int pauseMax = 4000) -> void
