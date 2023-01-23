@@ -136,16 +136,16 @@ experience:
 1. User does not have the [GitHub SponsorLink](https://github.com/apps/sponsorlink) (user) 
    app installed in his personal account. [Warning SL02](/docs/SL02.md):
 
-   ![Screenshot of build warning SL02 stating app is not installed](/assets/img/vs-sl03.png)
+   ![Screenshot of build warning SL02 stating app is not installed](/assets/img/VS-SL02.png)
 
 2. User installed the app, but is not sponsoring the sponsorable account. 
    [Warning SL03](/docs/SL03.md):
 
-   ![Screenshot of build warning SL04 stating user is not a sponsor](/assets/img/vs-sl04.png)
+   ![Screenshot of build warning SL04 stating user is not a sponsor](/assets/img/VS-SL03.png)
 
 3. User installed the app and is sponsoring:
 
-   ![Screenshot of build info SL01 thanking the user user for sponsoring](/assets/img/vs-sl01.png)
+   ![Screenshot of build info SL04 thanking the user user for sponsoring](/assets/img/VS-SL04.png)
 
 
 If you are using [NuGetizer](https://github.com/devlooped/nugetizer/) for packing your main 
