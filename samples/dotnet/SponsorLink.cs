@@ -8,7 +8,8 @@ public class Generator : IIncrementalGenerator
 {
     readonly SponsorLink link;
 
-    public Generator() => link = new("[SPONSORABLE]", "MyLib");
+    // TODO: replace with your sponsorable account and library name.
+    public Generator() => link = new("devlooped", "SponsorableLib");
 
     public void Initialize(IncrementalGeneratorInitializationContext context) => link.Initialize(context);
 }
