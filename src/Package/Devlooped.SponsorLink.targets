@@ -8,4 +8,52 @@
     <CompilerVisibleProperty Include="BuildingInsideVisualStudio" />
   </ItemGroup>
 
+  <Target Name="CollectSponsorLinkMessages" AfterTargets="CoreCompile">
+    <ItemGroup>
+      <SponsorLinkMessage Include="obj/SponsorLink/**/*.txt" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CleanSponsorLinkMessages" AfterTargets="Clean" DependsOnTargets="CollectSponsorLinkMessages">
+    <Delete Files="@(SponsorLinkMessage)" />
+  </Target>
+  
+  <Target Name="SponsorLinkMessages" AfterTargets="CoreCompile" 
+          Condition="'$(BuildingInsideVisualStudio)' == 'true' and '$(DesignTimeBuild)' != 'true'"
+          Inputs="@(SponsorLinkMessage)" Outputs="%(SponsorLinkMessage.Identity)-BATCH">
+    <PropertyGroup>
+      <SponsorLinkFilename>%(SponsorLinkMessage.Filename)%(SponsorLinkMessage.Extension)</SponsorLinkFilename>
+      <SponsorLinkDiagnosticId>$(SponsorLinkFilename.Substring(0, 4))</SponsorLinkDiagnosticId>
+      <SponsorLinkNoWarn>false</SponsorLinkNoWarn>
+      <SponsorLinkNoWarn Condition="$(NoWarn.Contains('$(SponsorLinkDiagnosticId)'))">true</SponsorLinkNoWarn>
+      <SponsorLinkMessageImportance>normal</SponsorLinkMessageImportance>
+      <SponsorLinkMessageImportance Condition="$(SponsorLinkFilename.Contains('.low.'))">low</SponsorLinkMessageImportance>
+      <SponsorLinkMessageImportance Condition="$(SponsorLinkFilename.Contains('.high.'))">high</SponsorLinkMessageImportance>
+    </PropertyGroup>
+
+    <ReadLinesFromFile File="@(SponsorLinkMessage)" Condition="$(SponsorLinkNoWarn)">
+      <Output TaskParameter="Lines" ItemName="SponsorLinkMessageLine"/>
+    </ReadLinesFromFile>
+
+    <!-- 🙏 Please, instead of disabling SponsorLink, consider supporting the ongoing development of 
+         the  projects you depend on. This helps keep the community healthy and supports your fellow developers 
+         make a living too. There is no minimum amount to sponsor, and you can cancel at any time. 
+         It's available everywhere in the world, and you can sponsor anonymously if you prefer too!
+         Learn more at https://github.com/sponsors. 
+    -->
+    <Error Text="@(SponsorLinkMessageLine, '')" Condition="$(SponsorLinkNoWarn) and $(SponsorLinkFilename.Contains('.Error.'))" />
+
+    <!-- 🙏 Please, instead of disabling SponsorLink, consider supporting the ongoing development of 
+         the  projects you depend on. This helps keep the community healthy and supports your fellow developers 
+         make a living too. There is no minimum amount to sponsor, and you can cancel at any time. 
+         It's available everywhere in the world, and you can sponsor anonymously if you prefer too!
+         Learn more at https://github.com/sponsors. 
+    -->
+    <Warning Text="@(SponsorLinkMessageLine, '')" Condition="$(SponsorLinkNoWarn) and $(SponsorLinkFilename.Contains('.Warning.'))" />
+
+    <!-- Always show info, since otherwise it's typically not visible anywhere, and we want the Thanks to be seen :) -->
+    <Message Text="@(SponsorLinkMessageLine, '')" Importance="normal" Condition="$(SponsorLinkFilename.Contains('.Info.'))" />
+  </Target>
+  
+
 </Project>
