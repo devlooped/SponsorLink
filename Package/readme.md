@@ -26,7 +26,7 @@ public class Generator : IIncrementalGenerator
 
     public void Initialize(IncrementalGeneratorInitializationContext context) => link.Initialize(context);
 }
-``
+```
 
 Replace `SPONSORABLE` with your sponsor account login and `PROJECT` with a recognizable 
 name of your project or library (i.e. `ThisAssembly` or `Moq`).
