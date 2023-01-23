@@ -10,6 +10,13 @@
     <Description>Enables library authors to attribute GitHub sponsorships to their Sponsors account.</Description>
     <PackageProjectUrl>https://github.com/devlooped/SponsorLink</PackageProjectUrl>
     <PackageTags>roslyn github sponsors</PackageTags>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <!-- Only produce debug symbols in debug mode, avoids leaking impl. details with obfuscated Release bits -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <ItemGroup>

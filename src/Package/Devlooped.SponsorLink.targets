@@ -1,6 +1,7 @@
 <Project>
 
   <ItemGroup>
+    <!-- By adding these items in .targets, we make it harder to break from tweaks in the project file -->
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="SourceItemType" />
     <AdditionalFiles Include="$(MSBuildProjectFullPath)" SourceItemType="MSBuildProject" Visible="false" InProject="false" />
     <CompilerVisibleProperty Include="DesignTimeBuild" />

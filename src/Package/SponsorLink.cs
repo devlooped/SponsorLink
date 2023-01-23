@@ -49,52 +49,45 @@ public class SponsorLink
         : this(sponsorable,
               (context, path) =>
               {
-                  context.ReportDiagnostic(Diagnostic.Create(
-                      "SL02", "SponsorLink",
-                      $"{product} uses SponsorLink to properly attribute your sponsorship with {sponsorable}. Please install the GitHub app at https://github.com/apps/sponsorlink.",
-                      DiagnosticSeverity.Warning, DiagnosticSeverity.Warning,
-                      true, 1, false,
-                      $"{product} uses SponsorLink to properly attribute your sponsorship with {sponsorable}.",
-                      $"Please install the GitHub app at https://github.com/apps/sponsorlink.",
-                      helpLink: "https://github.com/apps/sponsorlink",
-                      location: Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
-                      customTags: defaultTags));
-                  // Add a random configurable pause in this case.
-                  Thread.Sleep(rnd.Next(pauseMin, pauseMax));
-              },
-              (context, path) =>
-              {
-                  context.ReportDiagnostic(Diagnostic.Create(
-                      "SL03", "SponsorLink",
-                      $"Please consider supporting {product} development at https://github.com/sponsors/{sponsorable}.",
-                      DiagnosticSeverity.Warning, DiagnosticSeverity.Warning,
-                      true, 1, false,
-                      $"Please consider supporting {product} development at https://github.com/sponsors/{sponsorable}.",
-                      $"SponsorLink allows {product} to attribute your sponsorship with {sponsorable}.",
-                      helpLink: $"https://github.com/sponsors/{sponsorable}",
-                      location: Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
-                      customTags: defaultTags));
-                  // Add a random configurable pause in this case.
-                  Thread.Sleep(rnd.Next(pauseMin, pauseMax));
+                  var diag = Diagnostic.Create(SponsorLinkAnalyzer.AppNotInstalled,
+                      Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
+                      product, sponsorable);
+                  
+                  context.ReportDiagnostic(diag);
 
+                  // Add a random configurable pause in this case.
+                  var pause = rnd.Next(pauseMin, pauseMax);
+                  Thread.Sleep(pause);
+                  WriteMessage(Path.GetDirectoryName(path), $"{diag.GetMessage()} Build paused for {pause}ms.");
               },
               (context, path) =>
               {
-                  context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor(
-                      "SL04",
-                      "SponsorLink",
-                      "Thank you for supporting {0} development with your sponsorship of {1} 💟!",
-                      "SponsorLink",
-                      DiagnosticSeverity.Info,
-                      true,
-                      $"{product} uses SponsorLink to attribute your support via GitHub Sponsors.",
-                      $"https://github.com/sponsors/{sponsorable}",
-                      defaultTags),
-                      null,
-                      //location: location,
-                      product, sponsorable));
+                  var diag = Diagnostic.Create(SponsorLinkAnalyzer.UserNotSponsoring,
+                      Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
+                      product, sponsorable);
+
+                  context.ReportDiagnostic(diag);
+
+                  // Add a random configurable pause in this case.
+                  var pause = rnd.Next(pauseMin, pauseMax);
+                  Thread.Sleep(pause);
+                  WriteMessage(Path.GetDirectoryName(path), $"{diag.GetMessage()} Build paused for {pause}ms.");
+              },
+              (context, path) =>
+              {
+                  var diag = Diagnostic.Create(SponsorLinkAnalyzer.Thanks,
+                      Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
+                      product, sponsorable);
+
+                  context.ReportDiagnostic(diag);
+
+                  WriteMessage(Path.GetDirectoryName(path), diag.GetMessage());
               })
     { }
+
+    static void WriteMessage(string projectDir, string message)
+    {
+    }
 
     /// <summary>
     /// Advanced overload that allows granular behavior customization for the sponsorable account.
