@@ -8,6 +8,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackBuildOutput>false</PackBuildOutput>
     <Description>Enables library authors to attribute GitHub sponsorships to their Sponsors account.</Description>
+    <PackageProjectUrl>https://github.com/devlooped/SponsorLink</PackageProjectUrl>
+    <PackageTags>roslyn github sponsors</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
