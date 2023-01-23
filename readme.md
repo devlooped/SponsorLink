@@ -83,6 +83,9 @@ We offer initial support for .NET NuGet packages.
 
 ### Integrating via NuGet for .NET
 
+[![Version](https://img.shields.io/nuget/vpre/Devlooped.SponsorLink.svg?color=royalblue)](https://www.nuget.org/packages/Devlooped.SponsorLink)
+[![Downloads](https://img.shields.io/nuget/dt/Devlooped.SponsorLink.svg?color=green)](https://www.nuget.org/packages/Devlooped.SponsorLink)
+
 Integration is very straightforward, especially if you use [NuGetizer](https://github.com/devlooped/nugetizer/).
 Your NuGet package needs to add an analyzer/generator assembly/project, which performs the 
 SponsorLink check during compilation. 
