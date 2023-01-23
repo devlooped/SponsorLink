@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Net.NetworkInformation;
+using System.Security.Cryptography;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -49,29 +50,27 @@ public class SponsorLink
         : this(sponsorable,
               (context, path) =>
               {
-                  var diag = Diagnostic.Create(SponsorLinkAnalyzer.AppNotInstalled,
-                      Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
-                      product, sponsorable);
-                  
-                  context.ReportDiagnostic(diag);
-
                   // Add a random configurable pause in this case.
                   var pause = rnd.Next(pauseMin, pauseMax);
+                  var diag = Diagnostic.Create(SponsorLinkAnalyzer.AppNotInstalled,
+                      Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
+                      product, sponsorable, pause);
+                  
+                  context.ReportDiagnostic(diag);
                   Thread.Sleep(pause);
-                  WriteMessage(Path.GetDirectoryName(path), $"{diag.GetMessage()} Build paused for {pause}ms.");
+                  WriteMessage(sponsorable, product, Path.GetDirectoryName(path), diag);
               },
               (context, path) =>
               {
-                  var diag = Diagnostic.Create(SponsorLinkAnalyzer.UserNotSponsoring,
-                      Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
-                      product, sponsorable);
-
-                  context.ReportDiagnostic(diag);
-
                   // Add a random configurable pause in this case.
                   var pause = rnd.Next(pauseMin, pauseMax);
+                  var diag = Diagnostic.Create(SponsorLinkAnalyzer.UserNotSponsoring,
+                      Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
+                      product, sponsorable, pause);
+
+                  context.ReportDiagnostic(diag);
                   Thread.Sleep(pause);
-                  WriteMessage(Path.GetDirectoryName(path), $"{diag.GetMessage()} Build paused for {pause}ms.");
+                  WriteMessage(sponsorable, product, Path.GetDirectoryName(path), diag);
               },
               (context, path) =>
               {
@@ -80,13 +79,21 @@ public class SponsorLink
                       product, sponsorable);
 
                   context.ReportDiagnostic(diag);
-
-                  WriteMessage(Path.GetDirectoryName(path), diag.GetMessage());
+                  WriteMessage(sponsorable, product, Path.GetDirectoryName(path), diag);
               })
     { }
 
-    static void WriteMessage(string projectDir, string message)
+    static void WriteMessage(string sponsorable, string product, string projectDir, Diagnostic diag)
     {
+        var objDir = Path.Combine(projectDir, "obj", "SponsorLink", sponsorable, product);
+        if (Directory.Exists(objDir))
+        {
+            foreach (var file in Directory.EnumerateFiles(objDir))
+                File.Delete(file);
+        }
+
+        Directory.CreateDirectory(objDir);
+        File.WriteAllText(Path.Combine(objDir, $"{diag.Id}.{diag.Severity}.txt"), diag.GetMessage());
     }
 
     /// <summary>
