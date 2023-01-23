@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <BuildingInsideVisualStudio>false</BuildingInsideVisualStudio>
+    <BuildingInsideVisualStudio Condition="$(IDEA_INITIAL_DIRECTORY) != '' or $(RESHARPER_FUS_BUILD) != '' or $(RESHARPER_FUS_SESSION) != ''">true</BuildingInsideVisualStudio>
   </PropertyGroup>
 
 </Project>
