@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>SponsorableLib</PackageId>
+    <PackFolder>analyzers/dotnet</PackFolder>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NuGetizer" Version="0.9.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
+    <PackageReference Include="Devlooped.SponsorLink" Version="1.0.0" />
+  </ItemGroup>
+  
+</Project>
