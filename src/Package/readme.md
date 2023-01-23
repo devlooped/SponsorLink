@@ -81,3 +81,5 @@ the project file changes, or on rebuilds), users will get one of these three mes
 
 The goal of SponsorLink is to help make your project more sustainable, support your 
 ongoing development and ensure your customers can depend on it in the long run!
+
+<!-- include https://github.com/devlooped/sponsors/raw/main/footer.md -->
