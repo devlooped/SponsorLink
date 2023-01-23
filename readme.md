@@ -13,7 +13,7 @@ SponsorLink supports two scenarios:
 2. Open source project consumers, who want to ensure their dependencies keep have 
    an active team that can provide support, bug fixes and new features.
 
-## Open source developers
+## ![](https://avatars.githubusercontent.com/in/281005?s=24&u=20155dd9bc48951a962b40289bf40fd4d0e758e9&v=4) Open source developers
 
 [GitHub Sponsors](https://github.com/sponsors) provides the core functionality to 
 accept sponsorships from all over the world. It's a great feature available for 
@@ -150,7 +150,7 @@ will happen (remove the PackageId property in that case, since the referencing p
 be the one doing the packing).
 
 
-## Open source consumers
+## ![](https://avatars.githubusercontent.com/in/279204?s=24&u=d13eed8cef2b965c8bb34f6298b4edac31688c5a&v=4) Open source consumers
 
 The experience for consumers intentionally targets IDE/Editor usage only. If users build 
 on CI or via command-line, no sponsorship checks should be performed at all. The experience 
