@@ -1,6 +1,9 @@
 ﻿using System.Collections.Immutable;
+using System.Diagnostics;
+using System.IO;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Devlooped;
 
@@ -23,6 +26,7 @@ public class SponsorLinkAnalyzer : DiagnosticAnalyzer
     /// Exposes the supported diagnostics.
     /// </summary>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(
+        // NOTE: for Thanks, since we re-surface it via the analyzer, we can use the proper ID formerly used by the generator.
         CreateBroken("SLI01"), CreateAppNotInstalled("SLI02"), CreateUserNotSponsoring("SLI03"), CreateThanks("SLI04"));
 
     static DiagnosticDescriptor CreateThanks(string id = "SL04") => new(
@@ -74,5 +78,38 @@ public class SponsorLinkAnalyzer : DiagnosticAnalyzer
     {
         context.EnableConcurrentExecution();
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+        context.RegisterCompilationAction(AnalyzeCompilation);
+    }
+
+    void AnalyzeCompilation(CompilationAnalysisContext context)
+    {
+        if (bool.TryParse(Environment.GetEnvironmentVariable("DEBUG_SPONSORLINK"), out var debug) && debug)
+            if (Debugger.IsAttached)
+                Debugger.Break();
+            else
+                Debugger.Launch();
+
+        var opt = context.Options.AnalyzerConfigOptionsProvider.GlobalOptions;
+        if (!opt.TryGetValue("build_property.MSBuildProjectFullPath", out var projectPath))
+            return;
+
+        // Locate all info and report them again?
+        var objDir = Path.Combine(Path.GetDirectoryName(projectPath), "obj", "SponsorLink");
+        if (!Directory.Exists(objDir))
+            return;
+
+        foreach (var sponsorableDir in Directory.EnumerateDirectories(objDir))
+        {
+            var sponsorable = new DirectoryInfo(sponsorableDir).Name;
+            foreach (var projectDir in Directory.EnumerateDirectories(sponsorableDir))
+            {
+                var product = new DirectoryInfo(projectDir).Name;
+                if (File.Exists(Path.Combine(projectDir, $"{Thanks.Id}.{Thanks.DefaultSeverity}.txt")))
+                    context.ReportDiagnostic(Diagnostic.Create(CreateThanks("SLI04"),
+                        // If we provide a non-null location, the message for some reason is no longer shown in VS :/
+                        null,
+                        product, sponsorable));
+            }
+        }
     }
 }

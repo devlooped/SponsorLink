@@ -6,6 +6,7 @@
     <AdditionalFiles Include="$(MSBuildProjectFullPath)" SourceItemType="MSBuildProject" Visible="false" InProject="false" />
     <CompilerVisibleProperty Include="DesignTimeBuild" />
     <CompilerVisibleProperty Include="BuildingInsideVisualStudio" />
+    <CompilerVisibleProperty Include="MSBuildProjectFullPath" />
   </ItemGroup>
 
   <Target Name="CollectSponsorLinkMessages" AfterTargets="CoreCompile">
@@ -31,7 +32,8 @@
       <SponsorLinkMessageImportance Condition="$(SponsorLinkFilename.Contains('.high.'))">high</SponsorLinkMessageImportance>
     </PropertyGroup>
 
-    <ReadLinesFromFile File="@(SponsorLinkMessage)" Condition="$(SponsorLinkNoWarn)">
+    <!-- We always read info since we want the thanks to be seen :) -->
+    <ReadLinesFromFile File="@(SponsorLinkMessage)" Condition="$(SponsorLinkNoWarn) or $(SponsorLinkFilename.Contains('.Info.'))">
       <Output TaskParameter="Lines" ItemName="SponsorLinkMessageLine"/>
     </ReadLinesFromFile>
 

@@ -74,12 +74,13 @@ public class SponsorLink
               },
               (context, path) =>
               {
-                  var diag = Diagnostic.Create(SponsorLinkAnalyzer.Thanks,
-                      Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
-                      product, sponsorable);
-
-                  context.ReportDiagnostic(diag);
-                  WriteMessage(sponsorable, product, Path.GetDirectoryName(path), diag);
+                  // NOTE: reporting the Info diagnostics from the source generator results 
+                  // in it NEVER being shown for users, regardless of the Location we use.
+                  // So we instead skip it here and let the analyzer report it by discovering 
+                  // the written files.
+                  WriteMessage(sponsorable, product, Path.GetDirectoryName(path), Diagnostic.Create(
+                      SponsorLinkAnalyzer.Thanks, null,
+                      product, sponsorable));
               })
     { }
 
@@ -153,12 +154,6 @@ public class SponsorLink
 
     void CheckSponsor(SourceProductionContext context, ImmutableArray<State> states)
     {
-        if (bool.TryParse(Environment.GetEnvironmentVariable("DEBUG_SPONSORLINK"), out var debug) && debug)
-            if (Debugger.IsAttached)
-                Debugger.Break();
-            else
-                Debugger.Launch();
-
         if (states.IsDefaultOrEmpty || states[0].InsideEditor == null)
         {
             // Broken state
