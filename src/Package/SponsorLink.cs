@@ -193,7 +193,7 @@ public class SponsorLink
 
         // Check app install and sponsoring status
         var installed = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/apps/{email}", context.CancellationToken);
-        var sponsoring = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/devlooped/{email}", context.CancellationToken);
+        var sponsoring = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/{sponsorable}/{email}", context.CancellationToken);
 
         // Faulted HTTP HEAD request checking for url?
         if (installed == null || sponsoring == null)
