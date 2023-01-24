@@ -3,4 +3,13 @@ Devlooped.SponsorLink
 Devlooped.SponsorLink.Initialize(Microsoft.CodeAnalysis.IncrementalGeneratorInitializationContext context) -> void
 Devlooped.SponsorLink.SponsorLink(string! sponsorable, string! product) -> void
 Devlooped.SponsorLink.SponsorLink(string! sponsorable, string! product, int pauseMin, int pauseMax) -> void
-Devlooped.SponsorLink.SponsorLink(string! sponsorable, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, string!>! notInstalled, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, string!>! nonSponsor, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, string!>! activeSponsor) -> void
+Devlooped.SponsorLink.BuildInfo
+Devlooped.SponsorLink.BuildInfo.CompilationOptions.get -> Microsoft.CodeAnalysis.CompilationOptions?
+Devlooped.SponsorLink.BuildInfo.DesignTimeBuild.get -> bool?
+Devlooped.SponsorLink.BuildInfo.InsideEditor.get -> bool?
+Devlooped.SponsorLink.BuildInfo.ProjectPath.get -> string!
+Devlooped.SponsorLink.SponsorLink(string! sponsorable, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! notInstalled, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! nonSponsor, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! activeSponsor) -> void
+Devlooped.SponsorLinkAnalyzer
+Devlooped.SponsorLinkAnalyzer.SponsorLinkAnalyzer() -> void
+override Devlooped.SponsorLinkAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext! context) -> void
+override Devlooped.SponsorLinkAnalyzer.SupportedDiagnostics.get -> System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.DiagnosticDescriptor!>
