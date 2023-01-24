@@ -3,8 +3,8 @@ users can be properly linked to their sponsorship to unlock features or simply g
 the recognition they deserve for supporting your project.
 
 SponsorLink for .NET allows you to integrate sponsorship checks in the build process 
-itself, without affecting IDE/Editor performance or command line/CI builds. Read 
-more about [SponsorLink for open source developers](https://github.com/devlooped/SponsorLink#-open-source-developers) 
+itself, without affecting IDE/Editor performance or command line/CI builds. 
+[Learn more about SponsorLink for open source developers](https://github.com/devlooped/SponsorLink#-open-source-developers) 
 and the onboarding process.
 
 ## Usage
@@ -33,7 +33,7 @@ public class Generator : IIncrementalGenerator
 Replace `SPONSORABLE` with your sponsor account login and `PROJECT` with a recognizable 
 name of your project or library (i.e. `ThisAssembly` or `Moq`).
 
-Make sure you have installed the [SponsorLink Admin](https://github.com/apps/sponsorlink-admin) app 
+Make sure you have installed the [GitHub SponsorLink Admin](https://github.com/apps/sponsorlink-admin) app 
 and have followed the [onboarding steps](https://github.com/devlooped/SponsorLink#-open-source-developers).
 
 We recommend using [NuGetizer](https://nuget.org/packages/nugetizer) for packing your 
@@ -79,6 +79,10 @@ the project file changes, or on rebuilds), users will get one of these three mes
 
    ![Screenshot of build info SL04 thanking the user user for sponsoring](https://raw.githubusercontent.com/devlooped/SponsorLink/main/assets/img/VS-SL04.png)
 
+
+> NOTE: you can provide your own actions for the above scenarios, or simply configure 
+> the default behavior by tweaking the min/max amount of random waits introduced during 
+> builds. By default, the waits will range from 0 to 4000ms.
 
 The goal of SponsorLink is to help make your project more sustainable, support your 
 ongoing development and ensure your customers can depend on it in the long run!
