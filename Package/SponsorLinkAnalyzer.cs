@@ -119,6 +119,10 @@ public class SponsorLinkAnalyzer : DiagnosticAnalyzer
                     if (descriptor == null)
                         continue;
 
+                    if (descriptor.DefaultSeverity == DiagnosticSeverity.Info &&
+                        descriptor.GetEffectiveSeverity(context.Compilation.Options) == ReportDiagnostic.Suppress)
+                        continue;
+
                     // Turn the original format string into a regex to match against the actual 
                     // string, so we can recreate it for a new diagnostic.
                     var regex = new Regex(Regex.Replace(
