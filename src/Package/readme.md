@@ -39,7 +39,7 @@ and have followed the [onboarding steps](https://github.com/devlooped/SponsorLin
 We recommend using [NuGetizer](https://nuget.org/packages/nugetizer) for packing your 
 libraries, which provides the easiest integration with SponsorLink too. Simply add
 a project reference from your main library to the analyzer project and all packaging should 
-Just Work�. An example analyzer project referenced by your main library is typically just:
+Just Work. An example analyzer project referenced by your main library is typically just:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
