@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 namespace SponsorableLib;
 
 [Generator]
-public class Generator : IIncrementalGenerator
+class Generator : IIncrementalGenerator
 {
     readonly SponsorLink link;
 
