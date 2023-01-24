@@ -182,6 +182,13 @@ link both regardless of which happens first.
 Initially, no tier-checking is performed, only that a sponsorship is active at check 
 time.
 
+Over time, we expect many libraries will use this and too many "Thank you" can become 
+a bit noisy. In that case, you can disable that at the assembly level with:
+
+```csharp
+[assembly: SuppressMessage("SponsorLink", "SL04")]
+```
+
 
 ## Safety and Security
 
