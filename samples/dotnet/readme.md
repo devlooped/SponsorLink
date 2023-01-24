@@ -7,7 +7,7 @@ It can be installed to a project by running the following dotnet command from th
 project directory:
 
 ```
-> dotnet add package SponsorableLib --version 42.42.42-main.* -s https://pkg.kzu.io/index.json
+dotnet add package SponsorableLib --version 42.42.42-main.* -s https://pkg.kzu.io/index.json
 ```
 
 This will run the SponsorLink check with `https://github.com/sponsors/devlooped` for your 
