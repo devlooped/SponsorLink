@@ -1,4 +1,1 @@
-﻿Devlooped.SponsorLinkAnalyzer
-Devlooped.SponsorLinkAnalyzer.SponsorLinkAnalyzer() -> void
-override Devlooped.SponsorLinkAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext! context) -> void
-override Devlooped.SponsorLinkAnalyzer.SupportedDiagnostics.get -> System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.DiagnosticDescriptor!>
+﻿

@@ -20,13 +20,16 @@ public class SponsorLink
 {
     static readonly HttpClient http = new();
     static readonly Random rnd = new();
-    static readonly string[] defaultTags = new[] { "DoesNotSupportF1Help" };
+
+    static readonly DiagnosticDescriptor broken = SponsorLinkAnalyzer.CreateBroken(DescriptorKind.Generator);
+    static readonly DiagnosticDescriptor appNotInstalled = SponsorLinkAnalyzer.CreateAppNotInstalled(DescriptorKind.Generator);
+    static readonly DiagnosticDescriptor userNotSponsoring = SponsorLinkAnalyzer.CreateUserNotSponsoring(DescriptorKind.Generator);
 
     readonly string sponsorable;
-    readonly Action<SourceProductionContext, string> notInstalled;
-    readonly Action<SourceProductionContext, string> nonSponsor;
-    readonly Action<SourceProductionContext, string> activeSponsor;
-
+    readonly Action<SourceProductionContext, BuildInfo> notInstalled;
+    readonly Action<SourceProductionContext, BuildInfo> nonSponsor;
+    readonly Action<SourceProductionContext, BuildInfo> activeSponsor;
+    
     /// <summary>
     /// Creates the sponsor link instance for the given sponsorable account, used to 
     /// check for active installation and sponsorships for the current user (given 
@@ -35,7 +38,7 @@ public class SponsorLink
     /// <param name="sponsorable">A sponsorable account that has been properly provisioned with SponsorLink.</param>
     /// <param name="product">The product developed by <paramref name="sponsorable"/> that is checking the sponsorship link.</param>
     public SponsorLink(string sponsorable, string product)
-        : this(sponsorable, product, 2000, 4000) { }
+        : this(sponsorable, product, 0, 4000) { }
 
     /// <summary>
     /// Creates the sponsor link instance for the given sponsorable account, used to 
@@ -48,37 +51,45 @@ public class SponsorLink
     /// <param name="pauseMax">Max random milliseconds to apply during build for non-sponsored users. Use 0 for no pause.</param>
     public SponsorLink(string sponsorable, string product, int pauseMin, int pauseMax)
         : this(sponsorable,
-              (context, path) =>
+              (context, info) =>
               {
                   // Add a random configurable pause in this case.
                   var pause = rnd.Next(pauseMin, pauseMax);
-                  var diag = Diagnostic.Create(SponsorLinkAnalyzer.AppNotInstalled,
-                      Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
-                      product, sponsorable, pause);
-                  
-                  context.ReportDiagnostic(diag);
-                  Thread.Sleep(pause);
-                  WriteMessage(sponsorable, product, Path.GetDirectoryName(path), diag);
-              },
-              (context, path) =>
-              {
-                  // Add a random configurable pause in this case.
-                  var pause = rnd.Next(pauseMin, pauseMax);
-                  var diag = Diagnostic.Create(SponsorLinkAnalyzer.UserNotSponsoring,
-                      Location.Create(path, new TextSpan(0, 0), new LinePositionSpan()),
+                  var diag = Diagnostic.Create(appNotInstalled, 
+                      Location.Create(info.ProjectPath, new TextSpan(0, 0), new LinePositionSpan()),
                       product, sponsorable, pause);
 
-                  context.ReportDiagnostic(diag);
+                  // If it was supressed, hidden or changed, report it here. This check 
+                  // avoids reporting twice.
+                  if (SponsorLinkAnalyzer.AppNotInstalled.GetEffectiveSeverity(info.CompilationOptions!) != ReportDiagnostic.Warn)
+                      context.ReportDiagnostic(diag);
+                  
                   Thread.Sleep(pause);
-                  WriteMessage(sponsorable, product, Path.GetDirectoryName(path), diag);
+                  WriteMessage(sponsorable, product, Path.GetDirectoryName(info.ProjectPath), diag);
               },
-              (context, path) =>
+              (context, info) =>
+              {
+                  // Add a random configurable pause in this case.
+                  var pause = rnd.Next(pauseMin, pauseMax);
+                  var diag = Diagnostic.Create(userNotSponsoring,
+                      Location.Create(info.ProjectPath, new TextSpan(0, 0), new LinePositionSpan()),
+                      product, sponsorable, pause);
+
+                  // If it was supressed, hidden or changed, report it here. This check 
+                  // avoids reporting twice.
+                  if (SponsorLinkAnalyzer.AppNotInstalled.GetEffectiveSeverity(info.CompilationOptions!) != ReportDiagnostic.Warn)
+                      context.ReportDiagnostic(diag);
+
+                  Thread.Sleep(pause);
+                  WriteMessage(sponsorable, product, Path.GetDirectoryName(info.ProjectPath), diag);
+              },
+              (context, info) =>
               {
                   // NOTE: reporting the Info diagnostics from the source generator results 
                   // in it NEVER being shown for users, regardless of the Location we use.
                   // So we instead skip it here and let the analyzer report it by discovering 
                   // the written files.
-                  WriteMessage(sponsorable, product, Path.GetDirectoryName(path), Diagnostic.Create(
+                  WriteMessage(sponsorable, product, Path.GetDirectoryName(info.ProjectPath), Diagnostic.Create(
                       SponsorLinkAnalyzer.Thanks, null,
                       product, sponsorable));
               })
@@ -94,7 +105,8 @@ public class SponsorLink
         }
 
         Directory.CreateDirectory(objDir);
-        File.WriteAllText(Path.Combine(objDir, $"{diag.Id}.{diag.Severity}.txt"), diag.GetMessage());
+        // We always write the analyzer-based IDs.
+        File.WriteAllText(Path.Combine(objDir, $"{diag.Id.Replace("SLI", "SL")}.{diag.Severity}.txt"), diag.GetMessage());
     }
 
     /// <summary>
@@ -108,9 +120,9 @@ public class SponsorLink
     /// The action delegates receive the generator context and the current project path.
     /// </remarks>
     public SponsorLink(string sponsorable, 
-        Action<SourceProductionContext, string> notInstalled, 
-        Action<SourceProductionContext, string> nonSponsor, 
-        Action<SourceProductionContext, string> activeSponsor)
+        Action<SourceProductionContext, BuildInfo> notInstalled, 
+        Action<SourceProductionContext, BuildInfo> nonSponsor, 
+        Action<SourceProductionContext, BuildInfo> activeSponsor)
     {
         this.sponsorable = sponsorable;
         this.notInstalled = notInstalled;
@@ -136,8 +148,8 @@ public class SponsorLink
                     !bool.TryParse(value, out var bv) ? null : (bool?)bv;
 
                 // Override value if we detect R#/Rider in use.
-                if (Environment.GetEnvironmentVariables().Keys.Cast<string>().Any(k => 
-                        k.StartsWith("RESHARPER") || 
+                if (Environment.GetEnvironmentVariables().Keys.Cast<string>().Any(k =>
+                        k.StartsWith("RESHARPER") ||
                         k.StartsWith("IDEA_")))
                     insideEditor = true;
 
@@ -145,45 +157,38 @@ public class SponsorLink
                     !opt.TryGetValue("build_property.DesignTimeBuild", out value) ||
                     !bool.TryParse(value, out bv) ? null : (bool?)bv;
 
-                return new State(x.Left.Path, insideEditor, dtb);
-            });
+                return new BuildInfo(x.Left.Path, insideEditor, dtb);
+            })
+            .Combine(context.CompilationProvider)
+            .Select((x, c) => x.Left.WithCompilationOptions(x.Right.Options));
 
         context.RegisterSourceOutput(dirs.Collect(), CheckSponsor);
-
     }
 
-    void CheckSponsor(SourceProductionContext context, ImmutableArray<State> states)
+    void CheckSponsor(SourceProductionContext context, ImmutableArray<BuildInfo> states)
     {
         if (states.IsDefaultOrEmpty || states[0].InsideEditor == null)
         {
             // Broken state
-            context.ReportDiagnostic(Diagnostic.Create(
-                "SL01", "SponsorLink",
-                "Invalid SponsorLink configuration",
-                DiagnosticSeverity.Error, DiagnosticSeverity.Error,
-                true, 0, false,
-                "Invalid SponsorLink configuration",
-                "SponsorLink has been incorrectly configured. See https://devlooped.com/sponsorlink/SL01.html.",
-                location: Location.Create(states[0].Path, new TextSpan(0, 0), new LinePositionSpan()),
-                helpLink: "https://devlooped.com/sponsorlink/SL02.html",
-                customTags: defaultTags));
-
+            context.ReportDiagnostic(Diagnostic.Create(broken, null));
             return;
         }
 
+        var state = states[0];
+
         // We never pause in DTB
-        if (states[0].DesignTimeBuild == true)
+        if (state.DesignTimeBuild == true)
             return;
 
         // We never pause in non-IDE builds
-        if (states[0].InsideEditor == false)
+        if (state.InsideEditor == false)
             return;
 
         // If there is no network at all, don't do anything.
         if (!NetworkInterface.GetIsNetworkAvailable())
             return;
 
-        var email = GetEmail(Path.GetDirectoryName(states[0].Path));
+        var email = GetEmail(Path.GetDirectoryName(state.ProjectPath));
         // No email configured in git. Weird.
         if (string.IsNullOrEmpty(email))
             return;
@@ -197,11 +202,11 @@ public class SponsorLink
             return;
 
         if (installed == false)
-            notInstalled(context, states[0].Path);
+            notInstalled(context, state);
         else if (sponsoring == false)
-            nonSponsor(context, states[0].Path);
+            nonSponsor(context, state);
         else
-            activeSponsor(context, states[0].Path);
+            activeSponsor(context, state);
     }
 
     static string? GetEmail(string workingDirectory)
@@ -248,17 +253,39 @@ public class SponsorLink
         return exists;
     }
 
-    class State
+    /// <summary>
+    /// Provides information about the build that was checked for sponsor linking.
+    /// </summary>
+    public class BuildInfo
     {
-        public State(string path, bool? insideEditor, bool? designTimeBuild)
+        internal BuildInfo(string path, bool? insideEditor, bool? designTimeBuild)
         {
-            Path = path;
+            ProjectPath = path;
             InsideEditor = insideEditor;
             DesignTimeBuild = designTimeBuild;
         }
 
-        public string Path { get; }
+        /// <summary>
+        /// The full path of the project being built.
+        /// </summary>
+        public string ProjectPath { get; }
+        /// <summary>
+        /// Whether the build is happening inside an editor.
+        /// </summary>
         public bool? InsideEditor { get; }
+        /// <summary>
+        /// Whether the build is a design-time build.
+        /// </summary>
         public bool? DesignTimeBuild { get; }
+        /// <summary>
+        /// Compilation options being used for the build.
+        /// </summary>
+        public CompilationOptions? CompilationOptions { get; private set; }
+
+        internal BuildInfo WithCompilationOptions(CompilationOptions options)
+        {
+            CompilationOptions = options;
+            return this;
+        }
     }
 }
