@@ -24,6 +24,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" Pack="false" />
     <PackageReference Include="Obfuscar" Version="2.2.37" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" Pack="false" />
+    <PackageReference Include="ThisAssembly.Strings" Version="1.1.3" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,7 +44,7 @@
     <ItemGroup>
       <PackageFile Include="$(OutputPath)\$(TargetName).xml" PackFolder="lib" />
       <PackageFile Include="$(Obfuscated)\$(TargetFileName)" PackFolder="lib" />
-      <PackageFile Include="$(Obfuscated)\$(TargetFileName)" PackFolder="analyzers/dotnet" />
+      <PackageFile Include="$(Obfuscated)\$(TargetFileName)" PackFolder="analyzers/dotnet/roslyn4.0" />
     </ItemGroup>
   </Target>
   

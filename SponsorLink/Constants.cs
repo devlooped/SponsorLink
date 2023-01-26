@@ -2,9 +2,12 @@
 
 public static class Constants
 {
-    public static string DevloopedId = "MDEyOk9yZ2FuaXphdGlvbjYxNTMzODE4";
+    /// <summary>
+    /// The Node ID of the Devlooped account.
+    /// </summary>
+    public const string DevloopedId = "MDEyOk9yZ2FuaXphdGlvbjYxNTMzODE4";
     /// <summary>
     /// devlooped
     /// </summary>
-    public static string DevloopedLogin = "devlooped";
+    public const string DevloopedLogin = "devlooped";
 }

@@ -1,1 +1,4 @@
-﻿
+﻿const Devlooped.SponsorLink.DefaultMaxPause = 4000 -> int
+Devlooped.SponsorLink.BuildInfo.InstallTime.get -> System.DateTime?
+Devlooped.SponsorLink.SponsorLink(string! sponsorable, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! notInstalled, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! nonSponsor, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! activeSponsor) -> void
+Devlooped.SponsorLinkAnalyzer.SponsorLinkAnalyzer(string! sponsorable, string! product, string! idPrefix) -> void
