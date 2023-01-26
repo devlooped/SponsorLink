@@ -8,8 +8,6 @@ Devlooped.SponsorLink.BuildInfo.CompilationOptions.get -> Microsoft.CodeAnalysis
 Devlooped.SponsorLink.BuildInfo.DesignTimeBuild.get -> bool?
 Devlooped.SponsorLink.BuildInfo.InsideEditor.get -> bool?
 Devlooped.SponsorLink.BuildInfo.ProjectPath.get -> string!
-Devlooped.SponsorLink.SponsorLink(string! sponsorable, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! notInstalled, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! nonSponsor, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! activeSponsor) -> void
 Devlooped.SponsorLinkAnalyzer
-Devlooped.SponsorLinkAnalyzer.SponsorLinkAnalyzer() -> void
 override Devlooped.SponsorLinkAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext! context) -> void
 override Devlooped.SponsorLinkAnalyzer.SupportedDiagnostics.get -> System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.DiagnosticDescriptor!>
