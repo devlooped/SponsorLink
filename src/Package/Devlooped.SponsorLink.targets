@@ -4,15 +4,16 @@
     <!-- By adding these items in .targets, we make it harder to break from tweaks in the project file -->
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="SourceItemType" />
     <CompilerVisibleItemMetadata Include="Analyzer" MetadataName="NuGetPackageId" />
-    <AdditionalFiles Include="$(MSBuildProjectFullPath)" SourceItemType="MSBuildProject" Visible="false" InProject="false" />
     <CompilerVisibleProperty Include="DesignTimeBuild" />
     <CompilerVisibleProperty Include="BuildingInsideVisualStudio" />
     <CompilerVisibleProperty Include="MSBuildProjectFullPath" />
+    <CompilerVisibleProperty Include="DebugSponsorLink" />
+    <AdditionalFiles Include="$(MSBuildProjectFullPath)" SourceItemType="MSBuildProject" Visible="false" InProject="false" />
   </ItemGroup>
 
   <Target Name="CollectSponsorLinkReference" BeforeTargets="GenerateMSBuildEditorConfigFileShouldRun">
     <ItemGroup>
-      <AdditionalFiles Include="@(Analyzer -> WithMetadataValue('NuGetPackageId', 'Devlooped.SponsorLink'))" SourceItemType="Analyzer" />
+      <AdditionalFiles Include="@(Analyzer)" SourceItemType="Analyzer" />
     </ItemGroup>
   </Target>
 

@@ -5,20 +5,9 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Devlooped;
 
-enum DiagnosticKind { AppNotInstalled, UserNotSponsoring, Thanks }
 
 class DiagnosticsManager
 {
-    ConcurrentDictionary<string, string> SponsorableIdPrefixes
-    {
-        get => AppDomainDictionary.Get<ConcurrentDictionary<string, string>>(nameof(SponsorableIdPrefixes));
-    }
-
-    ConcurrentDictionary<(string Sponsorable, string IdPrefix, DiagnosticKind Kind), DiagnosticDescriptor> Descriptors
-    {
-        get => AppDomainDictionary.Get<ConcurrentDictionary<(string Sponsorable, string IdPrefix, DiagnosticKind Kind), DiagnosticDescriptor>>(nameof(Descriptors));
-    }
-
     ConcurrentDictionary<(string, string, string), Diagnostic> Diagnostics
     {
         get => AppDomainDictionary.Get<ConcurrentDictionary<(string, string, string), Diagnostic>>(nameof(Diagnostics));
@@ -51,36 +40,16 @@ class DiagnosticsManager
             GetDescriptor(sponsorable, idPrefix, DiagnosticKind.UserNotSponsoring),
             GetDescriptor(sponsorable, idPrefix, DiagnosticKind.Thanks));
 
-    public DiagnosticDescriptor GetDescriptor(string sponsorable, string idPrefix, DiagnosticKind kind)
+    public DiagnosticDescriptor GetDescriptor(string sponsorable, string idPrefix, DiagnosticKind kind) => kind switch
     {
-        // NOTE: ID prefixes are per sponsorable, not per product, since the URLs 
-        // are unique per sponsorable, not product.
-        SponsorableIdPrefixes.TryAdd(sponsorable, idPrefix);
-        return Descriptors.GetOrAdd((sponsorable, idPrefix, kind),
-            key => key.Kind switch
-            {
-                DiagnosticKind.AppNotInstalled => CreateAppNotInstalled(key.IdPrefix),
-                DiagnosticKind.UserNotSponsoring => CreateUserNotSponsoring(key.Sponsorable, key.IdPrefix),
-                DiagnosticKind.Thanks => CreateThanks(key.Sponsorable, key.IdPrefix),
-                _ => throw new NotImplementedException(),
-            });
-    }
+        DiagnosticKind.AppNotInstalled => CreateAppNotInstalled(idPrefix),
+        DiagnosticKind.UserNotSponsoring => CreateUserNotSponsoring(sponsorable, idPrefix),
+        DiagnosticKind.Thanks => CreateThanks(sponsorable, idPrefix),
+        _ => throw new NotImplementedException(),
+    };
 
-    public Diagnostic Push(string sponsorable, string product, string project, DiagnosticKind kind, params object?[]? args)
+    public Diagnostic Push(string sponsorable, string product, string project, Diagnostic diagnostic)
     {
-        var descriptor = GetDescriptor(sponsorable,
-            // Backwards-compatible gets potentially same descriptor IDs for distinct sponsorables.
-            // The actual behavior will be somewhat inconsistent in that the links might end up 
-            // pointing to the general /sponsors page rather than a specific sponsorable account one, 
-            // but otherwise, it's harmless
-            SponsorableIdPrefixes.TryGetValue(sponsorable, out var prefix) ? prefix : "",
-            kind);
-
-        // If we provide a non-null location, the entry for some reason is no longer shown in VS :/
-        var diagnostic = Diagnostic.Create(descriptor,
-            //Location.Create(project, new(), new()),
-            null,
-            args);
         // Directly sets, since we only expect to get one warning per sponsorable+product+project 
         // combination.
         Diagnostics[(sponsorable, product, project)] = diagnostic;
@@ -93,30 +62,8 @@ class DiagnosticsManager
         return diagnostic;
     }
 
-    static DiagnosticDescriptor CreateThanks(string sponsorable, string prefix) => new(
-        $"{prefix}SL04",
-        "You are a sponsor of the project, you rock 💟!",
-        "Thank you for supporting {0} with your sponsorship of {1} 💟!",
-        "SponsorLink",
-        DiagnosticSeverity.Info,
-        true,
-        "You are a true hero. Your sponsorship helps keep the project alive and thriving.",
-        "https://github.com/sponsors/" + sponsorable,
-        "DoesNotSupportF1Help");
-
-    static DiagnosticDescriptor CreateUserNotSponsoring(string sponsorable, string prefix) => new(
-        $"{prefix}SL03",
-        "Please consider supporting the ongoing development of the project 🙏",
-        "Please consider supporting {0} ongoing development by sponsoring at https://github.com/sponsors/{1}. {2}",
-        "SponsorLink",
-        DiagnosticSeverity.Warning,
-        true,
-        "Sponsoring projects you depend on ensures they remain active, and that you get the support you need. It's also super affordable and available worldwide!",
-        "https://github.com/sponsors/" + sponsorable,
-        "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable);
-
     static DiagnosticDescriptor CreateAppNotInstalled(string prefix) => new(
-        $"{prefix}SL02",
+        $"{prefix}02",
         "Please install the SponsorLink GitHub app 🙏",
         "{0} uses SponsorLink to properly attribute your sponsorship with {1}. Please install the GitHub app at https://github.com/apps/sponsorlink. {2}",
         "SponsorLink",
@@ -124,7 +71,29 @@ class DiagnosticsManager
         true,
         "Installing the SponsorLink GitHub app ensures that your sponsorship is properly attributed to you.",
         "https://github.com/apps/sponsorlink",
-        "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable);
+        "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable, nameof(DiagnosticKind.AppNotInstalled));
+
+    static DiagnosticDescriptor CreateUserNotSponsoring(string sponsorable, string prefix) => new(
+     $"{prefix}03",
+     "Please consider supporting the ongoing development of the project 🙏",
+     "Please consider supporting {0} ongoing development by sponsoring at https://github.com/sponsors/{1}. {2}",
+     "SponsorLink",
+     DiagnosticSeverity.Warning,
+     true,
+     "Sponsoring projects you depend on ensures they remain active, and that you get the support you need. It's also super affordable and available worldwide!",
+     "https://github.com/sponsors/" + sponsorable,
+     "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable, nameof(DiagnosticKind.UserNotSponsoring));
+
+    static DiagnosticDescriptor CreateThanks(string sponsorable, string prefix) => new(
+        $"{prefix}04",
+        "You are a sponsor of the project, you rock 💟!",
+        "Thank you for supporting {0} with your sponsorship of {1} 💟!",
+        "SponsorLink",
+        DiagnosticSeverity.Info,
+        true,
+        "You are a true hero. Your sponsorship helps keep the project alive and thriving.",
+        "https://github.com/sponsors/" + sponsorable,
+        "DoesNotSupportF1Help", nameof(DiagnosticKind.Thanks));
 
     static DiagnosticDescriptor CreateBroken() => new(
         "SL01",

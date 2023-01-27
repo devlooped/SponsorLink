@@ -2,161 +2,96 @@
 using System.Diagnostics;
 using System.Net.NetworkInformation;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Devlooped;
 
 /// <summary>
-/// Gathers and exposes sponsor link attribution for a given sponsorable 
-/// account that consumes SponsorLink. 
+/// Provides build-time checks for sponsorships. Derived classes must 
+/// annotate derived classes with both <see cref="DiagnosticAnalyzerAttribute"/> 
+/// as well as <see cref="GeneratorAttribute"/> in order for SponsorLink to 
+/// function properly.
 /// </summary>
-/// <remarks>
-/// Intended usage is for the library author to add a Roslyn source 
-/// generator to the package, and initialize a new instance of this class 
-/// with both the sponsorable account and the product name to use for the checks.
-/// </remarks>
-public class SponsorLink
+public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 {
     static readonly HttpClient http = new();
     static readonly Random rnd = new();
 
-    //static readonly DiagnosticDescriptor broken = SponsorLinkAnalyzer.CreateBroken(DescriptorKind.Generator);
-    //static readonly DiagnosticDescriptor appNotInstalled = SponsorLinkAnalyzer.CreateAppNotInstalled(DescriptorKind.Generator);
-
     readonly string sponsorable;
-    readonly Action<SourceProductionContext, BuildInfo> notInstalled;
-    readonly Action<SourceProductionContext, BuildInfo> nonSponsor;
-    readonly Action<SourceProductionContext, BuildInfo> activeSponsor;
+    readonly string product;
+    readonly SponsorLinkSettings settings;
+    readonly ImmutableArray<DiagnosticDescriptor> diagnostics = ImmutableArray<DiagnosticDescriptor>.Empty;
 
     /// <summary>
-    /// Manages generator > analyzer diagnostics being produced, so we never duplicate them 
-    /// but also don't perform the online checks more than once.
+    /// Manages the sharing and reporting of diagnostics across the source generator 
+    /// and the diagnostic analyzer, to avoid doing the online check more than once.
     /// </summary>
     internal static DiagnosticsManager Diagnostics { get; } = new();
 
     /// <summary>
-    /// Default maximum pause if not specified. The max pause 
-    /// is 1 second per day since installed/restored, up to the max pause value.
+    /// Initializes SponsorLink with the given sponsor account and product name, for fully 
+    /// customized diagnostics. You must override <see cref="SupportedDiagnostics"/> and 
+    /// <see cref="CreateDiagnostic(string, DiagnosticKind)"/> for this to work.
     /// </summary>
-    public const int DefaultMaxPause = 4000;
-
-    /// <summary>
-    /// Creates the sponsor link instance for the given sponsorable account, used to 
-    /// check for active installation and sponsorships for the current user (given 
-    /// their configured git email).
-    /// </summary>
-    /// <param name="sponsorable">A sponsorable account that has been properly provisioned with SponsorLink.</param>
-    /// <param name="product">The product developed by <paramref name="sponsorable"/> that is checking the sponsorship link.</param>
-    public SponsorLink(string sponsorable, string product)
-        : this(sponsorable, product, 0, DefaultMaxPause) { }
-
-    /// <summary>
-    /// Creates the sponsor link instance for the given sponsorable account, used to 
-    /// check for active installation and sponsorships for the current user (given 
-    /// their configured git email).
-    /// </summary>
-    /// <param name="sponsorable">A sponsorable account that has been properly provisioned with SponsorLink.</param>
-    /// <param name="product">The product developed by <paramref name="sponsorable"/> that is checking the sponsorship link.</param>
-    /// <param name="pauseMin">Min random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
-    /// <param name="pauseMax">Max random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
-    public SponsorLink(string sponsorable, string product, int pauseMin, int pauseMax)
-        : this(sponsorable, 
-              (context, info) =>
-              {
-                  // Add a random configurable pause in this case.
-                  var (pause, suffix) = GetPause(pauseMin, pauseMax, info.InstallTime!.Value);
-                  var diag = Diagnostics.Push(sponsorable, product, info.ProjectPath, DiagnosticKind.AppNotInstalled, 
-                      product, sponsorable, suffix);
-                  
-                  WriteMessage(sponsorable, product, Path.GetDirectoryName(info.ProjectPath), diag);
-
-                  if (pause > 0)
-                      Thread.Sleep(pause);
-              },
-              (context, info) =>
-              {
-                  // Add a random configurable pause in this case.
-                  var (pause, suffix) = GetPause(pauseMin, pauseMax, info.InstallTime!.Value);
-                  var diag = Diagnostics.Push(sponsorable, product, info.ProjectPath, DiagnosticKind.UserNotSponsoring,
-                      product, sponsorable, suffix);
-
-                  WriteMessage(sponsorable, product, Path.GetDirectoryName(info.ProjectPath), diag);
-
-                  if (pause > 0)
-                      Thread.Sleep(pause);
-              },
-              (context, info) =>
-              {
-                  var diag = Diagnostics.Push(sponsorable, product, info.ProjectPath, DiagnosticKind.Thanks,
-                      product, sponsorable);
-
-                  WriteMessage(sponsorable, product, Path.GetDirectoryName(info.ProjectPath), diag);
-              })
-    { }
-
-    /// <summary>
-    /// Advanced overload that allows granular behavior customization for the sponsorable account.
-    /// </summary>
-    /// <param name="sponsorable">A sponsorable account that has been properly provisioned with SponsorLink.</param>
-    /// <param name="notInstalled">Action to invoke when the user has not installed the SponsorLink app yet (or has disabled it).</param>
-    /// <param name="nonSponsor">Action to invoke when the user has installed the app but is not sponsoring.</param>
-    /// <param name="activeSponsor">Action to invoke when the user has installed the app and is sponsoring the account.</param>
+    /// <param name="sponsorable">The sponsor account that users should sponsor.</param>
+    /// <param name="product">The name of product that is using sponsor link.</param>
     /// <remarks>
-    /// The action delegates receive the generator context and the current project path.
+    /// This constructor overload allows full customization of reported diagnostics. The 
+    /// base class won't report anything in this case and just expose the support 
+    /// diagnostics from <see cref="SupportedDiagnostics"/> and invoke 
+    /// <see cref="CreateDiagnostic(string, DiagnosticKind)"/> for the various supported 
+    /// sponsoring scenarios.
     /// </remarks>
-    public SponsorLink(string sponsorable, 
-        Action<SourceProductionContext, BuildInfo> notInstalled,
-        Action<SourceProductionContext, BuildInfo> nonSponsor,
-        Action<SourceProductionContext, BuildInfo> activeSponsor)
+    protected SponsorLink(string sponsorable, string product)
+        : this(SponsorLinkSettings.Create(sponsorable, product)) { }
+
+    /// <summary>
+    /// Initializes the analyzer with the default behavior configured with the 
+    /// given settings. The specific diagnostics supported and reported are 
+    /// managed by the base class and require no additional overrides or 
+    /// customizations.
+    /// </summary>
+    /// <param name="settings">The settings for the analyzer and generator.</param>
+    protected SponsorLink(SponsorLinkSettings settings)
     {
-        this.sponsorable = sponsorable;
-        this.notInstalled = notInstalled;
-        this.nonSponsor = nonSponsor;
-        this.activeSponsor = activeSponsor;
+        sponsorable = settings.Sponsorable;
+        product = settings.Product;
+        diagnostics = settings.SupportedDiagnostics;
+        this.settings = settings;
     }
 
-    static (int pause, string suffix) GetPause(int pauseMin, int pauseMax, DateTime installTime)
+    /// <summary>
+    /// Exposes the supported diagnostics.
+    /// </summary>
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => diagnostics;
+
+    /// <inheritdoc/>
+    public override void Initialize(AnalysisContext context)
     {
-        var daysOld = (int)DateTime.Now.Subtract(installTime).TotalDays;
-
-        // Never pause the first day of the install. Just warnings.
-        if (daysOld == 0)
-            return (0, string.Empty);
-
-        // Turn days into milliseconds, used for the pause.
-        var daysPause = daysOld * 1000;
-
-        // From second day, the max pause will increase from days old until the max pause.
-        var pause = rnd.Next(pauseMin, Math.Min(daysPause, pauseMax));
-
-        return (pause, ThisAssembly.Strings.BuildPaused(pause));
-    }
-
-    static void WriteMessage(string sponsorable, string product, string projectDir, Diagnostic diag)
-    {
-        var objDir = Path.Combine(projectDir, "obj", "SponsorLink", sponsorable, product);
-        if (Directory.Exists(objDir))
-        {
-            foreach (var file in Directory.EnumerateFiles(objDir))
-                File.Delete(file);
-        }
-
-        Directory.CreateDirectory(objDir);
-        File.WriteAllText(Path.Combine(objDir, $"{diag.Id}.{diag.Severity}.txt"), diag.GetMessage());
+        context.EnableConcurrentExecution();
+        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+        context.RegisterCompilationAction(ReportDiagnostic);
     }
 
     /// <summary>
     /// Initializes the sponsor link checks during builds.
     /// </summary>
-    public void Initialize(IncrementalGeneratorInitializationContext context)
+    void IIncrementalGenerator.Initialize(IncrementalGeneratorInitializationContext context)
     {
         var analyzerFile = context.AdditionalTextsProvider
             .Combine(context.AnalyzerConfigOptionsProvider)
             .Where(x =>
                 x.Right.GetOptions(x.Left).TryGetValue("build_metadata.AdditionalFiles.SourceItemType", out var itemType) &&
-                itemType == "Analyzer")
+                itemType == "Analyzer" &&
+                x.Right.GetOptions(x.Left).TryGetValue("build_metadata.Analyzer.NuGetPackageId", out _))
             .Where(x => File.Exists(x.Left.Path))
-            .Select((x, c) => File.GetLastWriteTime(x.Left.Path))
+            .Select((x, c) => new
+            {
+                x.Left.Path,
+                PackageId = 
+                    x.Right.GetOptions(x.Left).TryGetValue("build_metadata.Analyzer.NuGetPackageId", out var packageId) ?
+                    packageId : ""
+            })
             .Collect();
 
         var dirs = context.AdditionalTextsProvider
@@ -181,6 +116,13 @@ public class SponsorLink
                     !opt.TryGetValue("build_property.DesignTimeBuild", out value) ||
                     !bool.TryParse(value, out bv) ? null : (bool?)bv;
 
+                // SponsorLink authors can debug it by setting up a IsRoslynComponent=true project, 
+                // but also need to set this property in the project, since the debugger will set DesignTimeBuild=true.
+                if (opt.TryGetValue("build_property.DebugSponsorLink", out value) && 
+                    bool.TryParse(value, out var debugSL) && debugSL)
+                    // Reset value to what it is in CLI builds
+                    dtb = null;
+
                 return new BuildInfo(x.Left.Path, insideEditor, dtb);
             })
             .Combine(context.CompilationProvider)
@@ -188,20 +130,69 @@ public class SponsorLink
             .Select((x, c) => x.Left.WithCompilationOptions(x.Right.Options))
             // Add our analyzer file path to check for installation time
             .Combine(analyzerFile)
-            .Select((x, c) => x.Left.WithInstallTime(x.Right.IsDefaultOrEmpty ? null : x.Right.Single()));
+            .Select((x, c) =>
+            {
+                // Try to locate the right file and get its write time to detect install/restore time
+                var path = x.Right.FirstOrDefault(f => f.PackageId == settings.PackageId)?.Path;
+                if (!string.IsNullOrEmpty(path))
+                    return x.Left.WithInstallTime(File.GetLastWriteTime(path));
+
+                // We won't set an install time, and therefore we'll just start doing pauses 
+                // righ-away with the max configured pause. This will happen for example if 
+                // the settings don't provide a package id, or it differs from the product name.
+                return x.Left;
+            });
 
         context.RegisterSourceOutput(dirs.Collect(), CheckSponsor);
     }
 
+    /// <summary>
+    /// Creates a diagnostic for the given <see cref="DiagnosticKind"/>, 
+    /// which must be one of the <see cref="SupportedDiagnostics"/>.
+    /// </summary>
+    /// <remarks>
+    /// Returns null if no diagnostics should be created for the given <paramref name="kind"/>.
+    /// </remarks>
+    protected virtual Diagnostic? CreateDiagnostic(string projectPath, DiagnosticKind kind)
+    {
+        var descriptor = SupportedDiagnostics.FirstOrDefault(x => x.CustomTags.Contains(kind.ToString()));
+        if (descriptor == null)
+            return null;
+
+        switch (kind)
+        {
+            case DiagnosticKind.AppNotInstalled:
+            case DiagnosticKind.UserNotSponsoring:
+                // Add a random configurable pause in this case.
+                var (pause, suffix) = GetPause();
+                var diag = Diagnostic.Create(descriptor, null, product, sponsorable, suffix);
+
+                WriteMessage(sponsorable, product, Path.GetDirectoryName(projectPath), diag);
+
+                if (pause > 0)
+                    Thread.Sleep(pause);
+
+                return diag;
+            case DiagnosticKind.Thanks:
+                return WriteMessage(sponsorable, product, Path.GetDirectoryName(projectPath),
+                    Diagnostic.Create(descriptor, null, product, sponsorable));
+            default:
+                return default;
+        }
+    }
+
     void CheckSponsor(SourceProductionContext context, ImmutableArray<BuildInfo> states)
     {
-        if (states.IsDefaultOrEmpty || states[0].InsideEditor == null || states[0].InstallTime == null)
+        if (states.IsDefaultOrEmpty || states[0].InsideEditor == null)
         {
             context.ReportDiagnostic(Diagnostic.Create(DiagnosticsManager.Broken, null));
             return;
         }
 
         var state = states[0];
+        // Updates the InstallTime setting the first time.
+        if (state.InstallTime != null && settings.InstallTime == null)
+            settings.InstallTime = state.InstallTime;
 
         // We never pause in DTB
         if (state.DesignTimeBuild == true)
@@ -228,12 +219,116 @@ public class SponsorLink
         if (installed == null || sponsoring == null)
             return;
 
-        if (installed == false)
-            notInstalled(context, state);
-        else if (sponsoring == false)
-            nonSponsor(context, state);
-        else
-            activeSponsor(context, state);
+        var kind =
+            installed == false ? DiagnosticKind.AppNotInstalled :
+            sponsoring == false ? DiagnosticKind.UserNotSponsoring :
+            DiagnosticKind.Thanks;
+
+        var diagnostic = CreateDiagnostic(state.ProjectPath, kind);
+        if (diagnostic != null)
+            Diagnostics.Push(sponsorable, product, state.ProjectPath, diagnostic);
+    }
+
+    void ReportDiagnostic(CompilationAnalysisContext context)
+    {
+        if (bool.TryParse(Environment.GetEnvironmentVariable("DEBUG_SPONSORLINK"), out var debug) && debug &&
+            !Debugger.IsAttached)
+            Debugger.Launch();
+
+        var opt = context.Options.AnalyzerConfigOptionsProvider.GlobalOptions;
+        if (!opt.TryGetValue("build_property.MSBuildProjectFullPath", out var projectPath))
+            return;
+        
+        // If we can get the generator-pushed diagnostic in the same process, we 
+        // report it here and exit. Analyzer-reported diagnostics have proper help links.
+        var diagnostic = Diagnostics.Pop(sponsorable, product, projectPath);
+        if (diagnostic != null)
+        {
+            Diagnostics.ReportDiagnosticOnce(context, diagnostic, sponsorable, product);
+            return;
+        }
+
+        // If this particular build did not generate a new diagnostic (i.e. it was an 
+        // incremental build where the project file didn't change at all, we still need 
+        // to report the diagnostic or it will go away immediately in a subsequent build.
+        // This keeps the diagnostic "pinned" until an actual new check is performed, but 
+        // makes sure we're not doing the online check anymore after the initial check.
+        // This keeps DTBs quick and the editor super responsive and is effectively the 
+        // communication "channel" between past runs of the generator check and the analyzer 
+        // reporting live in VS.
+
+        var productDir = Path.Combine(Path.GetDirectoryName(projectPath), "obj", "SponsorLink", sponsorable, product);
+        if (!Directory.Exists(productDir))
+            return;
+
+        foreach (var file in Directory.EnumerateFiles(productDir, "*.txt"))
+        {
+            var parts = Path.GetFileName(file).Split('.');
+            if (parts.Length < 2)
+                continue;
+
+            var id = parts[0];
+            var severity = parts[1];
+            var descriptor = SupportedDiagnostics.FirstOrDefault(x => x.Id == id);
+            if (descriptor == null)
+                continue;
+
+            var text = File.ReadAllText(file).Trim();
+            // NOTE: we recreate the descriptor here, since that's cheaper than attempting 
+            // to recreate the format string that produced the given message in the file. 
+            diagnostic = Diagnostic.Create(new DiagnosticDescriptor(
+                id: descriptor.Id,
+                title: descriptor.Title,
+                messageFormat: text,
+                category: descriptor.Category,
+                defaultSeverity: descriptor.DefaultSeverity,
+                isEnabledByDefault: descriptor.IsEnabledByDefault,
+                description: descriptor.Description,
+                helpLinkUri: descriptor.HelpLinkUri,
+                customTags: descriptor.CustomTags.ToArray()),
+                // If we provide a non-null location, the entry for some reason is no longer shown in VS :/
+                null);
+
+            Diagnostics.ReportDiagnosticOnce(context, diagnostic, sponsorable, product);
+        }
+    }
+
+    (int pause, string suffix) GetPause()
+    {
+        if (settings == null)
+            return (0, "");
+
+        if (settings.InstallTime == null)
+            return GetPaused(rnd.Next(settings.PauseMin, settings.PauseMax));
+
+        var daysOld = (int)DateTime.Now.Subtract(settings.InstallTime.Value).TotalDays;
+
+        // Never pause the first day of the install. Just warnings.
+        if (daysOld == 0)
+            return (0, string.Empty);
+
+        // Turn days into milliseconds, used for the pause.
+        var daysPause = daysOld * 1000;
+
+        // From second day, the max pause will increase from days old until the max pause.
+        return GetPaused(rnd.Next(settings.PauseMin, Math.Min(daysPause, settings.PauseMax)));
+    }
+
+    static (int pause, string suffix) GetPaused(int pause) => (pause, ThisAssembly.Strings.BuildPaused(pause));
+
+    static Diagnostic WriteMessage(string sponsorable, string product, string projectDir, Diagnostic diag)
+    {
+        var objDir = Path.Combine(projectDir, "obj", "SponsorLink", sponsorable, product);
+        if (Directory.Exists(objDir))
+        {
+            foreach (var file in Directory.EnumerateFiles(objDir))
+                File.Delete(file);
+        }
+
+        Directory.CreateDirectory(objDir);
+        File.WriteAllText(Path.Combine(objDir, $"{diag.Id}.{diag.Severity}.txt"), diag.GetMessage());
+        
+        return diag;
     }
 
     static string? GetEmail(string workingDirectory)
@@ -283,7 +378,7 @@ public class SponsorLink
     /// <summary>
     /// Provides information about the build that was checked for sponsor linking.
     /// </summary>
-    public class BuildInfo
+    class BuildInfo
     {
         internal BuildInfo(string path, bool? insideEditor, bool? designTimeBuild)
         {
@@ -313,7 +408,7 @@ public class SponsorLink
         /// The installation/restore time of SponsorLink.
         /// </summary>
         public DateTime? InstallTime { get; private set; }
-        
+
         internal BuildInfo WithCompilationOptions(CompilationOptions options)
         {
             CompilationOptions = options;
