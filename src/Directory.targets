@@ -1,7 +1,9 @@
 <Project>
 
-  <PropertyGroup>
-    <VersionPrefix Condition="$(CI)">42.42.$(GITHUB_RUN_NUMBER)</VersionPrefix>
+  <PropertyGroup Condition=" $(CI) ">
+    <VersionPrefix>42.42.$(GITHUB_RUN_NUMBER)</VersionPrefix>
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix)</Version>
+    <Version Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix)</Version>
   </PropertyGroup>
-  
+
 </Project>
