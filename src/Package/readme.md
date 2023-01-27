@@ -14,19 +14,16 @@ Add the following generator to an analyzer project you include in your package:
 ```csharp
 using Devlooped;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace SponsorableLib;
 
 [Generator]
-public class Generator : IIncrementalGenerator
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
+class SponsorLinker : SponsorLink
 {
-    readonly SponsorLink link;
-
-    public Generator() 
-        => link = new SponsorLink("[SPONSORABLE]", "[PROJECT]");
-
-    public void Initialize(IncrementalGeneratorInitializationContext context)
-        => link.Initialize(context);
+    public SponsorLinker() : base("[SPONSORABLE]", "[PROJECT]") 
+    { }
 }
 ```
 
