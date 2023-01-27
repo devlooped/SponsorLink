@@ -1,4 +1,14 @@
-﻿const Devlooped.SponsorLink.DefaultMaxPause = 4000 -> int
-Devlooped.SponsorLink.BuildInfo.InstallTime.get -> System.DateTime?
-Devlooped.SponsorLink.SponsorLink(string! sponsorable, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! notInstalled, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! nonSponsor, System.Action<Microsoft.CodeAnalysis.SourceProductionContext, Devlooped.SponsorLink.BuildInfo!>! activeSponsor) -> void
-Devlooped.SponsorLinkAnalyzer.SponsorLinkAnalyzer(string! sponsorable, string! product, string! idPrefix) -> void
+﻿Devlooped.DiagnosticKind
+Devlooped.DiagnosticKind.AppNotInstalled = 0 -> Devlooped.DiagnosticKind
+Devlooped.DiagnosticKind.Thanks = 2 -> Devlooped.DiagnosticKind
+Devlooped.DiagnosticKind.UserNotSponsoring = 1 -> Devlooped.DiagnosticKind
+Devlooped.SponsorLink
+Devlooped.SponsorLink.SponsorLink(Devlooped.SponsorLinkSettings! settings) -> void
+Devlooped.SponsorLink.SponsorLink(string! sponsorable, string! product) -> void
+Devlooped.SponsorLinkSettings
+Devlooped.SponsorLinkSettings.Product.get -> string!
+Devlooped.SponsorLinkSettings.Sponsorable.get -> string!
+override Devlooped.SponsorLink.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext! context) -> void
+override Devlooped.SponsorLink.SupportedDiagnostics.get -> System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.DiagnosticDescriptor!>
+static Devlooped.SponsorLinkSettings.Create(string! sponsorable, string! product, string? packageId = null, string? diagnosticsIdPrefix = null, int pauseMin = 0, int pauseMax = 4000) -> Devlooped.SponsorLinkSettings!
+virtual Devlooped.SponsorLink.CreateDiagnostic(string! projectPath, Devlooped.DiagnosticKind kind) -> Microsoft.CodeAnalysis.Diagnostic?

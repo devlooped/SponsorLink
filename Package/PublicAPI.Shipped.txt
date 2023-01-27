@@ -1,13 +1,1 @@
 ﻿#nullable enable
-Devlooped.SponsorLink
-Devlooped.SponsorLink.Initialize(Microsoft.CodeAnalysis.IncrementalGeneratorInitializationContext context) -> void
-Devlooped.SponsorLink.SponsorLink(string! sponsorable, string! product) -> void
-Devlooped.SponsorLink.SponsorLink(string! sponsorable, string! product, int pauseMin, int pauseMax) -> void
-Devlooped.SponsorLink.BuildInfo
-Devlooped.SponsorLink.BuildInfo.CompilationOptions.get -> Microsoft.CodeAnalysis.CompilationOptions?
-Devlooped.SponsorLink.BuildInfo.DesignTimeBuild.get -> bool?
-Devlooped.SponsorLink.BuildInfo.InsideEditor.get -> bool?
-Devlooped.SponsorLink.BuildInfo.ProjectPath.get -> string!
-Devlooped.SponsorLinkAnalyzer
-override Devlooped.SponsorLinkAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext! context) -> void
-override Devlooped.SponsorLinkAnalyzer.SupportedDiagnostics.get -> System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.DiagnosticDescriptor!>
