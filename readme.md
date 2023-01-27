@@ -118,17 +118,16 @@ Generator:
 ```csharp
 using Devlooped;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace SponsorableLib;
 
 [Generator]
-public class Generator : IIncrementalGenerator
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
+class SponsorLinker : SponsorLink
 {
-    readonly SponsorLink link;
-
-    public Generator() => link = new("[SPONSORABLE]", "MyLib");
-
-    public void Initialize(IncrementalGeneratorInitializationContext context) => link.Initialize(context);
+    public SponsorLinker() : base("[SPONSORABLE]", "SponsorableLib") 
+    { }
 }
 ```
 
@@ -155,6 +154,7 @@ library, you just need to add a project reference to that project and the right 
 will happen (remove the PackageId property in that case, since the referencing project will 
 be the one doing the packing).
 
+Check out [the complete example](samples/dotnet) plus test project (that can be debugged by just pressing F5 in Visual Studio).
 
 ## ![](https://avatars.githubusercontent.com/in/279204?s=24&u=d13eed8cef2b965c8bb34f6298b4edac31688c5a&v=4) Open source consumers
 
