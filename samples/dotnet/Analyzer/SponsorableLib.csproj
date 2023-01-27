@@ -5,12 +5,13 @@
     <PackFolder>analyzers/dotnet</PackFolder>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
+    <IsRoslynComponent>true</IsRoslynComponent>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="0.9.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
-    <PackageReference Include="Devlooped.SponsorLink" Version="0.3.0" />
+    <PackageReference Include="Devlooped.SponsorLink" Version="0.5.1" />
   </ItemGroup>
   
 </Project>
