@@ -1,0 +1,7 @@
+<Project>
+
+  <PropertyGroup>
+    <VersionPrefix Condition="$(CI)">42.42.$(GITHUB_RUN_NUMBER)</VersionPrefix>
+  </PropertyGroup>
+  
+</Project>
