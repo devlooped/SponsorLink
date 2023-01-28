@@ -46,3 +46,15 @@
 	sha = d3022567c9ef2bc9461511e53b8abe065afdf03b
 	etag = 58601b5a71c805647ab26e84053acdfb8d174eaa93330487af8a5503753c5707
 	weak
+[file "src/Package/Properties/."]
+	url = https://github.com/devlooped/SponsorLink/tree/main/loc
+[file "src/Package/Properties/Resources.es.resx"]
+	url = https://github.com/devlooped/SponsorLink/blob/main/loc/Resources.es.resx
+	sha = da76fbaadfb524ea6c58715f60b4d9c52e152977
+	etag = 2e8130a9a1799eaf05691ed68719146097797abbbb6214e12ba65917c36c376c
+	weak
+[file "src/Package/Properties/Resources.resx"]
+	url = https://github.com/devlooped/SponsorLink/blob/main/loc/Resources.resx
+	sha = da76fbaadfb524ea6c58715f60b4d9c52e152977
+	etag = 9c3302f054c55692be6fbae25f0f1af9b96803a40144dcef64885a9da7cb562c
+	weak

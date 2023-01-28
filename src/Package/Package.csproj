@@ -11,6 +11,7 @@
     <PackageProjectUrl>https://github.com/devlooped/SponsorLink</PackageProjectUrl>
     <PackageTags>roslyn github sponsors</PackageTags>
     <DebugSymbols>false</DebugSymbols>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
   <!-- Only produce debug symbols in debug mode, avoids leaking impl. details with obfuscated Release bits -->
@@ -36,12 +37,10 @@
     <Exec Command="$(Obfuscar) $(MSBuildThisFileDirectory)Obfuscar.xml" WorkingDirectory="$(MSBuildProjectDirectory)\$(OutputPath)" />
   </Target>
 
-  <Target Name="_RemoveCulturedResxFromStrings"
-          AfterTargets="_InjectRexAdditionalFiles;_InjectResxAdditionalFiles"
-          BeforeTargets="GenerateMSBuildEditorConfigFileShouldRun">
+  <Target Name="_RemoveCulturedResxFromStrings" AfterTargets="_InjectRexAdditionalFiles;_InjectResxAdditionalFiles" BeforeTargets="GenerateMSBuildEditorConfigFileShouldRun">
     <ItemGroup>
-      <ResxCode Remove="@(ResxCode -> WithMetadataValue('WithCulture', 'true'))" />
-      <AdditionalFiles Remove="@(AdditionalFiles -> WithMetadataValue('WithCulture', 'true'))" />
+      <ResxCode Remove="@(ResxCode -&gt; WithMetadataValue('WithCulture', 'true'))" />
+      <AdditionalFiles Remove="@(AdditionalFiles -&gt; WithMetadataValue('WithCulture', 'true'))" />
     </ItemGroup>
   </Target>
 
@@ -59,8 +58,7 @@
 
   <Target Name="AddSatelliteResources" BeforeTargets="GetPackageContents" DependsOnTargets="SatelliteDllsProjectOutputGroup">
     <ItemGroup>
-      <PackageFile Include="@(SatelliteDllsProjectOutputGroupOutput)"
-                   PackFolder="analyzers/dotnet/roslyn4.0" />
+      <PackageFile Include="@(SatelliteDllsProjectOutputGroupOutput)" PackFolder="analyzers/dotnet/roslyn4.0" />
     </ItemGroup>
   </Target>
 
