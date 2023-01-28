@@ -108,7 +108,7 @@ Project:
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="0.9.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
-    <PackageReference Include="Devlooped.SponsorLink" Version="1.0.0" />
+    <PackageReference Include="Devlooped.SponsorLink" Version="0.7.0" />
   </ItemGroup>
   
 </Project>
@@ -155,6 +155,17 @@ will happen (remove the PackageId property in that case, since the referencing p
 be the one doing the packing).
 
 Check out [the complete example](samples/dotnet) plus test project (that can be debugged by just pressing F5 in Visual Studio).
+
+In addition to surfacing the supported diagnostics in Visual Studio in the default language (english):
+
+   ![Screenshot of sample analyzer node in english](/assets/img/VS-LOC.png)
+
+we also support localized versions:
+
+   ![Screenshot of sample analyzer node in english](/assets/img/VS-LOC-es.png)
+
+Please consider contributing translations by adding the relevant resource file under the [loc](/loc) folder.
+
 
 ## ![](https://avatars.githubusercontent.com/in/279204?s=24&u=d13eed8cef2b965c8bb34f6298b4edac31688c5a&v=4) Open source consumers
 
