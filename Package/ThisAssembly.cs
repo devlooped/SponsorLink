@@ -14,7 +14,7 @@
 
         partial class Thanks
         {
-            public static string MessageFormat => GetResourceManager("Devlooped.SponsorLink.Properties.Resources").GetString("UserNotSponsoring_Thanks");
+            public static string MessageFormat => GetResourceManager("Devlooped.SponsorLink.Properties.Resources").GetString("Thanks_Message");
         }
     }
 }
