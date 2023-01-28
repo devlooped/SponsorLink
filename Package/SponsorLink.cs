@@ -225,7 +225,12 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
             sponsoring == false ? DiagnosticKind.UserNotSponsoring :
             DiagnosticKind.Thanks;
 
-        var diagnostic = OnDiagnostic(state.ProjectPath, kind);
+        // If the given kind was already reported, no-op.
+        if (Diagnostics.TryPeek(sponsorable, product, state.ProjectPath, out var diagnostic) &&
+            diagnostic != null && diagnostic.Descriptor.IsKind(kind))
+            return;
+
+        diagnostic = OnDiagnostic(state.ProjectPath, kind);
         if (diagnostic != null)
             Diagnostics.Push(sponsorable, product, state.ProjectPath, diagnostic);
     }
