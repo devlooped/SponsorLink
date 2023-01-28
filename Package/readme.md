@@ -9,7 +9,7 @@ and the onboarding process.
 
 ## Usage
 
-Add the following generator to an analyzer project you include in your package:
+Add the following analyzer+generator to an analyzer project you include in your package:
 
 ```csharp
 using Devlooped;
