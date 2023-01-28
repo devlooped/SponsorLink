@@ -64,45 +64,45 @@ class DiagnosticsManager
 
     static DiagnosticDescriptor CreateAppNotInstalled(string prefix) => new(
         $"{prefix}02",
-        "Please install the SponsorLink GitHub app 🙏",
-        "{0} uses SponsorLink to properly attribute your sponsorship with {1}. Please install the GitHub app at https://github.com/apps/sponsorlink. {2}",
+        ThisAssembly.Strings.AppNotInstalled.Title,
+        ThisAssembly.Strings.AppNotInstalled.MessageFormat,
         "SponsorLink",
         DiagnosticSeverity.Warning,
         true,
-        "Installing the SponsorLink GitHub app ensures that your sponsorship is properly attributed to you.",
+        ThisAssembly.Strings.AppNotInstalled.Description,
         "https://github.com/apps/sponsorlink",
         "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable, nameof(DiagnosticKind.AppNotInstalled));
 
     static DiagnosticDescriptor CreateUserNotSponsoring(string sponsorable, string prefix) => new(
      $"{prefix}03",
-     "Please consider supporting the ongoing development of the project 🙏",
-     "Please consider supporting {0} ongoing development by sponsoring at https://github.com/sponsors/{1}. {2}",
+     ThisAssembly.Strings.UserNotSponsoring.Title,
+     ThisAssembly.Strings.UserNotSponsoring.MessageFormat,
      "SponsorLink",
      DiagnosticSeverity.Warning,
      true,
-     "Sponsoring projects you depend on ensures they remain active, and that you get the support you need. It's also super affordable and available worldwide!",
+     ThisAssembly.Strings.UserNotSponsoring.Description,
      "https://github.com/sponsors/" + sponsorable,
      "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable, nameof(DiagnosticKind.UserNotSponsoring));
 
     static DiagnosticDescriptor CreateThanks(string sponsorable, string prefix) => new(
         $"{prefix}04",
-        "You are a sponsor of the project, you rock 💟!",
-        "Thank you for supporting {0} with your sponsorship of {1} 💟!",
+        ThisAssembly.Strings.Thanks.Title,
+        ThisAssembly.Strings.Thanks.MessageFormat,
         "SponsorLink",
         DiagnosticSeverity.Info,
         true,
-        "You are a true hero. Your sponsorship helps keep the project alive and thriving.",
+        ThisAssembly.Strings.Thanks.Description,
         "https://github.com/sponsors/" + sponsorable,
         "DoesNotSupportF1Help", nameof(DiagnosticKind.Thanks));
 
     static DiagnosticDescriptor CreateBroken() => new(
         "SL01",
-        "Invalid SponsorLink configuration 🤔",
-        "SponsorLink has been incorrectly configured. Please check the documentation for more information.",
+        ThisAssembly.Strings.Broken.Title,
+        ThisAssembly.Strings.Broken.Message,
         "SponsorLink",
         DiagnosticSeverity.Error,
         true,
-        "A library author or custom tweaks to your MSBuild projects and targets seems to have broken SponsorLink.",
+        ThisAssembly.Strings.Broken.Description,
         "https://github.com/devlooped/SponsorLink/discussions",
         "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable);
 
