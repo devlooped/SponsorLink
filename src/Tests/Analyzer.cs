@@ -1,9 +1,12 @@
 ﻿extern alias Analyzer;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Devlooped;
 
+[Generator]
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class TestSponsorLink : Analyzer::Devlooped.SponsorLink
 {
     public TestSponsorLink() : base(Analyzer::Devlooped.SponsorLinkSettings.Create("foo", "bar"))
