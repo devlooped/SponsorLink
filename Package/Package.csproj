@@ -29,11 +29,20 @@
 
   <ItemGroup>
     <PackageFile Include="$(MSBuildThisFileDirectory)_._" PackagePath="lib/netstandard2.0/_._" />
-    <PackageFile Include="*.props;*.targets" PackagePath="buildTransitive\$(TargetFramework)\%(Filename)%(Extension)" />
+    <PackageFile Include="*.props;*.targets" PackagePath="buildTransitive/$(TargetFramework)/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <Target Name="Obfuscate" AfterTargets="Build" DependsOnTargets="Build" Condition="'$(Configuration)' == 'Release' and '$(dotnet-nugetize)' == ''">
     <Exec Command="$(Obfuscar) $(MSBuildThisFileDirectory)Obfuscar.xml" WorkingDirectory="$(MSBuildProjectDirectory)\$(OutputPath)" />
+  </Target>
+
+  <Target Name="_RemoveCulturedResxFromStrings"
+          AfterTargets="_InjectRexAdditionalFiles;_InjectResxAdditionalFiles"
+          BeforeTargets="GenerateMSBuildEditorConfigFileShouldRun">
+    <ItemGroup>
+      <ResxCode Remove="@(ResxCode -> WithMetadataValue('WithCulture', 'true'))" />
+      <AdditionalFiles Remove="@(AdditionalFiles -> WithMetadataValue('WithCulture', 'true'))" />
+    </ItemGroup>
   </Target>
 
   <Target Name="AddObfuscated" BeforeTargets="GetPackageContents" DependsOnTargets="Obfuscate">
@@ -47,5 +56,12 @@
       <PackageFile Include="$(Obfuscated)\$(TargetFileName)" PackFolder="analyzers/dotnet/roslyn4.0" />
     </ItemGroup>
   </Target>
-  
+
+  <Target Name="AddSatelliteResources" BeforeTargets="GetPackageContents" DependsOnTargets="SatelliteDllsProjectOutputGroup">
+    <ItemGroup>
+      <PackageFile Include="@(SatelliteDllsProjectOutputGroupOutput)"
+                   PackFolder="analyzers/dotnet/roslyn4.0" />
+    </ItemGroup>
+  </Target>
+
 </Project>
