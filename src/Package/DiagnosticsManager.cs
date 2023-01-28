@@ -62,6 +62,9 @@ class DiagnosticsManager
         return diagnostic;
     }
 
+    public bool TryPeek(string sponsorable, string product, string project, out Diagnostic? diagnostic)
+        => Diagnostics.TryGetValue((sponsorable, product, project), out diagnostic);
+
     static DiagnosticDescriptor CreateAppNotInstalled(string prefix) => new(
         $"{prefix}02",
         ThisAssembly.Strings.AppNotInstalled.Title,
