@@ -9,7 +9,7 @@ namespace Devlooped;
 /// </summary>
 /// <remarks>
 /// The default behavior configured by this class is applied in the 
-/// <see cref="SponsorLink.CreateDiagnostic(string, DiagnosticKind)"/> virtual method. 
+/// <see cref="SponsorLink.OnDiagnostic(string, DiagnosticKind)"/> virtual method. 
 /// If overriden, none of these settings are actually used.
 /// </remarks>
 public class SponsorLinkSettings
@@ -89,10 +89,13 @@ public class SponsorLinkSettings
     /// </summary>
     public string Product { get; }
 
+    /// <summary>
+    /// The supported diagnostics used by sponsorlink when reporting diagnostics.
+    /// </summary>
+    public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; set; } = ImmutableArray<DiagnosticDescriptor>.Empty;
+
     internal string? PackageId { get; private set; }
     internal int PauseMin { get; private set; }
     internal int PauseMax { get; private set; }
-    internal DateTime? InstallTime { get; set; }
-    
-    internal ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; private set; } = ImmutableArray<DiagnosticDescriptor>.Empty;
+    internal DateTime? InstallTime { get; set; }    
 }
