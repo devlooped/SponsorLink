@@ -31,7 +31,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
     /// <summary>
     /// Initializes SponsorLink with the given sponsor account and product name, for fully 
     /// customized diagnostics. You must override <see cref="SupportedDiagnostics"/> and 
-    /// <see cref="CreateDiagnostic(string, DiagnosticKind)"/> for this to work.
+    /// <see cref="OnDiagnostic(string, DiagnosticKind)"/> for this to work.
     /// </summary>
     /// <param name="sponsorable">The sponsor account that users should sponsor.</param>
     /// <param name="product">The name of product that is using sponsor link.</param>
@@ -39,7 +39,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
     /// This constructor overload allows full customization of reported diagnostics. The 
     /// base class won't report anything in this case and just expose the support 
     /// diagnostics from <see cref="SupportedDiagnostics"/> and invoke 
-    /// <see cref="CreateDiagnostic(string, DiagnosticKind)"/> for the various supported 
+    /// <see cref="OnDiagnostic(string, DiagnosticKind)"/> for the various supported 
     /// sponsoring scenarios.
     /// </remarks>
     protected SponsorLink(string sponsorable, string product)
@@ -147,13 +147,14 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
     }
 
     /// <summary>
-    /// Creates a diagnostic for the given <see cref="DiagnosticKind"/>, 
-    /// which must be one of the <see cref="SupportedDiagnostics"/>.
+    /// Performs an action when the given diagnostic <paramref name="kind"/> is verified for 
+    /// the current user. If an actual diagnostic should be reported, a non-null value can be 
+    /// returned.
     /// </summary>
     /// <remarks>
-    /// Returns null if no diagnostics should be created for the given <paramref name="kind"/>.
+    /// Returns null if no diagnostics should be reported for the given diagnostic <paramref name="kind"/>.
     /// </remarks>
-    protected virtual Diagnostic? CreateDiagnostic(string projectPath, DiagnosticKind kind)
+    protected virtual Diagnostic? OnDiagnostic(string projectPath, DiagnosticKind kind)
     {
         var descriptor = SupportedDiagnostics.FirstOrDefault(x => x.CustomTags.Contains(kind.ToString()));
         if (descriptor == null)
@@ -224,7 +225,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
             sponsoring == false ? DiagnosticKind.UserNotSponsoring :
             DiagnosticKind.Thanks;
 
-        var diagnostic = CreateDiagnostic(state.ProjectPath, kind);
+        var diagnostic = OnDiagnostic(state.ProjectPath, kind);
         if (diagnostic != null)
             Diagnostics.Push(sponsorable, product, state.ProjectPath, diagnostic);
     }
