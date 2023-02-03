@@ -165,7 +165,10 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
             case DiagnosticKind.AppNotInstalled:
             case DiagnosticKind.UserNotSponsoring:
                 // Add a random configurable pause in this case.
-                var (pause, suffix) = GetPause();
+                var (warn, pause, suffix) = GetPause();
+                if (!warn)
+                    return null;
+                
                 var diag = Diagnostic.Create(descriptor, null, product, sponsorable, suffix);
 
                 WriteMessage(sponsorable, product, Path.GetDirectoryName(projectPath), diag);
@@ -299,28 +302,22 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         }
     }
 
-    (int pause, string suffix) GetPause()
+    (bool warn, int pause, string suffix) GetPause()
     {
-        if (settings == null)
-            return (0, "");
-
         if (settings.InstallTime == null)
             return GetPaused(rnd.Next(settings.PauseMin, settings.PauseMax));
 
         var daysOld = (int)DateTime.Now.Subtract(settings.InstallTime.Value).TotalDays;
 
-        // Never pause the first day of the install. Just warnings.
-        if (daysOld == 0)
-            return (0, string.Empty);
-
-        // Turn days into milliseconds, used for the pause.
-        var daysPause = daysOld * 1000;
+        // Never warn the first 15 days after install.
+        if (daysOld <= 15)
+            return (false, 0, string.Empty);
 
         // From second day, the max pause will increase from days old until the max pause.
-        return GetPaused(rnd.Next(settings.PauseMin, Math.Min(daysPause, settings.PauseMax)));
+        return GetPaused(rnd.Next(settings.PauseMin, settings.PauseMax));
     }
 
-    static (int pause, string suffix) GetPaused(int pause) => (pause, ThisAssembly.Strings.BuildPaused(pause));
+    static (bool warn, int pause, string suffix) GetPaused(int pause) => (true, pause, ThisAssembly.Strings.BuildPaused(pause));
 
     static Diagnostic WriteMessage(string sponsorable, string product, string projectDir, Diagnostic diag)
     {
