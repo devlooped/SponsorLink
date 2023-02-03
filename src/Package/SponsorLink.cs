@@ -216,8 +216,8 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
             return;
 
         // Check app install and sponsoring status
-        var installed = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/apps/{email}", context.CancellationToken);
-        var sponsoring = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/{sponsorable}/{email}", context.CancellationToken);
+        var installed = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/apps/{email}?product={product}", context.CancellationToken);
+        var sponsoring = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/{sponsorable}/{email}?product={product}", context.CancellationToken);
 
         // Faulted HTTP HEAD request checking for url?
         if (installed == null || sponsoring == null)
