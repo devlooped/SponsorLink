@@ -51,7 +51,7 @@ public class Functions
         
         await manager.AuthorizeAsync(appKind, code);
 
-        return new RedirectResult("https://devlooped.com");
+        return new RedirectResult("https://devlooped.com/?" + (appKind == AppKind.Sponsor ? "thanks" : "admin"));
     }
 
     [FunctionName("app")]
