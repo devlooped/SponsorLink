@@ -122,29 +122,8 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
                 itemType == "MSBuildProject")
             .Select((x, c) =>
             {
-                var opt = x.Right.GlobalOptions;
-                var insideEditor =
-                    !opt.TryGetValue("build_property.BuildingInsideVisualStudio", out var value) ||
-                    !bool.TryParse(value, out var bv) ? null : (bool?)bv;
-
-                // Override value if we detect R#/Rider in use.
-                if (Environment.GetEnvironmentVariables().Keys.Cast<string>().Any(k =>
-                        k.StartsWith("RESHARPER") ||
-                        k.StartsWith("IDEA_")))
-                    insideEditor = true;
-
-                var dtb =
-                    !opt.TryGetValue("build_property.DesignTimeBuild", out value) ||
-                    !bool.TryParse(value, out bv) ? null : (bool?)bv;
-
-                // SponsorLink authors can debug it by setting up a IsRoslynComponent=true project, 
-                // but also need to set this property in the project, since the debugger will set DesignTimeBuild=true.
-                if (opt.TryGetValue("build_property.DebugSponsorLink", out value) && 
-                    bool.TryParse(value, out var debugSL) && debugSL)
-                    // Reset value to what it is in CLI builds
-                    dtb = null;
-
-                return new BuildInfo(x.Left.Path, insideEditor, dtb);
+                var (insideEditor, designTimeBuild) = ReadOptions(x.Right.GlobalOptions);
+                return new BuildInfo(x.Left.Path, insideEditor, designTimeBuild);
             })
             .Combine(context.CompilationProvider)
             // Add compilation options to check for warning disable.
@@ -268,7 +247,17 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         var opt = context.Options.AnalyzerConfigOptionsProvider.GlobalOptions;
         if (!opt.TryGetValue("build_property.MSBuildProjectFullPath", out var projectPath))
             return;
-        
+
+        var (insideEditor, designTimeBuild) = ReadOptions(opt);
+
+        // We never pause in DTB
+        if (designTimeBuild == true)
+            return;
+
+        // We never pause in non-IDE builds
+        if (insideEditor == false)
+            return;
+
         // If we can get the generator-pushed diagnostic in the same process, we 
         // report it here and exit. Analyzer-reported diagnostics have proper help links.
         var diagnostic = Diagnostics.Pop(sponsorable, product, projectPath);
@@ -323,6 +312,33 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         }
     }
 
+    (bool? insideEditor, bool? designTimeBuild) ReadOptions(AnalyzerConfigOptions options)
+    {
+        var insideEditor =
+            !options.TryGetValue("build_property.BuildingInsideVisualStudio", out var value) ||
+            !bool.TryParse(value, out var bv) ? null : (bool?)bv;
+
+        // Override value if we detect R#/Rider in use, or some hacked-up target but we're in VS
+        if (Environment.GetEnvironmentVariables().Keys.Cast<string>().Any(k =>
+                k.StartsWith("RESHARPER") ||
+                k.StartsWith("IDEA_") || 
+                k == "VSAPPIDDIR"))
+            insideEditor = true;
+
+        var dtb =
+            !options.TryGetValue("build_property.DesignTimeBuild", out value) ||
+            !bool.TryParse(value, out bv) ? null : (bool?)bv;
+
+        // SponsorLink authors can debug it by setting up a IsRoslynComponent=true project, 
+        // but also need to set this property in the project, since the debugger will set DesignTimeBuild=true.
+        if (options.TryGetValue("build_property.DebugSponsorLink", out value) &&
+            bool.TryParse(value, out var debugSL) && debugSL)
+            // Reset value to what it is in CLI builds
+            dtb = null;
+
+        return (insideEditor, dtb);
+    }
+
     (bool warn, int pause, string suffix) GetPause()
     {
         if (settings.InstallTime == null)
@@ -331,7 +347,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         var daysOld = (int)DateTime.Now.Subtract(settings.InstallTime.Value).TotalDays;
 
         // Never warn during the quiet days.
-        if (daysOld <= quietDays)
+        if (daysOld <= (settings.QuietDays ?? quietDays))
             return (false, 0, string.Empty);
 
         // From second day, the max pause will increase from days old until the max pause.

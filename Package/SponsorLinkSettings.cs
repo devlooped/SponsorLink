@@ -33,12 +33,14 @@ public class SponsorLinkSettings
     /// a default one is determined from the <paramref name="sponsorable"/> and <paramref name="product"/> values.</param>
     /// <param name="pauseMin">Min random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
     /// <param name="pauseMax">Max random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
+    /// <param name="quietDays">Optional days to keep warnings quiet so the user has a chance to test the product undisturbed.</param>
     public static SponsorLinkSettings Create(string sponsorable, string product, 
         string? packageId = default,
         string? version = default,
         string? diagnosticsIdPrefix = default,
         int pauseMin = 0, int 
-        pauseMax = 4000)
+        pauseMax = 4000, 
+        int? quietDays = default)
     {
         if (diagnosticsIdPrefix == null)
         {
@@ -78,6 +80,7 @@ public class SponsorLinkSettings
             Version = version,
             PauseMin = pauseMin,
             PauseMax = pauseMax,
+            QuietDays = quietDays,
             SupportedDiagnostics = SponsorLink.Diagnostics.GetDescriptors(sponsorable, diagnosticsIdPrefix)
         };
     }
@@ -101,5 +104,6 @@ public class SponsorLinkSettings
     internal string? Version { get; private set; }
     internal int PauseMin { get; private set; }
     internal int PauseMax { get; private set; }
-    internal DateTime? InstallTime { get; set; }    
+    internal DateTime? InstallTime { get; set; }
+    internal int? QuietDays { get; private set; }
 }
