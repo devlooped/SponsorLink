@@ -1,8 +1,10 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Net.NetworkInformation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Devlooped;
 
@@ -16,11 +18,30 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 {
     static readonly HttpClient http = new();
     static readonly Random rnd = new();
+    static int quietDays = 15;
 
     readonly string sponsorable;
     readonly string product;
     readonly SponsorLinkSettings settings;
     readonly ImmutableArray<DiagnosticDescriptor> diagnostics = ImmutableArray<DiagnosticDescriptor>.Empty;
+
+    static SponsorLink()
+    {
+        // Reads settings from storage, best-effort
+        http.GetStringAsync("https://devlooped.blob.core.windows.net/sponsorlink/settings.ini")
+        .ContinueWith(t =>
+        {
+            var values = t.Result
+                .Split(new[] { "\r\n", "\r" }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(x => x[0] != '#')
+                .Select(x => x.Split(new[] { '=' }, 2))
+                .ToDictionary(x => x[0].Trim(), x => x[1].Trim());
+
+            if (values.TryGetValue("quiet", out var value) && int.TryParse(value, out var days))
+                quietDays = days;
+            
+        }, TaskContinuationOptions.OnlyOnRanToCompletion);
+    }
 
     /// <summary>
     /// Manages the sharing and reporting of diagnostics across the source generator 
@@ -309,8 +330,8 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 
         var daysOld = (int)DateTime.Now.Subtract(settings.InstallTime.Value).TotalDays;
 
-        // Never warn the first 15 days after install.
-        if (daysOld <= 15)
+        // Never warn during the quiet days.
+        if (daysOld <= quietDays)
             return (false, 0, string.Empty);
 
         // From second day, the max pause will increase from days old until the max pause.

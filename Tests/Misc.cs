@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -98,6 +99,21 @@ public record Misc(ITestOutputHelper Output)
         DateTime date = data.sponsorship.created_at;
 
         Output.WriteLine(date.AddDays(30).ToString("o"));
+    }
+
+    [Fact]
+    public void ParseIni()
+    {
+        var text = ThisAssembly.Resources.settings.Text;
+        var values = text.Split(new[] { "\r\n", "\r" }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(x => x[0] != '#')
+            .Select(x => x.Split(new[] { '=' }, 2))
+            .ToDictionary(x => x[0].Trim(), x => x[1].Trim());
+
+        foreach (var pair in values)
+        {
+            Output.WriteLine($"{pair.Key} = {pair.Value}");
+        }
     }
 
     [Fact]
