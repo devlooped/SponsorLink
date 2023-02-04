@@ -23,7 +23,7 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="Xunit.Abstractions" />
-    <EmbeddedResource Include="*.json" />
+    <EmbeddedResource Include="*.json;*.ini" Kind="Text" />
   </ItemGroup>
 
   <ItemGroup>
