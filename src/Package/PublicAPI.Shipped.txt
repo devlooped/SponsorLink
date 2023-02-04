@@ -12,7 +12,7 @@ Devlooped.SponsorLinkSettings.Product.get -> string!
 Devlooped.SponsorLinkSettings.Sponsorable.get -> string!
 override Devlooped.SponsorLink.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext! context) -> void
 override Devlooped.SponsorLink.SupportedDiagnostics.get -> System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.DiagnosticDescriptor!>
-static Devlooped.SponsorLinkSettings.Create(string! sponsorable, string! product, string? packageId = null, string? diagnosticsIdPrefix = null, int pauseMin = 0, int pauseMax = 4000) -> Devlooped.SponsorLinkSettings!
+static Devlooped.SponsorLinkSettings.Create(string! sponsorable, string! product, string? packageId = null, string? version = null, string? diagnosticsIdPrefix = null, int pauseMin = 0, int pauseMax = 4000) -> Devlooped.SponsorLinkSettings!
 static Devlooped.DiagnosticExtensions.With(this Microsoft.CodeAnalysis.DiagnosticDescriptor! descriptor, string? id = null, Microsoft.CodeAnalysis.LocalizableString? title = null, Microsoft.CodeAnalysis.LocalizableString? messageFormat = null, Microsoft.CodeAnalysis.LocalizableString? description = null, string? helpLinkUri = null) -> Microsoft.CodeAnalysis.DiagnosticDescriptor!
 static Devlooped.DiagnosticExtensions.IsKind(this Microsoft.CodeAnalysis.DiagnosticDescriptor! descriptor, Devlooped.DiagnosticKind kind) -> bool
 Devlooped.SponsorLinkSettings.SupportedDiagnostics.get -> System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.DiagnosticDescriptor!>
