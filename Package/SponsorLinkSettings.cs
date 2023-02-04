@@ -28,12 +28,14 @@ public class SponsorLinkSettings
     /// <param name="product">The product that uses SponsorLink. Used in diagnostics to clarify the product requesting the sponsor link check.</param>
     /// <param name="packageId">Optional NuGet package identifier of the product performing the check. Defaults to <paramref name="product"/>. 
     /// Used to determine installation time of the product and avoid pausing builds for the first 24 hours after installation.</param>
+    /// <param name="version">Optional product or package version.</param>
     /// <param name="diagnosticsIdPrefix">Prefix to use for diagnostics with numbers <c>02,03,04</c> reported by default. If not provided, 
     /// a default one is determined from the <paramref name="sponsorable"/> and <paramref name="product"/> values.</param>
     /// <param name="pauseMin">Min random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
     /// <param name="pauseMax">Max random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
     public static SponsorLinkSettings Create(string sponsorable, string product, 
         string? packageId = default,
+        string? version = default,
         string? diagnosticsIdPrefix = default,
         int pauseMin = 0, int 
         pauseMax = 4000)
@@ -73,6 +75,7 @@ public class SponsorLinkSettings
         return new SponsorLinkSettings(sponsorable, product)
         {
             PackageId = packageId ?? product,
+            Version = version,
             PauseMin = pauseMin,
             PauseMax = pauseMax,
             SupportedDiagnostics = SponsorLink.Diagnostics.GetDescriptors(sponsorable, diagnosticsIdPrefix)
@@ -95,6 +98,7 @@ public class SponsorLinkSettings
     public ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; set; } = ImmutableArray<DiagnosticDescriptor>.Empty;
 
     internal string? PackageId { get; private set; }
+    internal string? Version { get; private set; }
     internal int PauseMin { get; private set; }
     internal int PauseMax { get; private set; }
     internal DateTime? InstallTime { get; set; }    
