@@ -25,7 +25,7 @@ jobs:
 
       - name: 🙏 build
         run: |
-          dotnet build ./samples/dotnet/SponsorableLib.csproj
+          dotnet build ./samples/dotnet/
 
       - name: 🚀 nuget
         run: |
