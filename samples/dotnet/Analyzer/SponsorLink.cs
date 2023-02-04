@@ -12,6 +12,9 @@ class SimpleSponsorLinker : SponsorLink
 {
     public SimpleSponsorLinker() : base("kzu", "SponsorableLib")
     // NOTE: diagnostics prefix will default to K(zu)S(Sponsorable)L(Lib) > DSLxx
+    // NOTE: since we don't specify any Quiet Days via settings, we will get the 
+    // default behavior (15 days), meaning no warnings will be reported for this 
+    // analyzer when built locally. 
     { }
 }
 
@@ -25,7 +28,9 @@ class AdvancedSponsorLinker : SponsorLink
     static AdvancedSponsorLinker()
     {
         // NOTE: diagnostics prefix will default to K(zu)S(Sponsorable)L(Lib) > DSLxx
-        settings = SponsorLinkSettings.Create("kzu", "AdvancedSponsorableLib");
+        settings = SponsorLinkSettings.Create("kzu", "AdvancedSponsorableLib", 
+            packageId: "SponsorableLib",
+            quietDays: -1);
         // Here we showcase how to modify the built-in diagnostics to add a custom description.
         settings.SupportedDiagnostics = settings.SupportedDiagnostics
             .Select(x => x.IsKind(DiagnosticKind.UserNotSponsoring) ?
