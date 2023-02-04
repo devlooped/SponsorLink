@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Immutable;
+using System.ComponentModel;
 using System.Text;
 
 namespace Devlooped;
@@ -14,12 +15,53 @@ namespace Devlooped;
 /// </remarks>
 public class SponsorLinkSettings
 {
+    const int DefaultMaxPause = 4000;
+
     // Make this private for now. We may expose derived types if needed at some point?
     SponsorLinkSettings(string sponsorable, string product) 
     {
         Sponsorable = sponsorable;
         Product = product;
     }
+
+
+    /// <summary>
+    /// Creates the settings for <see cref="SponsorLink"/> with the given values.
+    /// </summary>
+    /// <param name="sponsorable">The sponsor account to check for sponsorships.</param>
+    /// <param name="product">The product that uses SponsorLink. Used in diagnostics to clarify the product requesting the sponsor link check.</param>
+    public static SponsorLinkSettings Create(string sponsorable, string product)
+        => Create(sponsorable, product,
+            packageId: default,
+            version: default,
+            diagnosticsIdPrefix: default,
+            pauseMin: default,
+            pauseMax: DefaultMaxPause,
+            quietDays: default);
+
+    /// <summary>
+    /// Creates the settings for <see cref="SponsorLink"/> with the given values.
+    /// </summary>
+    /// <param name="sponsorable">The sponsor account to check for sponsorships.</param>
+    /// <param name="product">The product that uses SponsorLink. Used in diagnostics to clarify the product requesting the sponsor link check.</param>
+    /// <param name="packageId">Optional NuGet package identifier of the product performing the check. Defaults to <paramref name="product"/>. 
+    /// Used to determine installation time of the product and avoid pausing builds for the first 24 hours after installation.</param>
+    /// <param name="diagnosticsIdPrefix">Prefix to use for diagnostics with numbers <c>02,03,04</c> reported by default. If not provided, 
+    /// a default one is determined from the <paramref name="sponsorable"/> and <paramref name="product"/> values.</param>
+    /// <param name="pauseMin">Min random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
+    /// <param name="pauseMax">Max random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static SponsorLinkSettings Create(string sponsorable, string product,
+        string? packageId = default,
+        string? diagnosticsIdPrefix = default,
+        int pauseMin = 0, int
+        pauseMax = DefaultMaxPause) => Create(sponsorable, product,
+            packageId: packageId,
+            diagnosticsIdPrefix: diagnosticsIdPrefix,
+            version: default,
+            pauseMin: pauseMin,
+            pauseMax: pauseMax, 
+            quietDays: default);
 
     /// <summary>
     /// Creates the settings for <see cref="SponsorLink"/> with the given values.
@@ -39,7 +81,7 @@ public class SponsorLinkSettings
         string? version = default,
         string? diagnosticsIdPrefix = default,
         int pauseMin = 0, int 
-        pauseMax = 4000, 
+        pauseMax = DefaultMaxPause, 
         int? quietDays = default)
     {
         if (diagnosticsIdPrefix == null)
