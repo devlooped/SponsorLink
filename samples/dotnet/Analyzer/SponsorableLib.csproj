@@ -6,13 +6,20 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <IsRoslynComponent>true</IsRoslynComponent>
-    <RestoreSources>https://api.nuget.org/v3/index.json;C:\Code\SponsorLinkCore\bin</RestoreSources>
+    <SponsorLinkVersion Condition="'$(SponsorLinkVersion)' == ''">0.8.2</SponsorLinkVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="0.9.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
-    <PackageReference Include="Devlooped.SponsorLink" Version="42.42.42" />
+    <PackageReference Include="Devlooped.SponsorLink" Version="$(SponsorLinkVersion)" />
   </ItemGroup>
+
+  <ItemDefinitionGroup>
+    <!-- Allows the P2P reference to have this metadata as if restored from a package reference -->
+    <TargetPathWithTargetPlatformMoniker>
+      <NuGetPackageId>$(PackageId)</NuGetPackageId>
+    </TargetPathWithTargetPlatformMoniker>
+  </ItemDefinitionGroup>
   
 </Project>
