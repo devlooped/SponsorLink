@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Net.NetworkInformation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Devlooped;
 
@@ -28,7 +26,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
     static SponsorLink()
     {
         // Reads settings from storage, best-effort
-        http.GetStringAsync("https://devlooped.blob.core.windows.net/sponsorlink/settings.ini")
+        http.GetStringAsync("https://cdn.devlooped.com/sponsorlink/settings.ini")
         .ContinueWith(t =>
         {
             var values = t.Result
@@ -216,8 +214,8 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
             return;
 
         // Check app install and sponsoring status
-        var installed = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/apps/{email}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
-        var sponsoring = UrlExists($"https://devlooped.blob.core.windows.net/sponsorlink/{sponsorable}/{email}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
+        var installed = UrlExists($"https://cdn.devlooped.com/sponsorlink/apps/{email}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
+        var sponsoring = UrlExists($"https://cdn.devlooped.com/sponsorlink/{sponsorable}/{email}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
 
         // Faulted HTTP HEAD request checking for url?
         if (installed == null || sponsoring == null)
@@ -402,7 +400,8 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
     {
         var ev = new ManualResetEventSlim();
         bool? exists = null;
-        http.SendAsync(new HttpRequestMessage(HttpMethod.Head, url), cancellation)
+        // We perform a GET since that can be cached by the CDN, but HEAD cannot.
+        http.GetAsync(url, cancellation)
             .ContinueWith(t =>
             {
                 if (!t.IsFaulted)

@@ -19,7 +19,12 @@ public class SponsorsRegistry
         var container = blobService.GetBlobContainerClient("sponsorlink");
         await container.CreateIfNotExistsAsync(PublicAccessType.Blob);
 
-        var headers = new BlobHttpHeaders { ContentType = "text/plain" };
+        var headers = new BlobHttpHeaders 
+        { 
+            ContentType = "text/plain", 
+            // Allow caching up to 12hrs to optimize via a CDN
+            CacheControl = "max-age=43200"
+        };
         var tags = new Dictionary<string, string>
         {
             { "Id", account.Id } ,
@@ -51,7 +56,12 @@ public class SponsorsRegistry
         var container = blobService.GetBlobContainerClient("sponsorlink");
         await container.CreateIfNotExistsAsync(PublicAccessType.Blob);
 
-        var headers = new BlobHttpHeaders { ContentType = "text/plain" };
+        var headers = new BlobHttpHeaders
+        {
+            ContentType = "text/plain",
+            // Allow caching up to 12hrs to optimize via a CDN
+            CacheControl = "max-age=43200"
+        };
         var tags = new Dictionary<string, string>
         {
             { "Sponsorable", sponsorable.Id } ,
