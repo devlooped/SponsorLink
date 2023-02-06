@@ -45,7 +45,8 @@ public class SponsorLinkSettings
     /// <param name="sponsorable">The sponsor account to check for sponsorships.</param>
     /// <param name="product">The product that uses SponsorLink. Used in diagnostics to clarify the product requesting the sponsor link check.</param>
     /// <param name="packageId">Optional NuGet package identifier of the product performing the check. Defaults to <paramref name="product"/>. 
-    /// Used to determine installation time of the product and avoid pausing builds for the first 24 hours after installation.</param>
+    /// Used to determine installation time of the product and avoid pausing builds or emitting warnings during the 
+    /// quiet days after install (configurable using another overload).</param>
     /// <param name="diagnosticsIdPrefix">Prefix to use for diagnostics with numbers <c>02,03,04</c> reported by default. If not provided, 
     /// a default one is determined from the <paramref name="sponsorable"/> and <paramref name="product"/> values.</param>
     /// <param name="pauseMin">Min random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
@@ -69,7 +70,8 @@ public class SponsorLinkSettings
     /// <param name="sponsorable">The sponsor account to check for sponsorships.</param>
     /// <param name="product">The product that uses SponsorLink. Used in diagnostics to clarify the product requesting the sponsor link check.</param>
     /// <param name="packageId">Optional NuGet package identifier of the product performing the check. Defaults to <paramref name="product"/>. 
-    /// Used to determine installation time of the product and avoid pausing builds for the first 24 hours after installation.</param>
+    /// Used to determine installation time of the product and avoid pausing builds or emitting warnings during the 
+    /// <paramref name="quietDays"/> after install.</param>
     /// <param name="version">Optional product or package version.</param>
     /// <param name="diagnosticsIdPrefix">Prefix to use for diagnostics with numbers <c>02,03,04</c> reported by default. If not provided, 
     /// a default one is determined from the <paramref name="sponsorable"/> and <paramref name="product"/> values.</param>
