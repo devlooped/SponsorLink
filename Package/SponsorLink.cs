@@ -246,16 +246,6 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         if (!opt.TryGetValue("build_property.MSBuildProjectFullPath", out var projectPath))
             return;
 
-        var (insideEditor, designTimeBuild) = ReadOptions(opt);
-
-        // We never pause in DTB
-        if (designTimeBuild == true)
-            return;
-
-        // We never pause in non-IDE builds
-        if (insideEditor == false)
-            return;
-
         // If we can get the generator-pushed diagnostic in the same process, we 
         // report it here and exit. Analyzer-reported diagnostics have proper help links.
         var diagnostic = Diagnostics.Pop(sponsorable, product, projectPath);
@@ -264,6 +254,24 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
             Diagnostics.ReportDiagnosticOnce(context, diagnostic, sponsorable, product);
             return;
         }
+
+        // We MUST always re-report previously built diagnostics because 
+        // otherwise they go away as soon as they are reported by a real 
+        // build. The IDE re-runs the analyzers at various points and we 
+        // want the real build diagnostics to remain visible since otherwise 
+        // the user can miss what happened. Granted, a message saying the 
+        // build was paused might be misleading since upon reopening VS 
+        // with no build performed yet, a previously created diagnostic 
+        // might be reported again, but that's a small price to pay.
+        // So: DO NOT TRY TO AVOID REPORTING AGAIN ON DTB
+
+        var (insideEditor, designTimeBuild) = ReadOptions(opt);
+
+        // We never report from in non-IDE builds, which *will* invoke analyzers 
+        // and may end up improperly notifying of build pauses when none was 
+        // incurred, actually.
+        if (insideEditor == false)
+            return;
 
         // If this particular build did not generate a new diagnostic (i.e. it was an 
         // incremental build where the project file didn't change at all, we still need 
