@@ -30,8 +30,12 @@ class AdvancedSponsorLinker : SponsorLink
         // NOTE: diagnostics prefix will default to K(zu)S(Sponsorable)L(Lib) > DSLxx
         settings = SponsorLinkSettings.Create("kzu", "AdvancedSponsorableLib", 
             packageId: "SponsorableLib",
-            // This introduces warnings and build pauses right from the start
-            quietDays: -1);
+            // This introduces warnings right from the start. The 
+            // default pauses always start from the second non-quiet day, 
+            // and increase from zero (max pauses) until configured 
+            // max pause, increasing by 1sec (max pause) per additional 
+            // day of usage.
+            quietDays: 0);
         // Here we showcase how to modify the built-in diagnostics to add a custom description.
         settings.SupportedDiagnostics = settings.SupportedDiagnostics
             .Select(x => x.IsKind(DiagnosticKind.UserNotSponsoring) ?
