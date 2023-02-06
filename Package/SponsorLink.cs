@@ -353,14 +353,20 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         var daysOld = (int)DateTime.Now.Subtract(settings.InstallTime.Value).TotalDays;
 
         // Never warn during the quiet days.
-        if (daysOld <= (settings.QuietDays ?? quietDays))
-            return (false, 0, string.Empty);
+        if (daysOld < (settings.QuietDays ?? quietDays))
+            return (false, 0, "");
+
+        // At this point, daysOld is greater than quietDays and greater than 1.
+        var nonQuietDays = daysOld - (settings.QuietDays ?? quietDays);
+        // Turn days pause (starting at 1sec max pause into milliseconds, used for the pause.
+        var daysMaxPause = nonQuietDays * 1000;
 
         // From second day, the max pause will increase from days old until the max pause.
-        return GetPaused(rnd.Next(settings.PauseMin, settings.PauseMax));
+        return GetPaused(rnd.Next(settings.PauseMin, Math.Min(daysMaxPause, settings.PauseMax)));
     }
 
-    static (bool warn, int pause, string suffix) GetPaused(int pause) => (true, pause, ThisAssembly.Strings.BuildPaused(pause));
+    static (bool warn, int pause, string suffix) GetPaused(int pause) 
+        => (true, pause, pause > 0 ? ThisAssembly.Strings.BuildPaused(pause) : "");
 
     static Diagnostic WriteMessage(string sponsorable, string product, string projectDir, Diagnostic diag)
     {
@@ -424,6 +430,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 
     /// <summary>
     /// Provides information about the build that was checked for sponsor linking.
+    /// Used internally only for now.
     /// </summary>
     class BuildInfo
     {

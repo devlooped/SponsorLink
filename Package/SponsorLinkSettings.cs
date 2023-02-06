@@ -86,6 +86,10 @@ public class SponsorLinkSettings
         pauseMax = DefaultMaxPause, 
         int? quietDays = default)
     {
+        if (quietDays < 0)
+            // Throwing would be a backwards incompatible change.
+            quietDays = 0;
+        
         if (diagnosticsIdPrefix == null)
         {
             var sb = new StringBuilder();
