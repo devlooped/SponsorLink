@@ -30,6 +30,7 @@ class AdvancedSponsorLinker : SponsorLink
         // NOTE: diagnostics prefix will default to K(zu)S(Sponsorable)L(Lib) > DSLxx
         settings = SponsorLinkSettings.Create("kzu", "AdvancedSponsorableLib", 
             packageId: "SponsorableLib",
+            // This introduces warnings and build pauses right from the start
             quietDays: -1);
         // Here we showcase how to modify the built-in diagnostics to add a custom description.
         settings.SupportedDiagnostics = settings.SupportedDiagnostics
