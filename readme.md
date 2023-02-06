@@ -107,8 +107,8 @@ Project:
 
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="0.9.1" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
-    <PackageReference Include="Devlooped.SponsorLink" Version="0.7.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" Pack="false" />
+    <PackageReference Include="Devlooped.SponsorLink" Version="0.9.0" />
   </ItemGroup>
   
 </Project>
