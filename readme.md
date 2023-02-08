@@ -130,7 +130,7 @@ namespace SponsorableLib;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 class SponsorLinker : SponsorLink
 {
-    public SponsorLinker() : base("[SPONSORABLE]", "SponsorableLib") 
+    public SponsorLinker() : base("[YOUR_ACCOUNT]", "[YOUR_PROJECT]") 
     { }
 }
 ```
