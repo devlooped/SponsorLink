@@ -46,6 +46,9 @@ We offer initial support for .NET NuGet packages.
 
 [![Version](https://img.shields.io/nuget/vpre/Devlooped.SponsorLink.svg?color=royalblue)](https://www.nuget.org/packages/Devlooped.SponsorLink)
 [![Downloads](https://img.shields.io/nuget/dt/Devlooped.SponsorLink.svg?color=green)](https://www.nuget.org/packages/Devlooped.SponsorLink)
+![Monthly Active Users](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/users&label=monthly%20active%20users&color=brightgreen)
+![Total Projects](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/projects&label=total%20projects&color=blue)
+![Total Accounts](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/accounts&label=sponsor%20accountss&color=FF69B4)
 
 Integration is very straightforward, especially if you use [NuGetizer](https://github.com/devlooped/nugetizer/).
 Your NuGet package needs to add an analyzer/generator assembly/project, which performs the 
