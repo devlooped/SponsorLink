@@ -15,6 +15,10 @@ SponsorLink supports two scenarios:
 
 [Read the announcement](https://www.cazzulino.com/sponsorlink.html) blog post.
 
+![Monthly Active Users](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/users&label=monthly%20active%20users&color=brightgreen)
+![Total Projects](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/projects&label=total%20projects&color=blue)
+![Total Accounts](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/accounts&label=sponsor%20accounts&color=FF69B4)
+
 ## ![](https://avatars.githubusercontent.com/in/281005?s=24&u=20155dd9bc48951a962b40289bf40fd4d0e758e9&v=4) Open source developers
 
 [GitHub Sponsors](https://github.com/sponsors) provides the core functionality to 
