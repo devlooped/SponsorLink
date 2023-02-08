@@ -1,5 +1,9 @@
 # ![](https://github.com/devlooped/SponsorLink/raw/main/assets/img/sponsorlink-32.png) SponsorLink 
 
+![Monthly Active Users](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/users&label=monthly%20active%20users&color=brightgreen)
+![Total Projects](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/projects&label=total%20projects&color=blue)
+![Total Accounts](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/accounts&label=sponsor%20accounts&color=FF69B4)
+
 Integrate [GitHub Sponsors](https://github.com/sponsors) into your libraries so that 
 users can be properly linked to their sponsorship to unlock features or simply get 
 the recognition they deserve for supporting your project. 
@@ -14,10 +18,6 @@ SponsorLink supports two scenarios:
    an active team that can provide support, bug fixes and new features.
 
 [Read the announcement](https://www.cazzulino.com/sponsorlink.html) blog post.
-
-![Monthly Active Users](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/users&label=monthly%20active%20users&color=brightgreen)
-![Total Projects](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/projects&label=total%20projects&color=blue)
-![Total Accounts](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/accounts&label=sponsor%20accounts&color=FF69B4)
 
 ## ![](https://avatars.githubusercontent.com/in/281005?s=24&u=20155dd9bc48951a962b40289bf40fd4d0e758e9&v=4) Open source developers
 
