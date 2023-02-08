@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -6,6 +5,8 @@ using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
 using Azure;
+using Azure.Identity;
+using Azure.Monitor.Query;
 using Devlooped;
 using Devlooped.SponsorLink;
 using Microsoft.Extensions.Configuration;
@@ -27,7 +28,7 @@ public record Misc(ITestOutputHelper Output)
             return;
 
         var container = account.CreateBlobServiceClient().GetBlobContainerClient("sponsorlink");
-        
+
         try
         {
             while (true)
@@ -43,7 +44,7 @@ public record Misc(ITestOutputHelper Output)
                     Thread.Sleep(100);
                 }
             }
-            
+
             var sponsorable = new AccountId("MDEyOk9yZ2FuaXphdGlvbjYxNTMzODE4", "devlooped");
             var sponsor = new AccountId("MDQ6VXNlcjg3OTU5NTQx", "devlooped-bot");
             var registry = new SponsorsRegistry(account, Mock.Of<IEventStream>());
@@ -79,7 +80,7 @@ public record Misc(ITestOutputHelper Output)
         using (var compressor = new DeflateStream(mem, CompressionMode.Compress, true))
         using (var writer = new StreamWriter(compressor))
             writer.Write(payload);
-        
+
         var hash = SHA1.HashData(Encoding.UTF8.GetBytes(payload));
         var big = BigInteger.Abs(new BigInteger(hash));
         Output.WriteLine($"{Encoding.UTF8.GetByteCount(payload)} bytes, {hash.Length} hashed: {Base62.Encode(big)}");
@@ -127,7 +128,7 @@ public record Misc(ITestOutputHelper Output)
 
         if (string.IsNullOrEmpty(accessToken))
             return;
-        
+
         var octo = new GitHubClient(new Octokit.ProductHeaderValue("SponsorLink", new Version(ThisAssembly.Info.Version).ToString(2)))
         {
             Credentials = new Credentials(accessToken)
@@ -216,5 +217,52 @@ public record Misc(ITestOutputHelper Output)
             });
 
         var body = await response.Content.ReadAsStringAsync();
+    }
+
+    [Fact]
+    public async Task QueryLogs()
+    {
+        var creds = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+        {
+        });
+
+        var client = new LogsQueryClient(creds);
+        var kql =
+            """
+            StorageBlobLogs
+            | where TimeGenerated > ago(6d)
+            | where OperationName == "GetBlobProperties"
+            | extend Parts=split(ObjectKey, '/')
+            | extend Project=tostring(Parts[2]), Container=tostring(Parts[3]), Email=tostring(Parts[4])
+            | where Project == "sponsorlink" and Container == "apps"
+            | extend Url=parse_url(Uri)
+            | extend Account=tostring(Url["Query Parameters"]["account"]), 
+                     Product=tostring(Url["Query Parameters"]["product"]), 
+                     Package=tostring(Url["Query Parameters"]["package"]), 
+                     Version=tostring(Url["Query Parameters"]["version"])
+            | where not(isempty(Account)) and not(isempty(Product)) and Account != "kzu" and Account != "sample"
+            | project TimeGenerated, Email, 
+                      Account=iif(isempty(Account), "devlooped", Account),
+                      Product=iif(isempty(Product), "unknown", Product),
+                      Package=iif(isempty(Package), iif(isempty(Product), "unknown", Product), Package),
+                      Version
+            | summarize Count=count() by Account, Product, Package, Version, Email
+            """;
+
+        var result = await client.QueryWorkspaceAsync<LogResult>("b5823173-1be6-4d23-92e6-4d2a4a89ad20", kql,
+            new QueryTimeRange(DateTimeOffset.UtcNow.AddDays(-6), DateTimeOffset.UtcNow));
+
+    }
+
+    public class LogResult
+    //(string? Account, string? Product, string? Package, string? Version, string? Email, long? Count)
+    {
+        public string? Account { get; set; }
+        public string? Product { get; set; }
+        public string? Package { get; set; }
+        public string? Version { get; set; }
+        public string? Email { get; set; }
+        public long? Count { get; set; }
+
     }
 }
