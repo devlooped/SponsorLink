@@ -110,9 +110,10 @@ Project:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NuGetizer" Version="0.9.1" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" Pack="false" />
-    <PackageReference Include="Devlooped.SponsorLink" Version="0.9.0" />
+    <PackageReference Include="NuGetizer" />
+    <!-- Roslyn min version is 4.0.1 -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" />
+    <PackageReference Include="Devlooped.SponsorLink" />
   </ItemGroup>
   
 </Project>
