@@ -13,7 +13,7 @@ public class Stats
     readonly ILogger logger;
 
 
-    public Stats(CloudStorageAccount storageAccount, ILogger logger) 
+    public Stats(CloudStorageAccount storageAccount, ILogger<Stats> logger) 
         => (this.storageAccount, this.logger)
         = (storageAccount, logger);    
 
