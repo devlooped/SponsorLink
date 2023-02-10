@@ -1,0 +1,17 @@
+﻿StorageBlobLogs
+| where TimeGenerated > ago(6d)
+| where OperationName == "GetBlobProperties"
+| extend Parts=split(ObjectKey, '/')
+| extend Project=tostring(Parts[2]), Container=tostring(Parts[3]), Email=tostring(Parts[4])
+| where Project == "sponsorlink" and Container == "apps"
+| extend Url=parse_url(Uri)
+| extend Account=tostring(Url["Query Parameters"]["account"]), 
+         Product=tostring(Url["Query Parameters"]["product"]), 
+         Package=tostring(Url["Query Parameters"]["package"]), 
+         Version=tostring(Url["Query Parameters"]["version"])
+| project TimeGenerated, Email, 
+          Account=iif(isempty(Account), "devlooped", Account),
+          Product=iif(isempty(Product), "unknown", Product),
+          Package=iif(isempty(Package), iif(isempty(Product), "unknown", Product), Package),
+          Version
+| summarize Count=count() by Account, Product, Package, Version, Email
