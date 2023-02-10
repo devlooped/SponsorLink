@@ -133,7 +133,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
                 // Try to locate the right file and get its write time to detect install/restore time
                 var path = x.Right.FirstOrDefault(f => f.PackageId == settings.PackageId)?.Path;
                 if (!string.IsNullOrEmpty(path))
-                    return x.Left.WithInstallTime(File.GetLastWriteTime(path));
+                    return x.Left.WithInstallTime(File.GetCreationTime(path));
 
                 // We won't set an install time, and therefore we'll just start doing pauses 
                 // righ-away with the max configured pause. This will happen for example if 
