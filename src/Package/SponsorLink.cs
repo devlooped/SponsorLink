@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Net.NetworkInformation;
+using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -14,7 +15,15 @@ namespace Devlooped;
 /// </summary>
 public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 {
-    static readonly HttpClient http = new();
+    static readonly TimeSpan NetworkTimeout = TimeSpan.FromMilliseconds(500);
+
+    static readonly HttpClient http = new()
+    {
+        // Customize network timeout so we don't become unusable when target is 
+        // unreachable (i.e. a proxy prevents access)
+        Timeout = NetworkTimeout
+    };
+
     static readonly Random rnd = new();
     static int quietDays = 15;
 
@@ -27,18 +36,18 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
     {
         // Reads settings from storage, best-effort
         http.GetStringAsync("https://cdn.devlooped.com/sponsorlink/settings.ini")
-        .ContinueWith(t =>
-        {
-            var values = t.Result
-                .Split(new[] { "\r\n", "\r" }, StringSplitOptions.RemoveEmptyEntries)
-                .Where(x => x[0] != '#')
-                .Select(x => x.Split(new[] { '=' }, 2))
-                .ToDictionary(x => x[0].Trim(), x => x[1].Trim());
+            .ContinueWith(t =>
+            {
+                var values = t.Result
+                    .Split(new[] { "\r\n", "\r" }, StringSplitOptions.RemoveEmptyEntries)
+                    .Where(x => x[0] != '#')
+                    .Select(x => x.Split(new[] { '=' }, 2))
+                    .ToDictionary(x => x[0].Trim(), x => x[1].Trim());
 
-            if (values.TryGetValue("quiet", out var value) && int.TryParse(value, out var days))
-                quietDays = days;
+                if (values.TryGetValue("quiet", out var value) && int.TryParse(value, out var days))
+                    quietDays = days;
             
-        }, TaskContinuationOptions.OnlyOnRanToCompletion);
+            }, TaskContinuationOptions.OnlyOnRanToCompletion);
     }
 
     /// <summary>
@@ -217,7 +226,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         var installed = UrlExists($"https://cdn.devlooped.com/sponsorlink/apps/{email}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
         var sponsoring = UrlExists($"https://cdn.devlooped.com/sponsorlink/{sponsorable}/{email}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
 
-        // Faulted HTTP HEAD request checking for url?
+        // Faulted HTTP HEAD request checking for url? Other network issues? Timeout?
         if (installed == null || sponsoring == null)
             return;
 
@@ -398,7 +407,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 
             // Couldn't run git config, so we can't check for sponsorship, no email to check.
             if (proc.ExitCode != 0)
-                return null;
+                return nuxll;
 
             return proc.StandardOutput.ReadToEnd().Trim();
         }
@@ -424,7 +433,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
                 ev.Set();
             });
 
-        ev.Wait(cancellation);
+        ev.Wait(NetworkTimeout, cancellation);
         return exists;
     }
 
