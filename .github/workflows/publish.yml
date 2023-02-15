@@ -45,6 +45,7 @@ jobs:
           $tag = $($env:GITHUB_REF.Replace('refs/tags/', ''))
           $body = gh release view $tag --json body | convertfrom-json | select -first 1 -expandproperty body
           $body = "# $tag`r`n$body"
+          gh auth status
           gh repo clone devlooped/SponsorLink
           cd .\SponsorLink
           $($body; Get-Content .\releases.md) | Set-Content .\releases.md          
