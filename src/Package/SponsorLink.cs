@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
@@ -16,22 +17,7 @@ namespace Devlooped;
 public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 {
     static readonly TimeSpan NetworkTimeout = TimeSpan.FromMilliseconds(250);
-
-    static readonly HttpClient http = new(
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework") ?
-        // When running on Windows + .NET Framework, this guarantees proper proxy settings behavior
-        new WinHttpHandler
-        {
-            ReceiveDataTimeout = NetworkTimeout,
-            ReceiveHeadersTimeout = NetworkTimeout,
-            SendTimeout = NetworkTimeout
-        } :
-        new HttpClientHandler())
-    {
-        // Customize network timeout so we don't become unusable when target is 
-        // unreachable (i.e. a proxy prevents access)
-        Timeout = NetworkTimeout
-    };
+    static readonly HttpClient http;
 
     static readonly Random rnd = new();
     static int quietDays = 15;
@@ -43,6 +29,41 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 
     static SponsorLink()
     {
+        var proxy = WebRequest.GetSystemWebProxy();
+        var useProxy = !proxy.IsBypassed(new Uri("https://cdn.devlooped.com"));
+
+        HttpMessageHandler handler;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"))
+        {
+            // When running on Windows + .NET Framework, this guarantees proper proxy settings behavior automatically
+            handler = new WinHttpHandler
+            {
+                ReceiveDataTimeout = NetworkTimeout,
+                ReceiveHeadersTimeout = NetworkTimeout,
+                SendTimeout = NetworkTimeout
+            };
+        }
+        else if (useProxy)
+        {
+            handler = new HttpClientHandler
+            {
+                UseProxy = true,
+                Proxy = proxy,
+                DefaultProxyCredentials = CredentialCache.DefaultCredentials
+            };
+        }
+        else
+        {
+            handler = new HttpClientHandler();
+        }
+
+        http = new(handler)
+        {
+            // Customize network timeout so we don't become unusable when target is 
+            // unreachable (i.e. a proxy prevents access or misconfigured)
+            Timeout = NetworkTimeout
+        };
+        
         // Reads settings from storage, best-effort
         http.GetStringAsync("https://cdn.devlooped.com/sponsorlink/settings.ini")
             .ContinueWith(t =>
