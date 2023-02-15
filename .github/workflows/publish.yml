@@ -22,12 +22,14 @@ jobs:
           fetch-depth: 0
 
       - name: 🙏 build
-        run: dotnet build -m:1 -p:version="$($env:GITHUB_REF.Replace('refs/tags/', '').TrimStart('v'))"
+        run: dotnet build -m:1
 
       - name: 🧪 test
+        working-directory: src/Tests
         run: dotnet test --filter SponsorLink=true
         
       - name: 📦 pack
+        working-directory: src/Package
         run: dotnet pack -m:1 -p:version="$($env:GITHUB_REF.Replace('refs/tags/', '').TrimStart('v'))" -p:PackageReleaseNotes="https://github.com/devlooped/SponsorLink/blob/main/releases.md#$($env:GITHUB_REF.Replace('refs/tags/', '').Replace('.', ''))"
 
       - name: 🤖 defaults
