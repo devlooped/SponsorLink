@@ -5,7 +5,7 @@
   configured pause
 * Add 250ms network timeout to speed up HTTP request failures
 * Add proxy support for Windows/.NET Framework
-* 
+
 ### 🐛 Fixed bugs
 * Fix detection of install time for package to start quiet days countdown
 
