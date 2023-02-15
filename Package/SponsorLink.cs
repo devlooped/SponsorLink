@@ -15,7 +15,7 @@ namespace Devlooped;
 /// </summary>
 public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 {
-    static readonly TimeSpan NetworkTimeout = TimeSpan.FromMilliseconds(500);
+    static readonly TimeSpan NetworkTimeout = TimeSpan.FromMilliseconds(250);
 
     static readonly HttpClient http = new(
         RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework") ?
@@ -416,7 +416,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 
             // Couldn't run git config, so we can't check for sponsorship, no email to check.
             if (proc.ExitCode != 0)
-                return nuxll;
+                return null;
 
             return proc.StandardOutput.ReadToEnd().Trim();
         }
