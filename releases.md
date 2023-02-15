@@ -1,8 +1,7 @@
 # v0.9.4
 ## What's Changed
 ### ✨ Implemented enhancements
-* After quiet days passed, increase random pause by 1sec/day until max
-  configured pause
+* After quiet days passed, increase random pause by 1sec/day until max configured pause
 * Add 250ms network timeout to speed up HTTP request failures
 * Add proxy support for Windows/.NET Framework
 
@@ -19,8 +18,7 @@
 ## What's Changed
 ### ✨ Implemented enhancements
 * Track localized resources from upstream for easier translation
-* Further optimize diagnostic reporting for multiple reports for 
-  same sponsorable/project
+* Further optimize diagnostic reporting for multiple reports for same sponsorable/project
 * Don't issue warnings during first two weeks after install (quiet days)
 * Improve devlooped thanks page for SponsorApp/Admin installations
 * Support reporting package id/version for a sponsorable project
@@ -40,10 +38,8 @@
 # v0.5.0
 ## What's Changed
 ### ✨ Implemented enhancements
-* Honor compiler-based supressions: allows skipping Info diagnostic with 
-  `[assembly: SuppressMessage("SponsorLink", "SL04")]` for example.
-* Deduplicate diagnostics that are for the same sponsorable and project 
-  (i.e. using multiple ThisAssembly.* packages)
+* Honor compiler-based supressions: allows skipping Info diagnostic with `[assembly: SuppressMessage("SponsorLink", "SL04")]` for example.
+* Deduplicate diagnostics that are for the same sponsorable and project (i.e. using multiple ThisAssembly.* packages)
 
 # v0.3.0
 ## What's Changed
@@ -51,8 +47,7 @@
 * Improve detection of Rider
 * Improve detection of disabled SponsorLink warnings and surface via MSBuild
 * Downgrade Roslyn dependency to enable running on VS2022 RTM and newer
-* Fix rendering of diagnostics links by moving the actual diagnostic reporting 
-  to an analyzer
+* Fix rendering of diagnostics links by moving the actual diagnostic reporting to an analyzer
 ### 🐛 Fixed bugs
 * Info (thanks) diagnostics aren't properly reported from source generators. 
 
