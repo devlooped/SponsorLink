@@ -17,7 +17,16 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 {
     static readonly TimeSpan NetworkTimeout = TimeSpan.FromMilliseconds(500);
 
-    static readonly HttpClient http = new()
+    static readonly HttpClient http = new(
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework") ?
+        // When running on Windows + .NET Framework, this guarantees proper proxy settings behavior
+        new WinHttpHandler
+        {
+            ReceiveDataTimeout = NetworkTimeout,
+            ReceiveHeadersTimeout = NetworkTimeout,
+            SendTimeout = NetworkTimeout
+        } :
+        new HttpClientHandler())
     {
         // Customize network timeout so we don't become unusable when target is 
         // unreachable (i.e. a proxy prevents access)
