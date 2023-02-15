@@ -254,10 +254,12 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 
         // Check app install and sponsoring status
         var installed = UrlExists($"https://cdn.devlooped.com/sponsorlink/apps/{email}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
+        // Timeout, network error, proxy config issue, etc., exit quickly
+        if (installed == null)
+            return;
+        
         var sponsoring = UrlExists($"https://cdn.devlooped.com/sponsorlink/{sponsorable}/{email}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
-
-        // Faulted HTTP HEAD request checking for url? Other network issues? Timeout?
-        if (installed == null || sponsoring == null)
+        if (sponsoring == null)
             return;
 
         var kind =
