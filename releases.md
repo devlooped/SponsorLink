@@ -1,3 +1,11 @@
+# v0.9.5
+## What's Changed
+### ✨ Implemented enhancements
+* Further improve proxy support for non-Win/VS scenarios
+* Automate publishing of release notes
+
+### 🐛 Fixed bugs
+* Halve network error timeout by exiting early on first failure when checking for installed GH app
 # v0.9.4
 ## What's Changed
 ### ✨ Implemented enhancements
