@@ -16,9 +16,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: 🤘 checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with: 
-          submodules: recursive
           fetch-depth: 0
 
       - name: 🙏 build
@@ -35,10 +34,18 @@ jobs:
       - name: 🤖 defaults
         uses: devlooped/actions-bot@v1
         with:
-          name: ${{ secrets.BOT_NAME }}
-          email: ${{ secrets.BOT_EMAIL }}
+          name: devlooped-bot
           gh_token: ${{ secrets.GH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🤘 checkout
+        uses: actions/checkout@v3
+        with: 
+          path: SponsorLink
+          repository: devlooped/SponsorLink
+          ref: main
+          fetch-depth: 0
+          token: ${{ env.GH_TOKEN }}
                   
       - name: 📝 release notes
         run: |
@@ -46,7 +53,6 @@ jobs:
           $body = gh release view $tag --json body | convertfrom-json | select -first 1 -expandproperty body
           $body = "# $tag`r`n$body"
           gh auth status
-          gh repo clone devlooped/SponsorLink
           cd .\SponsorLink
           $($body; Get-Content .\releases.md) | Set-Content .\releases.md          
           git add releases.md
