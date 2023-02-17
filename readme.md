@@ -4,6 +4,12 @@ Integrate [GitHub Sponsors](https://github.com/sponsors) into your libraries so 
 users can be properly linked to their sponsorship to unlock features or simply get 
 the recognition they deserve for supporting your project. 
 
+
+![Monthly Active Users](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/users&label=monthly+active+users&color=brightgreen)
+![Total Projects](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/projects&label=monthly+active+projects&color=blue)
+![Total Accounts](https://img.shields.io/endpoint.svg?url=https://sponsorlink.devlooped.com/stats/accounts&label=sponsor+accounts&color=FF69B4)
+
+
 SponsorLink supports two scenarios:
 
 1. Open source project developers or maintainers who are looking to incentivize 
