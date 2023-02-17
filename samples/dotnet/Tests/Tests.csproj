@@ -5,7 +5,8 @@
     <!-- Uncomment to see experience when user attempts to disable SL warnings -->
     <!--<NoWarn>KSL03</NoWarn>-->
     <!-- Allows running SL checks while debugging Roslyn component (otherwise, it's run as a design-time build -->
-    <SponsorLinkVersion Condition="'$(SponsorLinkVersion)' == ''">0.8.0</SponsorLinkVersion>
+    <DebugSponsorLink>true</DebugSponsorLink>
+    <SponsorLinkVersion Condition="'$(SponsorLinkVersion)' == ''">0.9.5</SponsorLinkVersion>
   </PropertyGroup>
 
   <ItemGroup>
