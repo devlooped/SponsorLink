@@ -1,10 +1,10 @@
 StorageBlobLogs
-| where OperationName == "GetBlobProperties"
+| where OperationName == "GetBlob" or OperationName == "GetBlobProperties"
 | extend Parts=split(ObjectKey, '/')
 | extend Project=tostring(Parts[2]), Container=tostring(Parts[3]), Email=tostring(Parts[4])
 | where Project == "sponsorlink"
 | extend Url=parse_url(Uri)
 | extend Account=tostring(Url["Query Parameters"]["account"])
-| where Account != "" and Account != "kzu" and Account != "sample"
+| where Account != "" and Account != "kzu" and Account != "sample" and Account != "test"
 | summarize by Account
 | count
