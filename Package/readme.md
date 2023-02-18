@@ -49,7 +49,10 @@ Just Work. An example analyzer project referenced by your main library is typica
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="0.9.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
-    <PackageReference Include="Devlooped.SponsorLink" Version="0.1.0" />
+    <!-- The added PackInclude/PackExclude make sure the right dependency is packed for users -->
+    <PackageReference Include="Devlooped.SponsorLink" Version="0.9.6" 
+                      PackInclude="build,analyzers" 
+                      PackExclude="compile,native,runtime" />
   </ItemGroup>
 
 </Project>
