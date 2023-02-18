@@ -58,3 +58,13 @@
 	sha = da76fbaadfb524ea6c58715f60b4d9c52e152977
 	etag = 9c3302f054c55692be6fbae25f0f1af9b96803a40144dcef64885a9da7cb562c
 	weak
+[file "src/SponsorLink/System/Base62.cs"]
+	url = https://github.com/devlooped/catbag/blob/main/System/Base62.cs
+	sha = 43712304cdfff2c34ba01197cc2ccc0e16e7af08
+	etag = 045b9e458f11f846ae9a3979b8122c68173405fb5451083d4993f94004e60e76
+	weak
+[file "src/Package/System/Base62.cs"]
+	url = https://github.com/devlooped/catbag/blob/main/System/Base62.cs
+	sha = 43712304cdfff2c34ba01197cc2ccc0e16e7af08
+	etag = 045b9e458f11f846ae9a3979b8122c68173405fb5451083d4993f94004e60e76
+	weak
