@@ -1,3 +1,8 @@
+# v0.9.6
+## What's Changed
+### ✨ Implemented enhancements
+* Protect user personal data by hashing their email
+
 # v0.9.5
 ## What's Changed
 ### ✨ Implemented enhancements
