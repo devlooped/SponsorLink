@@ -115,7 +115,10 @@ Project:
     <PackageReference Include="NuGetizer" />
     <!-- Roslyn min version is 4.0.1 -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" />
-    <PackageReference Include="Devlooped.SponsorLink" />
+    <!-- Optimal packing by only consuming build+analyzers as dependency -->
+    <PackageReference Include="Devlooped.SponsorLink"
+                      PackInclude="build,analyzers" 
+                      PackExclude="compile,native,runtime"  />
   </ItemGroup>
   
 </Project>
