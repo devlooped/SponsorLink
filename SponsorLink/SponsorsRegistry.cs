@@ -1,4 +1,7 @@
-﻿using Azure.Storage.Blobs;
+﻿using System.Numerics;
+using System.Security.Cryptography;
+using System.Text;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -33,9 +36,15 @@ public class SponsorsRegistry
 
         foreach (var email in emails)
         {
-            var blob = container.GetBlobClient($"apps/{email}");
+            var data = SHA256.HashData(Encoding.UTF8.GetBytes(email));
+            var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
+
+            var blob = container.GetBlobClient($"apps/{hash}");
             await blob.UploadAsync(new MemoryStream(), headers);
-            await blob.SetTagsAsync(tags);
+            await blob.SetTagsAsync(new Dictionary<string, string>(tags)
+            {
+                {  "Email", email } 
+            });
             await events.PushAsync(new AppRegistered(account.Id, account.Login, email));
         }
     }
@@ -72,9 +81,15 @@ public class SponsorsRegistry
 
         foreach (var email in emails)
         {
-            var blob = container.GetBlobClient($"{sponsorable.Login}/{email}");
+            var data = SHA256.HashData(Encoding.UTF8.GetBytes(email));
+            var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
+
+            var blob = container.GetBlobClient($"{sponsorable.Login}/{hash}");
             await blob.UploadAsync(new MemoryStream(), headers);
-            await blob.SetTagsAsync(tags);
+            await blob.SetTagsAsync(new Dictionary<string, string>(tags)
+            {
+                { "Email", email } ,
+            });
             await events.PushAsync(new SponsorRegistered(sponsorable.Id, sponsor.Id, email));
         }
     }

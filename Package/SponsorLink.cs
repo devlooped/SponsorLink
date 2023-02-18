@@ -1,8 +1,12 @@
-﻿using System.Collections.Immutable;
+﻿using System.Buffers.Text;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -252,13 +256,16 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         if (string.IsNullOrEmpty(email))
             return;
 
+        var data = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(email));
+        var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
+
         // Check app install and sponsoring status
-        var installed = UrlExists($"https://cdn.devlooped.com/sponsorlink/apps/{email}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
+        var installed = UrlExists($"https://cdn.devlooped.com/sponsorlink/apps/{hash}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
         // Timeout, network error, proxy config issue, etc., exit quickly
         if (installed == null)
             return;
         
-        var sponsoring = UrlExists($"https://cdn.devlooped.com/sponsorlink/{sponsorable}/{email}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
+        var sponsoring = UrlExists($"https://cdn.devlooped.com/sponsorlink/{sponsorable}/{hash}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
         if (sponsoring == null)
             return;
 
