@@ -1,3 +1,8 @@
+# v0.9.7
+## What's Changed
+### ✨ Implemented enhancements
+* Report SponsorLink version running the check too by @kzu: this allows detecting older versions of SponsorLink 
+   in use in the wild, which might help identify packages that might need updating by contacting the owners.
 # v0.9.6
 ## What's Changed
 ### ✨ Implemented enhancements
