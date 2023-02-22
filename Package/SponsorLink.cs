@@ -260,12 +260,12 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
 
         // Check app install and sponsoring status
-        var installed = UrlExists($"https://cdn.devlooped.com/sponsorlink/apps/{hash}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
+        var installed = UrlExists($"https://cdn.devlooped.com/sponsorlink/apps/{hash}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}&sl={ThisAssembly.Info.InformationalVersion}", context.CancellationToken);
         // Timeout, network error, proxy config issue, etc., exit quickly
         if (installed == null)
             return;
         
-        var sponsoring = UrlExists($"https://cdn.devlooped.com/sponsorlink/{sponsorable}/{hash}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}", context.CancellationToken);
+        var sponsoring = UrlExists($"https://cdn.devlooped.com/sponsorlink/{sponsorable}/{hash}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}&sl={ThisAssembly.Info.InformationalVersion}", context.CancellationToken);
         if (sponsoring == null)
             return;
 
