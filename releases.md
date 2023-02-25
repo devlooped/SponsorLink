@@ -1,3 +1,7 @@
+# v0.9.8
+## What's Changed
+### ✨ Implemented enhancements
+* Allow checking sponsor status directly via API for non-analyzer scenarios by @kzu 
 # v0.9.7
 ## What's Changed
 ### ✨ Implemented enhancements
