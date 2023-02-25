@@ -5,7 +5,9 @@ using Microsoft.Extensions.Configuration;
 
 namespace Devlooped.SponsorLink;
 
+#pragma warning disable xUnit1013 // Public method should be marked as test
 public record RunBadgeQueries(ITestOutputHelper Output)
+#pragma warning restore xUnit1013 // Public method should be marked as test
 {
     [Fact]
     public Task users() => RunQuery();
