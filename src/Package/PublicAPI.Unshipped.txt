@@ -1,1 +1,6 @@
-﻿
+﻿Devlooped.SponsorCheck
+Devlooped.SponsorStatus
+Devlooped.SponsorStatus.AppMissing = 0 -> Devlooped.SponsorStatus
+Devlooped.SponsorStatus.NotSponsoring = 1 -> Devlooped.SponsorStatus
+Devlooped.SponsorStatus.Sponsoring = 2 -> Devlooped.SponsorStatus
+static Devlooped.SponsorCheck.CheckAsync(string! workingDirectory, string! sponsorable, string! product, string? packageId = null, string? version = null, System.Net.Http.HttpClient? http = null) -> System.Threading.Tasks.Task<Devlooped.SponsorStatus?>!

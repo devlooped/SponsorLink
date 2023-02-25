@@ -82,8 +82,8 @@ public class SponsorLinkSettings
         string? packageId = default,
         string? version = default,
         string? diagnosticsIdPrefix = default,
-        int pauseMin = 0, int 
-        pauseMax = DefaultMaxPause, 
+        int pauseMin = 0, 
+        int pauseMax = DefaultMaxPause, 
         int? quietDays = default)
     {
         if (quietDays < 0)

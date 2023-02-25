@@ -1,12 +1,5 @@
-﻿using System.Buffers.Text;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -20,6 +13,9 @@ namespace Devlooped;
 /// </summary>
 public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 {
+    // We use a smaller timeout since analyzer/generator will run more frequently 
+    // so we have more than one chance to get the right status, eventually. 
+    // This is 1/4 of the HttpClientFactory default timeout, used for direct API calls.
     static readonly TimeSpan NetworkTimeout = TimeSpan.FromMilliseconds(250);
     static readonly HttpClient http;
 
@@ -33,40 +29,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 
     static SponsorLink()
     {
-        var proxy = WebRequest.GetSystemWebProxy();
-        var useProxy = !proxy.IsBypassed(new Uri("https://cdn.devlooped.com"));
-
-        HttpMessageHandler handler;
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"))
-        {
-            // When running on Windows + .NET Framework, this guarantees proper proxy settings behavior automatically
-            handler = new WinHttpHandler
-            {
-                ReceiveDataTimeout = NetworkTimeout,
-                ReceiveHeadersTimeout = NetworkTimeout,
-                SendTimeout = NetworkTimeout
-            };
-        }
-        else if (useProxy)
-        {
-            handler = new HttpClientHandler
-            {
-                UseProxy = true,
-                Proxy = proxy,
-                DefaultProxyCredentials = CredentialCache.DefaultCredentials
-            };
-        }
-        else
-        {
-            handler = new HttpClientHandler();
-        }
-
-        http = new(handler)
-        {
-            // Customize network timeout so we don't become unusable when target is 
-            // unreachable (i.e. a proxy prevents access or misconfigured)
-            Timeout = NetworkTimeout
-        };
+        http = HttpClientFactory.Create(NetworkTimeout);
         
         // Reads settings from storage, best-effort
         http.GetStringAsync("https://cdn.devlooped.com/sponsorlink/settings.ini")
@@ -247,33 +210,30 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         if (state.InsideEditor == false)
             return;
 
-        // If there is no network at all, don't do anything.
-        if (!NetworkInterface.GetIsNetworkAvailable())
+        var ev = new ManualResetEventSlim();
+        SponsorStatus? status = default;
+
+        SponsorCheck.CheckAsync(Path.GetDirectoryName(state.ProjectPath), settings.Sponsorable, settings.Product, settings.PackageId, settings.Version, http)
+            .ContinueWith(t =>
+            {
+                if (t.Status == TaskStatus.RanToCompletion)
+                    status = t.Result;
+
+                ev.Set();
+            });
+
+        ev.Wait(NetworkTimeout, context.CancellationToken);
+
+        if (status == null)
             return;
 
-        var email = GetEmail(Path.GetDirectoryName(state.ProjectPath));
-        // No email configured in git. Weird.
-        if (string.IsNullOrEmpty(email))
-            return;
-
-        var data = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(email));
-        var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
-
-        // Check app install and sponsoring status
-        var installed = UrlExists($"https://cdn.devlooped.com/sponsorlink/apps/{hash}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}&sl={ThisAssembly.Info.InformationalVersion}", context.CancellationToken);
-        // Timeout, network error, proxy config issue, etc., exit quickly
-        if (installed == null)
-            return;
+        var kind = status.Value switch
+        {
+            SponsorStatus.AppMissing => DiagnosticKind.AppNotInstalled,
+            SponsorStatus.NotSponsoring => DiagnosticKind.UserNotSponsoring,
+            _ => DiagnosticKind.Thanks,
+        };
         
-        var sponsoring = UrlExists($"https://cdn.devlooped.com/sponsorlink/{sponsorable}/{hash}?account={sponsorable}&product={product}&package={settings.PackageId}&version={settings.Version}&sl={ThisAssembly.Info.InformationalVersion}", context.CancellationToken);
-        if (sponsoring == null)
-            return;
-
-        var kind =
-            installed == false ? DiagnosticKind.AppNotInstalled :
-            sponsoring == false ? DiagnosticKind.UserNotSponsoring :
-            DiagnosticKind.Thanks;
-
         // If the given kind was already reported, no-op.
         if (Diagnostics.TryPeek(sponsorable, product, state.ProjectPath, out var diagnostic) &&
             diagnostic != null && diagnostic.Descriptor.IsKind(kind))
@@ -429,51 +389,6 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         File.WriteAllText(Path.Combine(objDir, $"{diag.Id}.{diag.Severity}.txt"), diag.GetMessage());
         
         return diag;
-    }
-
-    static string? GetEmail(string workingDirectory)
-    {
-        try
-        {
-            var proc = Process.Start(new ProcessStartInfo("git", "config --get user.email")
-            {
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WorkingDirectory = workingDirectory
-            });
-            proc.WaitForExit();
-
-            // Couldn't run git config, so we can't check for sponsorship, no email to check.
-            if (proc.ExitCode != 0)
-                return null;
-
-            return proc.StandardOutput.ReadToEnd().Trim();
-        }
-        catch
-        {
-            // Git not even installed.
-        }
-
-        return null;
-    }
-
-    static bool? UrlExists(string url, CancellationToken cancellation)
-    {
-        var ev = new ManualResetEventSlim();
-        bool? exists = null;
-        // We perform a GET since that can be cached by the CDN, but HEAD cannot.
-        http.GetAsync(url, cancellation)
-            .ContinueWith(t =>
-            {
-                if (!t.IsFaulted)
-                    exists = t.IsCompleted && t.Result.IsSuccessStatusCode;
-
-                ev.Set();
-            });
-
-        ev.Wait(NetworkTimeout, cancellation);
-        return exists;
     }
 
     /// <summary>
