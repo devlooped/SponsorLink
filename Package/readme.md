@@ -58,6 +58,9 @@ Just Work. An example analyzer project referenced by your main library is typica
 </Project>
 ```
 
+> NOTE: please update your `PackageReference` as shown above to avoid introducing a downstream 
+> dependency for your library users.
+
 
 ## How it works
 
