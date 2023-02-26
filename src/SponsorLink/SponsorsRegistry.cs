@@ -44,7 +44,7 @@ public class SponsorsRegistry
             await blob.UploadAsync(new MemoryStream(), headers);
             await blob.SetTagsAsync(new Dictionary<string, string>(tags)
             {
-                {  "Email", HttpUtility.UrlEncode(email) } 
+                {  "Email", Convert.ToBase64String(Encoding.UTF8.GetBytes(email)) } 
             });
             await events.PushAsync(new AppRegistered(account.Id, account.Login, email));
         }
@@ -89,7 +89,7 @@ public class SponsorsRegistry
             await blob.UploadAsync(new MemoryStream(), headers);
             await blob.SetTagsAsync(new Dictionary<string, string>(tags)
             {
-                {  "Email", HttpUtility.UrlEncode(email) }
+                {  "Email", Convert.ToBase64String(Encoding.UTF8.GetBytes(email)) }
             });
             await events.PushAsync(new SponsorRegistered(sponsorable.Id, sponsor.Id, email));
         }
