@@ -39,53 +39,6 @@ infrastructure to implement it:
 
 This project provides the plumbing for you, so you can just focus on your oss library :).
 
-Setting up SponsorLink for your sponsor account involves the following steps:
-
-1. [Sponsor Devlooped](https://github.com/sponsors/devlooped): you will need to have 
-   an active monthly sponsorship to use SponsorLink on an ongoing basis. You can try 
-   it with a one-month subs too. There is no minimum tier (for now?), we want this to 
-   be accessible to as many oss developers as possible.
-2. Install the [SponsorLink Admin](https://github.com/apps/sponsorlink-admin) GitHub
-   app: this will "link" your sponsorable account with your sponsorship.
-3. Email sponsorlink@devlooped.com to request your shared secret to secure your webhooks 
-   with SponsorLink.
-4. Add a Sponsors webhook from your dashboard at `https://github.com/sponsors/[SPONSORABLE]/dashboard/webhooks` with the following values:
-   * Payload URL: `https://sponsorlink.devlooped.com/sponsor/[SPONSORABLE]`
-   * Content type: `application/json`
-   * Secret: the secret received from us via email.
-5. *Only* if you have existing sponsors: right now, [GitHub apps cannot access the sponsors API](https://github.com/orgs/community/discussions/44226), so we'll need to get them from you via email until 
-   that's fixed. Email sponsorlink@devlooped.com with the response of running the following 
-   GraphQL query at https://docs.github.com/en/graphql/overview/explorer:
-   ```
-   query { 
-     organization(login: "[SPONSORABLE]") {
-       id
-       login
-       sponsorshipsAsMaintainer(first: 100, orderBy: {field: CREATED_AT, direction: ASC}, includePrivate: true) {
-         nodes {
-           createdAt
-           isOneTimePayment
-           sponsorEntity {
-             ... on Organization {
-               id
-               login
-             }
-             ... on User {
-               id
-               login
-             }
-           }
-           tier {
-             monthlyPriceInDollars
-           }
-         }
-       }
-     }
-   }
-   ```
-   We will run a one-time process to link the reported sponsorships with your sponsorable account.
-   Whenever GitHub adds support for querying this information, this step will no longer be necessary.
-
 Integrating into your OSS project depends on the kind of library you provide. 
 We offer initial support for .NET NuGet packages.
 
@@ -98,7 +51,7 @@ Integration is very straightforward, especially if you use [NuGetizer](https://g
 Your NuGet package needs to add an analyzer/generator assembly/project, which performs the 
 SponsorLink check during compilation. 
 
-The following is an example analyzer that performs the sponsor link check:
+The following is an example analyzer that performs the SponsorLink check:
 
 Project:
 ```xml
@@ -108,21 +61,42 @@ Project:
     <PackageId>SponsorableLib</PackageId>
     <PackFolder>analyzers/dotnet</PackFolder>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NuGetizer" />
     <!-- Roslyn min version is 4.0.1 -->
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Pack="false" />
-    <!-- Optimal packing by only consuming build+analyzers as dependency -->
-    <PackageReference Include="Devlooped.SponsorLink"
-                      PackInclude="build,analyzers" 
-                      PackExclude="compile,native,runtime"  />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" Pack="false" />
+    <PackageReference Include="Devlooped.SponsorLink" />
   </ItemGroup>
   
 </Project>
 ```
+
+> NOTE: NuGetizer will take care of generating the right dependency entry for SponsorLink,
+> avoiding a downstream (library) reference for consumers.
+
+![nugetizer output for sample](assets/img/dotnet.png)
+
+If you are *not* using [NuGetizer](https://nuget.org/packages/nugetizer) for packing, 
+make sure your `.nuspec` contains the proper `include/exclude` attributes for the 
+SponsorLink [dependency](https://learn.microsoft.com/en-us/nuget/reference/nuspec#dependencies-element):
+
+```xml
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    ...
+    <dependencies>
+      <group targetFramework="[TF]">
+        <dependency id="Devlooped.SponsorLink" version="[version]" 
+                    include="build,analyzers" 
+                    exclude="compile,native,runtime" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>
+```
+
 
 Generator:
 ```csharp
@@ -175,6 +149,55 @@ we also support localized versions:
    ![Screenshot of sample analyzer node in english](/assets/img/VS-LOC-es.png)
 
 Please consider contributing translations by adding the relevant resource file under the [loc](/loc) folder.
+
+### Registering with SponsorLink
+
+Setting up SponsorLink for your sponsor account involves the following steps:
+
+1. [Sponsor Devlooped](https://github.com/sponsors/devlooped): you will need to have 
+   an active monthly sponsorship to use SponsorLink on an ongoing basis. You can try 
+   it with a one-month subs too. There is no minimum tier (for now?), we want this to 
+   be accessible to as many oss developers as possible.
+2. Install the [SponsorLink Admin](https://github.com/apps/sponsorlink-admin) GitHub
+   app: this will "link" your sponsorable account with your sponsorship.
+3. Email sponsorlink@devlooped.com to request your shared secret to secure your webhooks 
+   with SponsorLink.
+4. Add a Sponsors webhook from your dashboard at `https://github.com/sponsors/[SPONSORABLE]/dashboard/webhooks` with the following values:
+   * Payload URL: `https://sponsorlink.devlooped.com/sponsor/[SPONSORABLE]`
+   * Content type: `application/json`
+   * Secret: the secret received from us via email.
+5. *Only* if you have existing sponsors: right now, [GitHub apps cannot access the sponsors API](https://github.com/orgs/community/discussions/44226), so we'll need to get them from you via email until 
+   that's fixed. Email sponsorlink@devlooped.com with the response of running the following 
+   GraphQL query at https://docs.github.com/en/graphql/overview/explorer:
+   ```
+   query { 
+     organization(login: "[SPONSORABLE]") {
+       id
+       login
+       sponsorshipsAsMaintainer(first: 100, orderBy: {field: CREATED_AT, direction: ASC}, includePrivate: true) {
+         nodes {
+           createdAt
+           isOneTimePayment
+           sponsorEntity {
+             ... on Organization {
+               id
+               login
+             }
+             ... on User {
+               id
+               login
+             }
+           }
+           tier {
+             monthlyPriceInDollars
+           }
+         }
+       }
+     }
+   }
+   ```
+   We will run a one-time process to link the reported sponsorships with your sponsorable account.
+   Whenever GitHub adds support for querying this information, this step will no longer be necessary.
 
 
 ## ![](https://avatars.githubusercontent.com/in/279204?s=24&u=d13eed8cef2b965c8bb34f6298b4edac31688c5a&v=4) Open source consumers
