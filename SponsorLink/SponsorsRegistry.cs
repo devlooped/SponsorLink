@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
+using System.Web;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,7 +44,7 @@ public class SponsorsRegistry
             await blob.UploadAsync(new MemoryStream(), headers);
             await blob.SetTagsAsync(new Dictionary<string, string>(tags)
             {
-                {  "Email", email } 
+                {  "Email", HttpUtility.UrlEncode(email) } 
             });
             await events.PushAsync(new AppRegistered(account.Id, account.Login, email));
         }
@@ -88,7 +89,7 @@ public class SponsorsRegistry
             await blob.UploadAsync(new MemoryStream(), headers);
             await blob.SetTagsAsync(new Dictionary<string, string>(tags)
             {
-                { "Email", email } ,
+                {  "Email", HttpUtility.UrlEncode(email) }
             });
             await events.PushAsync(new SponsorRegistered(sponsorable.Id, sponsor.Id, email));
         }
