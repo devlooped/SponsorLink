@@ -1,3 +1,7 @@
+# v0.9.9
+## What's Changed
+### ✨ Implemented enhancements
+* Set default pack include/exclude when using NuGetizer for packing by @kzu
 # v0.9.8
 ## What's Changed
 ### ✨ Implemented enhancements
