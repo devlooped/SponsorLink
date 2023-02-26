@@ -64,6 +64,16 @@
     <!-- Always show info, since otherwise it's typically not visible anywhere, and we want the Thanks to be seen :) -->
     <Message Text="@(SponsorLinkMessageLine, '')" Importance="normal" Condition="$(SponsorLinkFilename.Contains('.Info.'))" />
   </Target>
-  
+
+  <Target Name="SponsorLinkPackDefaults" BeforeTargets="InferPackageContents;GetPackageContents">
+    <ItemGroup>
+      <PackageReference Update="Devlooped.SponsorLink"
+                        Condition="'%(PackageReference.PackInclude)' == ''"
+                        PackInclude="build,analyzer" />
+      <PackageReference Update="Devlooped.SponsorLink"
+                        Condition="'%(PackageReference.PackExclude)' == ''"
+                        PackExclude="compile,native,runtime" />
+    </ItemGroup>
+  </Target>
 
 </Project>
