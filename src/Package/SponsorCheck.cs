@@ -64,7 +64,10 @@ public static class SponsorCheck
         var data = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(email));
         var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
         var query = $"account={sponsorable}&product={product}&package={packageId}&version={version}&sl={ThisAssembly.Info.InformationalVersion}";
-        
+        query += $"&noreply={email!.EndsWith("@users.noreply.github.com")}";
+        if (Environment.GetEnvironmentVariable("CODESPACES") == "true")
+            query += "&codespace=true";
+
         // Check app install and sponsoring status
         var installed = await CheckUrlAsync(http ?? HttpClientFactory.Default, $"https://cdn.devlooped.com/sponsorlink/apps/{hash}?{query}", default);
         // Timeout, network error, proxy config issue, etc., exit quickly
