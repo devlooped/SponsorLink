@@ -357,7 +357,7 @@ public class SponsorsManager
 
         await registry.RegisterSponsorAsync(
             sponsorable, sponsor,
-            emails.Where(x => x.Verified && !x.Email.EndsWith("@users.noreply.github.com")).Select(x => x.Email));
+            emails.Where(x => x.Verified).Select(x => x.Email));
 
         return true;
     }
@@ -386,8 +386,8 @@ public class SponsorsManager
             Credentials = new Credentials(auth.AccessToken)
         }.User.Email.GetAll();
 
-        var verified = emails.Where(x => x.Verified && !x.Email.EndsWith("@users.noreply.github.com")).Select(x => x.Email);
-        await registry.RegisterAppAsync(account, verified);
+        await registry.RegisterAppAsync(account,
+            emails.Where(x => x.Verified).Select(x => x.Email));
 
         return true;
     }
