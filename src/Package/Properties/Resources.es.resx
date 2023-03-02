@@ -127,13 +127,13 @@
     <value>Por favor, instale la app SponsorLink en GitHub 🙏</value>
   </data>
   <data name="Broken_Description" xml:space="preserve">
-    <value>Una libreria o personalizaciones de MSBuild a su proyecto parecen haber roto SponsorLink.</value>
+    <value>Una libreria o personalizaciones de MSBuild a su proyecto parecen haber afectado SponsorLink.</value>
   </data>
   <data name="Broken_Message" xml:space="preserve">
-    <value>SponsorLink fue configurado de manera incorrecta. Por favor, verificar la documentación para más información.</value>
+    <value>SponsorLink parece haber sido affectado por cambios en su proyecto. Por favor, reportar el problema en https://github.com/devlooped/SponsorLink/discussions.</value>
   </data>
   <data name="Broken_Title" xml:space="preserve">
-    <value>Configuración de SponsorLink inválida 🤔</value>
+    <value>SponsorLink no funcionando 🤔</value>
   </data>
   <data name="BuildPaused" xml:space="preserve">
     <value> Compilación pausada por {0}ms.</value>

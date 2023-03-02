@@ -106,7 +106,7 @@ class DiagnosticsManager
         DiagnosticSeverity.Error,
         true,
         ThisAssembly.Strings.Broken.Description,
-        "https://github.com/devlooped/SponsorLink/discussions",
+        "https://github.com/devlooped/SponsorLink/blob/main/docs/SL01.md",
         "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable);
 
     class AlwaysEqual : IEqualityComparer<SyntaxTree>
