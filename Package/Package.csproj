@@ -34,10 +34,6 @@
   <ItemGroup>
     <PackageFile Include="$(MSBuildThisFileDirectory)_._" PackagePath="lib/netstandard2.0/_._" />
     <PackageFile Include="*.props;*.targets" PackagePath="buildTransitive/$(TargetFramework)/%(Filename)%(Extension)" />
-    <PackageFile Include="lib\net462\System.Net.Http.WinHttpHandler.dll" 
-                 PackageReference="System.Net.Http.WinHttpHandler" 
-                 PackFolder="analyzers/dotnet/roslyn4.0" 
-                 Visible="false" />
   </ItemGroup>
 
   <Target Name="Obfuscate" AfterTargets="Build" DependsOnTargets="Build" Condition="'$(Configuration)' == 'Release' and '$(dotnet-nugetize)' == ''">
@@ -63,9 +59,14 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="AddSatelliteResources" BeforeTargets="GetPackageContents" DependsOnTargets="SatelliteDllsProjectOutputGroup">
+  <Target Name="AddContents" BeforeTargets="GetPackageContents" DependsOnTargets="SatelliteDllsProjectOutputGroup">
     <ItemGroup>
       <PackageFile Include="@(SatelliteDllsProjectOutputGroupOutput)" PackFolder="analyzers/dotnet/roslyn4.0" />
+      <!-- Moved to target to avoid a broken link in the solution explorer to lib\net462 folder -->
+      <PackageFile Include="lib\net462\System.Net.Http.WinHttpHandler.dll"
+                   PackageReference="System.Net.Http.WinHttpHandler"
+                   PackFolder="analyzers/dotnet/roslyn4.0"
+                   Visible="false" />
     </ItemGroup>
   </Target>
 
