@@ -4,7 +4,7 @@
 /// The kind of SponsorLink diagnostic being reported.
 /// </summary>
 public enum DiagnosticKind
-{ 
+{
     /// <summary>
     /// The SponsorLink GitHub is not installed on the user's personal account.
     /// </summary>

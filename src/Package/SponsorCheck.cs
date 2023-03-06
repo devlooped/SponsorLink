@@ -48,11 +48,11 @@ public static class SponsorCheck
     /// exist or a configured git email cannot be determined for the check.</returns>
     public static async Task<SponsorStatus?> CheckAsync(
         string workingDirectory, string sponsorable, string product,
-        string? packageId = default, string? version = default, 
+        string? packageId = default, string? version = default,
         HttpClient? http = default)
     {
         // If there is no network at all, don't do anything.
-        if (!NetworkInterface.GetIsNetworkAvailable() || 
+        if (!NetworkInterface.GetIsNetworkAvailable() ||
             !Directory.Exists(workingDirectory))
             return default;
 
@@ -60,7 +60,7 @@ public static class SponsorCheck
         // No email configured in git, or there is no git at all.
         if (string.IsNullOrEmpty(email))
             return default;
-        
+
         var data = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(email));
         var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
         var query = $"account={sponsorable}&product={product}&package={packageId}&version={version}&sl={ThisAssembly.Info.InformationalVersion}";
@@ -85,7 +85,7 @@ public static class SponsorCheck
 
         return status;
     }
-
+    
     static string? GetEmail(string workingDirectory)
     {
         try

@@ -2,6 +2,8 @@
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Testing;
+using Microsoft.CodeAnalysis.Testing.Verifiers;
 
 namespace Devlooped;
 
@@ -18,10 +20,13 @@ public class AnalyzerTests
 {
     [Trait("SponsorLink", "true")]
     [Fact]
-    public void CreateSponsorLink()
+    public async Task CreateSponsorLinkAsync()
     {
-        IIncrementalGenerator link = new TestSponsorLink();
-        // Due to improper init on the context, this should fail with an NRE
-        Assert.Throws<NullReferenceException>(() => link.Initialize(new IncrementalGeneratorInitializationContext()));
+        var test = new Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<TestSponsorLink, XUnitVerifier>();
+
+        test.TestCode = "// ";
+        test.ExpectedDiagnostics.Add(DiagnosticResult.CompilerError("SL01"));
+
+        await test.RunAsync();
     }
 }
