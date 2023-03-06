@@ -18,6 +18,7 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>portable</DebugType>
+    <PackOnBuild>true</PackOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageFile Include="$(MSBuildThisFileDirectory)_._" PackagePath="lib/netstandard2.0/_._" />
     <PackageFile Include="*.props;*.targets" PackagePath="buildTransitive/$(TargetFramework)/%(Filename)%(Extension)" />
   </ItemGroup>
 

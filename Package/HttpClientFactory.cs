@@ -8,7 +8,7 @@ class HttpClientFactory
     static readonly TimeSpan defaultNetworkTimeout = TimeSpan.FromSeconds(1);
 
     public static HttpClient Default { get; } = Create(defaultNetworkTimeout);
-    
+
     public static HttpClient Create(TimeSpan networkTimeout)
     {
         var proxy = WebRequest.GetSystemWebProxy();

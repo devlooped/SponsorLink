@@ -1,7 +1,7 @@
-﻿using Microsoft.CodeAnalysis;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Text;
+using Microsoft.CodeAnalysis;
 
 namespace Devlooped;
 
@@ -18,7 +18,7 @@ public class SponsorLinkSettings
     const int DefaultMaxPause = 4000;
 
     // Make this private for now. We may expose derived types if needed at some point?
-    SponsorLinkSettings(string sponsorable, string product) 
+    SponsorLinkSettings(string sponsorable, string product)
     {
         Sponsorable = sponsorable;
         Product = product;
@@ -61,7 +61,7 @@ public class SponsorLinkSettings
             diagnosticsIdPrefix: diagnosticsIdPrefix,
             version: default,
             pauseMin: pauseMin,
-            pauseMax: pauseMax, 
+            pauseMax: pauseMax,
             quietDays: default);
 
     /// <summary>
@@ -78,18 +78,18 @@ public class SponsorLinkSettings
     /// <param name="pauseMin">Min random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
     /// <param name="pauseMax">Max random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
     /// <param name="quietDays">Optional days to keep warnings quiet so the user has a chance to test the product undisturbed.</param>
-    public static SponsorLinkSettings Create(string sponsorable, string product, 
+    public static SponsorLinkSettings Create(string sponsorable, string product,
         string? packageId = default,
         string? version = default,
         string? diagnosticsIdPrefix = default,
-        int pauseMin = 0, 
-        int pauseMax = DefaultMaxPause, 
+        int pauseMin = 0,
+        int pauseMax = DefaultMaxPause,
         int? quietDays = default)
     {
         if (quietDays < 0)
             // Throwing would be a backwards incompatible change.
             quietDays = 0;
-        
+
         if (diagnosticsIdPrefix == null)
         {
             var sb = new StringBuilder();

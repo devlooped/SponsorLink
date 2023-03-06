@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -11,13 +12,24 @@ namespace Devlooped;
 /// as well as <see cref="GeneratorAttribute"/> in order for SponsorLink to 
 /// function properly.
 /// </summary>
-public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
+public abstract class SponsorLink : DiagnosticAnalyzer
+    // For backwards compatibility only.
+    , IIncrementalGenerator
 {
+    static ConcurrentDictionary<string, (DateTime When, DiagnosticKind Kind)> upToDateChecks = new();
+
     // We use a smaller timeout since analyzer/generator will run more frequently 
     // so we have more than one chance to get the right status, eventually. 
     // This is 1/4 of the HttpClientFactory default timeout, used for direct API calls.
-    static readonly TimeSpan NetworkTimeout = TimeSpan.FromMilliseconds(250);
-    static readonly HttpClient http;
+#if DEBUG
+    // Debug builds are slower, to give it a full second of timeout
+    static TimeSpan NetworkTimeout => Debugger.IsAttached ?
+        TimeSpan.FromMinutes(10) : TimeSpan.FromSeconds(1);
+#else
+    static TimeSpan NetworkTimeout { get; } = TimeSpan.FromMilliseconds(250);
+#endif
+
+    static HttpClient http;
 
     static readonly Random rnd = new();
     static int quietDays = 15;
@@ -30,7 +42,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
     static SponsorLink()
     {
         http = HttpClientFactory.Create(NetworkTimeout);
-        
+
         // Reads settings from storage, best-effort
         http.GetStringAsync("https://cdn.devlooped.com/sponsorlink/settings.ini")
             .ContinueWith(t =>
@@ -43,7 +55,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 
                 if (values.TryGetValue("quiet", out var value) && int.TryParse(value, out var days))
                     quietDays = days;
-            
+
             }, TaskContinuationOptions.OnlyOnRanToCompletion);
     }
 
@@ -81,7 +93,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
     {
         sponsorable = settings.Sponsorable;
         product = settings.Product;
-        diagnostics = settings.SupportedDiagnostics;
+        diagnostics = settings.SupportedDiagnostics.Add(DiagnosticsManager.Broken);
         this.settings = settings;
     }
 
@@ -91,64 +103,20 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => diagnostics;
 
     /// <inheritdoc/>
+#pragma warning disable RS1026 // Enable concurrent execution: we only enable it on RELEASE builds
     public override void Initialize(AnalysisContext context)
+#pragma warning restore RS1026 // Enable concurrent execution
     {
+#if RELEASE
         context.EnableConcurrentExecution();
+#endif
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
-        context.RegisterCompilationAction(ReportDiagnostic);
+        context.RegisterCompilationAction(AnalyzeSponsors);
     }
 
-    /// <summary>
-    /// Initializes the sponsor link checks during builds.
-    /// </summary>
-    void IIncrementalGenerator.Initialize(IncrementalGeneratorInitializationContext context)
-    {
-        var analyzerFile = context.AdditionalTextsProvider
-            .Combine(context.AnalyzerConfigOptionsProvider)
-            .Where(x =>
-                x.Right.GetOptions(x.Left).TryGetValue("build_metadata.AdditionalFiles.SourceItemType", out var itemType) &&
-                itemType == "Analyzer" &&
-                x.Right.GetOptions(x.Left).TryGetValue("build_metadata.Analyzer.NuGetPackageId", out _))
-            .Where(x => File.Exists(x.Left.Path))
-            .Select((x, c) => new
-            {
-                x.Left.Path,
-                PackageId = 
-                    x.Right.GetOptions(x.Left).TryGetValue("build_metadata.Analyzer.NuGetPackageId", out var packageId) ?
-                    packageId : ""
-            })
-            .Collect();
+    // NOTE: for backwards compatiblity only. We had both an analyzer and source generator before.
+    void IIncrementalGenerator.Initialize(IncrementalGeneratorInitializationContext context) { }
 
-        var dirs = context.AdditionalTextsProvider
-            .Combine(context.AnalyzerConfigOptionsProvider)
-            .Where(x =>
-                x.Right.GetOptions(x.Left).TryGetValue("build_metadata.AdditionalFiles.SourceItemType", out var itemType) &&
-                itemType == "MSBuildProject")
-            .Select((x, c) =>
-            {
-                var (insideEditor, designTimeBuild) = ReadOptions(x.Right.GlobalOptions);
-                return new BuildInfo(x.Left.Path, insideEditor, designTimeBuild);
-            })
-            .Combine(context.CompilationProvider)
-            // Add compilation options to check for warning disable.
-            .Select((x, c) => x.Left.WithCompilationOptions(x.Right.Options))
-            // Add our analyzer file path to check for installation time
-            .Combine(analyzerFile)
-            .Select((x, c) =>
-            {
-                // Try to locate the right file and get its write time to detect install/restore time
-                var path = x.Right.FirstOrDefault(f => f.PackageId == settings.PackageId)?.Path;
-                if (!string.IsNullOrEmpty(path))
-                    return x.Left.WithInstallTime(File.GetCreationTime(path));
-
-                // We won't set an install time, and therefore we'll just start doing pauses 
-                // righ-away with the max configured pause. This will happen for example if 
-                // the settings don't provide a package id, or it differs from the product name.
-                return x.Left;
-            });
-
-        context.RegisterSourceOutput(dirs.Collect(), CheckSponsor);
-    }
 
     /// <summary>
     /// Performs an action when the given diagnostic <paramref name="kind"/> is verified for 
@@ -172,15 +140,17 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
                 var (warn, pause, suffix) = GetPause();
                 if (!warn)
                     return null;
-                
-                var diag = Diagnostic.Create(descriptor, null, product, sponsorable, suffix);
 
-                WriteMessage(sponsorable, product, Path.GetDirectoryName(projectPath), diag);
+                // The Pause property is used by our default implementation to introduce the pause 
+                // in an incremental-aware way.
+                var diag = Diagnostic.Create(descriptor, null,
+                    properties: new Dictionary<string, string?>
+                    {
+                        { "Pause", pause.ToString() },
+                    }.ToImmutableDictionary(),
+                    product, sponsorable, suffix);
 
-                if (pause > 0)
-                    Thread.Sleep(pause);
-
-                return diag;
+                return WriteMessage(sponsorable, product, Path.GetDirectoryName(projectPath), diag);
             case DiagnosticKind.Thanks:
                 return WriteMessage(sponsorable, product, Path.GetDirectoryName(projectPath),
                     Diagnostic.Create(descriptor, null, product, sponsorable));
@@ -189,79 +159,44 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         }
     }
 
-    void CheckSponsor(SourceProductionContext context, ImmutableArray<BuildInfo> states)
+    void AnalyzeSponsors(CompilationAnalysisContext context)
     {
-        if (states.IsDefaultOrEmpty || states[0].InsideEditor == null)
+        if (bool.TryParse(Environment.GetEnvironmentVariable("DEBUG_SPONSORLINK"), out var debug) && debug &&
+            !Debugger.IsAttached)
+        {
+            Debugger.Launch();
+            // Refresh HTTP client so we can have the increased timeout from an attached debugger session.
+            http = HttpClientFactory.Create(NetworkTimeout);
+        }
+
+        var globalOptions = context.Options.AnalyzerConfigOptionsProvider.GlobalOptions;
+        var projectFile = globalOptions.TryGetValue("build_property.MSBuildProjectFullPath", out var fullPath) ?
+                    fullPath : null;
+
+        if (string.IsNullOrWhiteSpace(projectFile) || !File.Exists(projectFile))
         {
             context.ReportDiagnostic(Diagnostic.Create(DiagnosticsManager.Broken, null));
             return;
         }
 
-        var state = states[0];
-        // Updates the InstallTime setting the first time.
-        if (state.InstallTime != null && settings.InstallTime == null)
-            settings.InstallTime = state.InstallTime;
+        var (insideEditor, designTimeBuild) = ReadOptions(globalOptions);
+        var info = new BuildInfo(projectFile!, insideEditor, designTimeBuild);
 
-        // We never pause in DTB
-        if (state.DesignTimeBuild == true)
-            return;
-
-        // We never pause in non-IDE builds
-        if (state.InsideEditor == false)
-            return;
-
-        var ev = new ManualResetEventSlim();
-        SponsorStatus? status = default;
-
-        SponsorCheck.CheckAsync(Path.GetDirectoryName(state.ProjectPath), settings.Sponsorable, settings.Product, settings.PackageId, settings.Version, http)
-            .ContinueWith(t =>
-            {
-                if (t.Status == TaskStatus.RanToCompletion)
-                    status = t.Result;
-
-                ev.Set();
-            });
-
-        ev.Wait(NetworkTimeout, context.CancellationToken);
-
-        if (status == null)
-            return;
-
-        var kind = status.Value switch
+        if (info.InsideEditor == null)
         {
-            SponsorStatus.AppMissing => DiagnosticKind.AppNotInstalled,
-            SponsorStatus.NotSponsoring => DiagnosticKind.UserNotSponsoring,
-            _ => DiagnosticKind.Thanks,
-        };
-        
-        // If the given kind was already reported, no-op.
-        if (Diagnostics.TryPeek(sponsorable, product, state.ProjectPath, out var diagnostic) &&
-            diagnostic != null && diagnostic.Descriptor.IsKind(kind))
-            return;
-
-        diagnostic = OnDiagnostic(state.ProjectPath, kind);
-        if (diagnostic != null)
-            Diagnostics.Push(sponsorable, product, state.ProjectPath, diagnostic);
-    }
-
-    void ReportDiagnostic(CompilationAnalysisContext context)
-    {
-        if (bool.TryParse(Environment.GetEnvironmentVariable("DEBUG_SPONSORLINK"), out var debug) && debug &&
-            !Debugger.IsAttached)
-            Debugger.Launch();
-
-        var opt = context.Options.AnalyzerConfigOptionsProvider.GlobalOptions;
-        if (!opt.TryGetValue("build_property.MSBuildProjectFullPath", out var projectPath))
-            return;
-
-        // If we can get the generator-pushed diagnostic in the same process, we 
-        // report it here and exit. Analyzer-reported diagnostics have proper help links.
-        var diagnostic = Diagnostics.Pop(sponsorable, product, projectPath);
-        if (diagnostic != null)
-        {
-            Diagnostics.ReportDiagnosticOnce(context, diagnostic, sponsorable, product);
+            // There's no way we should end up without this value, unless something's 
+            // wrong with targets trying to get this information to *not* get to us, or 
+            // a half-restored run (say, analyer is being run, but MSBuild targets aren't
+            // imported yet?
+            context.ReportDiagnostic(Diagnostic.Create(DiagnosticsManager.Broken, null));
             return;
         }
+
+        // We never report from in non-IDE builds, which *will* invoke analyzers 
+        // and may end up improperly notifying of build pauses when none was 
+        // incurred, actually.
+        if (insideEditor == false)
+            return;
 
         // We MUST always re-report previously built diagnostics because 
         // otherwise they go away as soon as they are reported by a real 
@@ -273,14 +208,6 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         // might be reported again, but that's a small price to pay.
         // So: DO NOT TRY TO AVOID REPORTING AGAIN ON DTB
 
-        var (insideEditor, designTimeBuild) = ReadOptions(opt);
-
-        // We never report from in non-IDE builds, which *will* invoke analyzers 
-        // and may end up improperly notifying of build pauses when none was 
-        // incurred, actually.
-        if (insideEditor == false)
-            return;
-
         // If this particular build did not generate a new diagnostic (i.e. it was an 
         // incremental build where the project file didn't change at all, we still need 
         // to report the diagnostic or it will go away immediately in a subsequent build.
@@ -290,7 +217,174 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         // communication "channel" between past runs of the generator check and the analyzer 
         // reporting live in VS.
 
-        var productDir = Path.Combine(Path.GetDirectoryName(projectPath), "obj", "SponsorLink", sponsorable, product);
+        // We never pause in DTB
+        if (info.DesignTimeBuild == true)
+        {
+            ReportExisting(context, projectFile);
+            return;
+        }
+
+        CheckAndReport(context, info);
+    }
+
+    /// <summary>
+    /// Runs a full check against URLs for sponsorship status. Only runs on full, editor builds.
+    /// </summary>
+    void CheckAndReport(CompilationAnalysisContext context, BuildInfo info)
+    {
+        if (settings.InstallTime != null)
+        {
+            info = info.WithInstallTime(settings.InstallTime);
+        }
+        else
+        {
+            // Attempt to calculate update time for quiet-days check
+            var installTime = context.Options.AdditionalFiles
+                .Where(x =>
+                {
+                    var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(x);
+                    return options.TryGetValue("build_metadata.AdditionalFiles.SourceItemType", out var itemType) &&
+                        itemType == "Analyzer" &&
+                        // Filter analyzer items that actually have an originating NuGetPackageId metadata
+                        options.TryGetValue("build_metadata.Analyzer.NuGetPackageId", out var packageId);
+                })
+                // Adding this since we check for the file write time... Is this needed?
+                .Where(x => File.Exists(x.Path))
+                .Select((x, c) => new
+                {
+                    x.Path,
+                    PackageId = context.Options.AnalyzerConfigOptionsProvider.GetOptions(x)
+                        .TryGetValue("build_metadata.Analyzer.NuGetPackageId", out var packageId) ?
+                        packageId : ""
+                })
+                .Where(x => x.PackageId == settings.PackageId)
+                .Select(x => (DateTime?)File.GetCreationTime(x.Path))
+                .FirstOrDefault();
+
+            info = info.WithInstallTime(installTime);
+
+            // Updates the InstallTime setting the first time.
+            if (settings.InstallTime == null)
+                settings.InstallTime = info.InstallTime;
+        }
+
+        // NOTE: we run the check even if we may be up to date, since the status might have changed, 
+        // going from NotSponsoring to Sponsoring, for example. We want to clear the warning ASAP in that case.
+
+        var ev = new ManualResetEventSlim();
+        SponsorStatus? status = default;
+        SponsorCheck.CheckAsync(Path.GetDirectoryName(info.ProjectPath), settings.Sponsorable, settings.Product, settings.PackageId, settings.Version, http)
+            .ContinueWith(t =>
+            {
+                if (t.Status == TaskStatus.RanToCompletion)
+                    status = t.Result;
+
+                ev.Set();
+            });
+        ev.Wait(NetworkTimeout, context.CancellationToken);
+
+        if (status == null)
+            return;
+
+        var kind = status.Value switch
+        {
+            SponsorStatus.AppMissing => DiagnosticKind.AppNotInstalled,
+            SponsorStatus.NotSponsoring => DiagnosticKind.UserNotSponsoring,
+            _ => DiagnosticKind.Thanks,
+        };
+
+        var lastCheck = upToDateChecks.TryGetValue(info.ProjectPath, out var check) ?
+            check : (When: DateTime.MinValue, Kind: kind);
+
+        var lastWrites = context.Options.AdditionalFiles
+            .Where(x => context.Options.AnalyzerConfigOptionsProvider.GetOptions(x)
+                .TryGetValue("build_metadata.AdditionalFiles.SourceItemType", out var itemType) &&
+                itemType == "SponsorLinkInput")
+            .Select((x, _) => File.GetLastWriteTimeUtc(x.Path))
+            .ToImmutableArray();
+
+        // Get the newest written file from SponsorLinkInput, or default to Now if none provided (hacked?)
+        var newestInput = lastWrites.IsDefaultOrEmpty ? DateTime.Now : lastWrites.OrderByDescending(_ => _).First();
+        var upToDate = newestInput <= lastCheck.When;
+
+        // If the given kind was already reported, no-op. For example, for ThisAssembly, each 
+        // package will cause a different Diagnostic but for the same sponsorable+product combination, 
+        // but we don't want to emit duplicates.
+        if (Diagnostics.TryPeek(sponsorable, product, info.ProjectPath, out var diagnostic) &&
+            diagnostic != null && diagnostic.Descriptor.IsKind(kind) &&
+            // If the inputs are not up to date, we'll run the check again regardless, 
+            // i.e. causing a new pause, as needed.
+            upToDate)
+        {
+            ClearExisting(info.ProjectPath);
+            return;
+        }
+
+        diagnostic = OnDiagnostic(info.ProjectPath, kind);
+        if (diagnostic != null)
+        {
+            // We need to do this up-to-date check ourselves since Roslyn itself doesn't
+            // do the incremental work at all for builds, only for in-IDE optimizations
+            // during typing. See https://github.com/dotnet/roslyn/issues/67160
+            if (upToDate && kind == lastCheck.Kind)
+            {
+                // Clear a previous report in this case, to avoid giving the impression that we
+                // paused again when we haven't.
+                ClearExisting(info.ProjectPath);
+                return;
+            }
+
+            upToDateChecks[info.ProjectPath] = (newestInput, kind);
+
+            // Pause if configured so. Note we won't pause if the project is up to date.
+            if (diagnostic.Properties.TryGetValue("Pause", out var value) &&
+                int.TryParse(value, out var pause) &&
+                pause > 0)
+            {
+#if DEBUG
+                Console.Beep(500, 500);
+#endif
+                Thread.Sleep(pause);
+            }
+
+            // Note that we don't push even Thanks if they were already reported and the 
+            // project is up to date. This means the Thanks won't become annoying either.
+            Diagnostics.ReportDiagnosticOnce(context,
+                Diagnostics.Push(sponsorable, product, info.ProjectPath, diagnostic),
+                sponsorable, product);
+        }
+    }
+
+    void ClearExisting(string projectFile)
+    {
+        // Clear a previous report in this case, to avoid giving the impression that we
+        // paused again when we haven't.
+        var cleared = false;
+        var objDir = Path.Combine(Path.GetDirectoryName(projectFile), "obj", "SponsorLink", sponsorable, product);
+        if (Directory.Exists(objDir))
+        {
+            foreach (var file in Directory.EnumerateFiles(objDir))
+            {
+                File.Delete(file);
+                cleared = true;
+            }
+        }
+
+        if (cleared)
+        {
+#if DEBUG
+            Console.Beep(800, 500);
+#endif
+        }
+    }
+
+    /// <summary>
+    /// In DTB, we merely re-surface diagnostics that were previously generated in a 
+    /// full build. This keeps the checks minimally impactful while still being visible.
+    /// </summary>
+    void ReportExisting(CompilationAnalysisContext context, string? projectFile)
+    {
+        var productDir = Path.Combine(Path.GetDirectoryName(projectFile), "obj", "SponsorLink", sponsorable, product);
         if (!Directory.Exists(productDir))
             return;
 
@@ -309,7 +403,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
             var text = File.ReadAllText(file).Trim();
             // NOTE: we recreate the descriptor here, since that's cheaper than attempting 
             // to recreate the format string that produced the given message in the file. 
-            diagnostic = Diagnostic.Create(new DiagnosticDescriptor(
+            var diagnostic = Diagnostic.Create(new DiagnosticDescriptor(
                 id: descriptor.Id,
                 title: descriptor.Title,
                 messageFormat: text,
@@ -335,7 +429,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         // Override value if we detect R#/Rider in use, or some hacked-up target but we're in VS
         if (Environment.GetEnvironmentVariables().Keys.Cast<string>().Any(k =>
                 k.StartsWith("RESHARPER") ||
-                k.StartsWith("IDEA_") || 
+                k.StartsWith("IDEA_") ||
                 k == "VSAPPIDDIR"))
             insideEditor = true;
 
@@ -373,7 +467,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         return GetPaused(rnd.Next(settings.PauseMin, Math.Min(daysMaxPause, settings.PauseMax)));
     }
 
-    static (bool warn, int pause, string suffix) GetPaused(int pause) 
+    static (bool warn, int pause, string suffix) GetPaused(int pause)
         => (true, pause, pause > 0 ? ThisAssembly.Strings.BuildPaused(pause) : "");
 
     static Diagnostic WriteMessage(string sponsorable, string product, string projectDir, Diagnostic diag)
@@ -387,7 +481,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
 
         Directory.CreateDirectory(objDir);
         File.WriteAllText(Path.Combine(objDir, $"{diag.Id}.{diag.Severity}.txt"), diag.GetMessage());
-        
+
         return diag;
     }
 
@@ -397,9 +491,9 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
     /// </summary>
     class BuildInfo
     {
-        internal BuildInfo(string path, bool? insideEditor, bool? designTimeBuild)
+        internal BuildInfo(string projectPath, bool? insideEditor, bool? designTimeBuild)
         {
-            ProjectPath = path;
+            ProjectPath = projectPath;
             InsideEditor = insideEditor;
             DesignTimeBuild = designTimeBuild;
         }
@@ -416,21 +510,11 @@ public abstract class SponsorLink : DiagnosticAnalyzer, IIncrementalGenerator
         /// Whether the build is a design-time build.
         /// </summary>
         public bool? DesignTimeBuild { get; }
-        /// <summary>
-        /// Compilation options being used for the build.
-        /// </summary>
-        public CompilationOptions? CompilationOptions { get; private set; }
 
         /// <summary>
         /// The installation/restore time of SponsorLink.
         /// </summary>
         public DateTime? InstallTime { get; private set; }
-
-        internal BuildInfo WithCompilationOptions(CompilationOptions options)
-        {
-            CompilationOptions = options;
-            return this;
-        }
 
         internal BuildInfo WithInstallTime(DateTime? installTime)
         {
