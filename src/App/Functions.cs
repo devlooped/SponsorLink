@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.EventGrid.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Microsoft.Azure.EventGrid.Models;
 
 namespace Devlooped.SponsorLink;
 
@@ -42,13 +42,13 @@ public class Functions
     {
         var appKind = Enum.Parse<AppKind>(kind, true);
         var code = req.Query["code"].ToString();
-        
+
         // TODO: the installation id can be used to request an installation token to perform actions 
         // authorized to the app on behalf of the authorizing user.
         // This will be necessary for the sponsorable account if we ever figure out how to run GraphQL 
         // queries, but for now, it's impossible.
         //var installation = req.Query["installation_id"].ToString();
-        
+
         await manager.AuthorizeAsync(appKind, code);
 
         return new RedirectResult($"https://devlooped.com/?{kind}");
@@ -92,7 +92,7 @@ public class Functions
     public async Task<IActionResult> SponsorHookAsync(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "sponsor/{account}")] HttpRequestMessage req, string account)
     {
-        var body = await req.Content!.ReadAsStringAsync();        
+        var body = await req.Content!.ReadAsStringAsync();
         dynamic? payload = JsonConvert.DeserializeObject(body);
         if (payload == null)
             return new BadRequestObjectResult("Could not deserialize payload as JSON");
@@ -140,7 +140,7 @@ public class Functions
 
             await manager.SponsorUpdateAsync(sponsorable, sponsor, amount, note);
         }
-        
+
         // TODO: if sponsorable has not installed the admin app or is 
         // not sponsoring devlooped with at least $x, return OK with content explaining 
         // this and that checks won't work until they do.
@@ -154,7 +154,7 @@ public class Functions
         var message = JsonConvert.DeserializeObject<UserRefreshPending>(e.Data.ToString() ?? "{ }");
         if (message == null)
             return;
-        
+
         if (message.Attempt >= 3)
             return;
 

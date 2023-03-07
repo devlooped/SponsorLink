@@ -146,7 +146,7 @@ public record ManualSponsors(ITestOutputHelper Output)
 
         var result = JsonSerializer.Deserialize<SponsorsResult>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         Assert.NotNull(result);
-        
+
         var config = new ConfigurationBuilder().AddUserSecrets(ThisAssembly.Project.UserSecretsId).Build();
         if (!CloudStorageAccount.TryParse(config["ProductionStorageAccount"], out var account))
             Assert.Fail("Did not find a user secret named 'ProductionStorageAccount' to run the query against.");

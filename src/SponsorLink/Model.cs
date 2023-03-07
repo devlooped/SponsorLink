@@ -1,6 +1,6 @@
 ﻿namespace Devlooped.SponsorLink;
 
-public enum AppKind { Sponsor, Sponsorable}
+public enum AppKind { Sponsor, Sponsorable }
 
 public enum AppState { Installed, Suspended, Deleted }
 
