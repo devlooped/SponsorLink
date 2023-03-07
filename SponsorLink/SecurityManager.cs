@@ -1,10 +1,10 @@
 ﻿using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using JWT.Algorithms;
 using JWT.Builder;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using System.Text.Json;
-using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Devlooped.SponsorLink;
 
@@ -70,7 +70,7 @@ public record SecurityManager(IConfiguration Configuration)
                 // If we got a signature but have no secret to verify, that's a misconfiguration 
                 return false;
         }
-        
+
         // If we have a secret but got no signature, request didn't came from where we expected
         if (signature == null)
             return false;

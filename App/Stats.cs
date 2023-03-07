@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs;
-using Azure.Identity;
+﻿using Azure.Identity;
 using Azure.Monitor.Query;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Devlooped.SponsorLink;
@@ -13,9 +13,9 @@ public class Stats
     readonly ILogger logger;
 
 
-    public Stats(CloudStorageAccount storageAccount, ILogger<Stats> logger) 
+    public Stats(CloudStorageAccount storageAccount, ILogger<Stats> logger)
         => (this.storageAccount, this.logger)
-        = (storageAccount, logger);    
+        = (storageAccount, logger);
 
     [FunctionName("users")]
     public async Task<IActionResult> RunAsync(

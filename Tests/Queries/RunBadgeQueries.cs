@@ -26,8 +26,8 @@ public record RunBadgeQueries(ITestOutputHelper Output)
         var creds = new DefaultAzureCredential(new DefaultAzureCredentialOptions
         {
             ExcludeAzureCliCredential = true,
-            ExcludeAzurePowerShellCredential = true, 
-            ExcludeInteractiveBrowserCredential = true, 
+            ExcludeAzurePowerShellCredential = true,
+            ExcludeInteractiveBrowserCredential = true,
             ExcludeManagedIdentityCredential = true,
             ExcludeSharedTokenCacheCredential = true,
             ExcludeVisualStudioCodeCredential = true,

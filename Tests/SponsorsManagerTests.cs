@@ -16,7 +16,7 @@ public sealed partial class SponsorsManagerTests : IDisposable
         // Ensure table is created;
         _ = connection.GetTableAsync().Result;
     }
-    
+
     public void Dispose() => connection.StorageAccount.CreateTableServiceClient().DeleteTable(connection.TableName);
 
     [Fact(Skip = "Manual run")]
@@ -59,7 +59,7 @@ public sealed partial class SponsorsManagerTests : IDisposable
             Mock.Of<IHttpClientFactory>(),
             new SecurityManager(config),
             connection.StorageAccount, connection,
-            Mock.Of<IEventStream>(), 
+            Mock.Of<IEventStream>(),
             new SponsorsRegistry(connection.StorageAccount, Mock.Of<IEventStream>()));
 
         var id = new AccountId("1234", "kzu");

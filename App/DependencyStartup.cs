@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 [assembly: FunctionsStartup(typeof(DependencyStartup))]
 
 public class DependencyStartup : FunctionsStartup
-{ 
+{
     public override void ConfigureAppConfiguration(IFunctionsConfigurationBuilder builder)
     {
         builder.ConfigurationBuilder.AddUserSecrets(ThisAssembly.Project.UserSecretsId);

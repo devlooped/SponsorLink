@@ -95,9 +95,9 @@ public class SponsorsManager
         await events.PushAsync(new AppSuspended(account.Id, account.Login, kind, note));
         if (kind == AppKind.Sponsor)
         {
-            await events.PushAsync(new UserRefreshPending(account.Id, account.Login, 0, note) 
-            { 
-                Unregister = true 
+            await events.PushAsync(new UserRefreshPending(account.Id, account.Login, 0, note)
+            {
+                Unregister = true
             });
         }
         else if (kind == AppKind.Sponsorable)
@@ -148,7 +148,7 @@ public class SponsorsManager
         {
             // If we're not doing sponsorable-based refresh, we need to sync the app 
             // registration for the user account too.
-            done &= await UpdateAppRegistryAsync(account);   
+            done &= await UpdateAppRegistryAsync(account);
         }
 
         await foreach (var sponsorship in bySponsor.EnumerateAsync())
@@ -167,7 +167,7 @@ public class SponsorsManager
             else
                 done &= await UpdateSponsorRegistryAsync(sponsorable, account);
         }
-        
+
         return done;
     }
 

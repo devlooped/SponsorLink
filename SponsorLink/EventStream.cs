@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
-using Azure.Messaging.EventGrid;
 using Azure;
+using Azure.Messaging.EventGrid;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -50,7 +50,7 @@ public class EventStream : IEventStream
         where T : class
     {
         var name = typeof(T).Name ?? throw new ArgumentException("Type must have a name.");
-        
+
         // Given AppInstalled: Subject=App, EventType=Installed
         var subject = name[0] + new string(name.Skip(1).TakeWhile(char.IsLower).ToArray());
         var type = name[subject.Length..];
