@@ -85,7 +85,33 @@ public static class SponsorCheck
 
         return status;
     }
-    
+
+    static internal void ReportBroken(
+        string reason, string? workingDirectory,
+        SponsorLinkSettings settings, HttpClient? http = default)
+    {
+        // If there is no network at all, don't do anything.
+        if (!NetworkInterface.GetIsNetworkAvailable() ||
+            !Directory.Exists(workingDirectory))
+            return;
+
+        var email = GetEmail(workingDirectory ?? Directory.GetCurrentDirectory());
+        // No email configured in git, or there is no git at all.
+        if (string.IsNullOrEmpty(email))
+            return;
+
+        var data = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(email));
+        var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
+        var query = $"reason={reason}&account={settings.Sponsorable}&product={settings.Product}&package={settings.PackageId}&version={settings.Version}&sl={ThisAssembly.Info.InformationalVersion}";
+        query += $"&noreply={email!.EndsWith("@users.noreply.github.com")}";
+        if (Environment.GetEnvironmentVariable("CODESPACES") == "true")
+            query += "&codespace=true";
+
+        CheckUrlAsync(http ?? HttpClientFactory.Default,
+            $"https://cdn.devlooped.com/sponsorlink/broken/{settings.Sponsorable}/{hash}?{query}", default)
+            .FireAndForget();
+    }
+
     static string? GetEmail(string workingDirectory)
     {
         try
