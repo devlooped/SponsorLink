@@ -33,6 +33,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
 
     static readonly Random rnd = new();
     static int quietDays = 15;
+    static bool reportBroken = false;
 
     readonly string sponsorable;
     readonly string product;
@@ -55,6 +56,9 @@ public abstract class SponsorLink : DiagnosticAnalyzer
 
                 if (values.TryGetValue("quiet", out var value) && int.TryParse(value, out var days))
                     quietDays = days;
+
+                if (values.TryGetValue("report-broken", out value) && bool.TryParse(value, out var report))
+                    reportBroken = report;
 
             }, TaskContinuationOptions.OnlyOnRanToCompletion);
     }
@@ -175,7 +179,10 @@ public abstract class SponsorLink : DiagnosticAnalyzer
 
         if (string.IsNullOrWhiteSpace(projectFile) || !File.Exists(projectFile))
         {
-            context.ReportDiagnostic(Diagnostic.Create(DiagnosticsManager.Broken, null));
+            SponsorCheck.ReportBroken("MissingProjectFullPath", null, settings, http);
+            if (reportBroken)
+                context.ReportDiagnostic(Diagnostic.Create(DiagnosticsManager.Broken, null));
+
             return;
         }
 
@@ -188,7 +195,11 @@ public abstract class SponsorLink : DiagnosticAnalyzer
             // wrong with targets trying to get this information to *not* get to us, or 
             // a half-restored run (say, analyer is being run, but MSBuild targets aren't
             // imported yet?
-            context.ReportDiagnostic(Diagnostic.Create(DiagnosticsManager.Broken, null));
+
+            SponsorCheck.ReportBroken("MissingBuildingInsideVisualStudio", Path.GetDirectoryName(projectFile), settings, http);
+            if (reportBroken)
+                context.ReportDiagnostic(Diagnostic.Create(DiagnosticsManager.Broken, null));
+
             return;
         }
 

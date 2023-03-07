@@ -11,7 +11,7 @@ namespace Devlooped;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class TestSponsorLink : Analyzer::Devlooped.SponsorLink
 {
-    public TestSponsorLink() : base(Analyzer::Devlooped.SponsorLinkSettings.Create("foo", "bar"))
+    public TestSponsorLink() : base(Analyzer::Devlooped.SponsorLinkSettings.Create("testing", "foo"))
     {
     }
 }
@@ -25,7 +25,9 @@ public class AnalyzerTests
         var test = new Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<TestSponsorLink, XUnitVerifier>();
 
         test.TestCode = "// ";
-        test.ExpectedDiagnostics.Add(DiagnosticResult.CompilerError("SL01"));
+
+        // We no longer report the misconfiguration as an error
+        //test.ExpectedDiagnostics.Add(DiagnosticResult.CompilerError("SL01"));
 
         await test.RunAsync();
     }
