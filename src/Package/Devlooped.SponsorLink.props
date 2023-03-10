@@ -1,12 +1,7 @@
 <Project>
 
   <PropertyGroup>
-    <BuildingInsideVisualStudio>false</BuildingInsideVisualStudio>
-    <BuildingInsideVisualStudio Condition="$(IDEA_INITIAL_DIRECTORY) != '' or $(RESHARPER_FUS_BUILD) != '' or $(RESHARPER_FUS_SESSION) != ''">true</BuildingInsideVisualStudio>
-    <!-- Analyzer projects using DebugRoslynComponent launch profile and IsRoslynComponent can 
-         set this property to true in the launched project so that SponsorLink does not skip the 
-         checks even if DesignTimeBuild is true. -->
-    <DebugSponsorLink />
+    <SponsorLinkTargets>$(MSBuildThisFileDirectory)Devlooped.SponsorLink.targets</SponsorLinkTargets>
   </PropertyGroup>
 
 </Project>

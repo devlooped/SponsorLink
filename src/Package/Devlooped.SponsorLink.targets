@@ -1,5 +1,14 @@
 <Project>
 
+  <PropertyGroup>
+    <BuildingInsideVisualStudio>false</BuildingInsideVisualStudio>
+    <BuildingInsideVisualStudio Condition="$(IDEA_INITIAL_DIRECTORY) != '' or $(RESHARPER_FUS_BUILD) != '' or $(RESHARPER_FUS_SESSION) != ''">true</BuildingInsideVisualStudio>
+    <!-- Analyzer projects using DebugRoslynComponent launch profile and IsRoslynComponent can 
+         set this property to true in the launched project so that SponsorLink does not skip the 
+         checks even if DesignTimeBuild is true. -->
+    <DebugSponsorLink Condition="'$(DebugSponsorLink)' == ''" />
+  </PropertyGroup>
+
   <ItemGroup>
     <!-- By adding these items in .targets, we make it harder to break from tweaks in the project file -->
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="SourceItemType" />
@@ -75,6 +84,15 @@
     <ItemGroup>
       <PackageReference Condition="'%(PackageReference.PrivateAssets)' == ''"
                         PrivateAssets="all" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="AddSponsorLinkPackageContents" BeforeTargets="GetPackageContents">
+    <ItemGroup>
+      <PackageFile Include="$(MSBuildThisFileDirectory)Devlooped.SponsorLink.targets" 
+                   PackagePath="build/Devlooped.SponsorLink.targets" />
+      <PackageFile Include="$(MSBuildThisFileDirectory)Devlooped.SponsorLink.targets"
+                   PackagePath="buildTransitive/Devlooped.SponsorLink.targets" />
     </ItemGroup>
   </Target>
 

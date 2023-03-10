@@ -9,7 +9,7 @@
     <PackBuildOutput>false</PackBuildOutput>
     <Description>Enables library authors to attribute GitHub sponsorships to their Sponsors account.</Description>
     <PackageProjectUrl>https://github.com/devlooped/SponsorLink</PackageProjectUrl>
-    <PackageTags>roslyn github sponsors</PackageTags>
+    <PackageTags>github sponsors</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
     <DebugSymbols>false</DebugSymbols>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageFile Include="*.props;*.targets" PackagePath="buildTransitive/%(Filename)%(Extension)" />
+    <PackageFile Include="*.props;*.targets" PackagePath="build/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <Target Name="Obfuscate" AfterTargets="Build" DependsOnTargets="Build" Condition="'$(Configuration)' == 'Release' and '$(dotnet-nugetize)' == ''">
