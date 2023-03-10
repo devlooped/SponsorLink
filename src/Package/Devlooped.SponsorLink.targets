@@ -68,14 +68,13 @@
     <Message Text="@(SponsorLinkMessageLine, '')" Importance="normal" Condition="$(SponsorLinkFilename.Contains('.Info.'))" />
   </Target>
 
-  <Target Name="SponsorLinkPackDefaults" BeforeTargets="InferPackageContents;GetPackageContents">
+  <Target Name="SponsorLinkPackDefaults" 
+          BeforeTargets="InferPackageContents;GetPackageContents" 
+          Inputs="@(PackageReference -> WithMetadataValue('Identity', 'Devlooped.SponsorLink'))" 
+          Outputs="|%(PackageReference.Identity)|">
     <ItemGroup>
-      <PackageReference Update="Devlooped.SponsorLink"
-                        Condition="'%(PackageReference.PackInclude)' == ''"
-                        PackInclude="build,analyzer" />
-      <PackageReference Update="Devlooped.SponsorLink"
-                        Condition="'%(PackageReference.PackExclude)' == ''"
-                        PackExclude="compile,native,runtime" />
+      <PackageReference Condition="'%(PackageReference.PrivateAssets)' == ''"
+                        PrivateAssets="all" />
     </ItemGroup>
   </Target>
 
