@@ -16,8 +16,8 @@ SponsorLink supports two scenarios:
    sponsors to contribute to the project, to ensure ongoing and recurring income 
    that can help ensure proper maintenance and further feature work.
 
-2. Open source project consumers, who want to ensure their dependencies keep have 
-   an active team that can provide support, bug fixes and new features.
+2. Open source project consumers, who want to ensure their dependencies have 
+   an active team that can provide support, bug fixes and add new features.
 
 [Read the announcement](https://www.cazzulino.com/sponsorlink.html) blog post.
 
