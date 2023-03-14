@@ -35,6 +35,7 @@
 
   <ItemGroup>
     <PackageFile Include="*.props;*.targets" PackagePath="build/%(Filename)%(Extension)" />
+    <None Update="tools\Devlooped.SponsorLink.targets" Pack="true" />
   </ItemGroup>
 
   <Target Name="Obfuscate" AfterTargets="Build" DependsOnTargets="Build" Condition="'$(Configuration)' == 'Release' and '$(dotnet-nugetize)' == ''">
@@ -58,9 +59,7 @@
       <PackageFile Include="$(Obfuscated)\$(TargetFileName)" PackFolder="lib" />
       <PackageFile Include="@(SatelliteDllsProjectOutputGroupOutput -> '%(FullPath)')" PackFolder="lib" />
       <!-- Moved to target to avoid a broken link in the solution explorer to lib\net462 folder -->
-      <PackageFile Include="lib\net462\System.Net.Http.WinHttpHandler.dll"
-                   PackageReference="System.Net.Http.WinHttpHandler"
-                   PackFolder="lib" />
+      <PackageFile Include="lib\net462\System.Net.Http.WinHttpHandler.dll" PackageReference="System.Net.Http.WinHttpHandler" PackFolder="lib" />
     </ItemGroup>
   </Target>
 

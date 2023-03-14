@@ -55,8 +55,8 @@ public class SponsorLinkSettings
     public static SponsorLinkSettings Create(string sponsorable, string product,
         string? packageId = default,
         string? diagnosticsIdPrefix = default,
-        int pauseMin = 0, int
-        pauseMax = DefaultMaxPause) => Create(sponsorable, product,
+        int pauseMin = 0, 
+        int pauseMax = DefaultMaxPause) => Create(sponsorable, product,
             packageId: packageId,
             diagnosticsIdPrefix: diagnosticsIdPrefix,
             version: default,
@@ -154,4 +154,5 @@ public class SponsorLinkSettings
     internal int PauseMax { get; private set; }
     internal DateTime? InstallTime { get; set; }
     internal int? QuietDays { get; private set; }
+    internal bool Transitive { get; private set; }
 }
