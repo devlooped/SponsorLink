@@ -136,7 +136,34 @@
     <value>Broken SponsorLink 🤔</value>
   </data>
   <data name="BuildPaused" xml:space="preserve">
-    <value>Build paused for {0}ms.</value>
+    <value>Build paused for {0}ms. This happens only once per project, per IDE/editor session.</value>
+  </data>
+  <data name="MissingBuildingInside_Description" xml:space="preserve">
+    <value>This is typically a package authoring error which can be fixed by adding the following MSBuild item to the project: &lt;CompilerVisibleProperty Include="BuildingInsideVisualStudio" /&gt;.</value>
+  </data>
+  <data name="MissingBuildingInside_Message" xml:space="preserve">
+    <value>SponsorLink analyzer did not receive the required BuildingInsideVisualStudio compiler-visible property.</value>
+  </data>
+  <data name="MissingBuildingInside_Title" xml:space="preserve">
+    <value>BuildingInsideVisualStudio compiler-visible property is required</value>
+  </data>
+  <data name="MissingDesignTimeBuild_Description" xml:space="preserve">
+    <value>This is typically a package authoring error which can be fixed by adding the following MSBuild item to the project: &lt;CompilerVisibleProperty Include="DesignTimeBuild" /&gt;.</value>
+  </data>
+  <data name="MissingDesignTimeBuild_Message" xml:space="preserve">
+    <value>SponsorLink analyzer did not receive the required DesignTimeBuild compiler-visible property.</value>
+  </data>
+  <data name="MissingDesignTimeBuild_Title" xml:space="preserve">
+    <value>DesignTimeBuild compiler-visible property is required</value>
+  </data>
+  <data name="MissingProject_Description" xml:space="preserve">
+    <value>This is typically a package authoring error which can be fixed by adding the following MSBuild item to the project: &lt;CompilerVisibleProperty Include="MSBuildProjectFullPath" /&gt;.</value>
+  </data>
+  <data name="MissingProject_Message" xml:space="preserve">
+    <value>SponsorLink analyzer did not receive the required MSBuildProjectFullPath compiler-visible property.</value>
+  </data>
+  <data name="MissingProject_Title" xml:space="preserve">
+    <value>MSBuildProjectFullPath compiler-visible property is required</value>
   </data>
   <data name="Thanks_Description" xml:space="preserve">
     <value>You are a true hero. Your sponsorship helps keep the project alive and thriving.</value>

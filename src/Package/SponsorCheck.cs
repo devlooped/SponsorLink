@@ -90,9 +90,12 @@ public static class SponsorCheck
         string reason, string? workingDirectory,
         SponsorLinkSettings settings, HttpClient? http = default)
     {
+#if DEBUG
+        Debugger.Launch();
+#endif
+
         // If there is no network at all, don't do anything.
-        if (!NetworkInterface.GetIsNetworkAvailable() ||
-            !Directory.Exists(workingDirectory))
+        if (!NetworkInterface.GetIsNetworkAvailable())
             return;
 
         var email = GetEmail(workingDirectory ?? Directory.GetCurrentDirectory());
