@@ -6,6 +6,10 @@
     <UserSecretsId>A85AC898-E41C-4D9D-AD9B-52ED748D9901</UserSecretsId>
     <ImplicitUsings>true</ImplicitUsings>
     <RestoreSources>https://api.nuget.org/v3/index.json;https://pkg.kzu.io/index.json</RestoreSources>
+
+    <!-- Roslyn aggressively caches analyzers so we are better off using a very dynamic version number 
+         for local builds where a quick devloop is key. -->
+    <VersionPrefix>42.42.$([System.Math]::Floor($([System.DateTime]::Now.TimeOfDay.TotalSeconds)))</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
