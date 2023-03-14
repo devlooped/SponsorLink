@@ -274,7 +274,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
                     return options.TryGetValue("build_metadata.AdditionalFiles.SourceItemType", out var itemType) &&
                         itemType == "Analyzer" &&
                         // Filter analyzer items that actually have an originating NuGetPackageId metadata
-                        options.TryGetValue("build_metadata.Analyzer.NuGetPackageId", out var packageId);
+                        options.TryGetValue("build_metadata.AdditionalFiles.NuGetPackageId", out var packageId);
                 })
                 // Adding this since we check for the file write time... Is this needed?
                 .Where(x => File.Exists(x.Path))
@@ -282,7 +282,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
                 {
                     x.Path,
                     PackageId = context.Options.AnalyzerConfigOptionsProvider.GetOptions(x)
-                        .TryGetValue("build_metadata.Analyzer.NuGetPackageId", out var packageId) ?
+                        .TryGetValue("build_metadata.AdditionalFiles.NuGetPackageId", out var packageId) ?
                         packageId : ""
                 })
                 .Where(x => x.PackageId == settings.PackageId)

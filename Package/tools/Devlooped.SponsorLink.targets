@@ -1,0 +1,106 @@
+<!-- These targets are included by sponsorable packages that integrate 
+     SponsorLink checks. It's used by end users of the sponsorable package/product. -->
+<Project>
+
+  <PropertyGroup>
+    <BuildingInsideVisualStudio>false</BuildingInsideVisualStudio>
+    <BuildingInsideVisualStudio Condition="$(IDEA_INITIAL_DIRECTORY) != '' or $(RESHARPER_FUS_BUILD) != '' or $(RESHARPER_FUS_SESSION) != ''">true</BuildingInsideVisualStudio>
+    <!-- Analyzer projects using DebugRoslynComponent launch profile and IsRoslynComponent can 
+         set this property to true in the launched project so that SponsorLink does not skip the 
+         checks even if DesignTimeBuild is true. -->
+    <DebugSponsorLink Condition="'$(DebugSponsorLink)' == ''" />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- By adding these items in .targets, we make it harder to break from tweaks in the project file -->
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="SourceItemType" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="NuGetPackageId" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="ParentPackage" />
+
+    <CompilerVisibleProperty Include="DesignTimeBuild" />
+    <CompilerVisibleProperty Include="BuildingInsideVisualStudio" />
+    <CompilerVisibleProperty Include="MSBuildProjectFullPath" />
+    
+    <CompilerVisibleProperty Include="DebugSponsorLink" />    
+  </ItemGroup>
+
+  <Target Name="CollectPackageDependencies" 
+          Condition="'$(UsingMicrosoftNETSdk)' == 'true'"
+          BeforeTargets="GenerateMSBuildEditorConfigFileShouldRun"
+          DependsOnTargets="RunResolvePackageDependencies" />
+
+  <Target Name="CollectSponsorLinkReference" 
+          BeforeTargets="GenerateMSBuildEditorConfigFileShouldRun"
+          DependsOnTargets="CollectPackageDependencies" 
+			    Inputs="@(SponsorablePackageId)"
+			    Outputs="|%(SponsorablePackageId.Identity)|">
+
+    <PropertyGroup>
+      <SponsorablePackageId>%(SponsorablePackageId.Identity)</SponsorablePackageId>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <!-- Used to determine InstallTime for quiet days calculation -->
+      <AdditionalFiles Include="@(Analyzer -> WithMetadataValue('NuGetPackageId', '$(SponsorablePackageId)'))"
+                       SourceItemType="Analyzer" NuGetPackageId="%(Analyzer.NuGetPackageId)" />
+
+      <SponsorablePackageDependencies Include="@(PackageDependencies)"
+											                Condition="$([MSBuild]::ValueOrDefault('%(PackageDependencies.Identity)', '').StartsWith('$(SponsorablePackageId)/'))" />
+
+      <!-- Used to determine if the reference is top-level or transitive, via the ParentPackage metadata -->
+      <AdditionalFiles Include="@(SponsorablePackageDependencies)"
+							         SourceItemType="PackageDependencies"
+							         SourceIdentity="$(SponsorablePackageId)" />
+    </ItemGroup>
+
+  </Target>
+
+  <Target Name="CollectSponsorLinkMessages" AfterTargets="CoreCompile">
+    <ItemGroup>
+      <SponsorLinkMessage Include="obj/SponsorLink/**/*.txt" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CleanSponsorLinkMessages" AfterTargets="Clean" DependsOnTargets="CollectSponsorLinkMessages">
+    <Delete Files="@(SponsorLinkMessage)" />
+  </Target>
+  
+  <Target Name="SponsorLinkMessages" AfterTargets="CoreCompile" 
+          Condition="'$(BuildingInsideVisualStudio)' == 'true' and '$(DesignTimeBuild)' != 'true'"
+          Inputs="@(SponsorLinkMessage)" Outputs="%(SponsorLinkMessage.Identity)-BATCH">
+    <PropertyGroup>
+      <SponsorLinkFilename>%(SponsorLinkMessage.Filename)%(SponsorLinkMessage.Extension)</SponsorLinkFilename>
+      <SponsorLinkDiagnosticId>$(SponsorLinkFilename.Substring(0, 4))</SponsorLinkDiagnosticId>
+      <SponsorLinkNoWarn>false</SponsorLinkNoWarn>
+      <SponsorLinkNoWarn Condition="$(NoWarn.Contains('$(SponsorLinkDiagnosticId)'))">true</SponsorLinkNoWarn>
+      <SponsorLinkMessageImportance>normal</SponsorLinkMessageImportance>
+      <SponsorLinkMessageImportance Condition="$(SponsorLinkFilename.Contains('.low.'))">low</SponsorLinkMessageImportance>
+      <SponsorLinkMessageImportance Condition="$(SponsorLinkFilename.Contains('.high.'))">high</SponsorLinkMessageImportance>
+    </PropertyGroup>
+
+    <!-- We always read info since we want the thanks to be seen :) -->
+    <ReadLinesFromFile File="@(SponsorLinkMessage)" Condition="$(SponsorLinkNoWarn) or $(SponsorLinkFilename.Contains('.Info.'))">
+      <Output TaskParameter="Lines" ItemName="SponsorLinkMessageLine"/>
+    </ReadLinesFromFile>
+
+    <!-- 🙏 Please, instead of disabling SponsorLink, consider supporting the ongoing development of 
+         the  projects you depend on. This helps keep the community healthy and supports your fellow developers 
+         make a living too. There is no minimum amount to sponsor, and you can cancel at any time. 
+         It's available everywhere in the world, and you can sponsor anonymously if you prefer too!
+         Learn more at https://github.com/sponsors. 
+    -->
+    <Error Text="@(SponsorLinkMessageLine, '')" Condition="$(SponsorLinkNoWarn) and $(SponsorLinkFilename.Contains('.Error.'))" />
+
+    <!-- 🙏 Please, instead of disabling SponsorLink, consider supporting the ongoing development of 
+         the  projects you depend on. This helps keep the community healthy and supports your fellow developers 
+         make a living too. There is no minimum amount to sponsor, and you can cancel at any time. 
+         It's available everywhere in the world, and you can sponsor anonymously if you prefer too!
+         Learn more at https://github.com/sponsors. 
+    -->
+    <Warning Text="@(SponsorLinkMessageLine, '')" Condition="$(SponsorLinkNoWarn) and $(SponsorLinkFilename.Contains('.Warning.'))" />
+
+    <!-- Always show info, since otherwise it's typically not visible anywhere, and we want the Thanks to be seen :) -->
+    <Message Text="@(SponsorLinkMessageLine, '')" Importance="normal" Condition="$(SponsorLinkFilename.Contains('.Info.'))" />
+  </Target>
+
+</Project>

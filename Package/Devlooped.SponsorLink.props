@@ -1,7 +1,12 @@
+<!-- These props are intended for SponsorLink consumption by package authors -->
 <Project>
 
   <PropertyGroup>
-    <SponsorLinkTargets>$(MSBuildThisFileDirectory)Devlooped.SponsorLink.targets</SponsorLinkTargets>
+    <!-- SL package root directory -->
+    <SponsorLinkRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</SponsorLinkRoot>
+
+    <!-- Consuming packages can use this property to pack and ship this required targets file -->
+    <SponsorLinkTargets>$(SponsorLinkRoot)\tools\Devlooped.SponsorLink.targets</SponsorLinkTargets>
   </PropertyGroup>
 
 </Project>
