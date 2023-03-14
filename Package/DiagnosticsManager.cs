@@ -18,7 +18,38 @@ class DiagnosticsManager
         get => AppDomainDictionary.Get<ConcurrentDictionary<(string, string), SyntaxTreeValueProvider<HashSet<string>>>>(nameof(ValueProviders));
     }
 
-    public static DiagnosticDescriptor Broken { get; } = CreateBroken();
+    public static DiagnosticDescriptor MissingProject { get; } = new(
+        "DSL001",
+        ThisAssembly.Strings.MissingProject.Title,
+        ThisAssembly.Strings.MissingProject.Message,
+        "SponsorLink",
+        DiagnosticSeverity.Error,
+        true,
+        ThisAssembly.Strings.MissingProject.Description,
+        "https://github.com/devlooped/SponsorLink/blob/main/docs/DSL001.md",
+        "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable);
+
+    public static DiagnosticDescriptor MissingBuildingInside { get; } = new(
+        "DSL002",
+        ThisAssembly.Strings.MissingBuildingInside.Title,
+        ThisAssembly.Strings.MissingBuildingInside.Message,
+        "SponsorLink",
+        DiagnosticSeverity.Error,
+        true,
+        ThisAssembly.Strings.MissingBuildingInside.Description,
+        "https://github.com/devlooped/SponsorLink/blob/main/docs/DSL002.md",
+        "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable);
+
+    public static DiagnosticDescriptor MissingDesignTimeBuild { get; } = new(
+        "DSL003",
+        ThisAssembly.Strings.MissingDesignTimeBuild.Title,
+        ThisAssembly.Strings.MissingDesignTimeBuild.Message,
+        "SponsorLink",
+        DiagnosticSeverity.Error,
+        true,
+        ThisAssembly.Strings.MissingDesignTimeBuild.Description,
+        "https://github.com/devlooped/SponsorLink/blob/main/docs/DSL003.md",
+        "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable);
 
     public void ReportDiagnosticOnce(CompilationAnalysisContext context, Diagnostic diagnostic, string sponsorable, string product)
     {
@@ -65,8 +96,19 @@ class DiagnosticsManager
     public bool TryPeek(string sponsorable, string product, string project, out Diagnostic? diagnostic)
         => Diagnostics.TryGetValue((sponsorable, product, project), out diagnostic);
 
+    static DiagnosticDescriptor CreateThanks(string sponsorable, string prefix) => new(
+        $"{prefix}100",
+        ThisAssembly.Strings.Thanks.Title,
+        ThisAssembly.Strings.Thanks.MessageFormat,
+        "SponsorLink",
+        DiagnosticSeverity.Info,
+        true,
+        ThisAssembly.Strings.Thanks.Description,
+        "https://github.com/sponsors/" + sponsorable,
+        "DoesNotSupportF1Help", nameof(DiagnosticKind.Thanks));
+
     static DiagnosticDescriptor CreateAppNotInstalled(string prefix) => new(
-        $"{prefix}02",
+        $"{prefix}101",
         ThisAssembly.Strings.AppNotInstalled.Title,
         ThisAssembly.Strings.AppNotInstalled.MessageFormat,
         "SponsorLink",
@@ -77,37 +119,15 @@ class DiagnosticsManager
         "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable, nameof(DiagnosticKind.AppNotInstalled));
 
     static DiagnosticDescriptor CreateUserNotSponsoring(string sponsorable, string prefix) => new(
-     $"{prefix}03",
-     ThisAssembly.Strings.UserNotSponsoring.Title,
-     ThisAssembly.Strings.UserNotSponsoring.MessageFormat,
-     "SponsorLink",
-     DiagnosticSeverity.Warning,
-     true,
-     ThisAssembly.Strings.UserNotSponsoring.Description,
-     "https://github.com/sponsors/" + sponsorable,
-     "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable, nameof(DiagnosticKind.UserNotSponsoring));
-
-    static DiagnosticDescriptor CreateThanks(string sponsorable, string prefix) => new(
-        $"{prefix}04",
-        ThisAssembly.Strings.Thanks.Title,
-        ThisAssembly.Strings.Thanks.MessageFormat,
-        "SponsorLink",
-        DiagnosticSeverity.Info,
-        true,
-        ThisAssembly.Strings.Thanks.Description,
-        "https://github.com/sponsors/" + sponsorable,
-        "DoesNotSupportF1Help", nameof(DiagnosticKind.Thanks));
-
-    static DiagnosticDescriptor CreateBroken() => new(
-        "SL01",
-        ThisAssembly.Strings.Broken.Title,
-        ThisAssembly.Strings.Broken.Message,
-        "SponsorLink",
-        DiagnosticSeverity.Error,
-        true,
-        ThisAssembly.Strings.Broken.Description,
-        "https://github.com/devlooped/SponsorLink/blob/main/docs/SL01.md",
-        "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable);
+         $"{prefix}102",
+         ThisAssembly.Strings.UserNotSponsoring.Title,
+         ThisAssembly.Strings.UserNotSponsoring.MessageFormat,
+         "SponsorLink",
+         DiagnosticSeverity.Warning,
+         true,
+         ThisAssembly.Strings.UserNotSponsoring.Description,
+         "https://github.com/sponsors/" + sponsorable,
+         "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable, nameof(DiagnosticKind.UserNotSponsoring));
 
     class AlwaysEqual : IEqualityComparer<SyntaxTree>
     {

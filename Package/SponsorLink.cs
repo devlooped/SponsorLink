@@ -33,7 +33,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
 
     static readonly Random rnd = new();
     static int quietDays = 15;
-    static bool reportBroken = false;
+    static bool reportBroken = true;
 
     readonly string sponsorable;
     readonly string product;
@@ -97,7 +97,13 @@ public abstract class SponsorLink : DiagnosticAnalyzer
     {
         sponsorable = settings.Sponsorable;
         product = settings.Product;
-        diagnostics = settings.SupportedDiagnostics.Add(DiagnosticsManager.Broken);
+        
+        // Add the built-in ones to the dynamic diagnostics.
+        diagnostics = settings.SupportedDiagnostics
+            .Add(DiagnosticsManager.MissingProject)
+            .Add(DiagnosticsManager.MissingBuildingInside)
+            .Add(DiagnosticsManager.MissingDesignTimeBuild);
+        
         this.settings = settings;
     }
 
@@ -181,27 +187,38 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         {
             SponsorCheck.ReportBroken("MissingProjectFullPath", null, settings, http);
             if (reportBroken)
-                context.ReportDiagnostic(Diagnostic.Create(DiagnosticsManager.Broken, null));
+                context.ReportDiagnostic(WriteMessage(
+                    sponsorable, product, Directory.GetCurrentDirectory(),
+                    Diagnostic.Create(DiagnosticsManager.MissingProject, null)));
 
             return;
         }
+
+        if (!globalOptions.TryGetValue("build_property.BuildingInsideVisualStudio", out _))
+        {
+            SponsorCheck.ReportBroken("MissingBuildingInsideVisualStudio", Path.GetDirectoryName(projectFile), settings, http);
+            if (reportBroken)
+                context.ReportDiagnostic(WriteMessage(
+                    sponsorable, product, Path.GetDirectoryName(projectFile!),
+                    Diagnostic.Create(DiagnosticsManager.MissingBuildingInside, null)));
+
+            return;
+        }
+
+        if (!globalOptions.TryGetValue("build_property.DesignTimeBuild", out _))
+        {
+            SponsorCheck.ReportBroken("MissingDesignTimeBuild", Path.GetDirectoryName(projectFile), settings, http);
+            if (reportBroken)
+                context.ReportDiagnostic(WriteMessage(
+                    sponsorable, product, Path.GetDirectoryName(projectFile!),
+                    Diagnostic.Create(DiagnosticsManager.MissingDesignTimeBuild, null)));
+
+            return;
+        }
+
 
         var (insideEditor, designTimeBuild) = ReadOptions(globalOptions);
         var info = new BuildInfo(projectFile!, insideEditor, designTimeBuild);
-
-        if (info.InsideEditor == null)
-        {
-            // There's no way we should end up without this value, unless something's 
-            // wrong with targets trying to get this information to *not* get to us, or 
-            // a half-restored run (say, analyer is being run, but MSBuild targets aren't
-            // imported yet?
-
-            SponsorCheck.ReportBroken("MissingBuildingInsideVisualStudio", Path.GetDirectoryName(projectFile), settings, http);
-            if (reportBroken)
-                context.ReportDiagnostic(Diagnostic.Create(DiagnosticsManager.Broken, null));
-
-            return;
-        }
 
         // We never report from in non-IDE builds, which *will* invoke analyzers 
         // and may end up improperly notifying of build pauses when none was 
@@ -437,7 +454,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
             !options.TryGetValue("build_property.BuildingInsideVisualStudio", out var value) ||
             !bool.TryParse(value, out var bv) ? null : (bool?)bv;
 
-        // Override value if we detect R#/Rider in use, or some hacked-up target but we're in VS
+        // Override value if we detect R#/Rider in use, or some hacked-up targets but we're in VS
         if (Environment.GetEnvironmentVariables().Keys.Cast<string>().Any(k =>
                 k.StartsWith("RESHARPER") ||
                 k.StartsWith("IDEA_") ||
