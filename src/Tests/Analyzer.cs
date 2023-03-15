@@ -26,8 +26,8 @@ public class AnalyzerTests
 
         test.TestCode = "// ";
 
-        // We no longer report the misconfiguration as an error
-        //test.ExpectedDiagnostics.Add(DiagnosticResult.CompilerError("SL01"));
+        // We should get the error about missing MSBuildProjectFullPath
+        test.ExpectedDiagnostics.Add(DiagnosticResult.CompilerError("DSL001"));
 
         await test.RunAsync();
     }
