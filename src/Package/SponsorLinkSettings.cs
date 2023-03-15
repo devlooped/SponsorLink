@@ -30,6 +30,7 @@ public class SponsorLinkSettings
     /// </summary>
     /// <param name="sponsorable">The sponsor account to check for sponsorships.</param>
     /// <param name="product">The product that uses SponsorLink. Used in diagnostics to clarify the product requesting the sponsor link check.</param>
+    // <Previous release> BACKCOMPAT OVERLOAD -- DO NOT TOUCH
     public static SponsorLinkSettings Create(string sponsorable, string product)
         => Create(sponsorable, product,
             packageId: default,
@@ -51,12 +52,13 @@ public class SponsorLinkSettings
     /// a default one is determined from the <paramref name="sponsorable"/> and <paramref name="product"/> values.</param>
     /// <param name="pauseMin">Min random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
     /// <param name="pauseMax">Max random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
+    // <Previous release> BACKCOMPAT OVERLOAD -- DO NOT TOUCH
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static SponsorLinkSettings Create(string sponsorable, string product,
-        string? packageId = default,
-        string? diagnosticsIdPrefix = default,
-        int pauseMin = 0, 
-        int pauseMax = DefaultMaxPause) => Create(sponsorable, product,
+        string? packageId,
+        string? diagnosticsIdPrefix,
+        int pauseMin, 
+        int pauseMax) => Create(sponsorable, product,
             packageId: packageId,
             diagnosticsIdPrefix: diagnosticsIdPrefix,
             version: default,
@@ -78,13 +80,46 @@ public class SponsorLinkSettings
     /// <param name="pauseMin">Min random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
     /// <param name="pauseMax">Max random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
     /// <param name="quietDays">Optional days to keep warnings quiet so the user has a chance to test the product undisturbed.</param>
+    // <Previous release> BACKCOMPAT OVERLOAD -- DO NOT TOUCH
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static SponsorLinkSettings Create(string sponsorable, string product,
+        string? packageId,
+        string? version,
+        string? diagnosticsIdPrefix,
+        int pauseMin,
+        int pauseMax,
+        int? quietDays) => Create(sponsorable, product,
+            packageId: packageId,
+            version: version,
+            diagnosticsIdPrefix: diagnosticsIdPrefix,
+            pauseMin: pauseMin,
+            pauseMax: pauseMax,
+            quietDays: quietDays,
+            transitive: false);
+
+    /// <summary>
+    /// Creates the settings for <see cref="SponsorLink"/> with the given values.
+    /// </summary>
+    /// <param name="sponsorable">The sponsor account to check for sponsorships.</param>
+    /// <param name="product">The product that uses SponsorLink. Used in diagnostics to clarify the product requesting the sponsor link check.</param>
+    /// <param name="packageId">Optional NuGet package identifier of the product performing the check. Defaults to <paramref name="product"/>. 
+    /// Used to determine installation time of the product and avoid pausing builds or emitting warnings during the 
+    /// <paramref name="quietDays"/> after install.</param>
+    /// <param name="version">Optional product or package version.</param>
+    /// <param name="diagnosticsIdPrefix">Prefix to use for diagnostics with numbers <c>02,03,04</c> reported by default. If not provided, 
+    /// a default one is determined from the <paramref name="sponsorable"/> and <paramref name="product"/> values.</param>
+    /// <param name="pauseMin">Min random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
+    /// <param name="pauseMax">Max random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
+    /// <param name="quietDays">Optional days to keep warnings quiet so the user has a chance to test the product undisturbed.</param>
+    /// <param name="transitive">Whether the check is transitive (enforced when dependency is indirect in a project).</param>
     public static SponsorLinkSettings Create(string sponsorable, string product,
         string? packageId = default,
         string? version = default,
         string? diagnosticsIdPrefix = default,
         int pauseMin = 0,
         int pauseMax = DefaultMaxPause,
-        int? quietDays = default)
+        int? quietDays = default, 
+        bool transitive = default)
     {
         if (quietDays < 0)
             // Throwing would be a backwards incompatible change.
@@ -129,7 +164,8 @@ public class SponsorLinkSettings
             PauseMin = pauseMin,
             PauseMax = pauseMax,
             QuietDays = quietDays,
-            SupportedDiagnostics = SponsorLink.Diagnostics.GetDescriptors(sponsorable, diagnosticsIdPrefix)
+            SupportedDiagnostics = SponsorLink.Diagnostics.GetDescriptors(sponsorable, diagnosticsIdPrefix),
+            Transitive = transitive
         };
     }
 

@@ -18,5 +18,3 @@ Devlooped.SponsorLinkSettings.SupportedDiagnostics.get -> System.Collections.Imm
 Devlooped.SponsorLinkSettings.SupportedDiagnostics.set -> void
 virtual Devlooped.SponsorLink.OnDiagnostic(string! projectPath, Devlooped.DiagnosticKind kind) -> Microsoft.CodeAnalysis.Diagnostic?
 static Devlooped.SponsorLinkSettings.Create(string! sponsorable, string! product) -> Devlooped.SponsorLinkSettings!
-static Devlooped.SponsorLinkSettings.Create(string! sponsorable, string! product, string? packageId = null, string? diagnosticsIdPrefix = null, int pauseMin = 0, int pauseMax = 4000) -> Devlooped.SponsorLinkSettings!
-static Devlooped.SponsorLinkSettings.Create(string! sponsorable, string! product, string? packageId = null, string? version = null, string? diagnosticsIdPrefix = null, int pauseMin = 0, int pauseMax = 4000, int? quietDays = null) -> Devlooped.SponsorLinkSettings!
