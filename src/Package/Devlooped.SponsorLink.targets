@@ -1,19 +1,6 @@
-<!-- These targets are intended for SponsorLink consumption by package authors,
-     to simplify packing and distribution. It's not used by end users of the 
-     sponsorable package. -->
+<!-- These targets are intended for package authors,to simplify packing and distribution. 
+     They are not used by end users of the sponsorable package. -->
 <Project>
-
-  <PropertyGroup>
-    <!-- Used for renaming the packed targets. -->
-    <SponsorablePackageId Condition="'$(SponsorablePackageId)' == '' and '$(PackageId)' != ''">$(PackageId)</SponsorablePackageId>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="$(SponsorLinkTargets)"
-          Link="buildTransitive\$(SponsorablePackageId).SponsorLink.targets"
-          PackagePath="buildTransitive\$(SponsorablePackageId).SponsorLink.targets"
-          CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
 
   <!-- SponsorLink is typically consumed from a netstandard2.0 analyzer project, which by default won't copy-local 
        any of its runtime dependencies. But in order to properly load the analyzer when debugging as a roslyn component, 
@@ -33,6 +20,9 @@
            TODO: do the equivalent for SDK Pack too. -->
       <PackageReference Condition="'%(PackageReference.PrivateAssets)' == ''"
                         PrivateAssets="all" />
+                        
+      <!-- NOTE: this takes care of packing the buildTransitive targets as a dependency -->
+      <PackageFile Include="Devlooped.SponsorLink.Build" PackFolder="Dependency" FrameworkSpecific="false" Version="$(SponsorLinkVersion)" />
     </ItemGroup>
   </Target>
 

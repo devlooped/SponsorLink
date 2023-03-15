@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.Build.NoTargets/3.7.0">
+  <PropertyGroup>
+    <PackageId>Devlooped.SponsorLink.Build</PackageId>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Description>Provides the required build properties for SponsorLink to run.</Description>
+    <PackageProjectUrl>https://github.com/devlooped/SponsorLink</PackageProjectUrl>
+    <PackageTags>github sponsors</PackageTags>
+    <PackNone>true</PackNone>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NuGetizer" Version="0.9.1" />
+  </ItemGroup>
+</Project>

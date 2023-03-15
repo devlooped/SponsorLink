@@ -9,7 +9,7 @@ and the onboarding process.
 
 ## Usage
 
-Add the following analyzer+generator to an analyzer project you include in your package:
+Add the following analyzer to an analyzer project you include in your package:
 
 ```csharp
 using Devlooped;
@@ -18,8 +18,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace SponsorableLib;
 
-[Generator]
-[DiagnosticAnalyzer(LanguageNames.CSharp)]
+[DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
 class SponsorLinker : SponsorLink
 {
     public SponsorLinker() : base("[SPONSORABLE]", "[PROJECT]") 
@@ -28,7 +27,9 @@ class SponsorLinker : SponsorLink
 ```
 
 Replace `SPONSORABLE` with your sponsor account login and `PROJECT` with a recognizable 
-name of your project or library (i.e. `ThisAssembly` or `Moq`).
+name of your project or library (i.e. `ThisAssembly` or `Moq`). Optionally, use the 
+base constructor overload receiving a `SponsorLinkSettings` which offers many options 
+to customize the behavior of the analyzer.
 
 Make sure you have installed the [GitHub SponsorLink Admin](https://github.com/apps/sponsorlink-admin) app 
 and have followed the [onboarding steps](https://github.com/devlooped/SponsorLink#-open-source-developers).
@@ -48,20 +49,32 @@ Just Work. An example analyzer project referenced by your main library is typica
 
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="0.9.1" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
-    <PackageReference Include="Devlooped.SponsorLink" Version="*" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" Pack="false" />
+    <PackageReference Include="Devlooped.SponsorLink" Version="[VERSION]" />
   </ItemGroup>
 
 </Project>
 ```
 
+To only run the SponsorLink check when a consumer directly references you package, include a 
+`buildTransitive` targets file with your package that surfaces the relevant package id to the 
+analyzer:
+
+```xml
+<Project>
+  <ItemGroup>
+    <SponsorablePackageId Include="[YOUR_PACKAGE_ID]" />
+  </ItemGroup>
+</Project>
+```
+
+
 Learn more about [SponsorLink NuGet integration](https://github.com/devlooped/SponsorLink#integrating-via-nuget-for-net).
 
 ## How it works
 
-When you ship a new version of your library including the above analyzer/generator assembly, 
-at build time (this is done incrementally, so it won't happen on every build, but only whenever 
-the project file changes, or on rebuilds), users will get one of these three messages:
+When you ship a new version of your library including the above analyzer, the first 
+build in an IDE/editor session will result in one of these three messages:
 
 1. User does not have the [GitHub SponsorLink](https://github.com/apps/sponsorlink) (user) 
    app installed in his personal account. [Warning SL02](https://github.com/devlooped/SponsorLink/blob/main/docs/SL02.md):
@@ -80,7 +93,9 @@ the project file changes, or on rebuilds), users will get one of these three mes
 
 > NOTE: you can provide your own actions for the above scenarios, or simply configure 
 > the default behavior by tweaking the min/max amount of random waits introduced during 
-> builds. By default, the waits will range from 0 to 4000ms.
+> builds. By default, the waits will range from 0 to 4000ms. Use to relevant constructor 
+> overload in combination with `SponsorLinkSettings.Create()` factory method to access 
+> all configurable options.
 
 The goal of SponsorLink is to help make your project more sustainable, support your 
 ongoing development and ensure your customers can depend on it in the long run!
