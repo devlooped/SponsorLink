@@ -216,6 +216,23 @@ public abstract class SponsorLink : DiagnosticAnalyzer
             return;
         }
 
+        var dependency = context.Options.AdditionalFiles
+            .Where(x => context.Options.AnalyzerConfigOptionsProvider.GetOptions(x) is var fileOptions &&
+                fileOptions.TryGetValue("build_metadata.AdditionalFiles.SourceItemType", out var itemType) &&
+                itemType == "PackageDependencies" &&
+                fileOptions.TryGetValue("build_metadata.AdditionalFiles.SourceIdentity", out var itemSpec) &&
+                itemSpec == settings.PackageId)
+            .Select(x => context.Options.AnalyzerConfigOptionsProvider.GetOptions(x).TryGetValue("build_metadata.AdditionalFiles.ParentPackage", out var parent) ?
+                parent : null)
+            .ToImmutableList();
+
+        // We should not perform the check if the project is not referencing the package 
+        // We detect this by checking the dependencies (see runtime targets which add 
+        // PackageDependencies for the settings.PackageId from @SponsorablePackageId), 
+        // and if the dependency is found and has a non-null ParentPackage, it means it's 
+        // a transitive dependency.
+        // Note that we default to being non-transitive.
+        var shouldSkip = !settings.Transitive && dependency.Any(x => x != null);
 
         var (insideEditor, designTimeBuild) = ReadOptions(globalOptions);
         var info = new BuildInfo(projectFile!, insideEditor, designTimeBuild);
@@ -500,15 +517,23 @@ public abstract class SponsorLink : DiagnosticAnalyzer
 
     static Diagnostic WriteMessage(string sponsorable, string product, string projectDir, Diagnostic diag)
     {
-        var objDir = Path.Combine(projectDir, "obj", "SponsorLink", sponsorable, product);
-        if (Directory.Exists(objDir))
+        try
         {
-            foreach (var file in Directory.EnumerateFiles(objDir))
-                File.Delete(file);
-        }
+            var objDir = Path.Combine(projectDir, "obj", "SponsorLink", sponsorable, product);
+            if (Directory.Exists(objDir))
+            {
+                foreach (var file in Directory.EnumerateFiles(objDir))
+                    File.Delete(file);
+            }
 
-        Directory.CreateDirectory(objDir);
-        File.WriteAllText(Path.Combine(objDir, $"{diag.Id}.{diag.Severity}.txt"), diag.GetMessage());
+            Directory.CreateDirectory(objDir);
+            File.WriteAllText(Path.Combine(objDir, $"{diag.Id}.{diag.Severity}.txt"), diag.GetMessage());
+        }
+        // This is best-effort only. Cases where it can fail, is when bring run from 
+        // the Roslyn analyzer host, which is in program files, and if the project path 
+        // is empty, or in a folder that requires admin rights.
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
 
         return diag;
     }
