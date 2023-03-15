@@ -1,14 +1,25 @@
-<!-- These targets are included by sponsorable packages that integrate 
-     SponsorLink checks. It's used by end users of the sponsorable package/product. -->
+<!-- 
+  These targets must be imported by sponsorable packages that integrate 
+  SponsorLink checks. It's used by end users of the sponsorable package/product. 
+  The sponsorable package should provide a buildTransitive targets file that 
+  is imported automatically in users' projects, which in turn imports this 
+  file.
+
+  A typical such targets in an analyzer project looks like:
+
+  <Project>
+    <ItemGroup>
+      <SponsorablePackageId Include="[PACKAGE_ID]" />
+    </ItemGroup>
+
+    <Import Project="[PACKAGE_ID].SponsorLink.targets" Condition="'$(SponsorLinkImported)' != 'true'" />
+  </Project>
+-->
 <Project>
 
   <PropertyGroup>
     <BuildingInsideVisualStudio>false</BuildingInsideVisualStudio>
     <BuildingInsideVisualStudio Condition="$(IDEA_INITIAL_DIRECTORY) != '' or $(RESHARPER_FUS_BUILD) != '' or $(RESHARPER_FUS_SESSION) != ''">true</BuildingInsideVisualStudio>
-    <!-- Analyzer projects using DebugRoslynComponent launch profile and IsRoslynComponent can 
-         set this property to true in the launched project so that SponsorLink does not skip the 
-         checks even if DesignTimeBuild is true. -->
-    <DebugSponsorLink Condition="'$(DebugSponsorLink)' == ''" />
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,7 +40,7 @@
           BeforeTargets="GenerateMSBuildEditorConfigFileShouldRun"
           DependsOnTargets="RunResolvePackageDependencies" />
 
-  <Target Name="CollectSponsorLinkReference" 
+  <Target Name="CollectSponsorableDependencies" 
           BeforeTargets="GenerateMSBuildEditorConfigFileShouldRun"
           DependsOnTargets="CollectPackageDependencies" 
 			    Inputs="@(SponsorablePackageId)"
@@ -47,7 +58,7 @@
       <SponsorablePackageDependencies Include="@(PackageDependencies)"
 											                Condition="$([MSBuild]::ValueOrDefault('%(PackageDependencies.Identity)', '').StartsWith('$(SponsorablePackageId)/'))" />
 
-      <!-- Used to determine if the reference is top-level or transitive, via the ParentPackage metadata -->
+      <!-- Used to determine if the dependency is indirect, via the ParentPackage metadata -->
       <AdditionalFiles Include="@(SponsorablePackageDependencies)"
 							         SourceItemType="PackageDependencies"
 							         SourceIdentity="$(SponsorablePackageId)" />
@@ -102,5 +113,9 @@
     <!-- Always show info, since otherwise it's typically not visible anywhere, and we want the Thanks to be seen :) -->
     <Message Text="@(SponsorLinkMessageLine, '')" Importance="normal" Condition="$(SponsorLinkFilename.Contains('.Info.'))" />
   </Target>
+
+  <PropertyGroup>
+    <SponsorLinkImported>true</SponsorLinkImported>
+  </PropertyGroup>
 
 </Project>

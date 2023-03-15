@@ -3,6 +3,18 @@
      sponsorable package. -->
 <Project>
 
+  <PropertyGroup>
+    <!-- Used for renaming the packed targets. -->
+    <SponsorablePackageId Condition="'$(SponsorablePackageId)' == '' and '$(PackageId)' != ''">$(PackageId)</SponsorablePackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(SponsorLinkTargets)"
+          Link="buildTransitive\$(SponsorablePackageId).SponsorLink.targets"
+          PackagePath="buildTransitive\$(SponsorablePackageId).SponsorLink.targets"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <!-- SponsorLink is typically consumed from a netstandard2.0 analyzer project, which by default won't copy-local 
        any of its runtime dependencies. But in order to properly load the analyzer when debugging as a roslyn component, 
        all dependencies need to exist alongside the analyzer project, so we need CopyLocal behavior always for SL. -->
@@ -21,12 +33,6 @@
            TODO: do the equivalent for SDK Pack too. -->
       <PackageReference Condition="'%(PackageReference.PrivateAssets)' == ''"
                         PrivateAssets="all" />
-    </ItemGroup>
-  </Target>
-
-  <Target Name="AddSponsorLinkPackageContents" BeforeTargets="GetPackageContents">
-    <ItemGroup>
-      <PackageFile Include="$(SponsorLinkTargets)" PackFolder="buildTransitive" />
     </ItemGroup>
   </Target>
 
