@@ -7,6 +7,18 @@
 
     <!-- Consuming packages can use this property to pack and ship this required targets file -->
     <SponsorLinkTargets>$(SponsorLinkRoot)\tools\Devlooped.SponsorLink.targets</SponsorLinkTargets>
+
+    <!-- Analyzer projects using DebugRoslynComponent launch profile and IsRoslynComponent can 
+         set this property to true in the launched project so that SponsorLink does not skip the 
+         checks even if DesignTimeBuild is true. -->
+    <DebugSponsorLink Condition="'$(DebugSponsorLink)' == ''" />
   </PropertyGroup>
+
+  <Target Name="EnsureSponsorablePackageId" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(SponsorablePackageId)' == ''"
+           Text="SponsorablePackageId property must be set to the ID of the package that will perform the SponsorLink check."
+           Code="DSL004"
+           ContinueOnError="true" />
+  </Target>
 
 </Project>
