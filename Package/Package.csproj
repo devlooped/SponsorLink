@@ -38,8 +38,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageFile Include="*.props;*.targets" PackagePath="build/%(Filename)%(Extension)" />
-    <None Update="tools\Devlooped.SponsorLink.targets" Pack="true" />
+    <PackageFile Include="Devlooped.SponsorLink.props;Devlooped.SponsorLink.targets" PackagePath="build/%(Filename)%(Extension)" />
+    <None Update="Devlooped.SponsorLink.Version.props" CopyToOutputDirectory="PreserveNewest" PackagePath="build/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <Target Name="Obfuscate" AfterTargets="Build" DependsOnTargets="Build" Condition="'$(Configuration)' == 'Release' and '$(dotnet-nugetize)' == ''">
@@ -53,7 +53,7 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="AddContents" BeforeTargets="GetPackageContents" DependsOnTargets="Obfuscate;SatelliteDllsProjectOutputGroup">
+  <Target Name="AddContents" BeforeTargets="GetPackageContents" DependsOnTargets="GetPackageMetadata;Obfuscate;SatelliteDllsProjectOutputGroup">
     <PropertyGroup>
       <Obfuscated>$(MSBuildProjectDirectory)\$(OutputPath)</Obfuscated>
       <Obfuscated Condition="'$(Configuration)' == 'Release'">$(Obfuscated)\obfuscated</Obfuscated>
@@ -65,6 +65,19 @@
       <!-- Moved to target to avoid a broken link in the solution explorer to lib\net462 folder -->
       <PackageFile Include="lib\net462\System.Net.Http.WinHttpHandler.dll" PackageReference="System.Net.Http.WinHttpHandler" PackFolder="lib" />
     </ItemGroup>
+
+    <!-- Update the runtime version of SL in use -->
+    <PropertyGroup>
+      <!-- Property have have properly formed nested XML, see https://til.cazzulino.com/msbuild/write-entire-xml-fragments-in-msbuild-with-xmlpoke -->
+      <RuntimePackageVersion>
+        <PropertyGroup>
+          <SponsorLinkVersion>$(PackageVersion)</SponsorLinkVersion>
+        </PropertyGroup>
+      </RuntimePackageVersion>      
+    </PropertyGroup>
+    <XmlPoke XmlInputPath="$(MSBuildProjectDirectory)\$(OutputPath)Devlooped.SponsorLink.Version.props"
+             Value="$(RuntimePackageVersion)"
+             Query="/Project" />    
   </Target>
 
 </Project>

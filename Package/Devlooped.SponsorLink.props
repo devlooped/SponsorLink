@@ -14,11 +14,6 @@
     <DebugSponsorLink Condition="'$(DebugSponsorLink)' == ''" />
   </PropertyGroup>
 
-  <Target Name="EnsureSponsorablePackageId" BeforeTargets="PrepareForBuild">
-    <Error Condition="'$(SponsorablePackageId)' == ''"
-           Text="SponsorablePackageId property must be set to the ID of the package that will perform the SponsorLink check."
-           Code="DSL004"
-           ContinueOnError="true" />
-  </Target>
+  <Import Project="Devlooped.SponsorLink.Version.props"/>
 
 </Project>
