@@ -1,8 +1,8 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
+using static Devlooped.Tracing;
 
 namespace Devlooped;
 
@@ -16,8 +16,6 @@ public abstract class SponsorLink : DiagnosticAnalyzer
     // For backwards compatibility only.
     , IIncrementalGenerator
 {
-    static ConcurrentDictionary<string, (DateTime When, DiagnosticKind Kind)> upToDateChecks = new();
-
     // We use a smaller timeout since analyzer/generator will run more frequently 
     // so we have more than one chance to get the right status, eventually. 
     // This is 1/4 of the HttpClientFactory default timeout, used for direct API calls.
@@ -26,7 +24,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
     static TimeSpan NetworkTimeout => Debugger.IsAttached ?
         TimeSpan.FromMinutes(10) : TimeSpan.FromSeconds(1);
 #else
-    static TimeSpan NetworkTimeout { get; } = TimeSpan.FromMilliseconds(250);
+    static TimeSpan NetworkTimeout { get; set; } = TimeSpan.FromMilliseconds(500);
 #endif
 
     static HttpClient http;
@@ -42,6 +40,16 @@ public abstract class SponsorLink : DiagnosticAnalyzer
 
     static SponsorLink()
     {
+        Trace($"SponsorLink::cctor@{AppDomain.CurrentDomain.FriendlyName}");
+        //Trace(string.Join(Environment.NewLine, Environment
+        //    .GetEnvironmentVariables()
+        //    .Cast<DictionaryEntry>()
+        //    .OrderBy(x => x.Key)
+        //    .Where(x => !"Path".Equals(x.Key))
+        //    .Select(x => $"{x.Key}={x.Value}")));
+        
+        AppDomain.CurrentDomain.ProcessExit += (sender, args) => Trace("ProcessExit");
+            
         http = HttpClientFactory.Create(NetworkTimeout);
 
         // Reads settings from storage, best-effort
@@ -59,6 +67,11 @@ public abstract class SponsorLink : DiagnosticAnalyzer
 
                 if (values.TryGetValue("report-broken", out value) && bool.TryParse(value, out var report))
                     reportBroken = report;
+
+#if RELEASE
+                if (values.TryGetValue("network-timeout", out value) && double.TryParse(value, out var timeout))
+                    NetworkTimeout = TimeSpan.FromMilliseconds(timeout);
+#endif
 
             }, TaskContinuationOptions.OnlyOnRanToCompletion);
     }
@@ -101,7 +114,6 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         // Add the built-in ones to the dynamic diagnostics.
         diagnostics = settings.SupportedDiagnostics
             .Add(DiagnosticsManager.MissingProject)
-            .Add(DiagnosticsManager.MissingBuildingInside)
             .Add(DiagnosticsManager.MissingDesignTimeBuild);
         
         this.settings = settings;
@@ -179,6 +191,15 @@ public abstract class SponsorLink : DiagnosticAnalyzer
             http = HttpClientFactory.Create(NetworkTimeout);
         }
 
+        // We never report from non-IDE builds, which *will* invoke analyzers 
+        // and may end up improperly notifying of build pauses when none was 
+        // incurred, actually.
+        if (!SessionManager.IsEditor)
+        {
+            Trace(SessionManager.IsEditor == false);
+            return;
+        }
+
         var globalOptions = context.Options.AnalyzerConfigOptionsProvider.GlobalOptions;
         var projectFile = globalOptions.TryGetValue("build_property.MSBuildProjectFullPath", out var fullPath) ?
                     fullPath : null;
@@ -194,18 +215,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
             return;
         }
 
-        if (!globalOptions.TryGetValue("build_property.BuildingInsideVisualStudio", out _))
-        {
-            SponsorCheck.ReportBroken("MissingBuildingInsideVisualStudio", Path.GetDirectoryName(projectFile), settings, http);
-            if (reportBroken)
-                context.ReportDiagnostic(WriteMessage(
-                    sponsorable, product, Path.GetDirectoryName(projectFile!),
-                    Diagnostic.Create(DiagnosticsManager.MissingBuildingInside, null)));
-
-            return;
-        }
-
-        if (!globalOptions.TryGetValue("build_property.DesignTimeBuild", out _))
+        if (!globalOptions.TryGetValue("build_property.DesignTimeBuild", out var designTimeValue))
         {
             SponsorCheck.ReportBroken("MissingDesignTimeBuild", Path.GetDirectoryName(projectFile), settings, http);
             if (reportBroken)
@@ -233,15 +243,23 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         // a transitive dependency.
         // Note that we default to being non-transitive.
         var shouldSkip = !settings.Transitive && dependency.Any(x => x != null);
-
-        var (insideEditor, designTimeBuild) = ReadOptions(globalOptions);
-        var info = new BuildInfo(projectFile!, insideEditor, designTimeBuild);
-
-        // We never report from in non-IDE builds, which *will* invoke analyzers 
-        // and may end up improperly notifying of build pauses when none was 
-        // incurred, actually.
-        if (insideEditor == false)
+        if (shouldSkip)
+        {
+            Trace("Skipping: transitively referenced.");
             return;
+        }
+
+        var designTimeBuild = !bool.TryParse(designTimeValue, out var bv) ? null : (bool?)bv;
+
+        // SponsorLink authors can debug it by setting up a IsRoslynComponent=true project, 
+        // but also need to set this property in the project, since the debugger will set DesignTimeBuild=true.
+        if (globalOptions.TryGetValue("build_property.DebugSponsorLink", out var dsl) &&
+            bool.TryParse(dsl, out var debugSL) && debugSL)
+            // Reset value to what it is in CLI builds
+            designTimeBuild = null;
+
+
+        var info = new BuildInfo(projectFile!, designTimeBuild);
 
         // We MUST always re-report previously built diagnostics because 
         // otherwise they go away as soon as they are reported by a real 
@@ -265,6 +283,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         // We never pause in DTB
         if (info.DesignTimeBuild == true)
         {
+            Trace(nameof(ReportExisting), info.DesignTimeBuild == true);
             ReportExisting(context, projectFile);
             return;
         }
@@ -323,13 +342,19 @@ public abstract class SponsorLink : DiagnosticAnalyzer
             {
                 if (t.Status == TaskStatus.RanToCompletion)
                     status = t.Result;
+                else if (t.Status == TaskStatus.Faulted)
+                    Trace(t.Exception.InnerException.ToString());
 
                 ev.Set();
             });
-        ev.Wait(NetworkTimeout, context.CancellationToken);
+        // Wait a bit more than the timeout to make sure we don't get a false cancellation.
+        ev.Wait(NetworkTimeout.Add(TimeSpan.FromMilliseconds(100)), context.CancellationToken);
 
         if (status == null)
+        {
+            Trace("Could not get status");
             return;
+        }
 
         var kind = status.Value switch
         {
@@ -338,29 +363,23 @@ public abstract class SponsorLink : DiagnosticAnalyzer
             _ => DiagnosticKind.Thanks,
         };
 
-        var lastCheck = upToDateChecks.TryGetValue(info.ProjectPath, out var check) ?
-            check : (When: DateTime.MinValue, Kind: kind);
-
-        var lastWrites = context.Options.AdditionalFiles
-            .Where(x => context.Options.AnalyzerConfigOptionsProvider.GetOptions(x)
-                .TryGetValue("build_metadata.AdditionalFiles.SourceItemType", out var itemType) &&
-                itemType == "SponsorLinkInput")
-            .Select((x, _) => File.GetLastWriteTimeUtc(x.Path))
-            .ToImmutableArray();
-
-        // Get the newest written file from SponsorLinkInput, or default to Now if none provided (hacked?)
-        var newestInput = lastWrites.IsDefaultOrEmpty ? DateTime.Now : lastWrites.OrderByDescending(_ => _).First();
-        var upToDate = newestInput <= lastCheck.When;
+        // We check only once per-project, per-session as long as the diagnostic kind doesn't change.
+        if (SessionManager.TryGet(info.ProjectPath, out var lastCheck) &&
+            lastCheck == kind)
+        {
+            Trace($"Skipping: lastCheck == {kind}");
+            ClearExisting(info.ProjectPath);
+            return;
+        }
 
         // If the given kind was already reported, no-op. For example, for ThisAssembly, each 
         // package will cause a different Diagnostic but for the same sponsorable+product combination, 
         // but we don't want to emit duplicates.
         if (Diagnostics.TryPeek(sponsorable, product, info.ProjectPath, out var diagnostic) &&
-            diagnostic != null && diagnostic.Descriptor.IsKind(kind) &&
-            // If the inputs are not up to date, we'll run the check again regardless, 
-            // i.e. causing a new pause, as needed.
-            upToDate)
+            diagnostic != null && diagnostic.Descriptor.IsKind(kind))
         {
+            Trace($"Skipping: already reported {sponsorable}/{product} w/{kind}");
+            // Trace("Clearing existing diagnostic due to already reported same sponsorable/product diagnostic");
             ClearExisting(info.ProjectPath);
             return;
         }
@@ -368,25 +387,17 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         diagnostic = OnDiagnostic(info.ProjectPath, kind);
         if (diagnostic != null)
         {
-            // We need to do this up-to-date check ourselves since Roslyn itself doesn't
-            // do the incremental work at all for builds, only for in-IDE optimizations
-            // during typing. See https://github.com/dotnet/roslyn/issues/67160
-            if (upToDate && kind == lastCheck.Kind)
-            {
-                // Clear a previous report in this case, to avoid giving the impression that we
-                // paused again when we haven't.
-                ClearExisting(info.ProjectPath);
-                return;
-            }
-
-            upToDateChecks[info.ProjectPath] = (newestInput, kind);
+            Trace($"Save new check: {info.ProjectPath}={kind}");
+            SessionManager.Set(info.ProjectPath, kind);
 
             // Pause if configured so. Note we won't pause if the project is up to date.
             if (diagnostic.Properties.TryGetValue("Pause", out var value) &&
                 int.TryParse(value, out var pause) &&
                 pause > 0)
             {
-#if DEBUG
+                Trace($"Pausing new check for {pause}ms");
+
+#if !CI
                 Console.Beep(500, 500);
 #endif
                 Thread.Sleep(pause);
@@ -417,7 +428,8 @@ public abstract class SponsorLink : DiagnosticAnalyzer
 
         if (cleared)
         {
-#if DEBUG
+            Trace($"Cleared existing diagnostic files");
+#if !CI
             Console.Beep(800, 500);
 #endif
         }
@@ -463,33 +475,6 @@ public abstract class SponsorLink : DiagnosticAnalyzer
 
             Diagnostics.ReportDiagnosticOnce(context, diagnostic, sponsorable, product);
         }
-    }
-
-    (bool? insideEditor, bool? designTimeBuild) ReadOptions(AnalyzerConfigOptions options)
-    {
-        var insideEditor =
-            !options.TryGetValue("build_property.BuildingInsideVisualStudio", out var value) ||
-            !bool.TryParse(value, out var bv) ? null : (bool?)bv;
-
-        // Override value if we detect R#/Rider in use, or some hacked-up targets but we're in VS
-        if (Environment.GetEnvironmentVariables().Keys.Cast<string>().Any(k =>
-                k.StartsWith("RESHARPER") ||
-                k.StartsWith("IDEA_") ||
-                k == "VSAPPIDDIR"))
-            insideEditor = true;
-
-        var dtb =
-            !options.TryGetValue("build_property.DesignTimeBuild", out value) ||
-            !bool.TryParse(value, out bv) ? null : (bool?)bv;
-
-        // SponsorLink authors can debug it by setting up a IsRoslynComponent=true project, 
-        // but also need to set this property in the project, since the debugger will set DesignTimeBuild=true.
-        if (options.TryGetValue("build_property.DebugSponsorLink", out value) &&
-            bool.TryParse(value, out var debugSL) && debugSL)
-            // Reset value to what it is in CLI builds
-            dtb = null;
-
-        return (insideEditor, dtb);
     }
 
     (bool warn, int pause, string suffix) GetPause()
@@ -544,10 +529,9 @@ public abstract class SponsorLink : DiagnosticAnalyzer
     /// </summary>
     class BuildInfo
     {
-        internal BuildInfo(string projectPath, bool? insideEditor, bool? designTimeBuild)
+        internal BuildInfo(string projectPath, bool? designTimeBuild)
         {
             ProjectPath = projectPath;
-            InsideEditor = insideEditor;
             DesignTimeBuild = designTimeBuild;
         }
 
@@ -555,10 +539,6 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         /// The full path of the project being built.
         /// </summary>
         public string ProjectPath { get; }
-        /// <summary>
-        /// Whether the build is happening inside an editor.
-        /// </summary>
-        public bool? InsideEditor { get; }
         /// <summary>
         /// Whether the build is a design-time build.
         /// </summary>

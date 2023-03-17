@@ -13,6 +13,7 @@
     <DevelopmentDependency>true</DevelopmentDependency>
     <DebugSymbols>false</DebugSymbols>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <LangVersion>10</LangVersion>
 
     <!-- Roslyn caches analyzers aggressively so we are better off using a very dynamic version number 
          for local builds where a quick devloop is key. We bump version every 10 seconds -->
@@ -20,9 +21,10 @@
   </PropertyGroup>
 
   <!-- Only produce debug symbols in debug mode, avoids leaking impl. details with obfuscated Release bits -->
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' or '$(CI)' != 'true'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
     <PackOnBuild>true</PackOnBuild>
   </PropertyGroup>
 
@@ -32,6 +34,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" Pack="false" />
     <PackageReference Include="Obfuscar" Version="2.2.37" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" Pack="false" />
+    <PackageReference Include="PolySharp" Version="1.12.1" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.1.3" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.Strings" Version="1.1.3" PrivateAssets="all" />
     <PackageReference Include="System.Net.Http.WinHttpHandler" Version="7.0.0" Pack="false" GeneratePathProperty="true" />
@@ -75,9 +78,7 @@
         </PropertyGroup>
       </RuntimePackageVersion>      
     </PropertyGroup>
-    <XmlPoke XmlInputPath="$(MSBuildProjectDirectory)\$(OutputPath)Devlooped.SponsorLink.Version.props"
-             Value="$(RuntimePackageVersion)"
-             Query="/Project" />    
+    <XmlPoke XmlInputPath="$(MSBuildProjectDirectory)\$(OutputPath)Devlooped.SponsorLink.Version.props" Value="$(RuntimePackageVersion)" Query="/Project" />    
   </Target>
 
 </Project>

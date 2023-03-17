@@ -1,9 +1,13 @@
 <Project>
 
-  <PropertyGroup Condition=" $(CI) ">
+  <PropertyGroup Condition="$(CI)">
     <VersionPrefix>42.42.$(GITHUB_RUN_NUMBER)</VersionPrefix>
     <Version Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix)</Version>
     <Version Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix)</Version>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(CI)' != 'true' and '$(Language)' == 'C#'">
+    <DefineConstants>LOG;$(DefineConstants)</DefineConstants>
   </PropertyGroup>
 
 </Project>

@@ -127,16 +127,7 @@
     <value>Please install the SponsorLink GitHub app 🙏</value>
   </data>
   <data name="BuildPaused" xml:space="preserve">
-    <value>Build paused for {0}ms. This happens only once per project, per IDE/editor session.</value>
-  </data>
-  <data name="MissingBuildingInside_Description" xml:space="preserve">
-    <value>This is typically a package authoring error which can be fixed by installing the Devlooped.SponsorLink.Build package or adding the following MSBuild item to the project: &lt;CompilerVisibleProperty Include="BuildingInsideVisualStudio" /&gt;.</value>
-  </data>
-  <data name="MissingBuildingInside_Message" xml:space="preserve">
-    <value>SponsorLink analyzer did not receive the required BuildingInsideVisualStudio compiler-visible property.</value>
-  </data>
-  <data name="MissingBuildingInside_Title" xml:space="preserve">
-    <value>BuildingInsideVisualStudio compiler-visible property is required</value>
+    <value>Build paused for {0}ms. This happens only once per IDE/editor session.</value>
   </data>
   <data name="MissingDesignTimeBuild_Description" xml:space="preserve">
     <value>This is typically a package authoring error which can be fixed by installing the Devlooped.SponsorLink.Build package or adding the following MSBuild item to the project: &lt;CompilerVisibleProperty Include="DesignTimeBuild" /&gt;.</value>
