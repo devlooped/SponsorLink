@@ -41,8 +41,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageFile Include="Devlooped.SponsorLink.props;Devlooped.SponsorLink.targets" PackagePath="build/%(Filename)%(Extension)" />
-    <None Update="Devlooped.SponsorLink.Version.props" CopyToOutputDirectory="PreserveNewest" PackagePath="build/%(Filename)%(Extension)" />
+    <PackageFile Include="Devlooped.SponsorLink.props;Devlooped.SponsorLink.targets" PackagePath="buildTransitive/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="icon.png">
+      <PackagePath>%(Filename)%(Extension)</PackagePath>
+      <Pack>true</Pack>
+    </None>
   </ItemGroup>
 
   <Target Name="Obfuscate" AfterTargets="Build" DependsOnTargets="Build" Condition="'$(Configuration)' == 'Release' and '$(dotnet-nugetize)' == ''">
@@ -62,23 +68,16 @@
       <Obfuscated Condition="'$(Configuration)' == 'Release'">$(Obfuscated)\obfuscated</Obfuscated>
     </PropertyGroup>
     <ItemGroup>
-      <PackageFile Include="$(OutputPath)\$(TargetName).xml" PackFolder="lib" />
-      <PackageFile Include="$(Obfuscated)\$(TargetFileName)" PackFolder="lib" />
-      <PackageFile Include="@(SatelliteDllsProjectOutputGroupOutput -> '%(FullPath)')" PackFolder="lib" />
+      <SponsorLinkFile Include="$(OutputPath)\$(TargetName).xml;$(Obfuscated)\$(TargetFileName)" />
+      <SponsorLinkFile Include="@(SatelliteDllsProjectOutputGroupOutput -> '%(FullPath)')" />
       <!-- Moved to target to avoid a broken link in the solution explorer to lib\net462 folder -->
-      <PackageFile Include="lib\net462\System.Net.Http.WinHttpHandler.dll" PackageReference="System.Net.Http.WinHttpHandler" PackFolder="lib" />
-    </ItemGroup>
+      <SponsorLinkFile Include="lib\net462\System.Net.Http.WinHttpHandler.dll" PackageReference="System.Net.Http.WinHttpHandler" />
 
-    <!-- Update the runtime version of SL in use -->
-    <PropertyGroup>
-      <!-- Property have have properly formed nested XML, see https://til.cazzulino.com/msbuild/write-entire-xml-fragments-in-msbuild-with-xmlpoke -->
-      <RuntimePackageVersion>
-        <PropertyGroup>
-          <SponsorLinkVersion>$(PackageVersion)</SponsorLinkVersion>
-        </PropertyGroup>
-      </RuntimePackageVersion>      
-    </PropertyGroup>
-    <XmlPoke XmlInputPath="$(MSBuildProjectDirectory)\$(OutputPath)Devlooped.SponsorLink.Version.props" Value="$(RuntimePackageVersion)" Query="/Project" />    
+      <!-- Analyzers are used by downstream consumers -->
+      <PackageFile Include="@(SponsorLinkFile)" PackFolder="analyzers/dotnet" />
+      <!-- Lib used by sponsorable packages at authoring time -->
+      <PackageFile Include="@(SponsorLinkFile)" PackFolder="lib" />
+    </ItemGroup>
   </Target>
 
 </Project>

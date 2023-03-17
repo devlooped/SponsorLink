@@ -1,19 +1,10 @@
-<!-- These props are intended for SponsorLink consumption by package authors -->
 <Project>
 
   <PropertyGroup>
-    <!-- SL package root directory -->
-    <SponsorLinkRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</SponsorLinkRoot>
-
-    <!-- Consuming packages can use this property to pack and ship this required targets file -->
-    <SponsorLinkTargets>$(SponsorLinkRoot)\tools\Devlooped.SponsorLink.targets</SponsorLinkTargets>
-
     <!-- Analyzer projects using DebugRoslynComponent launch profile and IsRoslynComponent can 
          set this property to true in the launched project so that SponsorLink does not skip the 
-         checks even if DesignTimeBuild is true. -->
+         checks even if DesignTimeBuild is true in that scenario. -->
     <DebugSponsorLink Condition="'$(DebugSponsorLink)' == ''" />
   </PropertyGroup>
-
-  <Import Project="Devlooped.SponsorLink.Version.props"/>
 
 </Project>
