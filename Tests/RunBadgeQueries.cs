@@ -12,6 +12,12 @@ public record RunBadgeQueries(ITestOutputHelper Output)
     [Fact]
     public Task users() => RunQuery();
 
+    [Fact]
+    public Task projects() => RunQuery();
+
+    [Fact]
+    public Task accounts() => RunQuery();
+
     async Task RunQuery([CallerMemberName] string query = "")
     {
         var config = new ConfigurationBuilder()
