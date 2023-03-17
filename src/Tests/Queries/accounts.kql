@@ -6,6 +6,6 @@ StorageBlobLogs
 | where Project == "sponsorlink"
 | extend Url=parse_url(Uri)
 | extend Account=tostring(Url["Query Parameters"]["account"])
-| where Account != "" and Account != "kzu" and Account != "sample" and Account != "test"
+| where Account != "" and Account != "kzu" and Account != "sample" and Account != "test" and Account != "testing"
 | summarize by Account
 | count

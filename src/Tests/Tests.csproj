@@ -33,14 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Remove="queries\projects.kql" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="queries\accounts.kql" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\SponsorLink\SponsorLink.csproj" />
   </ItemGroup>
 
