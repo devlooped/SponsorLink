@@ -29,26 +29,15 @@ class DiagnosticsManager
         "https://github.com/devlooped/SponsorLink/blob/main/docs/DSL001.md",
         "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable);
 
-    public static DiagnosticDescriptor MissingBuildingInside { get; } = new(
-        "DSL002",
-        ThisAssembly.Strings.MissingBuildingInside.Title,
-        ThisAssembly.Strings.MissingBuildingInside.Message,
-        "SponsorLink",
-        DiagnosticSeverity.Error,
-        true,
-        ThisAssembly.Strings.MissingBuildingInside.Description,
-        "https://github.com/devlooped/SponsorLink/blob/main/docs/DSL002.md",
-        "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable);
-
     public static DiagnosticDescriptor MissingDesignTimeBuild { get; } = new(
-        "DSL003",
+        "DSL002",
         ThisAssembly.Strings.MissingDesignTimeBuild.Title,
         ThisAssembly.Strings.MissingDesignTimeBuild.Message,
         "SponsorLink",
         DiagnosticSeverity.Error,
         true,
         ThisAssembly.Strings.MissingDesignTimeBuild.Description,
-        "https://github.com/devlooped/SponsorLink/blob/main/docs/DSL003.md",
+        "https://github.com/devlooped/SponsorLink/blob/main/docs/DSL002.md",
         "DoesNotSupportF1Help", WellKnownDiagnosticTags.NotConfigurable);
 
     public void ReportDiagnosticOnce(CompilationAnalysisContext context, Diagnostic diagnostic, string sponsorable, string product)

@@ -1,8 +1,10 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Devlooped;
 
@@ -31,6 +33,50 @@ public enum SponsorStatus
 /// </summary>
 public static class SponsorCheck
 {
+    static string ContextQuery { get; }
+
+    static SponsorCheck()
+    {
+        var sb = new StringBuilder()
+            .Append($"&sl={ThisAssembly.Info.InformationalVersion}");
+
+        if (Environment.GetEnvironmentVariable("CODESPACES") == "true")
+            sb.Append("&codespace=true");
+
+        if (SessionManager.IsVisualStudio)
+        {
+            sb.Append("&editor=vs")
+              .Append("&editor.sku=")
+              .Append(Environment.GetEnvironmentVariable("VSSKUEDITION")?.ToLowerInvariant());
+
+            if (Environment.GetEnvironmentVariable("VSAPPIDDIR") is string appdir && 
+                Directory.Exists(appdir) && 
+                File.Exists(Path.Combine(appdir, "devenv.isolation.ini")))
+            {
+                var value = File.ReadAllLines(Path.Combine(appdir, "devenv.isolation.ini"))
+                    .Where(line => line.StartsWith("InstallationVersion="))
+                    .Select(line => line.Substring("InstallationVersion=".Length))
+                    .FirstOrDefault()?.Trim();
+                if (value != null && Version.TryParse(value, out var version))
+                {
+                    sb.Append("&editor.version=").Append(version.ToString(2));
+                }
+            }
+        }
+        else if (SessionManager.IsRider)
+        {
+            sb.Append("&editor=rider");
+            if (Environment.GetEnvironmentVariable("IDEA_INITIAL_DIRECTORY") is string ideadir && 
+                Regex.Match(ideadir, "\\d\\d\\d\\d\\.\\d\\d?") is Match match && 
+                match.Success)
+            {
+                sb.Append("&editor.version=").Append(match.Value);
+            }
+        }
+
+        ContextQuery = sb.ToString();
+    }
+
     /// <summary>
     /// Checks the sponsoring status with the given parameters.
     /// </summary>
@@ -63,10 +109,9 @@ public static class SponsorCheck
 
         var data = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(email));
         var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
-        var query = $"account={sponsorable}&product={product}&package={packageId}&version={version}&sl={ThisAssembly.Info.InformationalVersion}";
-        query += $"&noreply={email!.EndsWith("@users.noreply.github.com")}";
-        if (Environment.GetEnvironmentVariable("CODESPACES") == "true")
-            query += "&codespace=true";
+        var query = $"account={sponsorable}&product={product}&package={packageId}&version={version}" + 
+            $"&noreply=" + email!.EndsWith("@users.noreply.github.com").ToString().ToLowerInvariant() + 
+            ContextQuery;
 
         // Check app install and sponsoring status
         var installed = await CheckUrlAsync(http ?? HttpClientFactory.Default, $"https://cdn.devlooped.com/sponsorlink/apps/{hash}?{query}", default);
@@ -105,10 +150,9 @@ public static class SponsorCheck
 
         var data = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(email));
         var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
-        var query = $"reason={reason}&account={settings.Sponsorable}&product={settings.Product}&package={settings.PackageId}&version={settings.Version}&sl={ThisAssembly.Info.InformationalVersion}";
-        query += $"&noreply={email!.EndsWith("@users.noreply.github.com")}";
-        if (Environment.GetEnvironmentVariable("CODESPACES") == "true")
-            query += "&codespace=true";
+        var query = $"reason={reason}&account={settings.Sponsorable}&product={settings.Product}&package={settings.PackageId}&version={settings.Version}" +
+            "&noreply=" + email!.EndsWith("@users.noreply.github.com").ToString().ToLowerInvariant() + 
+            ContextQuery;
 
         CheckUrlAsync(http ?? HttpClientFactory.Default,
             $"https://cdn.devlooped.com/sponsorlink/broken/{settings.Sponsorable}/{hash}?{query}", default)
@@ -150,8 +194,11 @@ public static class SponsorCheck
             var response = await http.GetAsync(url, cancellation);
             return response.IsSuccessStatusCode;
         }
-        catch
+        catch (Exception ex) 
         {
+            if (!cancellation.IsCancellationRequested)
+                Tracing.Trace($"{nameof(CheckUrlAsync)}({url}): \r\n{ex}");
+
             return null;
         }
     }

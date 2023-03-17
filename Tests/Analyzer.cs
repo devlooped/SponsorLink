@@ -26,8 +26,13 @@ public class AnalyzerTests
 
         test.TestCode = "// ";
 
-        // We should get the error about missing MSBuildProjectFullPath
-        test.ExpectedDiagnostics.Add(DiagnosticResult.CompilerError("DSL001"));
+        // We should get the error about missing MSBuildProjectFullPath if 
+        // running the test from the IDE, but not from CLI
+        if (Environment.GetEnvironmentVariable("ServiceHubLogSessionKey") != null ||
+            Environment.GetEnvironmentVariable("VSAPPIDNAME") != null)
+        {
+            test.ExpectedDiagnostics.Add(DiagnosticResult.CompilerError("DSL001"));
+        }
 
         await test.RunAsync();
     }

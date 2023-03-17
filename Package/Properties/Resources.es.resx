@@ -136,16 +136,7 @@
     <value>SponsorLink no funcionando 🤔</value>
   </data>
   <data name="BuildPaused" xml:space="preserve">
-    <value> Compilación pausada por {0}ms. Esto occurre solo una vez por proyecto y sesion del editor/IDE.</value>
-  </data>
-  <data name="MissingBuildingInside_Description" xml:space="preserve">
-    <value>Esto suele ser un error del autor del paquete que puede resolverse instalando el paquete Devlooped.SponsorLink.Build o agregando el siguiente item de MSBuild al proyect: &lt;CompilerVisibleProperty Include="BuildingInsideVisualStudio" /&gt;.</value>
-  </data>
-  <data name="MissingBuildingInside_Message" xml:space="preserve">
-    <value>El analyzer de SponsorLink no recibio la propiedad requerida BuildingInsideVisualStudio.</value>
-  </data>
-  <data name="MissingBuildingInside_Title" xml:space="preserve">
-    <value>El valor de BuildingInsideVisualStudio es requerido</value>
+    <value> Compilación pausada por {0}ms. Esto occurre solo una vez por sesion del editor/IDE.</value>
   </data>
   <data name="MissingDesignTimeBuild_Description" xml:space="preserve">
     <value>Esto suele ser un error del autor del paquete que puede resolverse instalando el paquete Devlooped.SponsorLink.Build o agregando el siguiente item de MSBuild al proyect: &lt;CompilerVisibleProperty Include="DesignTimeBuild" /&gt;.</value>

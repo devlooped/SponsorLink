@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <BuildingInsideVisualStudio>false</BuildingInsideVisualStudio>
-    <BuildingInsideVisualStudio Condition="$(IDEA_INITIAL_DIRECTORY) != '' or $(RESHARPER_FUS_BUILD) != '' or $(RESHARPER_FUS_SESSION) != ''">true</BuildingInsideVisualStudio>
+    <BuildingInsideVisualStudio Condition="$(ServiceHubLogSessionKey) != '' or $(VSAPPIDNAME) != '' or $(IDEA_INITIAL_DIRECTORY) != '' or $(RESHARPER_FUS_BUILD) != '' or $(RESHARPER_FUS_SESSION) != ''">true</BuildingInsideVisualStudio>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,8 +13,9 @@
 
     <!-- These are required properties without which the analyzer fails with build errors -->
     <CompilerVisibleProperty Include="DesignTimeBuild" />
-    <CompilerVisibleProperty Include="BuildingInsideVisualStudio" />
-    <CompilerVisibleProperty Include="MSBuildProjectFullPath" />    
+    <CompilerVisibleProperty Include="MSBuildProjectFullPath" />
+
+    <CompilerVisibleProperty Include="DebugSponsorLink" />
   </ItemGroup>
 
   <Target Name="CollectPackageDependencies" 
