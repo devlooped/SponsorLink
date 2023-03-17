@@ -250,16 +250,21 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         }
 
         var designTimeBuild = !bool.TryParse(designTimeValue, out var bv) ? null : (bool?)bv;
+        var forceRun = false;
 
         // SponsorLink authors can debug it by setting up a IsRoslynComponent=true project, 
         // but also need to set this property in the project, since the debugger will set DesignTimeBuild=true.
-        if (globalOptions.TryGetValue("build_property.DebugSponsorLink", out var dsl) &&
-            bool.TryParse(dsl, out var debugSL) && debugSL)
+        // Note we only consider this flag when the debugger is attached, since its sole purpose 
+        // is in this particular scenario. This allows non-debugging runs of the analyzer to 
+        // behave as it would for end consumers, even when building from within the sponsorable 
+        // analyzer solution while not debugging it.
+        if (Debugger.IsAttached && 
+            globalOptions.TryGetValue("build_property.DebugSponsorLink", out var dsl) &&
+            bool.TryParse(dsl, out forceRun) && forceRun)
             // Reset value to what it is in CLI builds
             designTimeBuild = null;
 
-
-        var info = new BuildInfo(projectFile!, designTimeBuild);
+        var info = new BuildInfo(projectFile!, designTimeBuild, forceRun);
 
         // We MUST always re-report previously built diagnostics because 
         // otherwise they go away as soon as they are reported by a real 
@@ -328,7 +333,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
             info = info.WithInstallTime(installTime);
 
             // Updates the InstallTime setting the first time.
-            if (settings.InstallTime == null)
+            if (settings.InstallTime == null && info.InstallTime != null)
                 settings.InstallTime = info.InstallTime;
         }
 
@@ -365,7 +370,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
 
         // We check only once per-project, per-session as long as the diagnostic kind doesn't change.
         if (SessionManager.TryGet(info.ProjectPath, out var lastCheck) &&
-            lastCheck == kind)
+            lastCheck == kind && !info.ForceRun)
         {
             Trace($"Skipping: lastCheck == {kind}");
             ClearExisting(info.ProjectPath);
@@ -529,10 +534,11 @@ public abstract class SponsorLink : DiagnosticAnalyzer
     /// </summary>
     class BuildInfo
     {
-        internal BuildInfo(string projectPath, bool? designTimeBuild)
+        internal BuildInfo(string projectPath, bool? designTimeBuild, bool forceRun)
         {
             ProjectPath = projectPath;
             DesignTimeBuild = designTimeBuild;
+            ForceRun = forceRun;
         }
 
         /// <summary>
@@ -543,7 +549,10 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         /// Whether the build is a design-time build.
         /// </summary>
         public bool? DesignTimeBuild { get; }
-
+        /// <summary>
+        /// Whether to always run the check and report issues.
+        /// </summary>
+        public bool ForceRun { get; }
         /// <summary>
         /// The installation/restore time of SponsorLink.
         /// </summary>
