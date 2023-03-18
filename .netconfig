@@ -3,8 +3,8 @@
 	skip
 [file ".gitignore"]
 	url = https://github.com/devlooped/oss/blob/main/.gitignore
-	sha = c78868eba59a3e04602434684f9eac241fef13fb
-	etag = 1c1705a3f0ed65e33c9133996ebaa100aa445a8b968b2904ad48fef938702006
+	sha = 9dff0bde290185226986f512c75fa0434bc9fe3f
+	etag = 7b3f23aa88e3ed628f03677a5b0fc4587c404bd0ef97dcf9650917a48316d51c
 	weak
 [file ".gitattributes"]
 	url = https://github.com/devlooped/oss/blob/main/.gitattributes
@@ -13,8 +13,8 @@
 	weak
 [file ".editorconfig"]
 	url = https://github.com/devlooped/oss/blob/main/.editorconfig
-	sha = 448cf45a26e068fe5d7164ea48d1dc8bf620df46
-	etag = 897634b9ba05c00e8ef35b24533d31bc43a5299be5a64e240109ba4c00fcad15
+	sha = 29818360755cdb9ba5527013a2ecc9670c437e44
+	etag = f0b411ee5aa5ddb4449d98ad73fe11c921589b8d26e4f4527d58e26d39f03958
 	weak
 [file ".github/workflows/dotnet-file.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/dotnet-file.yml
