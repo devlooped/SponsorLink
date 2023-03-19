@@ -5,10 +5,10 @@
     <BuildingInsideVisualStudio Condition="$(ServiceHubLogSessionKey) != '' or $(VSAPPIDNAME) != '' or $(IDEA_INITIAL_DIRECTORY) != '' or $(RESHARPER_FUS_BUILD) != '' or $(RESHARPER_FUS_SESSION) != ''">true</BuildingInsideVisualStudio>
   </PropertyGroup>
 
-
   <ItemGroup>
     <!-- By adding these items in .targets, we make it harder to break from tweaks in the project file -->
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="SourceItemType" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="SourceIdentity" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="NuGetPackageId" />
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="ParentPackage" />
 
