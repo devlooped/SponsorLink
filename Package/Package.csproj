@@ -44,13 +44,6 @@
     <PackageFile Include="Devlooped.SponsorLink.props;Devlooped.SponsorLink.targets" PackagePath="buildTransitive/%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="icon.png">
-      <PackagePath>%(Filename)%(Extension)</PackagePath>
-      <Pack>true</Pack>
-    </None>
-  </ItemGroup>
-
   <Target Name="Obfuscate" AfterTargets="Build" DependsOnTargets="Build" Condition="'$(Configuration)' == 'Release' and '$(dotnet-nugetize)' == ''">
     <Exec Command="$(Obfuscar) $(MSBuildThisFileDirectory)Obfuscar.xml" WorkingDirectory="$(MSBuildProjectDirectory)\$(OutputPath)" />
   </Target>
