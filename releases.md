@@ -1,3 +1,7 @@
+# v0.10.1
+## What's Changed
+### ✨ Implemented enhancements
+* Enable diagnostics logging to `%TEMP%\SponsorLink\log.txt` by setting `SPONSORLINK_TRACE` environment variable to a non-empty value.
 # v0.10.0
 ## What's Changed
 ### ✨ Implemented enhancements
