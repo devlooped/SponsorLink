@@ -90,7 +90,7 @@ SponsorLink [dependency](https://learn.microsoft.com/en-us/nuget/reference/nuspe
       <group targetFramework="[TF]">
         <dependency id="Devlooped.SponsorLink" version="[version]" 
                     include="build,analyzers" 
-                    exclude="compile,native,runtime" />
+                    exclude="compile,runtime" />
       </group>
     </dependencies>
   </metadata>
@@ -106,7 +106,6 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace SponsorableLib;
 
-[Generator]
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 class SponsorLinker : SponsorLink
 {
@@ -138,7 +137,7 @@ library, you just need to add a project reference to that project and the right 
 will happen (remove the PackageId property in that case, since the referencing project will 
 be the one doing the packing).
 
-Check out [the complete example](samples/dotnet) plus test project (that can be debugged by just pressing F5 in Visual Studio).
+Check out [the complete example](samples/dotnet) plus test project (which can be debugged by just pressing F5 in Visual Studio).
 
 In addition to surfacing the supported diagnostics in Visual Studio in the default language (english):
 
@@ -149,6 +148,66 @@ we also support localized versions:
    ![Screenshot of sample analyzer node in english](/assets/img/VS-LOC-es.png)
 
 Please consider contributing translations by adding the relevant resource file under the [loc](/loc) folder.
+
+#### Transitive Analyzer References
+
+Currently, the .NET SDK (in combination with NuGet) *always* includes analyzers 
+transitively from *all* dependencies (project and package references). This is 
+a [known issue](https://github.com/dotnet/sdk/issues/1212) which might eventually 
+be resolved, but for the time being, it means your package might end up causing 
+SponsorLink checks transitively on projects that don't even reference your package, 
+simply through project-to-project references. This can cause build errors since 
+SponsorLink relies on some build properties being surfaced to the analyzer via 
+compiler-visible properties and items.
+
+So at this time, the following (NuGetizer only) steps are necessary to workaround 
+the .NET SDK issue:
+
+1. Add `GeneratePathProperty="true"` on the package reference to SponsorLink:
+
+  ```xml
+  <PackageReference Include="Devlooped.SponsorLink" Version="0.10.0" GeneratePathProperty="true" />
+  ```
+
+2.Pack SponsorLink targets alongside your package targets by adding to the project file:
+
+  ```xml
+  <ItemGroup>
+    <None Include="$(PkgDevlooped_SponsorLink)\buildTransitive\Devlooped.SponsorLink.targets" 
+          PackFolder="buildTransitive" 
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  ```
+
+3. Make sure you include a `buildTransitive` targets file with your project, by adding a 
+   .targets named after your package ID and specifying the pack properties for NuGetizer 
+   as follows:
+
+  ```xml
+  <ItemGroup>
+    <None Update="[PACKAGE_ID].targets" PackFolder="buildTransitive" />
+  </ItemGroup>
+  ```
+
+4. Import the SponsorLink targets if not imported already, from your build targets from 
+   the previous step, such as:
+
+  ```xml
+  <ItemGroup Label="SponsorLink">
+    <!-- Let SponsorLink know your package ID for transitive checks -->
+    <SponsorablePackageId Include="[PACKAGE_ID]" />
+  </ItemGroup>
+
+  <!-- Ensure SponsorLink targets are always imported -->
+  <Import Project="Devlooped.SponsorLink.targets" 
+          Condition="$(SponsorLinkImported) != true"/>
+ ```
+
+This ensures end users don't get build errors from missing SponsorLink compiler properties.
+End users can also fix issues by installing the 
+[Devlooped.SponsorLink](https://nuget.org/packages/Devlooped.SponsorLink) on failing projects, 
+even if your package fails to provide the above workarounds.
+
 
 ### Registering with SponsorLink
 
