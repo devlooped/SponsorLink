@@ -6,24 +6,32 @@ namespace Devlooped;
 
 static class Tracing
 {
-    [Conditional("LOG")]
+    //[Conditional("LOG")]
     public static void Trace(string message, object? value, [CallerArgumentExpression("value")] string? expression = null, [CallerFilePath] string? filePath = null, [CallerLineNumber] int lineNumber = 0)
         => Trace($"{message}: {value} ({expression})", filePath, lineNumber);
 
-    [Conditional("LOG")]
+    //[Conditional("LOG")]
     public static void Trace(object? value, [CallerArgumentExpression("value")] string? expression = null, [CallerFilePath] string? filePath = null, [CallerLineNumber] int lineNumber = 0)
         => Trace($"{value} ({expression})", filePath, lineNumber);
 
-    [Conditional("LOG")]
+    [Conditional("TRACE")]
     public static void Trace([CallerMemberName] string? message = null, [CallerFilePath] string? filePath = null, [CallerLineNumber] int lineNumber = 0)
     {
+        var trace = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SPONSORLINK_TRACE"));
+#if DEBUG
+        trace = true;
+#endif
+
+        if (!trace)
+            return;
+
         var line = new StringBuilder()
             .Append($"[{DateTime.Now:O}]")
             .Append($"[{Process.GetCurrentProcess().ProcessName}:{Process.GetCurrentProcess().Id}]")
             .Append($" {message} ")
             .AppendLine($" -> {filePath}({lineNumber})")
             .ToString();
-
+        
         var dir = Environment.ExpandEnvironmentVariables(@"%TEMP%\SponsorLink");
         Directory.CreateDirectory(dir);
 
