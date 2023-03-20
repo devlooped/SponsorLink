@@ -6,8 +6,4 @@
     <Version Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix)</Version>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(CI)' != 'true' and '$(Language)' == 'C#'">
-    <DefineConstants>LOG;$(DefineConstants)</DefineConstants>
-  </PropertyGroup>
-
 </Project>
