@@ -130,7 +130,7 @@
     <value>Build paused for {0}ms. This happens only once per IDE/editor session.</value>
   </data>
   <data name="MissingDesignTimeBuild_Description" xml:space="preserve">
-    <value>This is typically a package authoring error which can be fixed by installing the Devlooped.SponsorLink.Build package or adding the following MSBuild item to the project: &lt;CompilerVisibleProperty Include="DesignTimeBuild" /&gt;.</value>
+    <value>This is typically a package authoring error which can be fixed by installing the Devlooped.SponsorLink package or adding the following MSBuild item to the project: &lt;CompilerVisibleProperty Include="DesignTimeBuild" /&gt;.</value>
   </data>
   <data name="MissingDesignTimeBuild_Message" xml:space="preserve">
     <value>SponsorLink analyzer did not receive the required DesignTimeBuild compiler-visible property.</value>
@@ -139,7 +139,7 @@
     <value>DesignTimeBuild compiler-visible property is required</value>
   </data>
   <data name="MissingProject_Description" xml:space="preserve">
-    <value>This is typically a package authoring error which can be fixed by installing the Devlooped.SponsorLink.Build package or adding the following MSBuild item to the project: &lt;CompilerVisibleProperty Include="MSBuildProjectFullPath" /&gt;.</value>
+    <value>This is typically a package authoring error which can be fixed by installing the Devlooped.SponsorLink package or adding the following MSBuild item to the project: &lt;CompilerVisibleProperty Include="MSBuildProjectFullPath" /&gt;.</value>
   </data>
   <data name="MissingProject_Message" xml:space="preserve">
     <value>SponsorLink analyzer did not receive the required MSBuildProjectFullPath compiler-visible property.</value>
