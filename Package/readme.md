@@ -7,6 +7,9 @@ itself, without affecting IDE/Editor performance or command line/CI builds.
 [Learn more about SponsorLink for open source developers](https://github.com/devlooped/SponsorLink#-open-source-developers) 
 and the onboarding process.
 
+> NOTE: this package is intended for *package authors*. Downstream package *consumers* 
+> should get it transitively automatically to support the SponsorLink checks.
+
 ## Usage
 
 Add the following analyzer to an analyzer project you include in your package:
@@ -99,6 +102,12 @@ build in an IDE/editor session will result in one of these three messages:
 
 The goal of SponsorLink is to help make your project more sustainable, support your 
 ongoing development and ensure your customers can depend on it in the long run!
+
+
+Learn more about [SponsorLink NuGet integration](https://github.com/devlooped/SponsorLink#integrating-via-nuget-for-net), 
+in particular the section on properly packing to workaround the issue of forced 
+transitiveness of analyzers in the .NET SDK.
+
 
 <!-- include https://github.com/devlooped/sponsors/raw/main/footer.md -->
 # Sponsors 
