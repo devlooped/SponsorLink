@@ -97,8 +97,8 @@ SponsorLink [dependency](https://learn.microsoft.com/en-us/nuget/reference/nuspe
 </package>
 ```
 
+Analyzer:
 
-Generator:
 ```csharp
 using Devlooped;
 using Microsoft.CodeAnalysis;
@@ -106,7 +106,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace SponsorableLib;
 
-[DiagnosticAnalyzer(LanguageNames.CSharp)]
+[DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
 class SponsorLinker : SponsorLink
 {
     public SponsorLinker() : base("[YOUR_ACCOUNT]", "[YOUR_PROJECT]") 
@@ -289,7 +289,7 @@ Over time, we expect many libraries will use this and too many "Thank you" can b
 a bit noisy. In that case, you can disable that at the assembly level with:
 
 ```csharp
-[assembly: SuppressMessage("SponsorLink", "SL04")]
+[assembly: SuppressMessage("SponsorLink", "DSL04")]
 ```
 
 
