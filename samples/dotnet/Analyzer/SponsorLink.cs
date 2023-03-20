@@ -6,8 +6,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace SponsorableLib;
 
-[Generator]
-[DiagnosticAnalyzer(LanguageNames.CSharp)]
+[DiagnosticAnalyzer(LanguageNames.CSharp, LanguageNames.VisualBasic)]
 class SimpleSponsorLinker : SponsorLink
 {
     public SimpleSponsorLinker() : base("test", "SponsorableLib")
@@ -19,7 +18,6 @@ class SimpleSponsorLinker : SponsorLink
 }
 
 
-[Generator]
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 class AdvancedSponsorLinker : SponsorLink
 {
@@ -27,18 +25,19 @@ class AdvancedSponsorLinker : SponsorLink
     
     static AdvancedSponsorLinker()
     {
-        // NOTE: diagnostics prefix will default to T(test)S(Sponsorable)L(Lib) > TSLxx
+        // NOTE: diagnostics prefix will default to T(test)A(dvanced)S(ponsorable)L(Lib) > TSLxx
         settings = SponsorLinkSettings.Create("test", "AdvancedSponsorableLib",
             packageId: "SponsorableLib",
             // This introduces warnings right from the start. The 
             // default pauses always start from the second non-quiet day, 
-            // and increase from zero (max pause) until configured 
-            // max pause, increasing by 1sec (max pause) per additional 
+            // and increase from zero until configured 
+            // max pause, increasing by 1sec per additional 
             // day of usage. So, on the 2nd day, the pause will be random
             // between 0ms and 1000ms (1 day after quiet days). The following 
             // day it will be up to 2000ms pause, and so on until the max 
             // configured pause, which defaults to 4000ms.
-            quietDays: 0);
+            quietDays: 0); 
+            //version: ThisAssembly.Info.InformationalVersion);
         // Here we showcase how to modify the built-in diagnostics to add a custom description.
         settings.SupportedDiagnostics = settings.SupportedDiagnostics
             .Select(x => x.IsKind(DiagnosticKind.UserNotSponsoring) ?

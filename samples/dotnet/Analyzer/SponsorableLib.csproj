@@ -2,16 +2,34 @@
 
   <PropertyGroup>
     <PackageId>SponsorableLib</PackageId>
+    <Description>Sponsorable Lib Sample</Description>
     <PackFolder>analyzers/dotnet</PackFolder>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <IsRoslynComponent>true</IsRoslynComponent>
+
+    <!-- Roslyn caches analyzers aggressively so we are better off using a very dynamic version number 
+         for local builds where a quick devloop is key. We bump version every 10 seconds -->
+    <VersionPrefix>42.42.$([System.Math]::Floor($([MSBuild]::Divide($([System.DateTime]::Now.TimeOfDay.TotalSeconds), 10))))</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NuGetizer" Version="0.9.5" />
+    <!-- GeneratePathProperty=true used to workaround https://github.com/dotnet/sdk/issues/1212  -->
+    <PackageReference Include="Devlooped.SponsorLink" Version="0.10.0" GeneratePathProperty="true" />
+    <PackageReference Include="NuGetizer" Version="42.42.957-main" PrivateAssets="all" PackTransitive="false" />
+    <!--<PackageReference Include="ThisAssembly" Version="42.42.597-main" PrivateAssets="all" />-->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
-    <PackageReference Include="Devlooped.SponsorLink" Version="0.9.9" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="buildTransitive\SponsorableLib.targets" PackFolder="buildTransitive" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Workaround for https://github.com/dotnet/sdk/issues/1212 
+         Since analyzers will be forcedly included transitively even, we must always be 
+         able to provide the targets, since the actual package reference might not be transitive itself -->
+    <None Include="$(PkgDevlooped_SponsorLink)\buildTransitive\Devlooped.SponsorLink.targets" 
+          Link="buildTransitive\Devlooped.SponsorLink.targets"
+          PackFolder="buildTransitive"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  
 </Project>

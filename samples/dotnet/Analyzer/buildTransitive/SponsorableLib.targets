@@ -1,0 +1,14 @@
+<Project>
+
+  <ItemGroup>
+    <!-- This makes sure we don't enforce SponsorLink transitively, but only when 
+         consumers are directly referencing our package. -->
+    <SponsorablePackageId Include="SponsorableLib" />
+  </ItemGroup>
+
+  <!-- Workaround for https://github.com/dotnet/sdk/issues/1212 
+         Since analyzers will be forcedly included transitively even, we must always be 
+         able to provide the targets, since the actual package reference might not be transitive itself -->
+  <Import Project="Devlooped.SponsorLink.targets" Condition="$(SponsorLinkImported) != true"/>
+
+</Project>
