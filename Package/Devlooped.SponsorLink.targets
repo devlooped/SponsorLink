@@ -1,6 +1,8 @@
 <Project>
 
   <PropertyGroup>
+    <!-- Used in RunResolvePackageDependencies to emit items we use to detect transitive deps -->
+    <EmitLegacyAssetsFileItems>true</EmitLegacyAssetsFileItems>
     <BuildingInsideVisualStudio>false</BuildingInsideVisualStudio>
     <BuildingInsideVisualStudio Condition="$(ServiceHubLogSessionKey) != '' or $(VSAPPIDNAME) != '' or $(IDEA_INITIAL_DIRECTORY) != '' or $(RESHARPER_FUS_BUILD) != '' or $(RESHARPER_FUS_SESSION) != ''">true</BuildingInsideVisualStudio>
   </PropertyGroup>
@@ -117,9 +119,8 @@
           Inputs="@(PackageReference -> WithMetadataValue('Identity', 'Devlooped.SponsorLink'))"
           Outputs="|%(PackageReference.Identity)|">
     <ItemGroup>
-      <!-- NOTE: this will take care of packing SL dependencies automatically due to PrivateAssets=all
-           TODO: do the equivalent for SDK Pack too. -->
-      <PackageReference PackInclude="build,analyzers" PackExclude="compile,runtime" />
+      <!-- TODO: do the equivalent for SDK Pack too. -->
+      <PackageReference PrivateAssets="" PackInclude="build,analyzers" PackExclude="compile,runtime" />
     </ItemGroup>
   </Target>
 

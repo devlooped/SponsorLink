@@ -232,7 +232,8 @@ public abstract class SponsorLink : DiagnosticAnalyzer
                 itemType == "PackageDependencies" &&
                 fileOptions.TryGetValue("build_metadata.AdditionalFiles.SourceIdentity", out var itemSpec) &&
                 itemSpec == settings.PackageId)
-            .Select(x => context.Options.AnalyzerConfigOptionsProvider.GetOptions(x).TryGetValue("build_metadata.AdditionalFiles.ParentPackage", out var parent) ?
+            .Select(x => context.Options.AnalyzerConfigOptionsProvider.GetOptions(x)
+                .TryGetValue("build_metadata.AdditionalFiles.ParentPackage", out var parent) && !string.IsNullOrEmpty(parent) ?
                 parent : null)
             .ToImmutableList();
 
@@ -242,7 +243,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         // and if the dependency is found and has a non-null ParentPackage, it means it's 
         // a transitive dependency.
         // Note that we default to being non-transitive.
-        var shouldSkip = !settings.Transitive && dependency.Any(x => x != null);
+        var shouldSkip = !settings.Transitive && dependency.Any(x => !string.IsNullOrEmpty(x));
         if (shouldSkip)
         {
             Trace("Skipping: transitively referenced.");
