@@ -246,7 +246,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         var shouldSkip = !settings.Transitive && dependency.Any(x => !string.IsNullOrEmpty(x));
         if (shouldSkip)
         {
-            Trace("Skipping: transitively referenced.");
+            Trace($"Skipping {sponsorable}/{product}@{Path.GetFileNameWithoutExtension(projectFile)}: transitively referenced.");
             return;
         }
 
@@ -289,7 +289,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         // We never pause in DTB
         if (info.DesignTimeBuild == true)
         {
-            Trace(nameof(ReportExisting), info.DesignTimeBuild == true);
+            Trace($"ReportExisting {sponsorable}/{product}@{Path.GetFileNameWithoutExtension(projectFile)}", info.DesignTimeBuild == true);
             ReportExisting(context, projectFile);
             return;
         }
@@ -358,7 +358,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
 
         if (status == null)
         {
-            Trace("Could not get status");
+            Trace($"Could not get status for {sponsorable}/{product}@{Path.GetFileNameWithoutExtension(info.ProjectPath)}");
             return;
         }
 
@@ -370,11 +370,11 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         };
 
         // We check only once per-project, per-session as long as the diagnostic kind doesn't change.
-        if (SessionManager.TryGet(info.ProjectPath, out var lastCheck) &&
+        if (SessionManager.TryGet(sponsorable, product, info.ProjectPath, out var lastCheck) &&
             lastCheck == kind && !info.ForceRun)
         {
-            Trace($"Skipping: lastCheck == {kind}");
-            ClearExisting(info.ProjectPath);
+            Trace($"Skipping {sponsorable}/{product}@{Path.GetFileNameWithoutExtension(info.ProjectPath)}: lastCheck == {kind}");
+            //ClearExisting(info.ProjectPath);
             return;
         }
 
@@ -386,15 +386,14 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         {
             Trace($"Skipping: already reported {sponsorable}/{product} w/{kind}");
             // Trace("Clearing existing diagnostic due to already reported same sponsorable/product diagnostic");
-            ClearExisting(info.ProjectPath);
+            // ClearExisting(info.ProjectPath);
             return;
         }
 
         diagnostic = OnDiagnostic(info.ProjectPath, kind);
         if (diagnostic != null)
         {
-            Trace($"Save new check: {info.ProjectPath}={kind}");
-            SessionManager.Set(info.ProjectPath, kind);
+            SessionManager.Set(sponsorable, product, info.ProjectPath, kind);
 
             // Pause if configured so. Note we won't pause if the project is up to date.
             if (diagnostic.Properties.TryGetValue("Pause", out var value) &&
