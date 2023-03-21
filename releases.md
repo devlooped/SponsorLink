@@ -1,3 +1,16 @@
+# v0.10.2
+## What's Changed
+### ✨ Implemented enhancements
+* Make it more clear when an issue SponsorLink's and not the package using it 
+* Make SponsorLink check incremental 
+* Improve broken configuration reporting and telemetry 
+* Improve packing and diagnostics 
+* Add setting and behavior to skip checks if dependency isn't direct 
+* Make sure transitive targets are always properly packed 
+* Suggest installing the Devlooped.SponsorLink package as a fix for build issues
+* Only run SL check once per editor session (per consuming project) 
+* Enable diagnostics logging to %TEMP%\SponsorLink\log.txt by setting SPONSORLINK_TRACE environment variable to a non-empty value.
+
 # v0.10.1
 ## What's Changed
 ### ✨ Implemented enhancements
