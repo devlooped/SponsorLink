@@ -72,9 +72,9 @@ static class SessionManager
         return Base62.Encode(BigInteger.Parse(new string(sessionId.Where(char.IsDigit).ToArray())));
     }
 
-    public static void Set(string key, DiagnosticKind kind)
+    public static void Set(string sponsorable, string product, string project, DiagnosticKind kind)
     {
-        var hash = Hashed(key);
+        var hash = Key(sponsorable, product, project);
         using var mutex = new Mutex(false, $"{SessionId}_{hash}", out _);
         // Only one can write at a time.
         mutex.WaitOne();
@@ -84,7 +84,7 @@ static class SessionManager
             var path = Path.Combine(SessionsDirectory, SessionId, hash);
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, ((int)kind).ToString());
-            Trace($"Set: {SessionId}\\{hash}={kind}");
+            Trace($"Set {SessionId}: {sponsorable}/{product}@{Path.GetFileNameWithoutExtension(project)} = {kind}");
         }
         finally
         {
@@ -92,9 +92,9 @@ static class SessionManager
         }
     }
 
-    public static bool TryGet(string key, out DiagnosticKind kind)
+    public static bool TryGet(string sponsorable, string product, string project, out DiagnosticKind kind)
     {
-        var hash = Hashed(key);
+        var hash = Key(sponsorable, product, project);
         using var mutex = new Mutex(false, $"{SessionId}_{hash}", out _);
 
         var path = Path.Combine(SessionsDirectory, SessionId, hash);
@@ -104,14 +104,17 @@ static class SessionManager
             File.ReadAllText(path) is string value &&
             Enum.TryParse(value, out kind))
         {
-            Trace($"Get: {SessionId}\\{hash}={kind}");
+            Trace($"Get {SessionId}: {sponsorable}/{product}@{Path.GetFileNameWithoutExtension(project)} => {kind}");
             return true;
         }
 
         kind = default;
-        Trace($"Get: {hash}=?");
+        Trace($"Get {SessionId}: {sponsorable}/{product}@{Path.GetFileNameWithoutExtension(project)} => ?");
         return false;
     }
+
+    static string Key(string sponsorable, string product, string project)
+        => Hashed($"{sponsorable}|{product}|{project}");
 
     static string Hashed(string key)
     {
