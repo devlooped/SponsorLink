@@ -11,7 +11,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <!-- Needed to simulate the transitive dependency from SponsorableLib > Devlooped.SponsorLink -->
-    <PackageReference Include="Devlooped.SponsorLink" Version="0.10.0" />
+    <PackageReference Include="Devlooped.SponsorLink" Version="0.10.2" />
   </ItemGroup>
 
   <ItemGroup>

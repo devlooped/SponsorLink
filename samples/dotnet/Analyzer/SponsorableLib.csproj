@@ -15,8 +15,8 @@
 
   <ItemGroup>
     <!-- GeneratePathProperty=true used to workaround https://github.com/dotnet/sdk/issues/1212  -->
-    <PackageReference Include="Devlooped.SponsorLink" Version="0.10.0" GeneratePathProperty="true" />
-    <PackageReference Include="NuGetizer" Version="42.42.957-main" PrivateAssets="all" PackTransitive="false" />
+    <PackageReference Include="Devlooped.SponsorLink" Version="0.10.2" GeneratePathProperty="true" />
+    <PackageReference Include="NuGetizer" Version="1.0.0" />
     <!--<PackageReference Include="ThisAssembly" Version="42.42.597-main" PrivateAssets="all" />-->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
   </ItemGroup>
