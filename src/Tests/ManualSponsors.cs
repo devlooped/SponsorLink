@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using Octokit;
 
 namespace Devlooped.SponsorLink.GraphQL;
 

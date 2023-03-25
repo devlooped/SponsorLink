@@ -1,6 +1,4 @@
-﻿using System;
-using Devlooped;
-using Microsoft.ApplicationInsights;
+﻿using Devlooped;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
