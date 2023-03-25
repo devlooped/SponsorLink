@@ -90,7 +90,7 @@ public class Functions
         {
             ["title"] = $"SponsorLink {appKind} App {CultureInfo.CurrentCulture.TextInfo.ToTitleCase(action)}",
             ["url"] = $"https://github.com/{id.Login}",
-            ["url_title"] = $"{id.Login} profile",
+            ["url_title"] = "View profile",
             ["message"] = note,
         });
 
@@ -123,7 +123,7 @@ public class Functions
             {
                 ["title"] = $"{account}: Sponsors webhook",
                 ["url"] = $"https://github.com/{account}",
-                ["url_title"] = $"{account} profile",
+                ["url_title"] = "View profile",
                 ["message"] = $"Sponsors webhook invoked by {account} without an admin install of the SponsorLink admin app.",
             });
 
@@ -138,7 +138,7 @@ public class Functions
             {
                 ["title"] = $"{account}: Sponsors webhook",
                 ["url"] = $"https://github.com/{account}",
-                ["url_title"] = $"{account} profile",
+                ["url_title"] = "View profile",
                 ["message"] = $"Sponsors webhook invoked by {account} with invalid payload signature.",
             });
 
@@ -161,7 +161,7 @@ public class Functions
             {
                 ["title"] = $"{account}: New Sponsor",
                 ["url"] = $"https://github.com/{sponsor.Login}",
-                ["url_title"] = $"{sponsor.Login} profile",
+                ["url_title"] = "View profile",
                 ["message"] = note,
             });
         }
@@ -174,7 +174,7 @@ public class Functions
             {
                 ["title"] = $"{account}: Lost Sponsor",
                 ["url"] = $"https://github.com/{sponsor.Login}",
-                ["url_title"] = $"{sponsor.Login} profile",
+                ["url_title"] = "View profile",
                 ["message"] = $"{sponsor.Login} cancelled sponsorship of {sponsorable.Login}.",
             });
         }
@@ -189,7 +189,7 @@ public class Functions
             {
                 ["title"] = $"{account}: Updated Sponsor",
                 ["url"] = $"https://github.com/{sponsor.Login}",
-                ["url_title"] = $"{sponsor.Login} profile",
+                ["url_title"] = "View profile",
                 ["message"] = note,
             });
         }
