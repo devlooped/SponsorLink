@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.EventGrid.Models;
@@ -85,6 +86,14 @@ public class Functions
             _ => Task.CompletedTask,
         });
 
+        await PushoverAsync(new Dictionary<string, string>
+        {
+            ["title"] = $"SponsorLink {appKind} App {CultureInfo.CurrentCulture.TextInfo.ToTitleCase(action)}",
+            ["url"] = $"https://github.com/{id.Login}",
+            ["url_title"] = $"{id.Login} profile",
+            ["message"] = note,
+        });
+
         return new OkObjectResult(note);
     }
 
@@ -109,12 +118,32 @@ public class Functions
 
         var installation = await manager.FindAppAsync(AppKind.Sponsorable, sponsorable);
         if (installation == null)
-            return new BadRequestObjectResult($"No SponsorLink Admin installation found for {sponsorable}. See https://github.com/apps/sponsorlink-admin");
+        {
+            await PushoverAsync(new Dictionary<string, string>
+            {
+                ["title"] = $"{account}: Sponsors webhook",
+                ["url"] = $"https://github.com/{account}",
+                ["url_title"] = $"{account} profile",
+                ["message"] = $"Sponsors webhook invoked by {account} without an admin install of the SponsorLink admin app.",
+            });
+
+            return new BadRequestObjectResult($"No SponsorLink Admin installation found for {account}. See https://github.com/apps/sponsorlink-admin");
+        }
 
         // We require the installation to be present and enabled to receive sponsorships
         if (installation == null ||
             !SecurityManager.VerifySignature(body, installation.Secret, req.Headers.GetValues("x-hub-signature-256").FirstOrDefault()))
-            return new BadRequestObjectResult($"Could not verify signature payload signature. See https://github.com/apps/sponsorlink-admin");
+        {
+            await PushoverAsync(new Dictionary<string, string>
+            {
+                ["title"] = $"{account}: Sponsors webhook",
+                ["url"] = $"https://github.com/{account}",
+                ["url_title"] = $"{account} profile",
+                ["message"] = $"Sponsors webhook invoked by {account} with invalid payload signature.",
+            });
+
+            return new BadRequestObjectResult($"Could not verify signature payload signature from {account}. See https://github.com/apps/sponsorlink-admin");
+        }
 
         await webhooks.PutAsync(new(
             req.Headers.GetValues("X-GitHub-Delivery").FirstOrDefault() ?? Guid.NewGuid().ToString(),
@@ -127,11 +156,27 @@ public class Functions
                 note += " (one-time)";
 
             await manager.SponsorAsync(sponsorable, sponsor, amount, oneTime ? DateOnly.FromDateTime(date).AddDays(30) : null, note);
+
+            await PushoverAsync(new Dictionary<string, string>
+            {
+                ["title"] = $"{account}: New Sponsor",
+                ["url"] = $"https://github.com/{sponsor.Login}",
+                ["url_title"] = $"{sponsor.Login} profile",
+                ["message"] = note,
+            });
         }
         else if (action == "cancelled")
         {
             await manager.UnsponsorAsync(sponsorable, sponsor,
                 $"{sponsor.Login} cancelled sponsorship of {sponsorable.Login}.");
+
+            await PushoverAsync(new Dictionary<string, string>
+            {
+                ["title"] = $"{account}: Lost Sponsor",
+                ["url"] = $"https://github.com/{sponsor.Login}",
+                ["url_title"] = $"{sponsor.Login} profile",
+                ["message"] = $"{sponsor.Login} cancelled sponsorship of {sponsorable.Login}.",
+            });
         }
         else if (action == "tier_changed")
         {
@@ -139,6 +184,14 @@ public class Functions
             var note = $"{sponsor.Login} updated sponsorship of {sponsorable.Login} from ${from} to ${amount}";
 
             await manager.SponsorUpdateAsync(sponsorable, sponsor, amount, note);
+
+            await PushoverAsync(new Dictionary<string, string>
+            {
+                ["title"] = $"{account}: Updated Sponsor",
+                ["url"] = $"https://github.com/{sponsor.Login}",
+                ["url_title"] = $"{sponsor.Login} profile",
+                ["message"] = note,
+            });
         }
 
         // TODO: if sponsorable has not installed the admin app or is 
@@ -161,5 +214,18 @@ public class Functions
         var done = await manager.SyncUserAsync(new AccountId(message.Account, message.Login), message.Sponsorable, message.Unregister);
         if (!done)
             await events.PushAsync(message with { Attempt = message.Attempt + 1 });
+    }
+
+    async Task PushoverAsync(Dictionary<string, string> payload)
+    {
+        if (configuration["Pushover:Key"] is string pushKey &&
+            configuration["Pushover:User"] is string pushUser)
+        {
+            payload["token"] = pushKey;
+            payload["user"] = pushUser;
+
+            var client = clientFactory.CreateClient();
+            await client.PostAsync("https://api.pushover.net/1/messages.json", new FormUrlEncodedContent(payload));
+        }
     }
 }
