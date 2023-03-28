@@ -1,3 +1,8 @@
+# v0.10.3
+## What's Changed
+### ✨ Implemented enhancements
+* Make sure buildTransitive assets from SL are depended upon 
+
 # v0.10.2
 ## What's Changed
 ### ✨ Implemented enhancements
