@@ -120,7 +120,7 @@
           Outputs="|%(PackageReference.Identity)|">
     <ItemGroup>
       <!-- TODO: do the equivalent for SDK Pack too. -->
-      <PackageReference PrivateAssets="" PackInclude="build,analyzers" PackExclude="compile,runtime" />
+      <PackageReference PrivateAssets="" PackInclude="build,buildTransitive,analyzers" PackExclude="compile,runtime" />
     </ItemGroup>
   </Target>
 
