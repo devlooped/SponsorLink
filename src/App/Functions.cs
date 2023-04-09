@@ -88,7 +88,7 @@ public class Functions
 
         await PushoverAsync(new Dictionary<string, string>
         {
-            ["title"] = $"SponsorLink {appKind} App {CultureInfo.CurrentCulture.TextInfo.ToTitleCase(action)}",
+            ["title"] = $"SponsorLink {appKind} App {CultureInfo.CurrentCulture.TextInfo.ToTitleCase(action == "create" ? "installed" : action)}",
             ["url"] = $"https://github.com/{id.Login}",
             ["url_title"] = "View profile",
             ["message"] = note,
