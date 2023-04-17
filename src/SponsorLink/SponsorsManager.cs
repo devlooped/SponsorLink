@@ -22,12 +22,26 @@ public class SponsorsManager
     readonly IEventStream events;
     readonly SponsorsRegistry registry;
     readonly TableConnection sponsorshipsConnection;
+    readonly ITableRepository<AccountEmail> accountByEmail;
+    readonly ITableRepository<AccountEmail> accountById;
 
     public SponsorsManager(
         IHttpClientFactory httpFactory, SecurityManager security, CloudStorageAccount storageAccount,
         TableConnection tableConnection, IEventStream events, SponsorsRegistry registry)
-        => (this.httpFactory, this.security, this.storageAccount, this.tableConnection, this.events, this.registry, sponsorshipsConnection)
-        = (httpFactory, security, storageAccount, tableConnection, events, registry, new TableConnection(storageAccount, nameof(Sponsorship)));
+    {
+        (this.httpFactory, this.security, this.storageAccount, this.tableConnection, this.events, this.registry, sponsorshipsConnection) = 
+            (httpFactory, security, storageAccount, tableConnection, events, registry, new TableConnection(storageAccount, nameof(Sponsorship)));
+
+        accountByEmail = TableRepository.Create<AccountEmail>(
+            storageAccount,
+            partitionKey: x => x.Email,
+            rowKey: x => x.Account);
+
+        accountById = TableRepository.Create<AccountEmail>(
+            storageAccount,
+            partitionKey: x => x.Account,
+            rowKey: x => x.Email);
+    }
 
     public async Task AuthorizeAsync(AppKind kind, string code)
     {
@@ -359,6 +373,22 @@ public class SponsorsManager
             sponsorable, sponsor,
             emails.Where(x => x.Verified).Select(x => x.Email));
 
+        // Register the emails we know at this point.
+        var byEmail = TableRepository.Create<AccountEmail>(
+            CloudStorageAccount.DevelopmentStorageAccount,
+            partitionKey: x => x.Email,
+            rowKey: x => x.Account);
+
+        var byAccount = TableRepository.Create<AccountEmail>(
+            CloudStorageAccount.DevelopmentStorageAccount,
+            partitionKey: x => x.Account,
+            rowKey: x => x.Email);
+
+        var account = new AccountEmail("asdf", "kzu", "kzu@github.com");
+
+        await byEmail.PutAsync(account);
+        await byAccount.PutAsync(account);
+
         return true;
     }
 
@@ -386,8 +416,16 @@ public class SponsorsManager
             Credentials = new Credentials(auth.AccessToken)
         }.User.Email.GetAll();
 
-        await registry.RegisterAppAsync(account,
-            emails.Where(x => x.Verified).Select(x => x.Email));
+        var verified = emails.Where(x => x.Verified).Select(x => x.Email).ToList();
+
+        await registry.RegisterAppAsync(account, verified);
+
+        foreach (var email in verified)
+        {
+            var map = new AccountEmail(account.Id, account.Login, email);
+            await accountById.PutAsync(map);
+            await accountByEmail.PutAsync(map);
+        }
 
         return true;
     }
