@@ -6,6 +6,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.WindowsAzure.Storage;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -221,6 +222,33 @@ public class Functions
         var done = await manager.SyncUserAsync(new AccountId(message.Account, message.Login), message.Sponsorable, message.Unregister);
         if (!done)
             await events.PushAsync(message with { Attempt = message.Attempt + 1 });
+    }
+
+    [FunctionName("refreshall")]
+    public async Task<IActionResult> RefreshAllAsync(
+        [HttpTrigger(AuthorizationLevel.Function, "get", "refresh")] HttpRequestMessage req)
+    {
+        int count = 0;
+
+        await foreach (var installation in manager.EnumerateInstallationsAsync(AppKind.Sponsor))
+        {
+            if (installation.State != AppState.Installed)
+                continue;
+
+            await events.PushAsync(new UserRefreshPending(installation.Account, installation.Login, 0, "Forced refresh"));
+            count++;
+        }
+
+        await foreach (var installation in manager.EnumerateInstallationsAsync(AppKind.Sponsorable))
+        {
+            if (installation.State != AppState.Installed)
+                continue;
+
+            await events.PushAsync(new UserRefreshPending(installation.Account, installation.Login, 0, "Forced refresh"));
+            count++;
+        }
+
+        return new OkObjectResult($"Scheduled {count} users for refresh");
     }
 
     async Task PushoverAsync(Dictionary<string, string> payload)
