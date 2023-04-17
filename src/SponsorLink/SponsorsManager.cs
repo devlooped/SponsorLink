@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +30,7 @@ public class SponsorsManager
         IHttpClientFactory httpFactory, SecurityManager security, CloudStorageAccount storageAccount,
         TableConnection tableConnection, IEventStream events, SponsorsRegistry registry)
     {
-        (this.httpFactory, this.security, this.storageAccount, this.tableConnection, this.events, this.registry, sponsorshipsConnection) = 
+        (this.httpFactory, this.security, this.storageAccount, this.tableConnection, this.events, this.registry, sponsorshipsConnection) =
             (httpFactory, security, storageAccount, tableConnection, events, registry, new TableConnection(storageAccount, nameof(Sponsorship)));
 
         accountByEmail = TableRepository.Create<AccountEmail>(
@@ -90,6 +91,17 @@ public class SponsorsManager
             kind == AppKind.Sponsorable ? "Sponsorable" : "Sponsor");
 
         return partition.GetAsync(account.Id);
+    }
+
+    public async IAsyncEnumerable<Installation> EnumerateInstallationsAsync(AppKind kind, [EnumeratorCancellation] CancellationToken cancellation = default)
+    {
+        var partition = TablePartition.Create<Installation>(tableConnection,
+            kind == AppKind.Sponsorable ? "Sponsorable" : "Sponsor");
+
+        await foreach (var installation in partition.EnumerateAsync(cancellation))
+        {
+            yield return installation;
+        }
     }
 
     public async Task AppInstallAsync(AppKind kind, AccountId account, string? note = default)
@@ -167,7 +179,7 @@ public class SponsorsManager
 
         await foreach (var sponsorship in bySponsor.EnumerateAsync())
         {
-            // If we're filtering y sponsorable, skip non-matches.
+            // If we're filtering by sponsorable, skip non-matches.
             if (sponsorableId != null && sponsorship.SponsorableId != sponsorableId)
                 continue;
 
