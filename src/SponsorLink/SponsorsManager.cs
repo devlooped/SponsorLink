@@ -385,22 +385,6 @@ public class SponsorsManager
             sponsorable, sponsor,
             emails.Where(x => x.Verified).Select(x => x.Email));
 
-        // Register the emails we know at this point.
-        var byEmail = TableRepository.Create<AccountEmail>(
-            CloudStorageAccount.DevelopmentStorageAccount,
-            partitionKey: x => x.Email,
-            rowKey: x => x.Account);
-
-        var byAccount = TableRepository.Create<AccountEmail>(
-            CloudStorageAccount.DevelopmentStorageAccount,
-            partitionKey: x => x.Account,
-            rowKey: x => x.Email);
-
-        var account = new AccountEmail("asdf", "kzu", "kzu@github.com");
-
-        await byEmail.PutAsync(account);
-        await byAccount.PutAsync(account);
-
         return true;
     }
 
