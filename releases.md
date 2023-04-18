@@ -1,3 +1,12 @@
+# v0.10.4
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### ✨ Implemented enhancements
+* If no session ID can be determined, don't optimize checks: the session is available in Roslyn/VS and Rider ATM
+
+
+**Full Changelog**: https://github.com/devlooped/SponsorLinkCore/compare/v0.10.3...v0.10.4
 # v0.10.3
 ## What's Changed
 ### ✨ Implemented enhancements
