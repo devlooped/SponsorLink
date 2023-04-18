@@ -17,7 +17,11 @@ public sealed partial class SponsorsManagerTests : IDisposable
         _ = connection.GetTableAsync().Result;
     }
 
-    public void Dispose() => connection.StorageAccount.CreateTableServiceClient().DeleteTable(connection.TableName);
+    public void Dispose()
+    {
+        connection.StorageAccount.CreateTableServiceClient().DeleteTable(connection.TableName);
+        connection.StorageAccount.CreateTableServiceClient().DeleteTable("Sponsorship");
+    }
 
     [Fact(Skip = "Manual run")]
     public async Task DeleteDevelopmentTables()
@@ -66,7 +70,7 @@ public sealed partial class SponsorsManagerTests : IDisposable
 
         await manager.AppInstallAsync(AppKind.Sponsorable, id);
 
-        await scenario.Fact("App is inactive when first installed", async () =>
+        await scenario.Fact("App is installed after install", async () =>
         {
             var account = await repo.GetAsync(id.Id);
 
@@ -74,11 +78,19 @@ public sealed partial class SponsorsManagerTests : IDisposable
             Assert.Equal(AppState.Installed, account.State);
         });
 
+        await scenario.Fact("Cannot perform operations unless sponsorable is sponsoring devlooped", async () =>
+        {
+            var ex = await Assert.ThrowsAsync<ArgumentException>(() => manager.SyncSponsorableAsync(id, false));
+            Assert.Contains("SponsorLink usage requires an active sponsorship", ex.Message);
+        });
+
+        await manager.SponsorAsync(Constants.DevloopedAccount, id, 5);
+
         scenario.Fact("Suspending non-installed app throws", async () =>
             await Assert.ThrowsAsync<ArgumentException>(() => manager.AppSuspendAsync(AppKind.Sponsorable, new AccountId("456", "asdf")))
         );
 
-        scenario.Fact("Uninstalled non-installed app throws", async () =>
+        scenario.Fact("Uninstalling non-installed app throws", async () =>
             await Assert.ThrowsAsync<ArgumentException>(() => manager.AppUninstallAsync(AppKind.Sponsorable, new AccountId("456", "asdf")))
         );
 
