@@ -74,6 +74,10 @@ static class SessionManager
 
     public static void Set(string sponsorable, string product, string project, DiagnosticKind kind)
     {
+        // We cannot persist without a session ID.
+        if (SessionId == null)
+            return;
+
         var hash = Key(sponsorable, product, project);
         using var mutex = new Mutex(false, $"{SessionId}_{hash}", out _);
         // Only one can write at a time.
@@ -94,6 +98,14 @@ static class SessionManager
 
     public static bool TryGet(string sponsorable, string product, string project, out DiagnosticKind kind)
     {
+        // If we couldn't determine a session ID, bail.
+        // Might have been what happened in https://github.com/devlooped/nugetizer/issues/370
+        if (SessionId == null)
+        {
+            kind = default;
+            return false;
+        }
+
         var hash = Key(sponsorable, product, project);
         using var mutex = new Mutex(false, $"{SessionId}_{hash}", out _);
 
