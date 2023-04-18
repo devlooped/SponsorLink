@@ -18,7 +18,6 @@ public class SponsorsManager
 
     readonly IHttpClientFactory httpFactory;
     readonly SecurityManager security;
-    readonly CloudStorageAccount storageAccount;
     readonly TableConnection tableConnection;
     readonly IEventStream events;
     readonly SponsorsRegistry registry;
@@ -27,11 +26,11 @@ public class SponsorsManager
 
 
     public SponsorsManager(
-        IHttpClientFactory httpFactory, SecurityManager security, CloudStorageAccount storageAccount,
+        IHttpClientFactory httpFactory, SecurityManager security, 
         TableConnection tableConnection, IEventStream events, SponsorsRegistry registry)
     {
-        (this.httpFactory, this.security, this.storageAccount, this.tableConnection, this.events, this.registry, sponsorshipsConnection) =
-            (httpFactory, security, storageAccount, tableConnection, events, registry, new TableConnection(storageAccount, nameof(Sponsorship)));
+        (this.httpFactory, this.security, this.tableConnection, this.events, this.registry, sponsorshipsConnection) =
+            (httpFactory, security, tableConnection, events, registry, new TableConnection(tableConnection.StorageAccount, nameof(Sponsorship)));
 
         accounts = TableRepository.Create<Account>(tableConnection);
     }
