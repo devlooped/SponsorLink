@@ -127,7 +127,7 @@ public class SponsorsManager
     public async Task AppUnsuspendAsync(AppKind kind, AccountId account, string? note = default)
     {
         await ChangeState(kind, account, AppState.Installed);
-        await events.PushAsync(new AppSuspended(account.Id, account.Login, kind, note));
+        await events.PushAsync(new AppUnsuspended(account.Id, account.Login, kind, note));
         if (kind == AppKind.Sponsor)
         {
             await events.PushAsync(new UserRefreshPending(account.Id, account.Login, 0, note));
@@ -191,7 +191,9 @@ public class SponsorsManager
 
     public async Task SyncSponsorableAsync(AccountId sponsorable, bool unregister)
     {
-        await VerifySponsorableAsync(sponsorable);
+        // When unregistering, we cannot verify sponsorable.
+        if (!unregister)
+            await VerifySponsorableAsync(sponsorable);
 
         var bySponsorable = TablePartition.Create<Sponsorship>(sponsorshipsConnection,
             $"Sponsorable-{sponsorable.Id}", x => x.SponsorId);
@@ -304,7 +306,8 @@ public class SponsorsManager
         if (app.State == AppState.Suspended)
             throw new ArgumentException($"SponsorLink Admin app was suspended by the {sponsorable.Login} account.", nameof(sponsorable));
 
-        var sponsorship = await TablePartition.Create<Sponsorship>(sponsorshipsConnection, $"Sponsorable-{sponsorable.Id}", x => x.SponsorId)
+        // Sponsorship from sponsorable > devlooped
+        var sponsorship = await TablePartition.Create<Sponsorship>(sponsorshipsConnection, $"Sponsor-{sponsorable.Id}", x => x.SponsorId)
             .GetAsync(Constants.DevloopedId);
 
         if (sponsorship == null ||

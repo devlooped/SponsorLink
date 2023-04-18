@@ -14,7 +14,7 @@ public record Tier(int MonthlyPriceInDollars);
 
 public record ManualSponsors(ITestOutputHelper Output)
 {
-    [Fact]
+    [Fact(Skip = "Manual run")]
     public async Task RegisterExistingSponsors()
     {
         var json =

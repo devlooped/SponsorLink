@@ -6,6 +6,7 @@
     <!-- IVT+ThisAssembly -->
     <NoWarn>CS0436;CS0435</NoWarn>
     <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
   <ItemGroup>

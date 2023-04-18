@@ -2,6 +2,7 @@
 
 public static class Constants
 {
+    public static AccountId DevloopedAccount { get; } = new AccountId(DevloopedId, DevloopedLogin);
     /// <summary>
     /// The Node ID of the Devlooped account.
     /// </summary>
