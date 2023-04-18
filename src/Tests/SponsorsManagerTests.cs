@@ -30,18 +30,18 @@ public sealed partial class SponsorsManagerTests : IDisposable
     [Fact]
     public async Task SaveEmail()
     {
-        var byEmail = TableRepository.Create<AccountEmail>(
+        var byEmail = TableRepository.Create<Account>(
             CloudStorageAccount.DevelopmentStorageAccount,
             partitionKey: x => x.Email,
-            rowKey: x => x.Account);
+            rowKey: x => x.Id);
 
-        var byAccount = TableRepository.Create<AccountEmail>(
+        var byAccount = TableRepository.Create<Account>(
             CloudStorageAccount.DevelopmentStorageAccount,
-            partitionKey: x => x.Account,
+            partitionKey: x => x.Id,
             rowKey: x => x.Email);
 
-        var account = new AccountEmail("asdf", "kzu", "kzu@github.com");
-
+        var account = new Account("asdf", "kzu", "kzu@github.com");
+        
         await byEmail.PutAsync(account);
         await byAccount.PutAsync(account);
 

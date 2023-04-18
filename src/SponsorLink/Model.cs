@@ -1,4 +1,6 @@
-﻿namespace Devlooped.SponsorLink;
+﻿using System.ComponentModel;
+
+namespace Devlooped.SponsorLink;
 
 public enum AppKind { Sponsor, Sponsorable }
 
@@ -18,8 +20,8 @@ public record Authorization([property: RowKey] string Account, string AccessToke
 
 public record Installation([RowKey] string Account, string Login, AppState State, string Secret);
 
-[Table("Email")]
-public record AccountEmail(string Account, string Login, string Email);
+[PartitionKey(nameof(Account))]
+public record Account([RowKey] string Id, string Login, string Email);
 
 public record Sponsorship(
     string SponsorableId, string SponsorableLogin,
