@@ -14,6 +14,31 @@ public record Tier(int MonthlyPriceInDollars);
 
 public record ManualSponsors(ITestOutputHelper Output)
 {
+    [Fact]
+    public async Task KzuSponsorsDevlooped()
+    {
+        var config = new ConfigurationBuilder().AddUserSecrets(ThisAssembly.Project.UserSecretsId).Build();
+        if (!CloudStorageAccount.TryParse(config["ProductionStorageAccount"], out var storage))
+        {
+            Output.WriteLine("Did not find 'ProductionStorageAccount' secret. Cannot run kzu>devlooped sponsorship");
+            return;
+        }
+
+        var manager = new SponsorsManager(
+            Mock.Of<IHttpClientFactory>(),
+            new SecurityManager(config),
+            new TableConnection(storage, nameof(SponsorLink)),
+            Mock.Of<IEventStream>(),
+            new SponsorsRegistry(storage, Mock.Of<IEventStream>()));
+
+        // My account info from https://docs.github.com/en/graphql/overview/explorer
+        await manager.SponsorAsync(Constants.DevloopedAccount,
+            new AccountId("MDQ6VXNlcjE2OTcwNw==", "kzu"), 10);
+
+        await manager.SponsorAsync(Constants.DevloopedAccount,
+            new AccountId("MDQ6VXNlcjUyNDMxMDY0", "anycarvallo"), 10);
+    }
+
     [Fact(Skip = "Manual run")]
     public async Task RegisterExistingSponsors()
     {
@@ -155,7 +180,6 @@ public record ManualSponsors(ITestOutputHelper Output)
         var manager = new SponsorsManager(
             Mock.Of<IHttpClientFactory>(),
             new SecurityManager(config),
-            account,
             new TableConnection(account, "SponsorLink"),
             //new EventStream(config, new Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration()),
             events,

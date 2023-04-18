@@ -62,7 +62,7 @@ public sealed partial class SponsorsManagerTests : IDisposable
         var manager = new SponsorsManager(
             Mock.Of<IHttpClientFactory>(),
             new SecurityManager(config),
-            connection.StorageAccount, connection,
+            connection,
             Mock.Of<IEventStream>(),
             new SponsorsRegistry(connection.StorageAccount, Mock.Of<IEventStream>()));
 
