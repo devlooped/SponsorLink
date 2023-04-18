@@ -23,8 +23,8 @@ public class SponsorsManager
     readonly IEventStream events;
     readonly SponsorsRegistry registry;
     readonly TableConnection sponsorshipsConnection;
-    readonly ITableRepository<AccountEmail> accountByEmail;
-    readonly ITableRepository<AccountEmail> accountById;
+    readonly ITableRepository<Account> accounts;
+
 
     public SponsorsManager(
         IHttpClientFactory httpFactory, SecurityManager security, CloudStorageAccount storageAccount,
@@ -33,15 +33,7 @@ public class SponsorsManager
         (this.httpFactory, this.security, this.storageAccount, this.tableConnection, this.events, this.registry, sponsorshipsConnection) =
             (httpFactory, security, storageAccount, tableConnection, events, registry, new TableConnection(storageAccount, nameof(Sponsorship)));
 
-        accountByEmail = TableRepository.Create<AccountEmail>(
-            storageAccount,
-            partitionKey: x => x.Email,
-            rowKey: x => x.Account);
-
-        accountById = TableRepository.Create<AccountEmail>(
-            storageAccount,
-            partitionKey: x => x.Account,
-            rowKey: x => x.Email);
+        accounts = TableRepository.Create<Account>(tableConnection);
     }
 
     public async Task AuthorizeAsync(AppKind kind, string code)
@@ -407,21 +399,20 @@ public class SponsorsManager
         if (auth == null)
             return false;
 
-        var emails = await new GitHubClient(octoProduct)
+        var client = new GitHubClient(octoProduct)
         {
             Credentials = new Credentials(auth.AccessToken)
-        }.User.Email.GetAll();
+        };
 
+        var user = await client.User.Get(account.Login);
+        var emails = await client.User.Email.GetAll();
         var verified = emails.Where(x => x.Verified).Select(x => x.Email).ToList();
 
+        // All verified emails are required to associate sponsorship to local repo email
         await registry.RegisterAppAsync(account, verified);
 
-        foreach (var email in verified)
-        {
-            var map = new AccountEmail(account.Id, account.Login, email);
-            await accountById.PutAsync(map);
-            await accountByEmail.PutAsync(map);
-        }
+        // For communication purposes, we just need the user's primary email address though.
+        await accounts.PutAsync(new Account(account.Id, account.Login, user.Email));
 
         return true;
     }
