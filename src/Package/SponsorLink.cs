@@ -194,7 +194,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         // We never report from non-IDE builds, which *will* invoke analyzers 
         // and may end up improperly notifying of build pauses when none was 
         // incurred, actually.
-        if (!SessionManager.IsEditor)
+        if (!SessionManager.IsEditor || SessionManager.SessionId == null)
         {
             Trace(SessionManager.IsEditor == false);
             return;
