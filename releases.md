@@ -1,3 +1,7 @@
+# v0.10.5
+## What's Changed
+### ✨ Implemented enhancements
+* Consider no session id as no editor too and skip checks
 # v0.10.4
 <!-- Release notes generated using configuration in .github/release.yml at main -->
 
