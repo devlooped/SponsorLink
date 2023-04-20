@@ -13,8 +13,8 @@
 	weak
 [file ".editorconfig"]
 	url = https://github.com/devlooped/oss/blob/main/.editorconfig
-	sha = fd5b554bf3538a3c92a0b49e395c8ad2e8429158
-	etag = bf02d1679442e5169d03304164b8e9407997ac3132145831a91ba61fc8b50687
+	sha = c779d3d4e468358106dea03e93ba2cd35bb01ecb
+	etag = 7298c6450967975a8782b5c74f3071e1910fc59686e48f9c9d5cd7c68213cf59
 	weak
 [file ".github/workflows/dotnet-file.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/dotnet-file.yml
@@ -33,8 +33,8 @@
 	weak
 [file "samples/dotnet/Directory.Build.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
-	sha = 6ae80a175a8f926ac5d9ffb0f6afd55d85cc9320
-	etag = a890e3c9574327c4885f386756cba483c0f8fb2446554e4badcb6ab5b0eecfd0
+	sha = 1514d15399a7d545ad92a0e9d57dc8295fdd6af8
+	etag = 428f80b0786ff17b836c7a5b0640948724855d17933e958642b22849ac00dadb
 	weak
 [file "samples/dotnet/Directory.Build.props"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
