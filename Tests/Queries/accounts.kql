@@ -1,11 +1,17 @@
+let toquery = (uri: string) {
+    let query = parse_url(uri)["Query Parameters"];
+    iif(tostring(query["account"]) contains "%26", 
+        parse_urlquery(url_decode(strcat("account=", query["account"])))["Query Parameters"], 
+        query);
+};
 StorageBlobLogs
 | where TimeGenerated > ago(30d)
 | where OperationName == "GetBlob" or OperationName == "GetBlobProperties"
 | extend Parts=split(ObjectKey, '/')
 | extend Project=tostring(Parts[2]), Container=tostring(Parts[3]), Email=tostring(Parts[4])
 | where Project == "sponsorlink"
-| extend Url=parse_url(Uri)
-| extend Account=tostring(Url["Query Parameters"]["account"])
+| extend Query=toquery(Uri)
+| extend Account=tostring(Query["account"])
 | where Account != "" and Account != "kzu" and Account != "sample" and Account != "test" and Account != "testing"
 | summarize by Account
 | count
