@@ -31,6 +31,18 @@ jobs:
         working-directory: src/Package
         run: dotnet pack -m:1 -p:version="$($env:GITHUB_REF.Replace('refs/tags/', '').TrimStart('v'))" -p:PackageReleaseNotes="https://github.com/devlooped/SponsorLink/blob/main/releases.md#$($env:GITHUB_REF.Replace('refs/tags/', '').Replace('.', ''))"
 
+      - name: 🚀 nuget
+        run: dotnet nuget push bin\*.nupkg -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
+
+  notes:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🤘 checkout
+        uses: actions/checkout@v3
+        with: 
+          fetch-depth: 0
+
       - name: 🤖 defaults
         uses: devlooped/actions-bot@v1
         with:
@@ -57,6 +69,3 @@ jobs:
           $($body; Get-Content .\releases.md) | Set-Content .\releases.md          
           git add releases.md
           (git commit -m "📝 Update release notes with $tag" && git push) || echo "Done"
-
-      - name: 🚀 nuget
-        run: dotnet nuget push bin\*.nupkg -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
