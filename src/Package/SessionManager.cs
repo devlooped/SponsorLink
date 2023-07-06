@@ -63,6 +63,16 @@ static class SessionManager
         Environment.GetEnvironmentVariable("RESHARPER_FUS_SESSION") != null ||
         Environment.GetEnvironmentVariable("IDEA_INITIAL_DIRECTORY") != null;
 
+    public static bool IsCI =>
+        (bool.TryParse(Environment.GetEnvironmentVariable("CI"), out var ci) && ci) || 
+        (bool.TryParse(Environment.GetEnvironmentVariable("TF_BUILD"), out ci) && ci) ||
+        (bool.TryParse(Environment.GetEnvironmentVariable("TRAVIS"), out ci) && ci) ||
+        (bool.TryParse(Environment.GetEnvironmentVariable("BUDDY"), out ci) && ci) ||
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("TEAMCITY_VERSION")) ||
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("APPVEYOR")) ||
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JENKINS_URL")) ||
+        Environment.GetEnvironmentVariable("BuildRunner") == "MyGet";
+
     static string? RiderSession(string sessionId)
     {
         if (string.IsNullOrWhiteSpace(sessionId))
