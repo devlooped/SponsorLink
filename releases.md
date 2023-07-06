@@ -3,8 +3,6 @@
 ### ✨ Implemented enhancements
 * Detect CI builds too in addition to non-IDE builds by @kzu 
 
-# v0.11.0
-
 # v0.10.5
 ## What's Changed
 ### ✨ Implemented enhancements
