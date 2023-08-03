@@ -9,11 +9,11 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="Azure.Core" Version="1.30.0" />
-    <PackageReference Include="Azure.Monitor.Query" Version="1.1.0" />
+    <PackageReference Include="Azure.Core" Version="1.34.0" />
+    <PackageReference Include="Azure.Monitor.Query" Version="1.2.0" />
     <PackageReference Include="Microsoft.Azure.EventGrid" Version="3.2.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.EventGrid" Version="3.2.1" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.EventGrid" Version="3.3.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
