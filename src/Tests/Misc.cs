@@ -12,6 +12,7 @@ using Devlooped.SponsorLink;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Octokit;
 
 namespace Tests;
@@ -217,6 +218,49 @@ public record Misc(ITestOutputHelper Output)
             });
 
         var body = await response.Content.ReadAsStringAsync();
+    }
+
+    [Fact]
+    public async Task GetOrganizations()
+    {
+        var config = new ConfigurationBuilder()
+            .AddUserSecrets(ThisAssembly.Project.UserSecretsId)
+            .Build();
+
+        var accessToken = config["AccessToken"];
+        if (string.IsNullOrEmpty(accessToken))
+            return;
+
+        var query =
+            """
+            query {
+              viewer{
+                organizations(first: 100) {
+                  nodes {
+                    id
+                    login
+                  }
+                }
+              }
+            }
+            """;
+
+        using var http = new HttpClient();
+        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SponsorLink", new Version(ThisAssembly.Info.Version).ToString(2)));
+
+        var response = await http.PostAsJsonAsync("https://api.github.com/graphql", new { query });
+
+        Assert.True(response.IsSuccessStatusCode);
+
+        var body = await response.Content.ReadAsStringAsync();
+        foreach (var account in JObject.Parse(body)
+            .SelectTokens("$.data.viewer.organizations.nodes[*]")
+            .Select(j => j.ToString())
+            .Select(JsonConvert.DeserializeObject<AccountId>))
+        {
+            Output.WriteLine($"{account?.Login} ({account?.Id})");
+        }
     }
 
     [Fact]

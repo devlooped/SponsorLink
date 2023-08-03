@@ -60,7 +60,10 @@ public class SponsorsRegistry
         }
     }
 
-    public async Task RegisterSponsorAsync(AccountId sponsorable, AccountId sponsor, IEnumerable<string> emails)
+    /// <summary>
+    /// Creates a blob storage entry for the given sponsorable account, with the given sponsor and emails.
+    /// </summary>
+    public async Task RegisterSponsorAsync(AccountId sponsorable, AccountId sponsor, IEnumerable<string> emails, bool member = false)
     {
         var container = blobService.GetBlobContainerClient("sponsorlink");
         await container.CreateIfNotExistsAsync(PublicAccessType.Blob);
@@ -85,7 +88,9 @@ public class SponsorsRegistry
             var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
 
             var blob = container.GetBlobClient($"{sponsorable.Login}/{hash}");
-            await blob.UploadAsync(new MemoryStream(), headers);
+            // The blob will contain a single byte if the sponsor is a member, not a sponsor.
+            // See SponsorLink.CheckSponsorAsync on how the check is done.
+            await blob.UploadAsync(member ? new MemoryStream(new[] { (byte)1 }) : new MemoryStream(), headers);
             await blob.SetTagsAsync(new Dictionary<string, string>(tags)
             {
                 {  "Email", Convert.ToBase64String(Encoding.UTF8.GetBytes(email)) }

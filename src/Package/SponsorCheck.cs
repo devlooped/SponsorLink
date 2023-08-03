@@ -23,7 +23,11 @@ public enum SponsorStatus
     /// <summary>
     /// The user has the SponsorLink GitHub app installed and is sponsoring the given sponsor account.
     /// </summary>
-    Sponsoring
+    Sponsoring,
+    /// <summary>
+    /// The user is a member of the given sponsorable account and does not need to have a sponsorship.
+    /// </summary>
+    Member,
 }
 
 /// <summary>
@@ -118,16 +122,14 @@ public static class SponsorCheck
         if (installed == null)
             return default;
 
-        var sponsoring = await CheckUrlAsync(http ?? HttpClientFactory.Default, $"https://cdn.devlooped.com/sponsorlink/{sponsorable}/{hash}?{query}", default);
+        if (installed == false)
+            return SponsorStatus.AppMissing;
+
+        var sponsoring = await CheckSponsorAsync(http ?? HttpClientFactory.Default, $"https://cdn.devlooped.com/sponsorlink/{sponsorable}/{hash}?{query}", default);
         if (sponsoring == null)
             return default;
 
-        var status =
-            installed == false ? SponsorStatus.AppMissing :
-            sponsoring == false ? SponsorStatus.NotSponsoring :
-            SponsorStatus.Sponsoring;
-
-        return status;
+        return sponsoring;
     }
 
     static internal void ReportBroken(
@@ -194,6 +196,36 @@ public static class SponsorCheck
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex) 
+        {
+            if (!cancellation.IsCancellationRequested)
+                Tracing.Trace($"{nameof(CheckUrlAsync)}({url}): \r\n{ex}");
+
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// The three possible states when checking a blob URL are: 
+    /// 1. null, if the check could not be performed (network error, timeout, etc.) or 404
+    /// 2. true: the blob exists and its content is empty
+    /// 3. [true|false]: the blob exists, its content is not empty and its single byte payload is parsed as a boolean.
+    /// </summary>
+    static async Task<SponsorStatus?> CheckSponsorAsync(HttpClient http, string url, CancellationToken cancellation)
+    {
+        try
+        {
+            // We perform a GET since that can be cached by the CDN, but HEAD cannot.
+            var response = await http.GetAsync(url, cancellation);
+            if (!response.IsSuccessStatusCode)
+                return SponsorStatus.NotSponsoring;
+
+            var content = await response.Content.ReadAsByteArrayAsync();
+            if (content == null || content.Length == 0)
+                return SponsorStatus.Sponsoring;
+
+            return content[0] == 1 ? SponsorStatus.Member : SponsorStatus.Sponsoring;
+        }
+        catch (Exception ex)
         {
             if (!cancellation.IsCancellationRequested)
                 Tracing.Trace($"{nameof(CheckUrlAsync)}({url}): \r\n{ex}");

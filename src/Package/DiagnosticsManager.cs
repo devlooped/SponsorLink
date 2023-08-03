@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Devlooped;
 
-
 class DiagnosticsManager
 {
     ConcurrentDictionary<(string, string, string), Diagnostic> Diagnostics

@@ -16,5 +16,5 @@ public enum DiagnosticKind
     /// <summary>
     /// The user has the SponsorLink GitHub app installed and is sponsoring the given sponsor account.
     /// </summary>
-    Thanks
+    Thanks,
 }

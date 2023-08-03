@@ -362,6 +362,10 @@ public abstract class SponsorLink : DiagnosticAnalyzer
             return;
         }
 
+        // We don't report any status for members, since they are not expected to sponsor.
+        if (status == SponsorStatus.Member)
+            return;
+
         var kind = status.Value switch
         {
             SponsorStatus.AppMissing => DiagnosticKind.AppNotInstalled,

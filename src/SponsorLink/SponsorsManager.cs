@@ -1,9 +1,11 @@
 ﻿using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Octokit;
 
 namespace Devlooped.SponsorLink;
@@ -185,6 +187,48 @@ public class SponsorsManager
                 done &= await UpdateSponsorRegistryAsync(sponsorable, account);
         }
 
+        // Mark the user as "sponsor" (technically, supporter?) of their orgs.
+        // We can only perform this query *after* authorization, since we'll need the token
+        if (await TablePartition.Create<Authorization>(tableConnection).GetAsync(account.Id) is Authorization auth)
+        {
+            var query =
+                """
+                query {
+                  viewer{
+                    organizations(first: 100) {
+                      nodes {
+                        id
+                        login
+                      }
+                    }
+                  }
+                }
+                """;
+
+            using var http = new HttpClient();
+            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
+            http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SponsorLink", new Version(ThisAssembly.Info.Version).ToString(2)));
+            var response = await http.PostAsJsonAsync("https://api.github.com/graphql", new { query });
+            // Make sure we don't fail.
+            if (response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                foreach (var org in JObject.Parse(body)
+                    .SelectTokens("$.data.viewer.organizations.nodes[*]")
+                    .Select(j => j.ToString())
+                    .Select(JsonConvert.DeserializeObject<AccountId>)
+                    .Where(x => x != null))
+                {
+                    if (unregister)
+                        await registry.UnregisterSponsorAsync(org!, account);
+                    else
+                        // NOTE: we don't update the done flag, since the given org might not be sponsorable
+                        // at all, may not have the SL Admin app installed, etc. These are all expected situations.
+                        await UpdateSponsorRegistryAsync(org!, account, member: true);
+                }
+            }
+        }
+
         return done;
     }
 
@@ -355,7 +399,13 @@ public class SponsorsManager
         await bySponsor.PutAsync(sponsorship);
     }
 
-    async Task<bool> UpdateSponsorRegistryAsync(AccountId sponsorable, AccountId sponsor)
+    /// <summary>
+    /// Updates the registry in storage of the sponsors for the given sponsorable.
+    /// </summary>
+    /// <param name="sponsorable">The sponsorable account which must be a SL Admin user.</param>
+    /// <param name="sponsor">The sponsoring user.</param>
+    /// <param name="member">Whether the sponsor is a member of the sponsorable organization.</param>
+    async Task<bool> UpdateSponsorRegistryAsync(AccountId sponsorable, AccountId sponsor, bool member = false)
     {
         var app = await FindAppAsync(AppKind.Sponsor, sponsor);
         if (app == null || app.State != AppState.Installed)
@@ -377,7 +427,8 @@ public class SponsorsManager
 
         await registry.RegisterSponsorAsync(
             sponsorable, sponsor,
-            emails.Where(x => x.Verified).Select(x => x.Email));
+            emails.Where(x => x.Verified).Select(x => x.Email), 
+            member);
 
         return true;
     }
