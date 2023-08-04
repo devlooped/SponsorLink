@@ -130,7 +130,7 @@
     <value> Compilación pausada por {0}ms. Esto occurre solo una vez por sesion del editor/IDE.</value>
   </data>
   <data name="MissingDesignTimeBuild_Description" xml:space="preserve">
-    <value>Esto suele ser un error del autor del paquete que puede resolverse instalando el paquete Devlooped.SponsorLink o agregando el siguiente item de MSBuild al proyect: &lt;CompilerVisibleProperty Include="DesignTimeBuild" /&gt;.</value>
+    <value>Esto suele ser un error del autor del paquete que puede resolverse instalando el paquete Devlooped.SponsorLink o agregando el siguiente item de MSBuild al proyecto: &lt;CompilerVisibleProperty Include="DesignTimeBuild" /&gt;.</value>
   </data>
   <data name="MissingDesignTimeBuild_Message" xml:space="preserve">
     <value>El analyzer de SponsorLink no recibio la propiedad requerida DesignTimeBuild.</value>
@@ -139,7 +139,7 @@
     <value>El valor de DesignTimeBuild es requerido</value>
   </data>
   <data name="MissingProject_Description" xml:space="preserve">
-    <value>Esto suele ser un error del autor del paquete que puede resolverse instalando el paquete Devlooped.SponsorLink o agregando el siguiente item de MSBuild al proyect: &lt;CompilerVisibleProperty Include="MSBuildProjectFullPath" /&gt;.</value>
+    <value>Esto suele ser un error del autor del paquete que puede resolverse instalando el paquete Devlooped.SponsorLink o agregando el siguiente item de MSBuild al proyecto: &lt;CompilerVisibleProperty Include="MSBuildProjectFullPath" /&gt;.</value>
   </data>
   <data name="MissingProject_Message" xml:space="preserve">
     <value>El analyzer de SponsorLink no recibio la propiedad requerida MSBuildProjectFullPath.</value>
