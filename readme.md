@@ -292,10 +292,74 @@ a bit noisy. In that case, you can disable that at the assembly level with:
 [assembly: SuppressMessage("SponsorLink", "DSL04")]
 ```
 
+## How it works
+
+This section is mostly taken from [the announcement blob post](https://www.cazzulino.com/sponsorlink.html#how-it-works), and is intended as a reference for those interested in the implementation details.
+
+> NOTE: the reason why the .NET implementation of SponsorLink isn't provided as OSS, is that
+> given that its intention is to ensure that users receive their sponsorship stauts notifications, 
+> making the source available might only help those that want to circumvent it.
+> If you are integrating SponsorLink into your own OSS projects and want to understand how it works,
+> we will make the source available to you upon request.
+
+SponsorLink will *never* interfere with a CI/CLI build, neither a design-time build. 
+These are important scenarios where you don't want to be annoying your fellow OSS 
+users. This means SponsorLink doesn't require setting up licenses on a server, provisioning 
+test agents or whatever. Also, if your users are building from the command line, it's not as 
+if they are enjoying using the OSS library all that much at that moment.
+
+Even though we initially support [SponsorLink for .NET](https://www.nuget.org/packages/Devlooped.SponsorLink) 
+via a nuget package, the backend is agnostic to the client. If this takes off, we may add 
+other ecosystems.
+
+The non-.NET specific way it works for library users is:
+
+1. If the user isn't using an editor or there is no network, there's nothing to 
+   do, so we bail quickly and no-op.
+2. SponsorLink runs `git config --get user.email` during build to get the 
+   current user's configured email. If there's no `git` or `email`, there's nothing 
+   to do. No real work is done nowadays without both, right? :)
+3. A quick HTTP operation is sent to Azure Blob storage (via CDN for better performance 
+   and geo-distribution) to a relative URL ending in `/apps/[user_email]`. If it's a 404, 
+   it means the user hasn't installed the [SponsorLink GitHub app](https://github.com/apps/sponsorlink). 
+   This app requests *read* access to the users' email addresses, so the previous 
+   check can succeed.
+4. If the previous check succeeds, a second HTTP operation is send to Azure Blob 
+   storage (again via CDN) to a URL ending in `/[sponsor_account]/[user_email]`. If it's a 404, 
+   it means the user isn't sponsoring the given account.
+
+In both 3) and 4), users are offered to fix the situation with a link to install the app, 
+and then sponsor the account.
+
+> NOTE: the actual email is *never* sent. It's hashed with SHA256, then Base62-encoded.
+> The only moment SponsorLink actually gets your email address, is *after* you install 
+> the [SponsorLink GitHub app](https://github.com/apps/sponsorlink) and give it explicit
+> permission to do so.
+
+On the sponsor account side, the way it works at a high level is:
+
+1. One-time [provision of your account](https://github.com/devlooped/sponsorlink#-open-source-developers), 
+   by installing the [SponsorLink Admin GitHub app](https://github.com/apps/sponsorlink-admin) and 
+   setting up a Sponsors webhook in your dashboard to notify SponsorLink of changes from your sponsors.
+2. Integrating the [SponsorLink for .NET](https://www.nuget.org/packages/Devlooped.SponsorLink) 
+   nuget package and shipping it with your library: it ships as an analyzer of your library.
+
+And that's it!
+
+From this point on, any new sponsor will immediately be notified to SponsorLink which 
+will update the Azure Blob storage account with the right entries so that in mere seconds 
+the experience quickly goes from Install GH app > Sponsor account > Thanks!
+
+> NOTE: if the user belongs to the sponsorable (organization) account, its email > sponsor 
+> account is registered as well so we don't fail the check, but no diagnostics are generated 
+> in the editor at all.
+
 
 ## Safety and Security
 
-SponsorLink does not receive any information about users' code, repositories, or credentials. 
+SponsorLink does not receive any information about users' code, repositories, or credentials, 
+since none of those permissions are requested when installing the GitHub app and authorizing 
+it.
 
 
 <!-- include https://github.com/devlooped/sponsors/raw/main/footer.md -->
