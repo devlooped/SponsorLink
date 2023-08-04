@@ -219,12 +219,26 @@ public class SponsorsManager
                     .Select(JsonConvert.DeserializeObject<AccountId>)
                     .Where(x => x != null))
                 {
+                    if (org is null)
+                        continue;
+
                     if (unregister)
-                        await registry.UnregisterSponsorAsync(org!, account);
+                        await registry.UnregisterSponsorAsync(org, account);
                     else
                         // NOTE: we don't update the done flag, since the given org might not be sponsorable
                         // at all, may not have the SL Admin app installed, etc. These are all expected situations.
-                        await UpdateSponsorRegistryAsync(org!, account, member: true);
+                        await UpdateSponsorRegistryAsync(org, account, member: true);
+
+                    // Special case for Moq > Devlooped sponsorship. It's the only org whose repos we haven't 
+                    // moved over to develooped, so we need to sync it too, for now.
+                    if (org.Id == Constants.MoqAccount.Id)
+                    {
+                        // Fake devlooped organization belonging for the user.
+                        if (unregister)
+                            await registry.UnregisterSponsorAsync(Constants.DevloopedAccount, account);
+                        else
+                            await UpdateSponsorRegistryAsync(Constants.DevloopedAccount, account, member: true);
+                    }
                 }
             }
         }
@@ -349,7 +363,7 @@ public class SponsorsManager
         if (app.State == AppState.Suspended)
             throw new ArgumentException($"SponsorLink Admin app was suspended by the {sponsorable.Login} account.", nameof(sponsorable));
 
-        // Sponsorship from sponsorable > devlooped
+        // Sponsorship from sponsorable > devlooped, which are required to use SponsorLink as a sponsorable.
         var sponsorship = await TablePartition.Create<Sponsorship>(sponsorshipsConnection, $"Sponsor-{sponsorable.Id}", x => x.SponsorId)
             .GetAsync(Constants.DevloopedId);
 
