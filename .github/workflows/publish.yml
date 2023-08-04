@@ -11,6 +11,10 @@ env:
   DOTNET_NOLOGO: true
   Configuration: Release
   
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
   publish:
     runs-on: windows-latest
