@@ -1,3 +1,9 @@
+# v1.0.0
+With the recently added support for public organization memberships considered when checking for sponsorship (so you don't have to sponsor yourself!), we're ready for a v1 release. We've been using SponsorLink for months now in several smaller projects, and are now ready to more broadly adopt it in all projects.
+
+## What's Changed
+### Γ£¿ Implemented enhancements
+* Consider user orgs as sponsored/supported
 # v0.11.0
 ## What's Changed
 ### ✨ Implemented enhancements
