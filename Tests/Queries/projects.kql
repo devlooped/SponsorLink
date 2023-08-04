@@ -14,7 +14,6 @@ StorageBlobLogs
 | extend Account=tostring(Query["account"]), 
          Product=tostring(Query["product"])
 | where Account != "" and Account != "kzu" and Account != "sample" and Account != "test" and Account != "testing"
-| summarize by Account
 | project AccountProject=strcat(Account, "|", Product)
 | summarize by AccountProject
 | count 
