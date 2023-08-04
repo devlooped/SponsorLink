@@ -2,6 +2,7 @@
 
 public static class Constants
 {
+    public static AccountId MoqAccount { get; } = new AccountId("MDEyOk9yZ2FuaXphdGlvbjE0MzQ5MzQ=", "moq");
     public static AccountId DevloopedAccount { get; } = new AccountId(DevloopedId, DevloopedLogin);
     /// <summary>
     /// The Node ID of the Devlooped account.
