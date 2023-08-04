@@ -231,6 +231,13 @@ public record Misc(ITestOutputHelper Output)
         if (string.IsNullOrEmpty(accessToken))
             return;
 
+        var octo = new GitHubClient(new Octokit.ProductHeaderValue("SponsorLink", new Version(ThisAssembly.Info.Version).ToString(2)))
+        {
+            Credentials = new Credentials(accessToken)
+        };
+        var user = await octo.User.Current();
+        Console.WriteLine($"{user.Login}");
+
         var query =
             """
             query {

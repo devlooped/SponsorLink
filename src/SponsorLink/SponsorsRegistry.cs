@@ -82,6 +82,9 @@ public class SponsorsRegistry
             { "SponsorLogin", sponsor.Login } ,
         };
 
+        if (member)
+            tags.Add("SponsorableMember", "true");
+
         foreach (var email in emails)
         {
             var data = SHA256.HashData(Encoding.UTF8.GetBytes(email));
