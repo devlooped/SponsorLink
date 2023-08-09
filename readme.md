@@ -21,6 +21,26 @@ SponsorLink supports two scenarios:
 
 [Read the announcement](https://www.cazzulino.com/sponsorlink.html) blog post.
 
+## Privacy Considerations
+
+There was some concern that SponsorLink might be collecting your email without your 
+explicit consent. This is incorrect, and can easily be verified by running Fiddler 
+to see what kind of traffic is happening. 
+
+Specifically, the actual email is never sent when performing the sponsoring check.
+The email on your local machine is hashed with SHA256, then Base62-encoded. The 
+resulting opaque string (which can never reveal the originating email) is the only 
+thing used.
+
+The only moment SponsorLink actually gets your email address (to perform the backend-
+side association of that opaque string with your actual email and GH user to link 
+your sponsorship), is *after* you install the [SponsorLink GitHub app](https://github.com/apps/sponsorlink) 
+and give it explicit permission to do so. 
+
+Also, the moment you suspend or uninstall the app, we delete all records associated 
+with your account and your email(s).
+
+
 ## ![](https://avatars.githubusercontent.com/in/281005?s=24&u=20155dd9bc48951a962b40289bf40fd4d0e758e9&v=4) Open source developers
 
 [GitHub Sponsors](https://github.com/sponsors) provides the core functionality to 
