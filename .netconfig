@@ -35,8 +35,8 @@
 	weak
 [file "samples/dotnet/Directory.Build.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
-	sha = 1514d15399a7d545ad92a0e9d57dc8295fdd6af8
-	etag = 428f80b0786ff17b836c7a5b0640948724855d17933e958642b22849ac00dadb
+	sha = 5cec43dd514aeb9050ea2ccbc546f7afa428c5b5
+	etag = 8e0f43f00e0c29b408d4ce5c821b44a9bf7dbc8d4917895cfc39f2964d839bf6
 	weak
 [file "samples/dotnet/Directory.Build.props"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
@@ -50,8 +50,8 @@
 	weak
 [file "src/Directory.Build.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
-	sha = 1514d15399a7d545ad92a0e9d57dc8295fdd6af8
-	etag = 428f80b0786ff17b836c7a5b0640948724855d17933e958642b22849ac00dadb
+	sha = 5cec43dd514aeb9050ea2ccbc546f7afa428c5b5
+	etag = 8e0f43f00e0c29b408d4ce5c821b44a9bf7dbc8d4917895cfc39f2964d839bf6
 	weak
 [file ".github/dependabot.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/dependabot.yml
