@@ -1,6 +1,8 @@
 [file "license.txt"]
 	url = https://github.com/devlooped/oss/blob/main/license.txt
-	skip
+	sha = 0683ee777d7d878d4bf013d7deea352685135a05
+	etag = 2c6335b37e4ae05eea7c01f5d0c9d82b49c488f868a8b5ba7bff7c6ff01f3994
+	weak
 [file ".gitignore"]
 	url = https://github.com/devlooped/oss/blob/main/.gitignore
 	sha = b87a8a795a4c2b6830602225c066c11108552a99
@@ -33,18 +35,53 @@
 	weak
 [file "samples/dotnet/Directory.Build.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
-	sha = 1514d15399a7d545ad92a0e9d57dc8295fdd6af8
-	etag = 428f80b0786ff17b836c7a5b0640948724855d17933e958642b22849ac00dadb
+	sha = 5cec43dd514aeb9050ea2ccbc546f7afa428c5b5
+	etag = 8e0f43f00e0c29b408d4ce5c821b44a9bf7dbc8d4917895cfc39f2964d839bf6
 	weak
 [file "samples/dotnet/Directory.Build.props"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
 	sha = 6ae80a175a8f926ac5d9ffb0f6afd55d85cc9320
 	etag = 69d4b16c14d5047b3ed812dbf556b0b8d77deb86f73af04b9bd3640220056fa8
 	weak
-[file ".github/workflows/publish.yml"]
-	url = https://github.com/devlooped/oss/blob/main/.github/workflows/publish.yml
-	sha = d3022567c9ef2bc9461511e53b8abe065afdf03b
-	etag = 58601b5a71c805647ab26e84053acdfb8d174eaa93330487af8a5503753c5707
+[file "src/Directory.Build.props"]
+	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
+	sha = 6ae80a175a8f926ac5d9ffb0f6afd55d85cc9320
+	etag = 69d4b16c14d5047b3ed812dbf556b0b8d77deb86f73af04b9bd3640220056fa8
+	weak
+[file "src/Directory.Build.targets"]
+	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
+	sha = 5cec43dd514aeb9050ea2ccbc546f7afa428c5b5
+	etag = 8e0f43f00e0c29b408d4ce5c821b44a9bf7dbc8d4917895cfc39f2964d839bf6
+	weak
+[file ".github/dependabot.yml"]
+	url = https://github.com/devlooped/oss/blob/main/.github/dependabot.yml
+	sha = cba10bbf7bb08d841d2ddc990b67bc3f2c58fba0
+	etag = fc84e2bb7a348609b75bb20145333306e2030083c6929edcc4f675907b8c52ad
+	weak
+[file ".github/workflows/dotnet-file.yml"]
+	url = https://github.com/devlooped/oss/blob/main/.github/workflows/dotnet-file.yml
+	sha = f08c3f28e46e28eb31e70846d65e57aa9553ce56
+	etag = 567444486383d032c1c5fbc538f07e860f92b1d08c66ac6ffb1db64ca539251c
+	weak
+[file "src/App/System/QuaranTime.cs"]
+	url = https://github.com/devlooped/catbag/blob/main/System/QuaranTime.cs
+	sha = 83ae670d5c69de16dd0d3a15448bdefa2ef6cdfe
+	etag = 2de43ea10bb6dca91326c303fd4daf1c6493d3bc63511f3fd906c7f75117f49e
+	weak
+[file "src/Tests/System/QuaranTime.cs"]
+	url = https://github.com/devlooped/catbag/blob/main/System/QuaranTime.cs
+	sha = 83ae670d5c69de16dd0d3a15448bdefa2ef6cdfe
+	etag = 2de43ea10bb6dca91326c303fd4daf1c6493d3bc63511f3fd906c7f75117f49e
+	weak
+[file "src/Tests/System/Base62.cs"]
+	url = https://github.com/devlooped/catbag/blob/main/System/Base62.cs
+	sha = 43712304cdfff2c34ba01197cc2ccc0e16e7af08
+	etag = 045b9e458f11f846ae9a3979b8122c68173405fb5451083d4993f94004e60e76
+	weak
+[file "src/App/System/Base62.cs"]
+	url = https://github.com/devlooped/catbag/blob/main/System/Base62.cs
+	sha = 43712304cdfff2c34ba01197cc2ccc0e16e7af08
+	etag = 045b9e458f11f846ae9a3979b8122c68173405fb5451083d4993f94004e60e76
 	weak
 [file "src/Package/Properties/."]
 	url = https://github.com/devlooped/SponsorLink/tree/main/loc
