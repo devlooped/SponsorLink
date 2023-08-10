@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <PackageId>Devlooped.SponsorLink</PackageId>
@@ -30,7 +30,7 @@
 
   <ItemGroup>
     <!-- DO NOT BUMP BEYOND 0.9.1 or we get a dependency cycle -->
-    <PackageReference Include="NuGetizer" Version="0.9.1" />
+    <PackageReference Include="NuGetizer" Version="1.0.5" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" Pack="false" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" Pack="false" />
     <PackageReference Include="PolySharp" Version="1.13.2" PrivateAssets="all" />
