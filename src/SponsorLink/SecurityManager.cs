@@ -9,18 +9,27 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Devlooped.SponsorLink;
 
 [Service]
-public record SecurityManager(IConfiguration Configuration)
+public record SecurityManager
 {
-    static readonly RSA sponsorKey;
-    static readonly RSA sponsorableKey;
+    readonly RSA sponsorKey;
+    readonly RSA sponsorableKey;
 
-    static SecurityManager()
+    public IConfiguration Configuration { get; }
+
+    public SecurityManager(IConfiguration configuration)
     {
+        Configuration = configuration;
+
+        // TODO: move both to app settings/secret? Once we replace the private keys, 
+        // we can remove the files from here. Not critical to share this because 
+        // they can't be used to set up your own app private key, you can only generate
+        // a new private key in the the app settings UI.
+
         sponsorKey = RSA.Create();
-        sponsorKey.ImportFromPem(ThisAssembly.Resources.sponsorlink_sponsor.Text);
+        sponsorKey.ImportFromPem(configuration["GitHub:Sponsor:PrivateKey"]);
 
         sponsorableKey = RSA.Create();
-        sponsorableKey.ImportFromPem(ThisAssembly.Resources.sponsorlink_sponsorable.Text);
+        sponsorableKey.ImportFromPem(configuration["GitHub:Sponsorable:PrivateKey"]);
     }
 
     /// <summary>

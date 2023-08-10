@@ -14,10 +14,12 @@ Required web app settings:
 * GitHub:Sponsorable:ClientSecret =  [from https://github.com/organizations/devlooped/settings/apps/sponsorlink-admin]
 * GitHub:Sponsorable:ClientId =  [from https://github.com/organizations/devlooped/settings/apps/sponsorlink-admin]
 * GitHub:Sponsorable:AppId =  [from https://github.com/organizations/devlooped/settings/apps/sponsorlink-admin]
+* GitHub:Sponsorable:PrivateKey = [from https://github.com/organizations/devlooped/settings/apps/sponsorlink-admin]
 * GitHub:Sponsor:RedirectUri = https://[HOST]/authorize/sponsor
 * GitHub:Sponsor:ClientSecret = [from https://github.com/organizations/devlooped/settings/apps/sponsorlink]
 * GitHub:Sponsor:ClientId = [from https://github.com/organizations/devlooped/settings/apps/sponsorlink]
 * GitHub:Sponsor:AppId = [from https://github.com/organizations/devlooped/settings/apps/sponsorlink]
+* GitHub:Sponsor:PrivateKey = [from https://github.com/organizations/devlooped/settings/apps/sponsorlink]
 * EventGrid:Domain = [from Event Grid Domain overview]
 * EventGrid:AccessKey = [from Event Grid Domain access keys]
 
