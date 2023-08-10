@@ -87,6 +87,11 @@ public class SponsorsRegistry
 
         foreach (var email in emails)
         {
+            // TODO: we store the blobs using the email hash as the blob name. 
+            // This might not be enough to preserve user' privacy, so we'll likey 
+            // need to find a better alternative that involves more user interaction 
+            // on the client side. Kinda annoying vs having things "Just Work" but 
+            // it seems it will be necessary anyway.
             var data = SHA256.HashData(Encoding.UTF8.GetBytes(email));
             var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
 

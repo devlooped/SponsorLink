@@ -2,7 +2,7 @@ StorageBlobLogs
 | where TimeGenerated > ago(30d)
 | where OperationName == "GetBlob" or OperationName == "GetBlobProperties"
 | extend Parts=split(ObjectKey, '/')
-| extend Project=tostring(Parts[2]), Container=tostring(Parts[3]), Email=tostring(Parts[4])
+| extend Project=tostring(Parts[2]), Container=tostring(Parts[3]), User=tostring(Parts[4])
 | where Project == "sponsorlink" and Container == "apps"
-| summarize by Email
+| summarize by User
 | count 
