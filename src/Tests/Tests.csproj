@@ -38,8 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Condition="'$(Configuration)' == 'Release'" Include="Devlooped.SponsorLink" Aliases="Analyzer" HintPath="..\Package\bin\Release\netstandard2.0\obfuscated\Devlooped.SponsorLink.dll" />
-    <Reference Condition="'$(Configuration)' != 'Release'" Include="Devlooped.SponsorLink" Aliases="Analyzer" HintPath="..\Package\bin\Debug\netstandard2.0\Devlooped.SponsorLink.dll" />
+    <Reference Include="Devlooped.SponsorLink" Aliases="Analyzer" HintPath="..\Package\bin\$(Configuration)\netstandard2.0\Devlooped.SponsorLink.dll" />
   </ItemGroup>
 
   <ItemGroup>
