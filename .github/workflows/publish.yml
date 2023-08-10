@@ -1,0 +1,39 @@
+﻿# Builds a final release version and pushes to nuget.org 
+# whenever a release is published.
+# Requires: secrets.NUGET_API_KEY
+
+name: publish
+on:
+  release:
+    types: [released]
+
+env:
+  DOTNET_NOLOGO: true
+  Configuration: Release
+  
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: 🤘 checkout
+        uses: actions/checkout@v3
+        with: 
+          fetch-depth: 0
+
+      - name: 🙏 build
+        run: dotnet build -m:1
+
+      - name: 🧪 test
+        working-directory: src/Tests
+        run: dotnet test --filter SponsorLink=true
+        
+      - name: 📦 pack
+        working-directory: src/Package
+        run: dotnet pack -m:1 -p:version="$($env:GITHUB_REF.Replace('refs/tags/', '').TrimStart('v'))"
+
+      - name: 🚀 nuget
+        run: dotnet nuget push bin\*.nupkg -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
