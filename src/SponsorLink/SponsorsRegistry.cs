@@ -41,10 +41,6 @@ public class SponsorsRegistry
 
             var blob = container.GetBlobClient($"apps/{hash}");
             await blob.UploadAsync(new MemoryStream(), headers);
-            await blob.SetTagsAsync(new Dictionary<string, string>(tags)
-            {
-                {  "Email", Convert.ToBase64String(Encoding.UTF8.GetBytes(email)) }
-            });
             await events.PushAsync(new AppRegistered(account.Id, account.Login, email));
         }
     }
@@ -99,10 +95,6 @@ public class SponsorsRegistry
             // The blob will contain a single byte if the sponsor is a member, not a sponsor.
             // See SponsorLink.CheckSponsorAsync on how the check is done.
             await blob.UploadAsync(member ? new MemoryStream(new[] { (byte)1 }) : new MemoryStream(), headers);
-            await blob.SetTagsAsync(new Dictionary<string, string>(tags)
-            {
-                {  "Email", Convert.ToBase64String(Encoding.UTF8.GetBytes(email)) }
-            });
             await events.PushAsync(new SponsorRegistered(sponsorable.Id, sponsor.Id, email));
         }
     }
