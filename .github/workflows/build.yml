@@ -5,12 +5,14 @@ on:
     branches: [ main ]
     paths:
       - 'samples/**'
+      - 'src/**' 
   pull_request:
     types: [opened, synchronize, reopened]
 
 env:
   DOTNET_NOLOGO: true
-  VersionLabel: ${{ github.ref }}.${{ github.run_number }}
+  VersionLabel: ${{ github.ref }}
+  Configuration: Release
 
 defaults:
   run:
@@ -18,16 +20,52 @@ defaults:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: 🤘 checkout
         uses: actions/checkout@v2
 
       - name: 🙏 build
         run: |
+          dotnet build -m:1
           dotnet build ./samples/dotnet/
 
-      - name: 🚀 nuget
+      - name: 🧪 test
+        run: dotnet test --filter SponsorLink=true
+
+      - name: 📦 pack
+        run: dotnet pack -m:1
+        
+      - name: ⚙ func 4.x
+        run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
+
+      - name: 🔓 login
+        if: github.ref == 'refs/heads/main'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 🚀 deploy
+        if: github.ref == 'refs/heads/main'
+        working-directory: src\App
+        run: func azure functionapp publish ${{ secrets.AZURE_APPNAME }} --force --csharp
+
+      - name: 🗄 queries to storage
+        uses: LanceMcCarthy/Action-AzureBlobUpload@v2  
+        if: github.ref == 'refs/heads/main'
+        with:
+          connection_string: ${{ secrets.AZURE_STORAGE }}
+          container_name: sponsorlink
+          source_folder: src\Tests\Queries
+          destination_folder: queries
+          fail_if_source_empty: true
+          delete_if_exists: true
+
+      - name: 🚀 sleet
+        env:
+          SLEET_CONNECTION: ${{ secrets.SLEET_CONNECTION }}
+        if: env.SLEET_CONNECTION != ''
         run: |
           dotnet tool install -g --version 4.0.18 sleet 
+          sleet push bin --config none -f --verbose -p "SLEET_FEED_CONTAINER=nuget" -p "SLEET_FEED_CONNECTIONSTRING=${{ secrets.SLEET_CONNECTION }}" -p "SLEET_FEED_TYPE=azure" || echo "No packages found"
           sleet push ./samples/bin --config none -f --verbose -p "SLEET_FEED_CONTAINER=nuget" -p "SLEET_FEED_CONNECTIONSTRING=${{ secrets.SLEET_CONNECTION }}" -p "SLEET_FEED_TYPE=azure" || echo "No packages found"
