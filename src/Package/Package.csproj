@@ -13,7 +13,6 @@
     <DevelopmentDependency>true</DevelopmentDependency>
     <DebugSymbols>false</DebugSymbols>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <LangVersion>10</LangVersion>
 
     <!-- Roslyn caches analyzers aggressively so we are better off using a very dynamic version number 
          for local builds where a quick devloop is key. We bump version every 10 seconds -->
@@ -29,11 +28,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- DO NOT BUMP BEYOND 0.9.1 or we get a dependency cycle -->
-    <PackageReference Include="NuGetizer" Version="1.1.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <!-- NOTE: cannot use NuGetizer with SponsorLink or we get a dependency cycle -->
+    <PackageReference Include="NuGetizer" Version="1.1.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" Pack="false" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" Pack="false" />
     <PackageReference Include="PolySharp" Version="1.13.2" PrivateAssets="all" />
