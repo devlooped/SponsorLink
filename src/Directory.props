@@ -8,6 +8,7 @@
     <RestoreSources>https://api.nuget.org/v3/index.json;https://pkg.kzu.io/index.json</RestoreSources>
     <!-- Otherwise we get weird errors from misconfigured SL since we build it ourselves -->
     <EnablePackCleanup>false</EnablePackCleanup>
+    <LangVersion>Preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
