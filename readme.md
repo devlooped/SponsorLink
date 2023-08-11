@@ -311,11 +311,10 @@ a bit noisy. In that case, you can disable that at the assembly level with:
 
 This section is mostly taken from [the announcement blob post](https://www.cazzulino.com/sponsorlink.html#how-it-works), and is intended as a reference for those interested in the implementation details.
 
-> NOTE: the reason why the .NET implementation of SponsorLink isn't provided as OSS, is that
-> given that its intention is to ensure that users receive their sponsorship stauts notifications, 
-> making the source available might only help those that want to circumvent it.
-> If you are integrating SponsorLink into your own OSS projects and want to understand how it works,
-> we will make the source available to you upon request.
+> NOTE: the reason why the original .NET implementation of SponsorLink wasn't provided as OSS, was
+> that given that its intention is to ensure that users receive their sponsorship status notifications, 
+> making the source available might have only made it trivial to circumvent and therefore be less
+> effective in contributing to an OSS project long-term sustainability. 
 
 SponsorLink will *never* interfere with a CI/CLI build, neither a design-time build. 
 These are important scenarios where you don't want to be annoying your fellow OSS 
