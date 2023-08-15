@@ -15,5 +15,5 @@ public static class Constants
     /// <summary>
     /// The log analytics workspace to use for querying.
     /// </summary>
-    public const string LogAnalyticsWorkspaceId = "b5823173-1be6-4d23-92e6-4d2a4a89ad20";
+    public const string LogAnalyticsWorkspaceId = "7f38af71-fab9-4d5c-9a32-743ed17c2d1a";
 }
