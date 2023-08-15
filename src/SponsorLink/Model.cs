@@ -8,10 +8,10 @@ public enum AppState { Installed, Suspended, Deleted }
 
 /// <summary>
 /// Accounts have basically two pieces of IDs, depending on which APIs 
-/// you're using. The account ID is mostly used in REST APIs, and the NodeId 
+/// you're using. The account login is mostly used in REST APIs, and the Id (node_id)
 /// on GraphQL. The login is sometimes the only allowed identifier in some 
 /// REST APIs, but since it can be changed by the user, isn't as reliable 
-/// as the other two.
+/// as the id.
 /// </summary>
 public record AccountId(string Id, string Login);
 
