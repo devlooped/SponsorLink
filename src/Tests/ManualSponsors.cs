@@ -14,7 +14,7 @@ public record Tier(int MonthlyPriceInDollars);
 
 public record ManualSponsors(ITestOutputHelper Output)
 {
-    [Fact]
+    [LocalFact]
     public async Task KzuSponsorsDevlooped()
     {
         var config = new ConfigurationBuilder().AddUserSecrets(ThisAssembly.Project.UserSecretsId).Build();
@@ -39,135 +39,23 @@ public record ManualSponsors(ITestOutputHelper Output)
             new AccountId("MDQ6VXNlcjUyNDMxMDY0", "anycarvallo"), 10);
     }
 
-    [Fact(Skip = "Manual run")]
-    public async Task RegisterExistingSponsors()
+    /// <summary>
+    /// Run this test manually to initialize a sponsorable account that is being onboarded to 
+    /// SponsorLink which has existing sponsors. This is because for now we don't have a way 
+    /// to query existing sponsors via GraphQL, so we need to manually initialize the account 
+    /// with a JSON executed by the customer himself.
+    /// </summary>
+    [InlineData("")]
+    [LocalTheory]
+    public async Task SponsorableInit(string fileName)
     {
-        var json =
-            """
-            {
-              "data": {
-                "organization": {
-                  "id": "MDEyOk9yZ2FuaXphdGlvbjYxNTMzODE4",
-                  "login": "devlooped",
-                  "sponsorshipsAsMaintainer": {
-                    "nodes": [
-                      {
-                        "createdAt": "2020-12-22T05:29:42Z",
-                        "isOneTimePayment": false,
-                        "sponsorEntity": {
-                          "id": "MDEyOk9yZ2FuaXphdGlvbjcxODg4NjM2",
-                          "login": "clarius"
-                        },
-                        "tier": {
-                          "monthlyPriceInDollars": 1
-                        }
-                      },
-                      {
-                        "createdAt": "2021-01-24T10:15:18Z",
-                        "isOneTimePayment": false,
-                        "sponsorEntity": {
-                          "id": "MDQ6VXNlcjE2Njk3NTQ3",
-                          "login": "MelbourneDeveloper"
-                        },
-                        "tier": {
-                          "monthlyPriceInDollars": 2
-                        }
-                      },
-                      {
-                        "createdAt": "2021-02-17T04:35:26Z",
-                        "isOneTimePayment": false,
-                        "sponsorEntity": {
-                          "id": "MDQ6VXNlcjE3NzYwOA==",
-                          "login": "augustoproiete"
-                        },
-                        "tier": {
-                          "monthlyPriceInDollars": 1
-                        }
-                      },
-                      {
-                        "createdAt": "2022-02-03T07:24:51Z",
-                        "isOneTimePayment": false,
-                        "sponsorEntity": {
-                          "id": "MDQ6VXNlcjY3OTMyNg==",
-                          "login": "KirillOsenkov"
-                        },
-                        "tier": {
-                          "monthlyPriceInDollars": 10
-                        }
-                      },
-                      {
-                        "createdAt": "2022-04-02T16:09:20Z",
-                        "isOneTimePayment": false,
-                        "sponsorEntity": {
-                          "id": "MDEyOk9yZ2FuaXphdGlvbjg3MTgxNjMw",
-                          "login": "MFB-Technologies-Inc"
-                        },
-                        "tier": {
-                          "monthlyPriceInDollars": 10
-                        }
-                      },
-                      {
-                        "createdAt": "2022-07-17T12:30:08Z",
-                        "isOneTimePayment": false,
-                        "sponsorEntity": {
-                          "id": "MDQ6VXNlcjMyMTg2OA==",
-                          "login": "sandrock"
-                        },
-                        "tier": {
-                          "monthlyPriceInDollars": 2
-                        }
-                      },
-                      {
-                        "createdAt": "2022-09-17T01:58:25Z",
-                        "isOneTimePayment": false,
-                        "sponsorEntity": {
-                          "id": "MDQ6VXNlcjUxNTc3NA==",
-                          "login": "agocke"
-                        },
-                        "tier": {
-                          "monthlyPriceInDollars": 2
-                        }
-                      },
-                      {
-                        "createdAt": "2023-01-20T14:26:28Z",
-                        "isOneTimePayment": false,
-                        "sponsorEntity": {
-                          "id": "MDQ6VXNlcjg3OTU5NTQx",
-                          "login": "devlooped-bot"
-                        },
-                        "tier": {
-                          "monthlyPriceInDollars": 2
-                        }
-                      },
-                      {
-                        "createdAt": "2023-01-11T14:21:37Z",
-                        "isOneTimePayment": true,
-                        "sponsorEntity": {
-                          "id": "MDQ6VXNlcjU0MTI2ODM=",
-                          "login": "aguskzu"
-                        },
-                        "tier": {
-                          "monthlyPriceInDollars": 1
-                        }
-                      },
-                      {
-                        "createdAt": "2023-01-10T15:26:29Z",
-                        "isOneTimePayment": false,
-                        "sponsorEntity": {
-                          "id": "MDQ6VXNlcjUyNDMxMDY0",
-                          "login": "anycarvallo"
-                        },
-                        "tier": {
-                          "monthlyPriceInDollars": 3
-                        }
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-            """;
+        // NOTE: set the file name/path to the JSON file with the sponsors data.
+        if (string.IsNullOrEmpty(fileName))
+            return;
 
+        Assert.True(File.Exists(fileName), $"File path '{fileName}' does not exist.");
+
+        var json = File.ReadAllText(fileName);
         var result = JsonSerializer.Deserialize<SponsorsResult>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         Assert.NotNull(result);
 
