@@ -15,15 +15,12 @@ namespace Devlooped;
 /// </remarks>
 public class SponsorLinkSettings
 {
-    const int DefaultMaxPause = 4000;
-
     // Make this private for now. We may expose derived types if needed at some point?
     SponsorLinkSettings(string sponsorable, string product)
     {
         Sponsorable = sponsorable;
         Product = product;
     }
-
 
     /// <summary>
     /// Creates the settings for <see cref="SponsorLink"/> with the given values.
@@ -37,7 +34,7 @@ public class SponsorLinkSettings
             version: default,
             diagnosticsIdPrefix: default,
             pauseMin: default,
-            pauseMax: DefaultMaxPause,
+            pauseMax: default,
             quietDays: default);
 
     /// <summary>
@@ -112,13 +109,36 @@ public class SponsorLinkSettings
     /// <param name="pauseMax">Max random milliseconds to apply during build for non-sponsoring users. Use 0 for no pause.</param>
     /// <param name="quietDays">Optional days to keep warnings quiet so the user has a chance to test the product undisturbed.</param>
     /// <param name="transitive">Whether the check is transitive (enforced when dependency is indirect in a project).</param>
+    // <Previous release> BACKCOMPAT OVERLOAD -- DO NOT TOUCH
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static SponsorLinkSettings Create(string sponsorable, string product,
         string? packageId = default,
         string? version = default,
         string? diagnosticsIdPrefix = default,
         int pauseMin = 0,
-        int pauseMax = DefaultMaxPause,
-        int? quietDays = default, 
+        int pauseMax = 0,
+        int? quietDays = default,
+        bool transitive = default) => Create(sponsorable, product, packageId, version, diagnosticsIdPrefix, quietDays, transitive);
+
+    /// <summary>
+    /// Creates the settings for <see cref="SponsorLink"/> with the given values.
+    /// </summary>
+    /// <param name="sponsorable">The sponsor account to check for sponsorships.</param>
+    /// <param name="product">The product that uses SponsorLink. Used in diagnostics to clarify the product requesting the sponsor link check.</param>
+    /// <param name="packageId">Optional NuGet package identifier of the product performing the check. Defaults to <paramref name="product"/>. 
+    /// Used to determine installation time of the product and avoid pausing builds or emitting warnings during the 
+    /// <paramref name="quietDays"/> after install.</param>
+    /// <param name="version">Optional product or package version.</param>
+    /// <param name="diagnosticsIdPrefix">Prefix to use for diagnostics with numbers <c>02,03,04</c> reported by default. If not provided, 
+    /// a default one is determined from the <paramref name="sponsorable"/> and <paramref name="product"/> values.</param>
+    /// <param name="quietDays">Optional days to keep diagnostic quiet so the user has a chance to test the product undisturbed.</param>
+    /// <param name="transitive">Whether the check is transitive (enforced when dependency is indirect in a project).</param>
+    // <Previous release> BACKCOMPAT OVERLOAD -- DO NOT TOUCH
+    public static SponsorLinkSettings Create(string sponsorable, string product,
+        string? packageId = default,
+        string? version = default,
+        string? diagnosticsIdPrefix = default,
+        int? quietDays = default,
         bool transitive = default)
     {
         if (quietDays < 0)
@@ -161,8 +181,6 @@ public class SponsorLinkSettings
         {
             PackageId = packageId ?? product,
             Version = version,
-            PauseMin = pauseMin,
-            PauseMax = pauseMax,
             QuietDays = quietDays,
             SupportedDiagnostics = SponsorLink.Diagnostics.GetDescriptors(sponsorable, diagnosticsIdPrefix),
             Transitive = transitive
@@ -186,8 +204,6 @@ public class SponsorLinkSettings
 
     internal string? PackageId { get; private set; }
     internal string? Version { get; private set; }
-    internal int PauseMin { get; private set; }
-    internal int PauseMax { get; private set; }
     internal DateTime? InstallTime { get; set; }
     internal int? QuietDays { get; private set; }
     internal bool Transitive { get; private set; }
