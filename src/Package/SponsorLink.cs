@@ -158,19 +158,13 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         {
             case DiagnosticKind.AppNotInstalled:
             case DiagnosticKind.UserNotSponsoring:
-                // Add a random configurable pause in this case.
-                var (warn, pause, suffix) = GetPause();
-                if (!warn)
+                var show = ShouldShow();
+                if (!show)
                     return null;
 
-                // The Pause property is used by our default implementation to introduce the pause 
-                // in an incremental-aware way.
                 var diag = Diagnostic.Create(descriptor, null,
-                    properties: new Dictionary<string, string?>
-                    {
-                        { "Pause", pause.ToString() },
-                    }.ToImmutableDictionary(),
-                    product, sponsorable, suffix);
+                    properties: null,
+                    product, sponsorable);
 
                 return WriteMessage(sponsorable, product, Path.GetDirectoryName(projectPath), diag);
             case DiagnosticKind.Thanks:
@@ -271,10 +265,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         // otherwise they go away as soon as they are reported by a real 
         // build. The IDE re-runs the analyzers at various points and we 
         // want the real build diagnostics to remain visible since otherwise 
-        // the user can miss what happened. Granted, a message saying the 
-        // build was paused might be misleading since upon reopening VS 
-        // with no build performed yet, a previously created diagnostic 
-        // might be reported again, but that's a small price to pay.
+        // the user can miss what happened.
         // So: DO NOT TRY TO AVOID REPORTING AGAIN ON DTB
 
         // If this particular build did not generate a new diagnostic (i.e. it was an 
@@ -286,7 +277,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         // communication "channel" between past runs of the generator check and the analyzer 
         // reporting live in VS.
 
-        // We never pause in DTB
+        // In DTB we report the diagnostic again, but we don't perform the check again.
         if (info.DesignTimeBuild == true)
         {
             Trace($"ReportExisting {sponsorable}/{product}@{Path.GetFileNameWithoutExtension(projectFile)}", info.DesignTimeBuild == true);
@@ -399,48 +390,11 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         {
             SessionManager.Set(sponsorable, product, info.ProjectPath, kind);
 
-            // Pause if configured so. Note we won't pause if the project is up to date.
-            if (diagnostic.Properties.TryGetValue("Pause", out var value) &&
-                int.TryParse(value, out var pause) &&
-                pause > 0)
-            {
-                Trace($"Pausing new check for {pause}ms");
-
-#if !CI
-                Console.Beep(500, 500);
-#endif
-                Thread.Sleep(pause);
-            }
-
             // Note that we don't push even Thanks if they were already reported and the 
             // project is up to date. This means the Thanks won't become annoying either.
             Diagnostics.ReportDiagnosticOnce(context,
                 Diagnostics.Push(sponsorable, product, info.ProjectPath, diagnostic),
                 sponsorable, product);
-        }
-    }
-
-    void ClearExisting(string projectFile)
-    {
-        // Clear a previous report in this case, to avoid giving the impression that we
-        // paused again when we haven't.
-        var cleared = false;
-        var objDir = Path.Combine(Path.GetDirectoryName(projectFile), "obj", "SponsorLink", sponsorable, product);
-        if (Directory.Exists(objDir))
-        {
-            foreach (var file in Directory.EnumerateFiles(objDir))
-            {
-                File.Delete(file);
-                cleared = true;
-            }
-        }
-
-        if (cleared)
-        {
-            Trace($"Cleared existing diagnostic files");
-#if !CI
-            Console.Beep(800, 500);
-#endif
         }
     }
 
@@ -486,28 +440,19 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         }
     }
 
-    (bool warn, int pause, string suffix) GetPause()
+    bool ShouldShow()
     {
         if (settings.InstallTime == null)
-            return GetPaused(rnd.Next(settings.PauseMin, settings.PauseMax));
+            return true;
 
         var daysOld = (int)DateTime.Now.Subtract(settings.InstallTime.Value).TotalDays;
 
-        // Never warn during the quiet days.
+        // Don't show during the quiet days.
         if (daysOld < (settings.QuietDays ?? quietDays))
-            return (false, 0, "");
+            return false;
 
-        // At this point, daysOld is greater than quietDays and greater than 1.
-        var nonQuietDays = daysOld - (settings.QuietDays ?? quietDays);
-        // Turn days pause (starting at 1sec max pause into milliseconds, used for the pause.
-        var daysMaxPause = nonQuietDays * 1000;
-
-        // From second day, the max pause will increase from days old until the max pause.
-        return GetPaused(rnd.Next(settings.PauseMin, Math.Min(daysMaxPause, settings.PauseMax)));
+        return true;
     }
-
-    static (bool warn, int pause, string suffix) GetPaused(int pause)
-        => (true, pause, pause > 0 ? ThisAssembly.Strings.BuildPaused(pause) : "");
 
     static Diagnostic WriteMessage(string sponsorable, string product, string projectDir, Diagnostic diag)
     {
