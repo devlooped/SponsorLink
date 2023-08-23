@@ -29,23 +29,9 @@
     <Using Include="Xunit" />
     <Using Include="Xunit.Abstractions" />
     <EmbeddedResource Include="*.json;*.ini" Kind="Text" />
-    <None Update="Queries\*.kql" CopyToOutputDirectory="PreserveNewest" />
-    <EmbeddedResource Include="Queries\*.kql" Kind="Text" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\SponsorLink\SponsorLink.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Devlooped.SponsorLink" Aliases="Analyzer" HintPath="..\Package\bin\$(Configuration)\netstandard2.0\Devlooped.SponsorLink.dll" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <UpToDateCheck Remove="queries\projects.kql" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="..\Package\settings.ini" Link="settings.ini" Kind="Text" />
   </ItemGroup>
 </Project>

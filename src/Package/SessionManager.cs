@@ -31,7 +31,7 @@ static class SessionManager
 
         // Rider sets the parent process ID, but the child process lingers anyway, so we must ensure 
         // we exit the process or we'll never re-check regardless of how many times Rider itself is restarted.
-        if (Environment.GetEnvironmentVariable("MSBUILD_TASK_PARENT_PROCESS_PID") is string parentId && 
+        if (Environment.GetEnvironmentVariable("MSBUILD_TASK_PARENT_PROCESS_PID") is string parentId &&
             int.TryParse(parentId, out var processId))
         {
             timer = new Timer(_ =>
@@ -64,7 +64,7 @@ static class SessionManager
         Environment.GetEnvironmentVariable("IDEA_INITIAL_DIRECTORY") != null;
 
     public static bool IsCI =>
-        (bool.TryParse(Environment.GetEnvironmentVariable("CI"), out var ci) && ci) || 
+        (bool.TryParse(Environment.GetEnvironmentVariable("CI"), out var ci) && ci) ||
         (bool.TryParse(Environment.GetEnvironmentVariable("TF_BUILD"), out ci) && ci) ||
         (bool.TryParse(Environment.GetEnvironmentVariable("TRAVIS"), out ci) && ci) ||
         (bool.TryParse(Environment.GetEnvironmentVariable("BUDDY"), out ci) && ci) ||

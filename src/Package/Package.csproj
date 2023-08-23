@@ -39,6 +39,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="..\SponsorLink.pub" Link="SponsorLink.pub" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageFile Include="Devlooped.SponsorLink.props;Devlooped.SponsorLink.targets" PackagePath="buildTransitive/%(Filename)%(Extension)" />
   </ItemGroup>
 

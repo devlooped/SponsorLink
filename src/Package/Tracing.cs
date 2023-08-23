@@ -28,7 +28,7 @@ static class Tracing
             .Append($" {message} ")
             .AppendLine($" -> {filePath}({lineNumber})")
             .ToString();
-        
+
         var dir = Environment.ExpandEnvironmentVariables(@"%TEMP%\SponsorLink");
         Directory.CreateDirectory(dir);
 

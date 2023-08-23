@@ -63,48 +63,6 @@
 	sha = f08c3f28e46e28eb31e70846d65e57aa9553ce56
 	etag = 567444486383d032c1c5fbc538f07e860f92b1d08c66ac6ffb1db64ca539251c
 	weak
-[file "src/App/System/QuaranTime.cs"]
-	url = https://github.com/devlooped/catbag/blob/main/System/QuaranTime.cs
-	sha = 83ae670d5c69de16dd0d3a15448bdefa2ef6cdfe
-	etag = 2de43ea10bb6dca91326c303fd4daf1c6493d3bc63511f3fd906c7f75117f49e
-	weak
-[file "src/Tests/System/QuaranTime.cs"]
-	url = https://github.com/devlooped/catbag/blob/main/System/QuaranTime.cs
-	sha = 83ae670d5c69de16dd0d3a15448bdefa2ef6cdfe
-	etag = 2de43ea10bb6dca91326c303fd4daf1c6493d3bc63511f3fd906c7f75117f49e
-	weak
-[file "src/Tests/System/Base62.cs"]
-	url = https://github.com/devlooped/catbag/blob/main/System/Base62.cs
-	sha = 43712304cdfff2c34ba01197cc2ccc0e16e7af08
-	etag = 045b9e458f11f846ae9a3979b8122c68173405fb5451083d4993f94004e60e76
-	weak
-[file "src/App/System/Base62.cs"]
-	url = https://github.com/devlooped/catbag/blob/main/System/Base62.cs
-	sha = 43712304cdfff2c34ba01197cc2ccc0e16e7af08
-	etag = 045b9e458f11f846ae9a3979b8122c68173405fb5451083d4993f94004e60e76
-	weak
-[file "src/Package/Properties/."]
-	url = https://github.com/devlooped/SponsorLink/tree/main/loc
-[file "src/Package/Properties/Resources.es.resx"]
-	url = https://github.com/devlooped/SponsorLink/blob/main/loc/Resources.es.resx
-	sha = da76fbaadfb524ea6c58715f60b4d9c52e152977
-	etag = 2e8130a9a1799eaf05691ed68719146097797abbbb6214e12ba65917c36c376c
-	weak
-[file "src/Package/Properties/Resources.resx"]
-	url = https://github.com/devlooped/SponsorLink/blob/main/loc/Resources.resx
-	sha = da76fbaadfb524ea6c58715f60b4d9c52e152977
-	etag = 9c3302f054c55692be6fbae25f0f1af9b96803a40144dcef64885a9da7cb562c
-	weak
-[file "src/SponsorLink/System/Base62.cs"]
-	url = https://github.com/devlooped/catbag/blob/main/System/Base62.cs
-	sha = 43712304cdfff2c34ba01197cc2ccc0e16e7af08
-	etag = 045b9e458f11f846ae9a3979b8122c68173405fb5451083d4993f94004e60e76
-	weak
-[file "src/Package/System/Base62.cs"]
-	url = https://github.com/devlooped/catbag/blob/main/System/Base62.cs
-	sha = 43712304cdfff2c34ba01197cc2ccc0e16e7af08
-	etag = 045b9e458f11f846ae9a3979b8122c68173405fb5451083d4993f94004e60e76
-	weak
 [file ".github/workflows/changelog.config"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/changelog.config
 	sha = 055a8b7c94b74ae139cce919d60b83976d2a9942
