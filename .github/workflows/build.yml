@@ -25,15 +25,11 @@ jobs:
       - name: 🤘 checkout
         uses: actions/checkout@v2
 
-      - uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-          dotnet-quality: 'preview'
-
       - name: 🙏 build
         run: |
           dotnet build -m:1
           dotnet build ./samples/dotnet/
+          dotnet build src/App --output ./output
 
       - name: 🧪 test
         run: dotnet test --filter SponsorLink=true
@@ -41,9 +37,6 @@ jobs:
       - name: 📦 pack
         run: dotnet pack -m:1
         
-      - name: ⚙ func 4.x
-        run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
-
       - name: 🔓 login
         if: github.ref == 'refs/heads/main'
         uses: azure/login@v1
@@ -52,8 +45,10 @@ jobs:
 
       - name: 🚀 deploy
         if: github.ref == 'refs/heads/main'
-        working-directory: src\App
-        run: func azure functionapp publish ${{ secrets.AZURE_APPNAME }} --force --csharp
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ vars.AZURE_APPNAME }}
+          package: ./output
 
       - name: 🚀 sleet
         env:
