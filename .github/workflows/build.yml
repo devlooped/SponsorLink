@@ -29,7 +29,7 @@ jobs:
         run: |
           dotnet build -m:1
           dotnet build ./samples/dotnet/
-          dotnet build src/App --output ./output
+          dotnet build src/App --output ./app
 
       - name: 🧪 test
         run: dotnet test --filter SponsorLink=true
@@ -48,7 +48,7 @@ jobs:
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ vars.AZURE_APPNAME }}
-          package: ./output
+          package: ./app
 
       - name: 🚀 sleet
         env:
