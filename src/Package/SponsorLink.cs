@@ -47,9 +47,9 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         //    .OrderBy(x => x.Key)
         //    .Where(x => !"Path".Equals(x.Key))
         //    .Select(x => $"{x.Key}={x.Value}")));
-        
+
         AppDomain.CurrentDomain.ProcessExit += (sender, args) => Trace("ProcessExit");
-            
+
         http = HttpClientFactory.Create(NetworkTimeout);
 
         // Reads settings from storage, best-effort
@@ -110,12 +110,12 @@ public abstract class SponsorLink : DiagnosticAnalyzer
     {
         sponsorable = settings.Sponsorable;
         product = settings.Product;
-        
+
         // Add the built-in ones to the dynamic diagnostics.
         diagnostics = settings.SupportedDiagnostics
             .Add(DiagnosticsManager.MissingProject)
             .Add(DiagnosticsManager.MissingDesignTimeBuild);
-        
+
         this.settings = settings;
     }
 
@@ -253,7 +253,7 @@ public abstract class SponsorLink : DiagnosticAnalyzer
         // is in this particular scenario. This allows non-debugging runs of the analyzer to 
         // behave as it would for end consumers, even when building from within the sponsorable 
         // analyzer solution while not debugging it.
-        if (Debugger.IsAttached && 
+        if (Debugger.IsAttached &&
             globalOptions.TryGetValue("build_property.DebugSponsorLink", out var dsl) &&
             bool.TryParse(dsl, out forceRun) && forceRun)
             // Reset value to what it is in CLI builds

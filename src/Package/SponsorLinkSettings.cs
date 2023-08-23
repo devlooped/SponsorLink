@@ -54,7 +54,7 @@ public class SponsorLinkSettings
     public static SponsorLinkSettings Create(string sponsorable, string product,
         string? packageId,
         string? diagnosticsIdPrefix,
-        int pauseMin, 
+        int pauseMin,
         int pauseMax) => Create(sponsorable, product,
             packageId: packageId,
             diagnosticsIdPrefix: diagnosticsIdPrefix,

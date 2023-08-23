@@ -52,8 +52,8 @@ public static class SponsorCheck
               .Append("&editor.sku=")
               .Append(Environment.GetEnvironmentVariable("VSSKUEDITION")?.ToLowerInvariant());
 
-            if (Environment.GetEnvironmentVariable("VSAPPIDDIR") is string appdir && 
-                Directory.Exists(appdir) && 
+            if (Environment.GetEnvironmentVariable("VSAPPIDDIR") is string appdir &&
+                Directory.Exists(appdir) &&
                 File.Exists(Path.Combine(appdir, "devenv.isolation.ini")))
             {
                 var value = File.ReadAllLines(Path.Combine(appdir, "devenv.isolation.ini"))
@@ -69,8 +69,8 @@ public static class SponsorCheck
         else if (SessionManager.IsRider)
         {
             sb.Append("&editor=rider");
-            if (Environment.GetEnvironmentVariable("IDEA_INITIAL_DIRECTORY") is string ideadir && 
-                Regex.Match(ideadir, "\\d\\d\\d\\d\\.\\d\\d?") is Match match && 
+            if (Environment.GetEnvironmentVariable("IDEA_INITIAL_DIRECTORY") is string ideadir &&
+                Regex.Match(ideadir, "\\d\\d\\d\\d\\.\\d\\d?") is Match match &&
                 match.Success)
             {
                 sb.Append("&editor.version=").Append(match.Value);
@@ -112,8 +112,8 @@ public static class SponsorCheck
 
         var data = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(email));
         var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
-        var query = $"account={sponsorable}&product={product}&package={packageId}&version={version}" + 
-            $"&noreply=" + email!.EndsWith("@users.noreply.github.com").ToString().ToLowerInvariant() + 
+        var query = $"account={sponsorable}&product={product}&package={packageId}&version={version}" +
+            $"&noreply=" + email!.EndsWith("@users.noreply.github.com").ToString().ToLowerInvariant() +
             ContextQuery;
 
         // Check app install and sponsoring status
@@ -152,7 +152,7 @@ public static class SponsorCheck
         var data = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(email));
         var hash = Base62.Encode(BigInteger.Abs(new BigInteger(data)));
         var query = $"reason={reason}&account={settings.Sponsorable}&product={settings.Product}&package={settings.PackageId}&version={settings.Version}" +
-            "&noreply=" + email!.EndsWith("@users.noreply.github.com").ToString().ToLowerInvariant() + 
+            "&noreply=" + email!.EndsWith("@users.noreply.github.com").ToString().ToLowerInvariant() +
             ContextQuery;
 
         CheckUrlAsync(http ?? HttpClientFactory.Default,
@@ -195,7 +195,7 @@ public static class SponsorCheck
             var response = await http.GetAsync(url, cancellation);
             return response.IsSuccessStatusCode;
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
             if (!cancellation.IsCancellationRequested)
                 Tracing.Trace($"{nameof(CheckUrlAsync)}({url}): \r\n{ex}");
