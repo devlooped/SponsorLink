@@ -55,17 +55,6 @@ jobs:
         working-directory: src\App
         run: func azure functionapp publish ${{ secrets.AZURE_APPNAME }} --force --csharp
 
-      - name: 🗄 queries to storage
-        uses: LanceMcCarthy/Action-AzureBlobUpload@v2  
-        if: github.ref == 'refs/heads/main'
-        with:
-          connection_string: ${{ secrets.AZURE_STORAGE }}
-          container_name: sponsorlink
-          source_folder: src\Tests\Queries
-          destination_folder: queries
-          fail_if_source_empty: true
-          delete_if_exists: true
-
       - name: 🚀 sleet
         env:
           SLEET_CONNECTION: ${{ secrets.SLEET_CONNECTION }}
