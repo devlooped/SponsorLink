@@ -52,13 +52,15 @@ public class Signing
             return new BadRequestResult();
 
         var signing = new SigningCredentials(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256);
+        // Expire the first day of the next month
+        var expiration = DateTime.UtcNow.AddMonths(1);
+        expiration = new DateTime(expiration.Year, expiration.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
         var signed = new JwtSecurityToken(
             issuer: jwt.Issuer,
             audience: jwt.Audiences.First(),
             claims: jwt.Claims,
-            // Expire at the end of the month
-            expires: new DateTime(DateTime.Today.Year, DateTime.Today.Month + 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            expires: expiration,
             signingCredentials: signing);
 
         // Serialize the token and return as a string
