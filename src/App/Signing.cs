@@ -57,9 +57,9 @@ public class Signing
         expiration = new DateTime(expiration.Year, expiration.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
         var signed = new JwtSecurityToken(
-            issuer: jwt.Issuer,
-            audience: jwt.Audiences.First(),
-            claims: jwt.Claims,
+            issuer: "Devlooped",
+            audience: "SponsorLink",
+            claims: jwt.Claims.Where(c => c.Type != "exp" && c.Type != "aud" && c.Type != "iss"),
             expires: expiration,
             signingCredentials: signing);
 
