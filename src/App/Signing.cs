@@ -12,13 +12,16 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Devlooped.SponsorLink;
 
-public static class Signing
+public class Signing
 {
     static RSA? rsa;
+    readonly IConfiguration configuration;
+
+    public Signing(IConfiguration configuration) => this.configuration = configuration;
 
     [FunctionName("sign")]
-    public static async Task<IActionResult> RunAsync(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "sign")] HttpRequestMessage req, IConfiguration configuration, ILogger logger)
+    public async Task<IActionResult> RunAsync(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "sign")] HttpRequestMessage req, ILogger logger)
     {
         rsa ??= InitializeKey(configuration, logger);
         if (rsa == null)
