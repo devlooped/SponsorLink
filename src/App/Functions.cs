@@ -3,6 +3,9 @@ using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Web.Http;
+using Auth0.AuthenticationApi;
+using Auth0.AuthenticationApi.Models;
+using Auth0.ManagementApi;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -12,23 +15,54 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Devlooped.SponsorLink;
 
-public class Signing
+public class Functions
 {
     static RSA? rsa;
     readonly IConfiguration configuration;
 
-    public Signing(IConfiguration configuration) => this.configuration = configuration;
+    public Functions(IConfiguration configuration) => this.configuration = configuration;
+
+    [FunctionName("remove")]
+    public async Task<IActionResult> RemoveAsync(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestMessage req, ILogger logger)
+    {
+        if (req.Headers.Authorization is null ||
+            await Security.ValidateTokenAsync(req.Headers.Authorization) is not ClaimsPrincipal principal ||
+            principal.FindFirst(ClaimTypes.NameIdentifier)?.Value is not string userId)
+            return new UnauthorizedResult();
+
+        var auth = new AuthenticationApiClient(new Uri("https://sponsorlink.us.auth0.com/"));
+        if (configuration["Auth0:ClientId"] is not string clientId ||
+            configuration["Auth0:ClientSecret"] is not string clientSecret)
+        {
+            logger.LogError("Missing 'Auth0:ClientId' or 'Auth0:ClientSecret' configuration");
+            return new InternalServerErrorResult();
+        }
+
+        var token = await auth.GetTokenAsync(new ClientCredentialsTokenRequest
+        {
+            Audience = "https://sponsorlink.us.auth0.com/api/v2/",
+            ClientId = clientId,
+            ClientSecret = clientSecret,
+        });
+
+        var client = new ManagementApiClient(token.AccessToken, new Uri("https://sponsorlink.us.auth0.com/api/v2"));
+
+        await client.Users.DeleteAsync(userId);
+
+        return new OkResult();
+    }
 
     [FunctionName("sign")]
-    public async Task<IActionResult> RunAsync(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "sign")] HttpRequestMessage req, ILogger logger)
+    public async Task<IActionResult> SignAsync(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestMessage req, ILogger logger)
     {
         rsa ??= InitializeKey(configuration, logger);
         if (rsa == null)
             return new InternalServerErrorResult();
 
         if (req.Headers.Authorization is null ||
-            await Auth0.ValidateTokenAsync(req.Headers.Authorization) is not ClaimsPrincipal principal ||
+            await Security.ValidateTokenAsync(req.Headers.Authorization) is not ClaimsPrincipal principal ||
             principal.FindFirst(ClaimTypes.NameIdentifier)?.Value.Split('|')?[1] is not string id)
             return new UnauthorizedResult();
 
