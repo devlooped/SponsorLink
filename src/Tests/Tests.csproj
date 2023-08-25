@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -12,6 +12,9 @@
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.34.0" />
     <PackageReference Include="Azure.Monitor.Query" Version="1.2.0" />
+    <PackageReference Include="DotNetConfig" Version="1.0.6" />
+    <PackageReference Include="LibGit2Sharp" Version="0.27.2" />
+    <PackageReference Include="Microsoft.Build.Tasks.Git" Version="1.1.1" PrivateAssets="all"/>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.XUnit" Version="1.1.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.0" />
     <PackageReference Include="xunit" Version="2.5.0" />
@@ -34,4 +37,26 @@
   <ItemGroup>
     <Reference Include="Devlooped.SponsorLink" Aliases="Analyzer" HintPath="..\Package\bin\$(Configuration)\netstandard2.0\Devlooped.SponsorLink.dll" />
   </ItemGroup>
+
+  <Target Name="RenderSourceRoots" AfterTargets="Build" DependsOnTargets="InitializeSourceControlInformationFromSourceControlManager">
+    <!-- Showcases how to get the current (git) repository root, via the Microsoft.Build.Tasks.Git package -->
+    <Message Importance="high" Text="@(SourceRoot -&gt; WithMetadataValue('SourceControl', 'git'))" />
+  </Target>
+
+  <Target Name="RenderEmail" AfterTargets="Build">
+    <!-- Showcases how to read the email via targets -->
+    <Exec Command='git config --get user.email'
+          EchoOff='true'
+          StandardErrorImportance='high'
+          StandardOutputImportance='low'
+          ConsoleToMSBuild='true'
+          WorkingDirectory='$(MSBuildProjectDirectory)'
+          ContinueOnError='true'
+          StdOutEncoding='utf-8'>
+      <Output TaskParameter="ConsoleOutput" PropertyName="Email"/>
+      <Output TaskParameter="ExitCode" PropertyName="GitExitCode" />
+    </Exec>
+    <Message Condition="'$(GitExitCode)' == '0'" Importance="high" Text="Email='$(Email)'" />
+  </Target>
+
 </Project>
