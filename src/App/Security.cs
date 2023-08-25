@@ -7,14 +7,14 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Devlooped.SponsorLink;
 
-static class Auth0
+static class Security
 {
     static readonly IConfigurationManager<OpenIdConnectConfiguration> configuration;
 
     static readonly string Issuer = "https://sponsorlink.us.auth0.com/";
     static readonly string Audience = "https://sponsorlink.devlooped.com";
 
-    static Auth0()
+    static Security()
     {
         var documentRetriever = new HttpDocumentRetriever { RequireHttps = true };
 
