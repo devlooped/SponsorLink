@@ -1,0 +1,62 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Condition="'$(MicrosoftBuildTasksGitAssemblyFile)' == ''">
+    <MicrosoftBuildTasksGitAssemblyFile Condition="'$(MSBuildRuntimeType)' != 'Core'">$(MSBuildThisFileDirectory)..\tools\net472\Microsoft.Build.Tasks.Git.dll</MicrosoftBuildTasksGitAssemblyFile>
+    <MicrosoftBuildTasksGitAssemblyFile Condition="'$(MSBuildRuntimeType)' == 'Core'">$(MSBuildThisFileDirectory)..\tools\core\Microsoft.Build.Tasks.Git.dll</MicrosoftBuildTasksGitAssemblyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Update="@(Compile -> WithMetadataValue('NuGetPackageId', 'Devlooped.SponsorLink'))">
+      <Link>SponsorLink\%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+
+  <!-- Helper target to automatically populate [assembly: Funding(sponsorable)] from local FUNDING.yml -->
+  <Target Name="AddFundingAccounts" DependsOnTargets="GetGitRoot;ReadFunding;ParseSponsorable;AddAttributes" BeforeTargets="GetAssemblyAttributes" />
+
+  <Target Name="GetGitRoot">
+    <PropertyGroup>
+      <GitRoot>@(SourceRoot -> WithMetadataValue('SourceControl', 'git'))</GitRoot>
+    </PropertyGroup>
+
+    <Microsoft.Build.Tasks.Git.LocateRepository Condition="'$(GitRoot)' == ''"
+                                                Path="$(MSBuildProjectDirectory)"
+                                                RemoteName="$(GitRepositoryRemoteName)"
+                                                ConfigurationScope="$(GitRepositoryConfigurationScope)"
+                                                NoWarnOnMissingInfo="true">
+      <Output TaskParameter="Url" PropertyName="_GitRepositoryUrl" />
+      <Output TaskParameter="Roots" ItemName="_SourceRoot" />
+    </Microsoft.Build.Tasks.Git.LocateRepository>
+
+    <PropertyGroup Condition="'$(GitRoot)' == ''">
+      <GitRoot>@(_SourceRoot -> WithMetadataValue('SourceControl', 'git'))</GitRoot>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="ReadFunding" DependsOnTargets="GetGitRoot" Condition="Exists('$(GitRoot).github/FUNDING.yml')">
+    <ReadLinesFromFile File="$(GitRoot).github/FUNDING.yml">
+      <Output TaskParameter="Lines" ItemName="_FundingLine" />
+    </ReadLinesFromFile>
+  </Target>
+
+  <Target Name="ParseSponsorable" DependsOnTargets="ReadFunding" Outputs="%(_FundingLine.Identity)">
+    <PropertyGroup>
+      <_FundingLine>%(_FundingLine.Identity)</_FundingLine>
+      <GitHubLine Condition="$(_FundingLine.Trim().StartsWith('github:'))">$(_FundingLine.Trim().Substring(7).Trim())</GitHubLine>
+      <GitHubAccounts Condition="$(GitHubLine) != ''">$(GitHubLine.Trim('[').Trim(']'))</GitHubAccounts>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <GitHubSponsorable Include="$(GitHubAccounts.Split(','))" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="AddAttributes" DependsOnTargets="ParseSponsorable">
+    <ItemGroup>
+      <AssemblyAttribute Include="Devlooped.FundingAttribute">
+        <_Parameter1>%(GitHubSponsorable.Identity)</_Parameter1>
+      </AssemblyAttribute>
+    </ItemGroup>
+  </Target>
+
+</Project>
