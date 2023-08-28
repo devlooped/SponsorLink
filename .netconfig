@@ -73,3 +73,8 @@
 	sha = a4b66eb5f4dfb9704502f19f59ba33cb4855188c
 	etag = 54c0b571648b1055beb3ddac180b34e93a9869b9f0277de306901b2c1dbe0b2c
 	weak
+[file "src/Package/SponsorLink.cs"]
+	url = https://github.com/devlooped/gh-sponsors/blob/main/src/Commands/SponsorLink.cs
+	sha = adbdc9ff6f7c0a2bf8efe72e33d10c857bd19169
+	etag = 554801065c55a472f5288574c8dab513366cda5d5177473be1456e20ab5ed70f
+	weak
