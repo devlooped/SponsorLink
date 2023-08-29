@@ -1,0 +1,14 @@
+<Project>
+
+  <PropertyGroup Condition="$(CI)">
+    <VersionPrefix>42.42.$(GITHUB_RUN_NUMBER)</VersionPrefix>
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix)</Version>
+    <Version Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix)</Version>
+  </PropertyGroup>
+
+  <ItemGroup Condition="Exists('$(DevPath)\Devlooped.SponsorLink.$(Version).nupkg')">
+    <PackageReference Update="@(PackageReference -> WithMetadataValue('Identity', 'Devlooped.SponsorLink'))"
+                      Version="$(Version)" />
+  </ItemGroup>
+
+</Project>
