@@ -5,9 +5,18 @@
     <MicrosoftBuildTasksGitAssemblyFile Condition="'$(MSBuildRuntimeType)' == 'Core'">$(MSBuildThisFileDirectory)..\tools\core\Microsoft.Build.Tasks.Git.dll</MicrosoftBuildTasksGitAssemblyFile>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <ShowSponsorLinkInProject Condition="$(ShowSponsorLinkInProject) == '' and '$(TargetFramework)' == 'netstandard2.0'">true</ShowSponsorLinkInProject>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Compile Update="@(Compile -> WithMetadataValue('NuGetPackageId', 'Devlooped.SponsorLink'))">
+    <Compile Condition="$(ShowSponsorLinkInProject) == 'true'" 
+             Update="@(Compile -> WithMetadataValue('NuGetPackageId', 'Devlooped.SponsorLink'))">
       <Link>SponsorLink\%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Condition="$(ShowSponsorLinkInProject) != 'true'"
+             Update="@(Compile -> WithMetadataValue('NuGetPackageId', 'Devlooped.SponsorLink'))">
+      <Visible>false</Visible>
     </Compile>
   </ItemGroup>
 
