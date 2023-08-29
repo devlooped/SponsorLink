@@ -3,10 +3,11 @@
   <PropertyGroup>
     <PackageId>SponsorableLib</PackageId>
     <Description>Sponsorable Lib Sample</Description>
-    <PackFolder>analyzers/dotnet</PackFolder>
+    <PackFolder>analyzers/dotnet/roslyn4.0</PackFolder>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <IsRoslynComponent>true</IsRoslynComponent>
+    <PackNone>true</PackNone>
 
     <!-- Roslyn caches analyzers aggressively so we are better off using a very dynamic version number 
          for local builds where a quick devloop is key. We bump version every 10 seconds -->
@@ -14,22 +15,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- GeneratePathProperty=true used to workaround https://github.com/dotnet/sdk/issues/1212  -->
-    <PackageReference Include="Devlooped.SponsorLink" Version="0.10.2" GeneratePathProperty="true" />
-    <PackageReference Include="NuGetizer" Version="1.0.0" />
-    <!--<PackageReference Include="ThisAssembly" Version="42.42.597-main" PrivateAssets="all" />-->
+    <PackageReference Include="NuGetizer" Version="1.1.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />
+    <PackageReference Include="PolySharp" Version="1.13.2" PrivateAssets="all" Pack="false" />
+    <PackageReference Include="Devlooped.SponsorLink" Version="42.42.*" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.Git" Version="1.4.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="buildTransitive\SponsorableLib.targets" PackFolder="buildTransitive" CopyToOutputDirectory="PreserveNewest" />
-    <!-- Workaround for https://github.com/dotnet/sdk/issues/1212 
-         Since analyzers will be forcedly included transitively even, we must always be 
-         able to provide the targets, since the actual package reference might not be transitive itself -->
-    <None Include="$(PkgDevlooped_SponsorLink)\buildTransitive\Devlooped.SponsorLink.targets" 
-          Link="buildTransitive\Devlooped.SponsorLink.targets"
-          PackFolder="buildTransitive"
-          CopyToOutputDirectory="PreserveNewest" />
+    <!-- Showcases providing these via MSBuild instead of the default auto-reading of .github/FUNDING.yml -->
+    <GitHubSponsorable Include="devlooped;kzu" />
   </ItemGroup>
-  
+
 </Project>

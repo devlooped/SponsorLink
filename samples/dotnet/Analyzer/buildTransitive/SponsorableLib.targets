@@ -1,14 +1,13 @@
-<Project>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <!-- This showcases how to use a package-provided file as diagnostics linked content -->
+    <SponsorableLibSponsorable>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\sponsorable.md))</SponsorableLibSponsorable>
+  </PropertyGroup>
 
   <ItemGroup>
-    <!-- This makes sure we don't enforce SponsorLink transitively, but only when 
-         consumers are directly referencing our package. -->
-    <SponsorablePackageId Include="SponsorableLib" />
+    <!-- This makes it visible to the generator -->
+    <CompilerVisibleProperty Include="SponsorableLibSponsorable" />
   </ItemGroup>
-
-  <!-- Workaround for https://github.com/dotnet/sdk/issues/1212 
-         Since analyzers will be forcedly included transitively even, we must always be 
-         able to provide the targets, since the actual package reference might not be transitive itself -->
-  <Import Project="Devlooped.SponsorLink.targets" Condition="$(SponsorLinkImported) != true"/>
 
 </Project>
