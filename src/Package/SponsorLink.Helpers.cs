@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -15,6 +16,7 @@ partial class SponsorLink
         .GetCustomAttributes(typeof(FundingAttribute), false)
         .OfType<FundingAttribute>()
         .Select(x => x.Account)
+        .ToImmutableHashSet()
         .ToArray();
 
     static DateTime? installedOn;
