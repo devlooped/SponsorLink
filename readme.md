@@ -84,8 +84,8 @@ The short story is: we never persist or access *any* personally identifying info
 with the sole exception being your GitHub user identifier (an integer like `169707`) 
 which you authorize as part of authenticating with your GitHub account to our backend 
 API (we use [Auth0](https://auth0.com) for this). This identifier is already public for
-everyone on GitHub (i.e. open [dependabot-bot](https://api.github.com/users/dependabot-bot)
-or [dependabot](https://api.github.com/orgs/dependabot)).
+everyone on GitHub (i.e. open [Linus](https://api.github.com/users/torvalds)
+or [microsoft](https://api.github.com/orgs/microsoft)).
 
 Everything else is hashed and salted locally with a random GUID so the resulting hashes 
 cannot be used to uncover any of the original information. All checks are performed 
