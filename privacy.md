@@ -3,7 +3,7 @@
 This privacy statement explains the personal data SponsorLink processes, how SponsorLink processes it, 
 and for what purposes.
 
-SponsorLink offers a mechanism for integrators check whether a user is sponsoring a given account. 
+SponsorLink offers a mechanism for integrators to check whether a user is sponsoring a given account. 
 References to SponsorLink products in this statement include SponsorLink backend services, websites, 
 apps, extension and other related software.
 
