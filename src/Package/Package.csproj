@@ -28,12 +28,6 @@
     <PackageReference Include="PolySharp" Version="1.13.2" PrivateAssets="all" Pack="false" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.32.2" PrivateAssets="all" Pack="true" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" PrivateAssets="all" Pack="true" />
-    <PackageReference Include="Microsoft.Build.Tasks.Git" Version="1.1.1" Pack="false" GeneratePathProperty="true" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageFile Include="tools\core\Microsoft.Build.Tasks.Git.dll" PackagePath="%(Identity)" PackageReference="Microsoft.Build.Tasks.Git" />
-    <PackageFile Include="tools\net472\Microsoft.Build.Tasks.Git.dll" PackagePath="%(Identity)" PackageReference="Microsoft.Build.Tasks.Git" />
   </ItemGroup>
 
 </Project>

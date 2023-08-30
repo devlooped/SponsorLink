@@ -28,4 +28,11 @@
     <GitHubSponsorable Include="devlooped;kzu" />
   </ItemGroup>
 
+  <Target Name="AddFundingFile" BeforeTargets="ReadFunding" DependsOnTargets="InitializeSourceControlInformation">
+    <PropertyGroup>
+      <GitRoot>@(SourceRoot -> WithMetadataValue('SourceControl', 'git'))</GitRoot>
+      <FundingFile>$(GitRoot).github/FUNDING.yml</FundingFile>
+    </PropertyGroup>
+  </Target>
+
 </Project>
