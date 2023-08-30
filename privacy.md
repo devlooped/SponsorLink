@@ -19,7 +19,7 @@ integrators that use SponsorLink to check whether you are sponsoring a given acc
 The only personal data we collect outside of your local machine is your GitHub user identifier, as 
 part of authenticating with SponsorLink for the purpose of signing a locally-generated manifest file.
 Upon logging in for the first time you will be prompted to Authorize the GH Sponsors CLI with access to 
-your GitHub profile. This authorization (required for manifest signing), alongside with the signature 
+your GitHub profile. This authorization (required for manifest signing), alongside the signature 
 verification of the manifest itself, is sufficient indication to integrators that you have consented 
 to the use of your personal data for the purpose of checking whether you are sponsoring a given account.
 
