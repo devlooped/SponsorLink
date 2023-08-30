@@ -13,11 +13,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.netconfig = .netconfig
 		src\Directory.props = src\Directory.props
 		src\Directory.targets = src\Directory.targets
+		privacy.md = privacy.md
 		readme.md = readme.md
 		src\readme.md = src\readme.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Package", "src\Package\Package.csproj", "{B671E85F-9735-4864-9B66-69952FC0D52A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Package", "src\Package\Package.csproj", "{B671E85F-9735-4864-9B66-69952FC0D52A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
