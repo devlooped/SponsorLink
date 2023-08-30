@@ -24,7 +24,10 @@ verification of the manifest itself, is sufficient indication to integrators tha
 to the use of your personal data for the purpose of checking whether you are sponsoring a given account.
 
 Your SponsorLink authentication token is stored locally as an environment variable to avoid having to 
-authenticate through GitHub every time you synchronize your sponsorships. 
+authenticate through GitHub every time you synchronize your sponsorships. This token can only be used 
+for reading your profile information (and invoking the signing endpoint), which is already visible for 
+anyone on GitHub (i.e. open [Linus](https://api.github.com/users/torvalds)
+or [microsoft](https://api.github.com/orgs/microsoft).
 
 When we ask you to provide this personal data, you can decline. If you choose not to provide data necessary 
 to provide you with a product or feature, you cannot use that product or feature. For example, if an 
