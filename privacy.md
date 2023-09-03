@@ -5,22 +5,22 @@ and for what purposes.
 
 SponsorLink offers a mechanism for integrators to check whether a user is sponsoring a given account. 
 References to SponsorLink products in this statement include SponsorLink backend services, websites, 
-apps, extension and other related software.
+apps, extensions and other related software.
 
 This statement applies to the interactions SponsorLink has with you and the SponsorLink products listed below, 
 as well as other SponsorLink products that display this statement.
 
 # Personal data we collect
 
-SponsorLink does not collect any data unless you explicity consent to it. You provide this data directly, 
-by interacting with the SponsorLink GitHub CLI extension and indirectly afterwards by interacting with 
+SponsorLink does not collect any data unless you explicitly consent to it. You provide this data directly, 
+by interacting with the SponsorLink GitHub CLI extension and indirectly afterward by interacting with 
 integrators that use SponsorLink to check whether you are sponsoring a given account. 
 
 The only personal data we collect outside of your local machine is your GitHub user identifier, as 
 part of authenticating with SponsorLink for the purpose of signing a locally-generated manifest file.
 Upon logging in for the first time you will be prompted to Authorize the GH Sponsors CLI with access to 
 your GitHub profile. This authorization (required for manifest signing), alongside the signature 
-verification of the manifest itself, is sufficient indication to integrators that you have consented 
+verification of the manifest itself, is a sufficient indication to integrators that you have consented 
 to the use of your personal data for the purpose of checking whether you are sponsoring a given account.
 
 Your SponsorLink authentication token is stored locally as an environment variable to avoid having to 
@@ -44,7 +44,7 @@ Your email is collected *locally* as part of the process of generating a manifes
 using the SponsorLink GitHub CLI extension. This is done by reading the email(s) associated with your 
 GitHub account *locally* using the GitHub CLI itself. 
 
-This manifest contains salted hashes of your email(s) and sponsored account, and is signed with your GitHub 
+This manifest contains salted hashes of your email(s) and sponsored account and is signed with your GitHub 
 user identifier on the backend. To perform this operation, you must authenticate with SponsorLink using 
 your GitHub account via github.com, and authorize the SponsorLink GitHub CLI extension to access your 
 GitHub profile.
@@ -52,7 +52,7 @@ GitHub profile.
 Integrators can use the presence of the manifest (as an environment variable) as an indication of your 
 consent to using the contained information to check whether you are sponsoring a given account. This 
 is done *locally* and *offline* by the integrator, by usually running `git config --get user.email` 
-and then hashing the result with the sponsorable account to check. If manifest contains a matching 
+and then hashing the result with the sponsorable account to check. If the manifest contains a matching 
 hash, the integrator can be sure that you are sponsoring the given account.
 
 # How we use personal data
@@ -60,7 +60,7 @@ hash, the integrator can be sure that you are sponsoring the given account.
 SponsorLink uses the data we collect to provide integrators with a mechanism to enable proper attribution 
 of your (or your organization's) sponsorships to improve the products you use. In particular, we use data to:
 
-* Sign a locally-generated manifest file with your GitHub user identifier and sponsorships to enable 
+* Sign a locally generated manifest file with your GitHub user identifier and sponsorships to enable 
   integrators to verify that you are sponsoring a given account in a secure and offline way.
 * Allow integrators to lookup (locally and offline) your email and check whether you are sponsoring a 
   given account (also locally and offline)
