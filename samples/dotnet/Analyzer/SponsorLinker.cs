@@ -44,6 +44,9 @@ public class SponsorLinker : IIncrementalGenerator
             return true;
         }
 
+        // NOTE: pre-17.8, there's a Roslyn bug that causes the warning to show twice
+        // in VS: https://github.com/dotnet/roslyn/issues/69826
+
         // NOTE: you can either hardcode a specific sponsorable account or rely on
         // assembly-level attributes (FundingAttribute) which by default are added
         // automatically by reading the .github/FUNDING.yml file, if any.

@@ -17,28 +17,28 @@ public static class Descriptors
     public static DiagnosticDescriptor ExpiredManifest { get; } = new("LIB002",
         "Expired manifest",
         "⚠️ Sponsorship manifest has expired. Please run 'gh sponsors' again to update.",
-        "Build", DiagnosticSeverity.Info, true, 
+        "Build", DiagnosticSeverity.Warning, true, 
         "GitHub sponsorships expire at the end of each month. Run 'gh sponsors' to sync your manifest.",
         helpLinkUri: "https://github.com/devlooped/gh-sponsors");
 
     public static DiagnosticDescriptor InvalidManifest { get; } = new("LIB003",
         "Invalid manifest",
         "⚠️ Sponsorship manifest is invalid. Please run 'gh sponsors' again to update.",
-        "Build", DiagnosticSeverity.Info, true,
+        "Build", DiagnosticSeverity.Warning, true,
         "The sponsorships manifest seems to be invalid for some reason. Please run 'gh sponsors' to update it.",
         helpLinkUri: "https://github.com/devlooped/gh-sponsors");
 
     public static DiagnosticDescriptor ManifestNotFound { get; } = new("LIB004",
         "Unknown sponsoring",
         "🙏 This project is looking for sponsorships! Please consider sponsoring and run 'gh sponsors' to sync your sponsorships.",
-        "Build", DiagnosticSeverity.Info, true,
+        "Build", DiagnosticSeverity.Warning, true,
         "GitHub sponsors is a great way to keep the projects you enjoy healthy and sustainable. Learn more by clicking the help link.",
         helpLinkUri: "https://github.com/devlooped/SponsorLink");
 
     public static DiagnosticDescriptor NotSponsoring { get; } = new("LIB005",
         "Not sponsoring",
         "🙏 This project is looking for sponsorships! Please consider sponsoring and run 'gh sponsors' to update your sponsorships.",
-        "Build", DiagnosticSeverity.Info, true,
+        "Build", DiagnosticSeverity.Warning, true,
         "Thanks for being a SponsorLink user! This project is also seeking funding, learn more at the project repository.",
         helpLinkUri: ThisAssembly.Git.Url);
 
