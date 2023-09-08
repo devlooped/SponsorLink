@@ -12,7 +12,7 @@
     <PackageReference Include="Auth0.AuthenticationApi" Version="7.22.2" />
     <PackageReference Include="Auth0.ManagementApi" Version="7.22.2" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.2.0" />
-    <PackageReference Include="Azure.Core" Version="1.34.0" />
+    <PackageReference Include="Azure.Core" Version="1.35.0" />
     <PackageReference Include="Azure.Monitor.Query" Version="1.2.0" />
     <PackageReference Include="Microsoft.Azure.EventGrid" Version="3.2.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
