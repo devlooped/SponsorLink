@@ -55,8 +55,8 @@
 	weak
 [file ".github/dependabot.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/dependabot.yml
-	sha = e7d18aefd41b45e5f5378267a5518aa56f0ad3a6
-	etag = ad1080479cf9ef4e7613f845cfaf58a280bc1bb3d4c474b845c8478ca23da24c
+	sha = 14d1868b51ece7facae6bfb31c3114b6fcf3aad2
+	etag = c172da0a7b6f7bdecf3184007205a0c1ba371f9441de71fdf27b4fa02138e204
 	weak
 [file ".github/workflows/dotnet-file.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/dotnet-file.yml

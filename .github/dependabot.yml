@@ -15,6 +15,7 @@ updates:
     Identity:
       patterns:
         - "System.IdentityModel*"
+        - "Microsoft.IdentityModel*"
     System:
       patterns:
         - "System*"
