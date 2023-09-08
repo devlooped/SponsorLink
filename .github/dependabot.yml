@@ -12,6 +12,9 @@ updates:
       patterns:
         - "Azure*"
         - "Microsoft.Azure*"
+    Identity:
+      patterns:
+        - "System.IdentityModel*"
     System:
       patterns:
         - "System*"
