@@ -55,8 +55,8 @@
 	weak
 [file ".github/dependabot.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/dependabot.yml
-	sha = 14d1868b51ece7facae6bfb31c3114b6fcf3aad2
-	etag = c172da0a7b6f7bdecf3184007205a0c1ba371f9441de71fdf27b4fa02138e204
+	sha = 35ca3f3405452465058d89005f8a88a65847c377
+	etag = f8080f8f04d87529e90d9a66751d304a7141196fb9734aa2d110784e52e66898
 	weak
 [file ".github/workflows/dotnet-file.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/dotnet-file.yml
@@ -75,6 +75,6 @@
 	weak
 [file "src/Package/SponsorLink.cs"]
 	url = https://github.com/devlooped/gh-sponsors/blob/main/src/Commands/SponsorLink.cs
-	sha = adbdc9ff6f7c0a2bf8efe72e33d10c857bd19169
-	etag = 554801065c55a472f5288574c8dab513366cda5d5177473be1456e20ab5ed70f
+	sha = ed8598be2ed2c580d72b663d2f6a176089796b40
+	etag = 694208a5a86b3e9eee228367acdc58fc38979c6c22014345ea6d9a9b633bf332
 	weak
