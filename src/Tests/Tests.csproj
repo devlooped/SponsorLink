@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <!-- IVT+ThisAssembly -->
-    <NoWarn>CS0436;CS0435</NoWarn>
+    <NoWarn>CS0436;CS0435;NU1701</NoWarn>
     <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
