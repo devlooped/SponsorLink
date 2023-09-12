@@ -11,7 +11,7 @@
 
     <!-- Roslyn caches analyzers aggressively so we are better off using a very dynamic version number 
          for local builds where a quick devloop is key. We bump version every 10 seconds -->
-    <VersionPrefix>42.42.$([System.Math]::Floor($([MSBuild]::Divide($([System.DateTime]::Now.TimeOfDay.TotalSeconds), 10))))</VersionPrefix>
+    <VersionPrefix Condition="!$(CI)">42.42.$([System.Math]::Floor($([MSBuild]::Divide($([System.DateTime]::Now.TimeOfDay.TotalSeconds), 10))))</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
