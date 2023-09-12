@@ -28,15 +28,13 @@ jobs:
       - name: 🙏 build
         run: |
           dotnet build -m:1
+          dotnet pack src/Package
           dotnet build ./samples/dotnet/
           dotnet build src/App --output ./app
 
       - name: 🧪 test
         run: dotnet test --filter SponsorLink=true
 
-      - name: 📦 pack
-        run: dotnet pack -m:1
-        
       - name: 🔓 login
         if: github.ref == 'refs/heads/main'
         uses: azure/login@v1
