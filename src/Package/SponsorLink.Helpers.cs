@@ -24,6 +24,26 @@ partial class SponsorLink
     static ConcurrentDictionary<(string project, string sponsorable), bool?> sponsoring = new();
 
     /// <summary>
+    /// Whether the current process is running in an IDE, either 
+    /// <see cref="IsVisualStudio"/> or <see cref="IsRider"/>.
+    /// </summary>
+    public static bool IsEditor => IsVisualStudio || IsRider;
+
+    /// <summary>
+    /// Whether the current process is running as part of an active Visual Studio instance.
+    /// </summary>
+    public static bool IsVisualStudio =>
+        Environment.GetEnvironmentVariable("ServiceHubLogSessionKey") != null ||
+        Environment.GetEnvironmentVariable("VSAPPIDNAME") != null;
+
+    /// <summary>
+    /// Whether the current process is running as part of an active Rider instance.
+    /// </summary>
+    public static bool IsRider =>
+        Environment.GetEnvironmentVariable("RESHARPER_FUS_SESSION") != null ||
+        Environment.GetEnvironmentVariable("IDEA_INITIAL_DIRECTORY") != null;
+
+    /// <summary>
     /// Gets whether the user is sponsoring any of the accounts specified when <see cref="Initialize(string, string[])"/> 
     /// was invoked.
     /// </summary>
