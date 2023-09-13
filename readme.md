@@ -14,7 +14,7 @@ SponsorLink supports two scenarios:
    an active team that can provide support, bug fixes and add new features.
 
 
-## Why only GitHub sponsors?
+## Why GitHub sponsors?
 
 ![Octocat lifted by a sponsors heart-shaped globe](/assets/img/sponsors-mona.png)
 
@@ -34,7 +34,7 @@ sponsorship and the libraries they use, in an easy to check, secure and offline
 way.
 
 <!-- #package -->
-## How does it work?
+## How it works
 
 1. A library author adds a check for an environment variable named `SPONSORLINK_MANIFEST` 
    which contains a signed JWT with a bunch of hashes that represents a user's sponsorships.
@@ -45,7 +45,7 @@ way.
    the [GitHub CLI](https://cli.github.com/) and installs the 
    [gh-sponsors](https://github.com/devlooped/gh-sponsors) extension by running 
    `gh extension install devlooped/gh-sponsors`.
-4. The user `gh sponsorlink` to accept the usage terms and syncs their sponsorships 
+4. The user runs `gh sponsors` to accept the usage terms and syncs their sponsorships 
    manifest.
 5. Now the library can check for the `SPONSORLINK_MANIFEST` environment variable, 
    which will contain a signed JWT. The library can verify the signature and expiration, 
