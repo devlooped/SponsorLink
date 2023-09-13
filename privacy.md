@@ -70,6 +70,7 @@ git config to get your email address) and combine it with data we collect throug
 (e.g. with the random GUID used for salting hashes) to give you a more seamless, consistent, and personalized 
 experience.
 
+{: .info }
 > NOTE: Your personal data (i.e. your email) is not used at all outside your local machine, and if the
 > manifest is not present (which requires explicit consent for signing), nothing gets persisted or used
 > for any purpose at any time.
