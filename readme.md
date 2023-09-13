@@ -13,6 +13,7 @@ SponsorLink supports two scenarios:
 2. Open source project consumers, who want to ensure their dependencies have 
    an active team that can provide support, bug fixes and add new features.
 
+[Explore the documentation site](https://www.devlooped.com/SponsorLink).
 
 ## Why GitHub sponsors?
 
