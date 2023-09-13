@@ -12,8 +12,6 @@ aux_links:
   "GitHub":
     - "//github.com/devlooped/SponsorLink"
 
-color_scheme: dark
-
 callouts:
   warn:
     color: yellow
