@@ -1,9 +1,13 @@
 ---
 title: FAQ
-nav_order: 4
+nav_order: 2
 ---
-# SponsorLink Reference Implementation FAQ
+# Reference Implementation FAQ
 <!-- #content -->
+These are some frequently asked questions about the reference implementation 
+of the [standard manifest format](spec.md) available in the 
+[SponsorLink](https://github.com/devlooped/SponsorLink/) and 
+[`gh-sponsors`](https://github.com/devlooped/gh-sponsors/) repositories.
 
 1. Does SponsorLink "phone home" or track users?
    
