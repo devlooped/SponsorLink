@@ -1,3 +1,19 @@
+---
+title: Manifest Spec 
+nav_order: 2
+has_children: true
+has_toc: false
+---
+
+{%- assign versions = site[page.collection]
+  | default: site.html_pages
+  | where: "parent", page.title -%}
+
+[Current](spec/1.0.0-beta.html){: .btn .btn-blue }
+{% for spec in versions -%}
+[{{ spec.title }}]({{ spec.url}}){: .btn }
+{% endfor -%}
+
 <!-- include spec/1.0.0-beta.md -->
 # SponsorLink Manifest 1.0
 

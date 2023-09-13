@@ -1,3 +1,7 @@
+---
+title: FAQ
+nav_order: 4
+---
 # SponsorLink Reference Implementation FAQ
 <!-- #content -->
 

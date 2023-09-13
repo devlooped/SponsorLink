@@ -1,3 +1,7 @@
+---
+title: Home
+nav_order: 1
+---
 # ![](https://github.com/devlooped/SponsorLink/raw/main/assets/img/sponsorlink-32.png) SponsorLink 
 
 SponsorLink's goal is to raise awareness of your project's funding needs, 
@@ -33,8 +37,9 @@ The following applies to this reference implementation.
 5. The sponsorable library can now check for the manifest and change its 
    behavior accordingly.
 
-> NOTE: this reference implementation uses your configured git email (locally) 
-> to link your GitHub sponsorships. Read the [privacy policy](https://github.com/devlooped/SponsorLink/blob/main/privacy.md) 
+{: .info }
+> NOTE: the reference implementation uses your configured git email (locally) 
+> to link your GitHub sponsorships. Read the [privacy policy](privacy.md) 
 > for more details.
 
 *SponsorLink* itself does not dictate how a specific sponsorable library
