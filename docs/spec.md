@@ -15,8 +15,18 @@ OSS authors and users.
 
 ## Format
 
-A SponsorLink manifest is a (optionally signed) JWT token containing `hash` 
-claims such as:
+A SponsorLink manifest is a (optionally signed) JWT token containing the 
+following claims:
+
+| Claim | Description |
+| ----- | ----------- |
+| `aud` | The audience of the token, which must be `SponsorLink` |
+| `hash` | A list of hashes representing sponsorships |
+| `exp` | The expiration date of the token |
+| `iss` | The issuer of the token |
+| `sub` | The user identifier (e.g. GitHub user id) |
+
+Example:
 
 ```json
 {
@@ -30,14 +40,6 @@ claims such as:
   "sub": "[USER_ID]"
 }
 ```
-
-| Claim | Description |
-| ----- | ----------- |
-| `aud` | The audience of the token, which must be `SponsorLink` |
-| `hash` | A list of hashes representing sponsorships |
-| `exp` | The expiration date of the token |
-| `iss` | The issuer of the token |
-| `sub` | The user identifier (e.g. GitHub user id) |
 
 ### Hashing
 
