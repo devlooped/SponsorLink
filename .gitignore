@@ -1,5 +1,5 @@
-/app
 bin
+app
 obj
 artifacts
 pack
@@ -31,5 +31,6 @@ node_modules
 _site
 .jekyll-metadata
 .jekyll-cache
+.sass-cache
 Gemfile.lock
 package-lock.json

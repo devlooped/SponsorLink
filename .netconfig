@@ -5,8 +5,8 @@
 	weak
 [file ".gitignore"]
 	url = https://github.com/devlooped/oss/blob/main/.gitignore
-	sha = b87a8a795a4c2b6830602225c066c11108552a99
-	etag = 96e0860052044780f1fc9e3bdfbee09d82d5dddb8b1217d67460fc7330a64dd8
+	sha = 551d4e0e3979be937fbf7e632dd602ddc84bd043
+	etag = cb12a3e3e89a15acfb27d3eaace5135a6ec3d3fbd1242e4a8e8f9fa646200e5c
 	weak
 [file ".gitattributes"]
 	url = https://github.com/devlooped/oss/blob/main/.gitattributes
