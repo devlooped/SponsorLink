@@ -14,7 +14,7 @@ has_toc: false
 [{{ spec.title }}]({{ spec.url}}){: .btn }
 {% endfor -%}
 
-<!-- include spec/1.0.0-beta.md -->
+<!-- include spec/1.0.0-beta.md#content -->
 # SponsorLink Manifest 1.0
 
 ## Summary
@@ -126,4 +126,4 @@ user's information, solely using his identifier. One common identifier is the
 user's email address, which is readily available in the `git` configuration, for 
 example. The email's domain name can be used to check for organization-wide 
 sponsorships too, for example.
-<!-- spec/1.0.0-beta.md -->
+<!-- spec/1.0.0-beta.md#content -->
