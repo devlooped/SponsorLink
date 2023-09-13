@@ -15,6 +15,7 @@ has_toc: false
 {% endfor -%}
 
 <!-- include spec/1.0.0-beta.md#content -->
+<!-- #content -->
 # SponsorLink Manifest 1.0
 
 ## Summary
