@@ -16,32 +16,27 @@ has_toc: false
 
 <!-- include spec/1.0.0-beta.md#content -->
 <!-- #content -->
-# SponsorLink Manifest 1.0
+# SponsorLink Manifest Version 1.0
 
-## Summary
+## Overview
 
-A SponsorLink manifest is a JWT token that contains a list of hashes 
-representing a user or organization sponsorships. It can be used to unlock 
-sponsors-only features or to remove messages asking for sponsorships. 
+The SponsorLink manifest is a JWT (JSON Web Token) that encapsulates a set of hashes, each representing a sponsorship from a user or organization. This manifest can be utilized to enable features exclusive to sponsors or to suppress requests for sponsorships.
 
-## Introduction
+## Purpose
 
-A standard mechanism for representing sponsorships and checking for them in 
-a privacy-preserving, offline and safe manner would be beneficial to both 
-OSS authors and users.
+Establishing a standard method to represent and verify sponsorships in a secure, offline, and privacy-conscious manner would be advantageous for both open-source software (OSS) authors and users.
 
-## Format
+## Manifest Structure
 
-A SponsorLink manifest is a (optionally signed) JWT token containing the 
-following claims:
+A SponsorLink manifest is a JWT, which can be optionally signed, containing the following claims:
 
 | Claim | Description |
 | ----- | ----------- |
-| `aud` | The audience of the token, which must be `SponsorLink` |
-| `hash` | A list of hashes representing sponsorships |
-| `exp` | The expiration date of the token |
+| `aud` | The intended audience for the token, specifically `SponsorLink` |
+| `hash` | A collection of hashes, each representing a sponsorship |
+| `exp` | The token's expiration date |
 | `iss` | The issuer of the token |
-| `sub` | The user identifier (e.g. GitHub user id) |
+| `sub` | The identifier for the user (e.g., GitHub user id) |
 
 Example:
 
@@ -53,78 +48,48 @@ Example:
     "dk3xig+I5FgtQwfPaS3BGhtgru9DkKd5Bm8lKwVBboY="
   ],
   "exp": 1696118400,
-  "iss": "[SOME_ISSUER]",
+  "iss": "[SPECIFIC_ISSUER]",
   "sub": "[USER_ID]"
 }
 ```
 
-### Hashing
+### Hash Generation
 
-On first usage of any SponsorLink tool used to generate or synchronize a 
-manifest, a random string (typically a GUID) is generated and stored in 
-a user environment variable named `SPONSORLINK_INSTALLATION`. This string 
-is used as a salt in all hashes generated for that installation. 
+Upon initial use of any SponsorLink tool developed to generate or synchronize a manifest, a random string (typically a GUID) is produced and stored in an environment variable named `SPONSORLINK_INSTALLATION`. This string is utilized as a salt in all hashes generated for that particular installation.
 
-A manifest generation tool will: 
+The process to generate a manifest includes: 
 
-1. Identify the user (e.g. GitHub user id, Open Collective account, etc.) 
-   and the account(s) it's sponsoring.
-2. Generate a hash for each account using the salt, the user identifier and 
-   sponsored account with: `base64(sha256([SALT]+[USER]+[SPONSORED]))`.
+1. Identifying the user (e.g., GitHub user id, Open Collective account, etc.) and the account(s) they sponsor.
+2. Creating a unique hash for each sponsored account using the salt, user identifier, and sponsored account. The hashing function is defined as: `base64(sha256([SALT]+[USER]+[SPONSORED]))`.
 
+### Token Signing
 
-### Signing
+Implementations may choose to sign the JWT using a private key through a backend service. Although this is optional, it is recommended to prevent unauthorized alterations to the manifest.
 
-A particular implementation might choose to sign the JWT token with a 
-private key via a backend service. This is not required, but it's 
-recommended to prevent tampering with the manifest. 
+The manifest can be entirely generated via a backend service with sponsorship information access, or it can be locally generated and then sent to a backend service for signing.
 
-The manifest can be generated entirely via a backend service with access 
-to sponsorships information, or it can be generated locally and then sent 
-for signing only to a backend service.
+Typically, the backend service would use a private key to sign the JWT using RS256. The corresponding public key is then distributed to the manifest consuming libraries and tools to verify the signature.
 
-A signing (or generation + signing) backend would typically use a private
-key to sign the JWT token with RS256. The public key would be distributed
-to their manifest consuming libraries and tools can verify the signature.
+### Subject Claim
 
-### Subject
+The `sub` claim can be used by the backend service to identify the user to whom the manifest is applicable. The issuer has the freedom to choose the format of the `sub` claim and its validation or authentication mechanism. 
 
-The `sub` claim can be used by the backend service to identify the user 
-the manifest applies to. A given issuer (of signing or both manifest + 
-signing) is free to choose the format of the `sub` claim as well as its 
-validation or authentication mechanism. 
+For unsigned manifests, the `sub` claim is typically not utilized.
 
-For unsigned manifests, the `sub` claim is typically unused.
+## Manifest Usage
 
-## Usage
+The manifest is stored in a user environment variable named `SPONSORLINK_MANIFEST`. This variable, in conjunction with `SPONSORLINK_INSTALLATION`, can be used by a tool or library author to verify sponsorships in a secure, offline, and local manner.
 
-The manifest is stored in a user environment variable named `SPONSORLINK_MANIFEST`.
-This variable along with `SPONSORLINK_INSTALLATION` can be used by a tool 
-or library author to check for sponsorships entirely locally, offline and 
-safely.
+If both variables are detected, the manifest can be interpreted using any standard JWT library. The signature can be optionally verified against a public key provided by the *issuer*.
 
-If both variables are found, the manifest can be read with any standard JWT 
-library and optionally checked against a public key shared by the *issuer*.
+The author may also choose to verify the token's expiration date, decide on a grace period, and issue a notification if the manifest is expired.
 
-The author can optionally check for expiration too, decide on a grace period 
-and issue a message if the manifest is expired.
-
-Finally, the author can identify the user (using the same mechanism used 
-for manifest generation), create the hash for their sponsorable account 
-(i.e. GitHub user/org, Open Collective account, etc.) and check if it's 
-present in the manifest.
+Lastly, the author can identify the user (using the same method used for manifest generation), create the hash for their sponsorable account (e.g., GitHub user/org, Open Collective account, etc.), and verify if it is included in the manifest.
 
 ## Privacy Considerations
 
-* User identification for manifest generation is entirely up to the issuer. 
-* User identification for manifest consumption is entirely up to the tool or 
-  library author.
+* The method of user identification for manifest generation is entirely determined by the issuer.
+* The method of user identification for manifest consumption is left to the discretion of the tool or library author.
 
-Once a manifest is generated (and optionally signed) and stored in the 
-`SPONSORLINK_MANIFEST` environment variable, it can be used by any tool or 
-library to check for sponsorships locally without any further access to the 
-user's information, solely using his identifier. One common identifier is the 
-user's email address, which is readily available in the `git` configuration, for 
-example. The email's domain name can be used to check for organization-wide 
-sponsorships too, for example.
+Once a manifest is generated (and optionally signed) and stored in the `SPONSORLINK_MANIFEST` environment variable, it can be utilized by any tool or library to locally verify sponsorships without any further need to access the user's information, beyond their identifier. One commonly used identifier is the user's email address, which is usually accessible in the `git` configuration. The domain of the email can also be used to verify sponsorships at the organization level.
 <!-- spec/1.0.0-beta.md#content -->
