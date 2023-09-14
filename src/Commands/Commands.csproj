@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Devlooped.Sponsors.Commands</AssemblyName>
+    <RootNamespace>Devlooped.Sponsors</RootNamespace>
+    <TargetFrameworks>net6.0;netstandard2.0</TargetFrameworks>
+    <!-- Makes it easier to write code that can be simply sync'ed -->
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Auth0.AuthenticationApi" Version="7.22.3" />
+    <PackageReference Include="JWT" Version="10.1.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="6.32.3" />
+    <PackageReference Include="PolySharp" Version="1.13.2" PrivateAssets="all" Condition="$(TargetFramework) == 'netstandard2.0'" />
+    <PackageReference Include="SharpYaml" Version="2.1.0" />
+    <PackageReference Include="Spectre.Console.Analyzer" Version="0.47.0" PrivateAssets="all" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.47.0" />
+    <PackageReference Include="Spectre.Console.Json" Version="0.47.0" />
+    <PackageReference Include="ThisAssembly.Strings" Version="1.4.1" PrivateAssets="all" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" PrivateAssets="all" Condition="$(TargetFramework) == 'netstandard2.0'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Tests" />
+  </ItemGroup>
+
+</Project>

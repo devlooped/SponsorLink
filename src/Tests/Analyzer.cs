@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
 
-namespace Devlooped;
+namespace Devlooped.Tests;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class TestSponsorLink : DiagnosticAnalyzer
@@ -62,11 +62,78 @@ public class AnalyzerTests(ITestOutputHelper Output)
     [Fact]
     public void LibGitConfig()
     {
-        var config = LibGit2Sharp.Configuration.BuildFrom(Directory.GetCurrentDirectory());
+        var path = new DirectoryInfo(@"..\..\..\..\..").FullName;
+        Output.WriteLine(path);
+        var config = LibGit2Sharp.Configuration.BuildFrom(path);
         var email = config.Get<string>("user.email").Value;
 
         Assert.Contains("@", email);
         Output.WriteLine(email);
+    }
+
+    [Fact]
+    public void RawGitConfig()
+    {
+        string? email = null;
+        string? cfg = null;
+
+        string? ReadEmail(string? path)
+        {
+            if (string.IsNullOrEmpty(path) ||
+                !File.Exists(path))
+                return default;
+
+            // Read the user.email value from the .git config file
+            var lines = File.ReadAllLines(path);
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                if (line.StartsWith("[user]"))
+                {
+                    for (int j = i + 1; j < lines.Length; j++)
+                    {
+                        var pair = lines[j];
+                        if (pair.Trim().Split('=') is string[] parts &&
+                            parts.Length == 2 &&
+                            parts[0].Trim() == "email")
+                            return parts[1].Trim();
+                    }
+                }
+            }
+
+            return default;
+        }
+
+        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+
+        while (dir != null)
+        {
+            if (Path.Combine(dir.FullName, ".git", "config") is string path &&
+                File.Exists(path))
+            {
+                cfg = path;
+                break;
+            }
+
+            dir = dir.Parent;
+        }
+
+        if ((email = ReadEmail(cfg)) != null)
+        {
+            Output.WriteLine(email);
+            return;
+        }
+
+        if ((email = ReadEmail(
+            Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), 
+                ".gitconfig"))) != null)
+        {
+            Output.WriteLine(email);
+            return;
+        }
+
+        Assert.Fail("Should have exited before by rendering an email.");
     }
 
     // Showcases how to read the user's email using an external process

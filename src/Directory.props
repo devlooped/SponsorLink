@@ -9,6 +9,7 @@
     <!-- Otherwise we get weird errors from misconfigured SL since we build it ourselves -->
     <EnablePackCleanup>false</EnablePackCleanup>
     <LangVersion>Preview</LangVersion>
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
   </PropertyGroup>
 
   <ItemGroup>

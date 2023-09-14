@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="FirstRun_Accept" xml:space="preserve">
+    <value>Accept</value>
+  </data>
+  <data name="FirstRun_Acceptance" xml:space="preserve">
+    <value>[lime]?[/] [white]Do you accept the above conditions?[/]</value>
+  </data>
+  <data name="FirstRun_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="FirstRun_How" xml:space="preserve">
+    <value>As a GitHub CLI extension, SponsorLink leverages your currently authenticated user [lime]{0}[/] to locate your personal sponsorships, as well as your organizations'. It does this entirely locally, communicating exclusively with the GitHub API itself.
+
+This information is used to locally create a JWT token with hash claims of [blue]base62(sha256([/][green][[salt]][/][blue]+[/][green][[user/org]][/][blue]+[/][green][[sponsored]][/][blue]))[/].
+
+The [bold]random salt[/] is initialized to a GUID the first time you run this extension. Once hashed, the values are entirely opaque. Packages can use this JWT manifest to check (entirely offline) for hashed claims matching the salt + current user + sponsorable account.
+
+This manifest needs to be explicitly sync'ed once a month, which is the only point at which it is sent to our backend purely for signing with SponsorLink's private key (and refreshing the expiration date).</value>
+    <comment>How</comment>
+  </data>
+  <data name="FirstRun_HowTitle" xml:space="preserve">
+    <value>How it works</value>
+  </data>
+  <data name="FirstRun_Privacy" xml:space="preserve">
+    <value>SponsorLink is build by developers for developers. As such, we don't have an attorney or a big corporation backing this. If you're running this tool, it's likely because you are currently sponsoring or considering sponsoring the developer of a package you enjoy.
+
+The short story is: we never persist or access *any* personally identifying information, with the sole exception being your GitHub user identifier (an integer like [grey]169707[/]) which you authorize as part of authenticating with your GitHub account to our backend API (we use Auth0 for this). This identifier is already public for everyone on GitHub (i.e. open [link]https://api.github.com/users/dependabot-bot[/] or [link]https://api.github.com/orgs/dependabot[/]).
+
+Everything else is hashed and salted locally with a random GUID so the resulting hashes cannot be used to uncover any of the original information. All checks are performed fully offline with no connnection back to any external servers. 
+
+Please read the full privacy policy at [link]https://github.com/devlooped/SponsorLink/blob/main/privacy.md[/] to learn more.</value>
+    <comment>Privacy</comment>
+  </data>
+  <data name="FirstRun_PrivacyTitle" xml:space="preserve">
+    <value>Privacy policy</value>
+  </data>
+  <data name="FirstRun_SyncNow" xml:space="preserve">
+    <value>[lime]?[/] [white]Do you want to sync your sponsors manifest now?[/]</value>
+  </data>
+  <data name="FirstRun_Welcome" xml:space="preserve">
+    <value>Welcome to SponsorLink</value>
+  </data>
+  <data name="FirstRun_What" xml:space="preserve">
+    <value>SponsorLink is an offline, manifest-based (JWT) mechanism for associating your git user with your GitHub sponsorships. This allows package authors that leverage SponsorLink to provide selective functionality to sponsors, whether individual or organization-wide.</value>
+    <comment>What</comment>
+  </data>
+  <data name="GitHub_Login" xml:space="preserve">
+    <value>[lime]?[/] [white]Do you want to log into the GitHub CLI?[/]</value>
+  </data>
+  <data name="GitHub_UserScope" xml:space="preserve">
+    <value>[lime]?[/] [white]Allow read-access to your GitHub account email address(es)?[/] (Required for manifest generation)</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Remove_AuthenticationRequired" xml:space="preserve">
+    <value>[red]x[/] Removal of user data requires an authenticated user.</value>
+  </data>
+  <data name="Remove_Deleted" xml:space="preserve">
+    <value>[green]✓[/] Deleted authenticated user from backend</value>
+  </data>
+  <data name="Remove_Deleting" xml:space="preserve">
+    <value>Requesting removal of all user data ...</value>
+  </data>
+  <data name="Remove_ReportIssue" xml:space="preserve">
+    <value>[red]x[/] Failed to remove user data. Please report the issue at [link]https://github.com/devlooped/SponsorLink/issues/new[/]</value>
+  </data>
+  <data name="Session_OpenBrowser" xml:space="preserve">
+    <value>[lime]?[/] [white]Operation requires authentication on github.com. Open your browser now?[/]</value>
+  </data>
+  <data name="Sync_Signing" xml:space="preserve">
+    <value>Requesting manifest signing ...</value>
+  </data>
+  <data name="Variables_Cleared" xml:space="preserve">
+    <value>[green]✓[/] Cleared {0} user environment variable</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+</root>
