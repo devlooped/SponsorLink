@@ -11,7 +11,7 @@ has_toc: false
 
 [Current](spec/1.0.0-beta.html){: .btn .btn-blue }
 {% for spec in versions -%}
-[{{ spec.title }}]({{ spec.url}}){: .btn }
+[{{ spec.title }}]({{ spec.url | relative_url }}){: .btn }
 {% endfor -%}
 
 <!-- include spec/1.0.0-beta.md#content -->
