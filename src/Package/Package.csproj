@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <PackageId>Devlooped.SponsorLink</PackageId>
@@ -26,7 +26,7 @@
     <PackageReference Include="NuGetizer" Version="1.1.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" Pack="false" />
     <PackageReference Include="PolySharp" Version="1.13.2" PrivateAssets="all" Pack="false" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.32.3" PrivateAssets="all" Pack="true" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.2" PrivateAssets="all" Pack="true" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" PrivateAssets="all" Pack="true" />
   </ItemGroup>
 
