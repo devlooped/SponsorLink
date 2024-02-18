@@ -10,7 +10,7 @@ apps, extensions and other related software.
 This statement applies to the interactions SponsorLink has with you and the SponsorLink products listed below, 
 as well as other SponsorLink products that display this statement.
 
-# Personal data we collect
+## Personal data we collect
 
 SponsorLink does not collect any data unless you explicitly consent to it. You provide this data directly, 
 by interacting with the SponsorLink GitHub CLI extension and indirectly afterward by interacting with 
@@ -38,7 +38,7 @@ Where providing the data is optional (e.g. it is only used to avoid displaying a
 product), and you choose not to share personal data, features like personalization that use such data will 
 not work for you.
 
-## Email
+### Email
 
 Your email is collected *locally* as part of the process of generating a manifest of your sponsorships, 
 using the SponsorLink GitHub CLI extension. This is done by reading the email(s) associated with your 
@@ -55,7 +55,7 @@ is done *locally* and *offline* by the integrator, by usually running `git confi
 and then hashing the result with the sponsorable account to check. If the manifest contains a matching 
 hash, the integrator can be sure that you are sponsoring the given account.
 
-# How we use personal data
+## How we use personal data
 
 SponsorLink uses the data we collect to provide integrators with a mechanism to enable proper attribution 
 of your (or your organization's) sponsorships to improve the products you use. In particular, we use data to:
@@ -75,7 +75,7 @@ experience.
 > manifest is not present (which requires explicit consent for signing), nothing gets persisted or used
 > for any purpose at any time.
 
-# How to access and control your personal data
+## How to access and control your personal data
 
 You can also make choices about the collection and use of your data by SponsorLink. You can control your personal 
 data that SponsorLink has obtained, and exercise your data protection rights, by contacting SponsorLink or using 
@@ -88,7 +88,7 @@ Using the tool, you can:
 
 All personal data processed by SponsorLink can be accessed or controlled via this tool. 
 
-# SponsorLink Account
+## SponsorLink Account
 
 With a SponsorLink account, you can sign your sponsorship manifest. Personal data associated with your SponsorLink 
 account includes only your GitHub user identifier. Signing in to your SponsorLink account (using your GitHub account 
