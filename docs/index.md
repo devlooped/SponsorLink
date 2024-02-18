@@ -1,6 +1,7 @@
 ---
 title: Home
 nav_order: 1
+page_toc: false
 ---
 # ![](https://github.com/devlooped/SponsorLink/raw/main/assets/img/sponsorlink-32.png) SponsorLink 
 

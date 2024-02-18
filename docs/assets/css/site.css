@@ -1,2 +1,10 @@
 /* Copy styles from GH, i.e. https://docs.github.com/en/rest/overview/about-githubs-apis?apiVersion=2022-11-28 */
 
+#toc {
+    position: sticky;
+    float: right;
+    overflow-y: auto;
+    max-width: 200px;
+    padding-top: 16px;
+    padding-left: 24px;
+}
