@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Web.Http;
@@ -51,6 +52,54 @@ public class Functions
         await client.Users.DeleteAsync(userId);
 
         return new OkResult();
+    }
+
+    record InitData(string iss, string aud, string pub);
+
+    [FunctionName("init")]
+    public async Task<IActionResult> InitAsync(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestMessage req, ILogger logger)
+    {
+        rsa ??= InitializeKey(configuration, logger);
+        if (rsa is null)
+            return new InternalServerErrorResult();
+
+        if (req.Content is null)
+            return new BadRequestResult();
+
+        if (req.Headers.Authorization is null ||
+            await Security.ValidateTokenAsync(req.Headers.Authorization) is not ClaimsPrincipal principal ||
+            principal.FindFirst(ClaimTypes.NameIdentifier)?.Value.Split('|')?[1] is not string id)
+            return new UnauthorizedResult();
+
+        var data = await req.Content.ReadFromJsonAsync<InitData>();
+        if (data is null ||
+            data.iss is not { Length: > 0 } || 
+            data.aud is not { Length: > 0 } ||
+            data.pub is not { Length: > 0 })
+            return new BadRequestResult();
+
+        var signing = new SigningCredentials(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256);
+
+        var signed = new JwtSecurityToken(
+            issuer: data.iss,
+            audience: data.aud,
+            claims:
+            [
+                new Claim("sub", id),
+                new Claim("pub", data.pub),
+            ],
+            signingCredentials: signing);
+
+        // Serialize the token and return as a string
+        var body = new JwtSecurityTokenHandler().WriteToken(signed);
+
+        return new ContentResult
+        {
+            Content = body,
+            ContentType = "text/plain",
+            StatusCode = (int)HttpStatusCode.OK,
+        };
     }
 
     [FunctionName("sign")]
@@ -117,6 +166,7 @@ public class Functions
         }
 
         var rsa = RSA.Create();
+        //var bytes = rsa.Decrypt()
         rsa.ImportRSAPrivateKey(Convert.FromBase64String(key), out _);
 
         return rsa;
