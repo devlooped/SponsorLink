@@ -36,12 +36,10 @@ public class GitHubTokenMiddleware(IHttpClientFactory httpFactory) : IFunctionsW
         {
             // An example of this invocation style is a CLI app authenticating
             // using device flow
-            using var http = httpFactory.CreateClient();
-            
-            // TODO: use ThisAssembly for product info
-            http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("DSL", "0.2"));
+            using var http = httpFactory.CreateClient("github");            
             http.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", auth);
-            var resp = await http.GetAsync("https://api.github.com/user");
+            
+            var resp = await http.GetAsync("/user");
 
             // NOTE: by getting the user's profile, we're also verifying the token
             if (resp is { StatusCode: HttpStatusCode.OK, Content: { } content })
@@ -55,7 +53,8 @@ public class GitHubTokenMiddleware(IHttpClientFactory httpFactory) : IFunctionsW
                         prop.Value.ValueKind != JsonValueKind.Array &&
                         prop.Value.ToString() is { Length: > 0 } value)
                     {
-                        claims.Add(new Claim(prop.Name, value));
+                        // For compatiblity with the client principal populated claims.
+                        claims.Add(new Claim("urn:github:" + prop.Name, value));
                     }
                 }
 
