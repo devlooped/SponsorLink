@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Web": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7198",
+      "launchBrowser": false
+    }
+  }
+}

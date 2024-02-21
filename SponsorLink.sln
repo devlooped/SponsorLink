@@ -25,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Package", "src\Package\Pack
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Commands", "src\Commands\Commands.csproj", "{7BFC5488-26EB-47FF-8EF8-59BBD227EA3B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "src\Web\Web.csproj", "{ABB4FF66-0283-4EF0-B877-C61514CF506A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{7BFC5488-26EB-47FF-8EF8-59BBD227EA3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7BFC5488-26EB-47FF-8EF8-59BBD227EA3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7BFC5488-26EB-47FF-8EF8-59BBD227EA3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABB4FF66-0283-4EF0-B877-C61514CF506A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABB4FF66-0283-4EF0-B877-C61514CF506A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABB4FF66-0283-4EF0-B877-C61514CF506A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABB4FF66-0283-4EF0-B877-C61514CF506A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
