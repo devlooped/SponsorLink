@@ -36,9 +36,10 @@ public class ClientPrincipalMiddleware : IFunctionsWorkerMiddleware
             Encoding.UTF8.GetString(decoded) is var json &&
             JsonSerializer.Deserialize<ClientPrincipal>(json, options) is { } cp)
         {
+            var claims = new List<Claim>(cp.claims.Select(c => new Claim(c.typ, c.val)));
             var access_token = headers.TryGetValue($"x-ms-token-{cp.auth_typ}-access-token", out var token) ? token : default;
             var principal = new ClaimsPrincipal(new ClaimsIdentity(
-                cp.claims.Select(c => new Claim(c.typ, c.val)),
+                claims,
                 cp.auth_typ));
 
             context.Features.Set(new ClaimsFeature(principal, access_token));
