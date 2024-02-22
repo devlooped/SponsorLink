@@ -1,4 +1,29 @@
-﻿public class LocalFactAttribute : FactAttribute
+﻿using Devlooped.Tests;
+using LibGit2Sharp;
+using Microsoft.Extensions.Configuration;
+
+public class SecretsFactAttribute : FactAttribute
+{
+    public SecretsFactAttribute(params string[] secrets)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddUserSecrets<SecretsFactAttribute>()
+            .Build();
+
+        var missing = new HashSet<string>();
+
+        foreach (var secret in secrets)
+        {
+            if (configuration[secret] is not { Length: > 0 })
+                missing.Add(secret);
+        }
+
+        if (missing.Count > 0)
+            Skip = "Missing user secrets: " + string.Join(',', missing);
+    }
+}
+
+public class LocalFactAttribute : FactAttribute
 {
     public LocalFactAttribute()
     {
