@@ -1,12 +1,13 @@
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using Devlooped.SponsorLink;
+using Devlooped.Sponsors;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using static Google.Protobuf.Compiler.CodeGeneratorResponse.Types;
 
 var host = new HostBuilder()
     .ConfigureAppConfiguration((context, builder) =>
@@ -15,6 +16,7 @@ var host = new HostBuilder()
     })
     .ConfigureFunctionsWebApplication(builder =>
     {
+        builder.UseFunctionContextAccessor();
         builder.UseMiddleware<ErrorLoggingMiddleware>();
         builder.UseMiddleware<ClientPrincipalMiddleware>();
         builder.UseMiddleware<GitHubTokenMiddleware>();
@@ -23,11 +25,9 @@ var host = new HostBuilder()
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
-        services.AddHttpClient("github", http =>
-        {
-            http.BaseAddress = new Uri("https://api.github.com");
-            http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Devlooped.SponsorLink", ThisAssembly.Info.InformationalVersion));
-        });
+        services.AddMemoryCache();
+
+        // Add sponsorable client using the GH_TOKEN for GitHub API access
         services.AddHttpClient("sponsorable", (sp, http) =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
@@ -41,14 +41,23 @@ var host = new HostBuilder()
             http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Devlooped.SponsorLink", ThisAssembly.Info.InformationalVersion));
             http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghtoken);
         });
-        services.AddMemoryCache();
+
+        // Add sponsor client using the current invocation claims for GitHub API access
+        services.AddScoped<ClaimsHttpMessageHandler>();
+        services.AddHttpClient("sponsor", http =>
+        {
+            http.BaseAddress = new Uri("https://api.github.com");
+            http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Devlooped.SponsorLink", ThisAssembly.Info.InformationalVersion));
+        }).AddHttpMessageHandler<ClaimsHttpMessageHandler>();
+
+        // RSA key for JWT signing
         services.AddSingleton(sp =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
             if (config["SPONSORLINK_KEY"] is not { Length: > 0 } key)
             {
                 sp.GetRequiredService<ILogger<Sync>>().LogError("Missing required configration SPONSORLINK_KEY");
-                throw new InvalidOperationException("Missing required configuration SPONSORLINK_KEY");
+                throw new InvalidOperationException("Missing required configuration SPONSORLINK_KEY");  
             }
 
             // The key (as well as the yaml manifest) can be generated using gh sponsors init
@@ -59,7 +68,14 @@ var host = new HostBuilder()
 
             return rsa;
         });
+
+        services.AddSingleton<SponsorsManager>();
     })
-    .Build();
+.Build();
+
+// Leverage the function context accessor to provide the current principal, if available.
+ClaimsPrincipal.ClaimsPrincipalSelector = () => 
+    host.Services.GetRequiredService<IFunctionContextAccessor>().FunctionContext?.Features.Get<ClaimsFeature>()?.Principal ?? 
+    new ClaimsPrincipal(new ClaimsIdentity());
 
 host.Run();

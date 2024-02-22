@@ -17,13 +17,14 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.3.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
-    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.4.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.4.3" PrivateAssets="all" />
+    <PackageReference Include="CliWrap" Version="3.6.6" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="host.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="local.settings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+    <ProjectReference Include="..\Core\Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="@(None)" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="local.settings.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 </Project>

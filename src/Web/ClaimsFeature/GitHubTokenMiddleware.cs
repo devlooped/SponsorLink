@@ -36,7 +36,10 @@ public class GitHubTokenMiddleware(IHttpClientFactory httpFactory) : IFunctionsW
         {
             // An example of this invocation style is a CLI app authenticating
             // using device flow
-            using var http = httpFactory.CreateClient("github");            
+            using var http = httpFactory.CreateClient();
+
+            http.BaseAddress = new Uri("https://api.github.com");
+            http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Devlooped.SponsorLink", ThisAssembly.Info.InformationalVersion));
             http.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", auth);
             
             var resp = await http.GetAsync("/user");
