@@ -2,7 +2,7 @@
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.Logging;
 
-namespace Devlooped.SponsorLink;
+namespace Devlooped.Sponsors;
 
 public class ErrorLoggingMiddleware : IFunctionsWorkerMiddleware
 {
