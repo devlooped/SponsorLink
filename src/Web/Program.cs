@@ -17,9 +17,10 @@ var host = new HostBuilder()
     .ConfigureFunctionsWebApplication(builder =>
     {
         builder.UseFunctionContextAccessor();
-        builder.UseMiddleware<ErrorLoggingMiddleware>();
-        builder.UseMiddleware<ClientPrincipalMiddleware>();
-        builder.UseMiddleware<GitHubTokenMiddleware>();
+        builder.UseErrorLogging();
+        builder.UseAppServiceAuthentication();
+        builder.UseGitHubAuthentication();
+        builder.UseClaimsPrincipal();
     })
     .ConfigureServices(services =>
     {
@@ -38,17 +39,17 @@ var host = new HostBuilder()
             }
 
             http.BaseAddress = new Uri("https://api.github.com");
-            http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Devlooped.SponsorLink", ThisAssembly.Info.InformationalVersion));
+            http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
             http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghtoken);
         });
 
         // Add sponsor client using the current invocation claims for GitHub API access
-        services.AddScoped<ClaimsHttpMessageHandler>();
+        services.AddScoped<AccessTokenMessageHandler>();
         services.AddHttpClient("sponsor", http =>
         {
             http.BaseAddress = new Uri("https://api.github.com");
-            http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Devlooped.SponsorLink", ThisAssembly.Info.InformationalVersion));
-        }).AddHttpMessageHandler<ClaimsHttpMessageHandler>();
+            http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
+        }).AddHttpMessageHandler<AccessTokenMessageHandler>();
 
         // RSA key for JWT signing
         services.AddSingleton(sp =>
@@ -72,10 +73,5 @@ var host = new HostBuilder()
         services.AddSingleton<SponsorsManager>();
     })
 .Build();
-
-// Leverage the function context accessor to provide the current principal, if available.
-ClaimsPrincipal.ClaimsPrincipalSelector = () => 
-    host.Services.GetRequiredService<IFunctionContextAccessor>().FunctionContext?.Features.Get<ClaimsFeature>()?.Principal ?? 
-    new ClaimsPrincipal(new ClaimsIdentity());
 
 host.Run();
