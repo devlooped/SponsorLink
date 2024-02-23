@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using CliWrap;
 using CliWrap.Buffered;
 using Microsoft.AspNetCore.Http;
@@ -24,7 +25,7 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
     [Function("me")]
     public async Task<IActionResult> UserAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
-        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true})
+        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true} principal)
         {
             // Implement manual auto-redirect to GitHub, since we cannot turn it on in the portal
             // or the token-based principal population won't work.
@@ -32,7 +33,7 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
             if (!req.Headers.Accept.Contains("application/jwt") &&
                 configuration["WEBSITE_AUTH_GITHUB_CLIENT_ID"] is { Length: > 0 } clientId)
             {
-                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/me");
+                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/me");
             }
 
             // Otherwise, just 401
@@ -42,9 +43,16 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         using var http = httpFactory.CreateClient("sponsor");
         var response = await http.GetAsync("https://api.github.com/user");
 
+        var emails = await http.GetFromJsonAsync<JsonArray>("https://api.github.com/user/emails");
+        var body = await response.Content.ReadFromJsonAsync<JsonObject>();
+        body?.Add("emails", emails);
+
         return new JsonResult(new
         {
-            body = await response.Content.ReadFromJsonAsync<JsonElement>(),
+            body,
+            claims = principal.Claims.GroupBy(x => x.Type)
+                .Select(g => new { g.Key, Value = (object)(g.Count() == 1 ? g.First().Value : g.Select(x => x.Value).ToArray()) })
+                .ToDictionary(x => x.Key, x => x.Value),
             request = req.Headers.ToDictionary(x => x.Key, x => x.Value.ToString().Trim('"')),
             response = response.Headers.ToDictionary(x => x.Key, x => string.Join(',', x.Value))
         })
@@ -67,7 +75,7 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
             if (!req.Headers.Accept.Contains("application/jwt") &&
                 configuration["WEBSITE_AUTH_GITHUB_CLIENT_ID"] is { Length: > 0 } clientId)
             {
-                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/sync");
+                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/sync");
             }
 
             // Otherwise, just 401
@@ -77,14 +85,19 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         var manifest = await sponsors.GetManifestAsync();
         var sponsor = await sponsors.GetSponsorAsync();
 
-        if (sponsor == SponsorType.None)
+        if (sponsor == SponsorType.None ||
+            principal.FindFirstValue("urn:github:id") is not string id)
             return new NotFoundObjectResult("You are not a sponsor");
 
         // TODO: add more claims in the future? tier, others?
         var claims = new List<Claim>
         {
-            new("sponsor", sponsor.ToString().ToLowerInvariant())
+            new("sub", id),
+            new("sponsor", sponsor.ToString().ToLowerInvariant()),
         };
+
+        // Use shorthand JWT claim for email too. See https://www.iana.org/assignments/jwt/jwt.xhtml
+        claims.AddRange(principal.Claims.Where(x => x.Type == ClaimTypes.Email).Select(x => new Claim("email", x.Value)));
 
         // We always respond authenticated requests either with a JWT or JSON, depending on the Accept header.
         if (req.Headers.Accept.Contains("application/jwt"))
@@ -101,7 +114,10 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         {
             issuer = manifest.Issuer,
             audience = manifest.Audience,
-            claims = claims.ToDictionary(x => x.Type, x => x.Value),
+            // Claims can have duplicates, so we group them and turn them into arrays, which is what JWT does too.
+            claims = principal.Claims.GroupBy(x => x.Type)
+                .Select(g => new { g.Key, Value = (object)(g.Count() == 1 ? g.First().Value : g.Select(x => x.Value).ToArray()) })
+                .ToDictionary(x => x.Key, x => x.Value),
 #if DEBUG
             headers = req.Headers.ToDictionary(x => x.Key, x => x.Value.ToString().Trim('"'))
 #endif
