@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33103.201
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "App", "src\App\App.csproj", "{B906B3E1-E58C-4F30-9449-EB1DD219485A}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "src\Tests\Tests.csproj", "{638E2879-1321-495B-828B-785B6B5E9921}"
 	ProjectSection(ProjectDependencies) = postProject
 		{B671E85F-9735-4864-9B66-69952FC0D52A} = {B671E85F-9735-4864-9B66-69952FC0D52A}
@@ -25,7 +23,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Package", "src\Package\Pack
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Commands", "src\Commands\Commands.csproj", "{7BFC5488-26EB-47FF-8EF8-59BBD227EA3B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "src\Web\Web.csproj", "{ABB4FF66-0283-4EF0-B877-C61514CF506A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web", "src\Web\Web.csproj", "{ABB4FF66-0283-4EF0-B877-C61514CF506A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "src\Core\Core.csproj", "{B6A94443-3F18-4BBD-997B-3DEB38D2E8C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,10 +33,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B906B3E1-E58C-4F30-9449-EB1DD219485A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B906B3E1-E58C-4F30-9449-EB1DD219485A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B906B3E1-E58C-4F30-9449-EB1DD219485A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B906B3E1-E58C-4F30-9449-EB1DD219485A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{638E2879-1321-495B-828B-785B6B5E9921}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{638E2879-1321-495B-828B-785B6B5E9921}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{638E2879-1321-495B-828B-785B6B5E9921}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -53,6 +49,10 @@ Global
 		{ABB4FF66-0283-4EF0-B877-C61514CF506A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ABB4FF66-0283-4EF0-B877-C61514CF506A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ABB4FF66-0283-4EF0-B877-C61514CF506A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6A94443-3F18-4BBD-997B-3DEB38D2E8C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6A94443-3F18-4BBD-997B-3DEB38D2E8C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6A94443-3F18-4BBD-997B-3DEB38D2E8C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6A94443-3F18-4BBD-997B-3DEB38D2E8C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
