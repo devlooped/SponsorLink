@@ -32,7 +32,7 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
             if (!req.Headers.Accept.Contains("application/jwt") &&
                 configuration["WEBSITE_AUTH_GITHUB_CLIENT_ID"] is { Length: > 0 } clientId)
             {
-                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/sync");
+                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/me");
             }
 
             // Otherwise, just 401
@@ -46,10 +46,10 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         {
             body = await response.Content.ReadFromJsonAsync<JsonElement>(),
             request = req.Headers.ToDictionary(x => x.Key, x => x.Value.ToString().Trim('"')),
-            response = response.Headers.ToDictionary(x => x.Key, x => x.Value?.ToString()?.Trim('"'))
+            response = response.Headers.ToDictionary(x => x.Key, x => string.Join(',', x.Value))
         })
         {
-            StatusCode = 200
+            StatusCode = (int)response.StatusCode
         };
     }
 
