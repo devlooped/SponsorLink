@@ -3,7 +3,7 @@ title: Manifest Spec
 nav_order: 4
 has_children: true
 has_toc: false
-current: 1.0.0-beta
+current: 1.0.0-rc
 ---
 
 {%- assign versions = site[page.collection]
