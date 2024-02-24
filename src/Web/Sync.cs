@@ -86,7 +86,7 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         var sponsor = await sponsors.GetSponsorAsync();
 
         if (sponsor == SponsorType.None ||
-            principal.FindFirstValue("urn:github:id") is not string id)
+            principal.FindFirstValue("urn:github:login") is not string id)
             return new NotFoundObjectResult("You are not a sponsor");
 
         // TODO: add more claims in the future? tier, others?
