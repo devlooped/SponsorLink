@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Core" Version="1.35.0" />
+    <PackageReference Include="Azure.Core" Version="1.38.0" />
     <PackageReference Include="Azure.Monitor.Query" Version="1.2.0" />
     <PackageReference Include="DotNetConfig" Version="1.0.6" />
     <PackageReference Include="LibGit2Sharp" Version="0.27.2" />
