@@ -1,11 +1,13 @@
-﻿namespace Devlooped.Sponsors;
+﻿using GraphQuery = (string Query, string? JQ);
+
+namespace Devlooped.Sponsors;
 
 /// <summary>
 /// Centralizes queries used to retrieve data from the GitHub GraphQL API.
 /// </summary>
 static class GraphQL
 {
-    public const string UserSponsorships =
+    public static GraphQuery UserSponsorships { get; } = (
         """
         query { 
           viewer { 
@@ -23,25 +25,31 @@ static class GraphQL
             }
           }
         }
-        """;
+        """,
+        """
+        [.data.viewer.sponsorshipsAsSponsor.nodes.[].sponsorable.login]
+        """);
 
-    public const string UserOrganizations =
+    public static GraphQuery UserOrganizations { get; } = (
         """
         query { 
             viewer { 
-            organizations(first: 100) {
-                nodes {
-                login
-                isVerified
-                email
-                websiteUrl
+                organizations(first: 100) {
+                    nodes {
+                    login
+                    isVerified
+                    email
+                    websiteUrl
+                    }
                 }
             }
-            }
         }
-        """;
+        """,
+        """
+        [.data.viewer.organizations.nodes.[] | select(.isVerified == true)]
+        """);
 
-    public const string OrganizationSponsorships =
+    public static GraphQuery OrganizationSponsorships { get; } = (
         $$"""
         query($login: String!) { 
           organization(login: $login) { 
@@ -59,7 +67,10 @@ static class GraphQL
             }
           }
         }
-        """;
+        """,
+        """
+        [.data.organization.sponsorshipsAsSponsor.nodes.[].sponsorable.login]
+        """);
 
     // Alternative query, but includes private repositories too, not very useful.
     // It's highly unlikely that private repositories will be sponsorable anyway.
@@ -77,17 +88,22 @@ static class GraphQL
         }    
     */
 
-    public const string UserContributions =
+    public static GraphQuery UserContributions { get; } = (
         """
         query {
           viewer {
-            repositoriesContributedTo(first: 100, contributionTypes: [COMMIT]) {
+            repositoriesContributedTo(first: 100, includeUserRepositories: true, contributionTypes: [COMMIT]) {
               nodes {
-                nameWithOwner
+                nameWithOwner,
+                owner {
+                  login
+                }
               }
             }
           }
         }
-        """;
-
+        """,
+        """
+        [.data.viewer.repositoriesContributedTo.nodes.[].owner.login]
+        """);
 }

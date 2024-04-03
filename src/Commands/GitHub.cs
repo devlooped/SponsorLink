@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.Text.Json;
+using GraphQuery = (string Query, string? JQ);
 
 namespace Devlooped.Sponsors;
 
@@ -25,18 +26,19 @@ public static class GitHub
         return Process.TryExecute("gh", args, out json);
     }
 
-    public static bool TryQuery(string query, string jq, out string? json, params (string name, string value)[] fields)
+    public static bool TryQuery(GraphQuery query, out string? result, params (string name, string value)[] fields)
+        => TryQuery(query.Query, query.JQ, out result, fields);
+
+    public static bool TryQuery(string query, string? jq, out string? result, params (string name, string value)[] fields)
     {
         var args = $"api graphql -f query=\"{query}\"";
-        if (!string.IsNullOrEmpty(jq))
-            args += $" --jq \"{jq}\"";
+        if (jq is { Length: > 0 })
+            args += $" --jq \"{jq.Trim()}\"";
 
         foreach (var (name, value) in fields)
-        {
             args += $" -f {name}={value}";
-        }
 
-        return Process.TryExecute("gh", args, out json);
+        return Process.TryExecute("gh", args, out result);
     }
 
     public static Account? Authenticate()
@@ -54,7 +56,7 @@ public static class GitHub
             return default;
 
         if (!TryApi("user/emails", "[.[] | select(.verified == true) | .email]", out output) ||
-            string.IsNullOrEmpty(output))
+            output?.Length > 0)
             return account;
 
         return account with
