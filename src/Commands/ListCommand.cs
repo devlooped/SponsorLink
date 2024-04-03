@@ -127,7 +127,7 @@ public class ListCommand(Account account) : Command
                     """
                     [.data.organization.sponsorshipsAsSponsor.nodes.[].sponsorable.login]
                     """, out json, ("login", org)) &&
-                    !string.IsNullOrEmpty(json) &&
+                    json?.Length > 0 &&
                     JsonSerializer.Deserialize<string[]>(json, JsonOptions.Default) is { } sponsored &&
                     sponsored.Length > 0)
                 {

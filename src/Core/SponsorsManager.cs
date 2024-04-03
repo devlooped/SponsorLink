@@ -94,6 +94,13 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
         if (accounts.Count > 0)
             return SponsorType.Organization;
 
+        // TODO: add verified org email(s) > user's emails check (even if user's email is not public 
+        // and the logged in account does not belong to the org). This covers the scenario where a 
+        // user has multiple GH accounts, one for each org he works for (i.e. a consultant), and a 
+        // personal account. The personal account would not be otherwise associated with any of his 
+        // client's orgs, but he could still add his work emails to his personal account, keep them 
+        // private and verified, and then use them to access the be considered an org sponsor.
+
         var contribs = await sponsor.QueryAsync<string[]>(GraphQueries.UserContributions);
         if (contribs is not null && 
             contribs.Contains(manifest.Audience))
