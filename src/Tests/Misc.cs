@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Spectre.Console;
 
-namespace Devlooped.Tests;
+namespace Devlooped.Sponsors;
 
 public class Misc
 {

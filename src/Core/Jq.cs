@@ -1,9 +1,6 @@
-﻿using System.Diagnostics;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using CliWrap;
-using CliWrap.Buffered;
 using GraphQuery = (string Query, string? JQ);
 
 namespace Devlooped.Sponsors;
@@ -13,7 +10,7 @@ namespace Devlooped.Sponsors;
 /// </summary>
 public static class Jq
 {
-    static JsonSerializerOptions options = new(JsonSerializerDefaults.Web)
+    static readonly JsonSerializerOptions options = new(JsonSerializerDefaults.Web)
     {
         PropertyNameCaseInsensitive = true,
         Converters =
@@ -33,28 +30,9 @@ public static class Jq
             query = query.Query
         });
 
-        if (query.JQ is { Length: > 0 })
-            return await QueryAsync(await result.Content.ReadAsStringAsync(), query.JQ);
+        if (query.JQ?.Length > 0)
+            return await JQ.ExecuteAsync(await result.Content.ReadAsStringAsync(), query.JQ);
 
         return await result.Content.ReadAsStringAsync();
-    }
-
-    /// <summary>
-    /// Execute the query and return the selected result.
-    /// </summary>
-    public static async Task<string> QueryAsync(string json, string query)
-    {
-        var jq = Path.Combine(AppContext.BaseDirectory, "lib",
-            OperatingSystem.IsLinux() ? "jq-linux-amd64" : @"jq-win64.exe");
-
-        Debug.Assert(File.Exists(jq));
-
-        var jd = await Cli.Wrap(jq)
-            .WithArguments(["-r", query])
-            .WithStandardInputPipe(PipeSource.FromString(json))
-            .WithValidation(CommandResultValidation.None)
-            .ExecuteBufferedAsync();
-
-        return jd.StandardOutput.Trim();
     }
 }
