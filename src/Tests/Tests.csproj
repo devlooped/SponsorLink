@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <UserSecretsId>5af5cb1f-8a66-4238-b07b-032b4cf1a44d</UserSecretsId>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <RootNamespace>Devlooped.Tests</RootNamespace>
     <!-- IVT+ThisAssembly -->
@@ -11,6 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CliWrap" Version="3.6.6" />
+    <PackageReference Include="Devlooped.JQ" Version="1.7.1.1" />
     <PackageReference Include="Azure.Core" Version="1.37.0" />
     <PackageReference Include="Azure.Monitor.Query" Version="1.2.0" />
     <PackageReference Include="DotNetConfig" Version="1.0.6" />
@@ -23,6 +26,7 @@
     <PackageReference Include="xunit" Version="2.5.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.0" />
     <PackageReference Include="Moq" Version="4.20.69" />
+    <PackageReference Include="Octokit" Version="9.1.2" />
     <PackageReference Include="ScenarioTests.XUnit" Version="1.0.1" />
     <PackageReference Include="ThisAssembly" Version="1.4.1" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" Pack="false" />

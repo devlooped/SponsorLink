@@ -20,7 +20,7 @@ public static class GitHub
     public static bool TryApi(string endpoint, string jq, out string? json)
     {
         var args = $"api {endpoint}";
-        if (!string.IsNullOrEmpty(jq))
+        if (jq?.Length > 0)
             args += $" --jq \"{jq}\"";
 
         return Process.TryExecute("gh", args, out json);
@@ -32,7 +32,7 @@ public static class GitHub
     public static bool TryQuery(string query, string? jq, out string? result, params (string name, string value)[] fields)
     {
         var args = $"api graphql -f query=\"{query}\"";
-        if (jq is { Length: > 0 })
+        if (jq?.Length > 0)
             args += $" --jq \"{jq.Trim()}\"";
 
         foreach (var (name, value) in fields)
@@ -56,7 +56,7 @@ public static class GitHub
             return default;
 
         if (!TryApi("user/emails", "[.[] | select(.verified == true) | .email]", out output) ||
-            output?.Length > 0)
+            string.IsNullOrEmpty(output))
             return account;
 
         return account with

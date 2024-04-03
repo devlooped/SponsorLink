@@ -1,16 +1,67 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
 using static Devlooped.SponsorLink;
 
-namespace Devlooped.Tests;
+namespace Devlooped.Sponsors;
 
 public class ManifestTests(ITestOutputHelper Output)
 {
+    [Fact]
+    public void Init()
+    {
+        var issuer = "https://sponsorlink.us.auth0.com/";
+        var sync = "https://sponsorlink.devlooped.com/sync";
+        var pub = Convert.ToBase64String(File.ReadAllBytes(@"../../../test.pub"));
+
+        var token = new JwtSecurityToken(
+            issuer: issuer,
+            claims: new[]
+            {
+                new Claim("pub", pub),
+                new Claim("sync", sync),
+            });
+
+        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+        Output.WriteLine(jwt);
+        Output.WriteLine(token.ToString());
+        //Output.WriteLine(token.UnsafeToString());
+
+        var rsa = RSA.Create();
+        rsa.ImportRSAPrivateKey(File.ReadAllBytes(@"../../../test.key"), out var bytes);
+
+        var signing = new SigningCredentials(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256);
+        var signed = new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
+            issuer: issuer,
+            claims: new[]
+            {
+                new Claim("pub", pub),
+                new Claim("sync", sync),
+            },
+            signingCredentials: signing));
+
+        Output.WriteLine(signed);
+        Output.WriteLine("Public Key:");
+        Output.WriteLine(Convert.ToBase64String(File.ReadAllBytes(@"../../../test.pub")));
+        Output.WriteLine("Private Key:");
+        Output.WriteLine(Convert.ToBase64String(File.ReadAllBytes(@"../../../test.key")));
+
+        Output.WriteLine("Public JWK:");
+        Output.WriteLine(
+            JsonSerializer.Serialize(
+                JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(false))),
+                JsonOptions.Default));
+
+        Output.WriteLine("Private JWK:");
+        Output.WriteLine(
+            JsonSerializer.Serialize(
+                JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(true))),
+                JsonOptions.Default));
+    }
+
     [Fact]
     public void WhenReadingExpiredManifest_ThenCanStillCheckHashes()
     {

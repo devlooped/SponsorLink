@@ -64,7 +64,7 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
     /// <summary>
     /// Depending on the Accept header, returns a JWT or JSON manifest of the authenticated user's claims.
     /// </summary>
-    [Function("sync")]
+    [Function("sponsor")]
     public async Task<IActionResult> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
@@ -75,7 +75,7 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
             if (!req.Headers.Accept.Contains("application/jwt") &&
                 configuration["WEBSITE_AUTH_GITHUB_CLIENT_ID"] is { Length: > 0 } clientId)
             {
-                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/sync");
+                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/sponsor");
             }
 
             // Otherwise, just 401

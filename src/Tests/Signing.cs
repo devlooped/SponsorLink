@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 using static Devlooped.SponsorLink;
 
-namespace Devlooped.Tests;
+namespace Devlooped.Sponsors;
 
 public class Signing(ITestOutputHelper Output)
 {

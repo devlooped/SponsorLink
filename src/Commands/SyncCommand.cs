@@ -106,7 +106,7 @@ public partial class SyncCommand(Account user) : AsyncCommand
 
                 // TODO: we'll need to account for pagination after 100 sponsorships is commonplace :)
                 if (GitHub.TryQuery(GraphQL.OrganizationSponsorships, out json, ("login", org.Login)) &&
-                    json is { Length: > 0 } &&
+                    json?.Length > 0 &&
                     JsonSerializer.Deserialize<string[]>(json, JsonOptions.Default) is { } sponsored &&
                     sponsored.Length > 0)
                 {
@@ -201,7 +201,7 @@ public partial class SyncCommand(Account user) : AsyncCommand
     {
         var contributed = new HashSet<string>();
 
-        if (!GitHub.TryQuery(GraphQL.UserContributions, out var json) || json is not { Length: > 0 })
+        if (!GitHub.TryQuery(GraphQL.UserContributions, out var json) || !(json?.Length > 0))
         {
             AnsiConsole.MarkupLine("[red]x[/] Could not query GitHub for user sponsorships.");
             return contributed;
