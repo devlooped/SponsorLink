@@ -54,12 +54,12 @@
     <None Update="@(None)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <Target Name="RenderSourceRoots" AfterTargets="Build" DependsOnTargets="InitializeSourceControlInformationFromSourceControlManager">
+  <Target Name="RenderSourceRoots" DependsOnTargets="InitializeSourceControlInformationFromSourceControlManager">
     <!-- Showcases how to get the current (git) repository root, via the Microsoft.Build.Tasks.Git package -->
     <Message Importance="high" Text="@(SourceRoot -&gt; WithMetadataValue('SourceControl', 'git'))" />
   </Target>
 
-  <Target Name="RenderEmail" AfterTargets="Build">
+  <Target Name="RenderEmail">
     <!-- Showcases how to read the email via targets -->
     <Exec Command="git config --get user.email" EchoOff="true" StandardErrorImportance="high" StandardOutputImportance="low" ConsoleToMSBuild="true" WorkingDirectory="$(MSBuildProjectDirectory)" ContinueOnError="true" StdOutEncoding="utf-8">
       <Output TaskParameter="ConsoleOutput" PropertyName="Email" />
