@@ -31,6 +31,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json;
@@ -85,13 +86,13 @@ public static partial class AppServiceAuthenticationExtensions
                 // CLI auth using device flow
                 using var http = httpFactory.CreateClient();
 
-                http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(name.FullName, name.Version?.ToString()));
-                http.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", auth);
+                http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(name.Name ?? name.FullName.Split(',')[0], name.Version?.ToString()));
+                http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth[7..]);
                 var resp = await http.GetAsync("https://api.github.com/user");
 
-                if (resp is { StatusCode: HttpStatusCode.OK, Content: { } content })
+                if (resp.IsSuccessStatusCode)
                 {
-                    var gh = await content.ReadAsStringAsync();
+                    var gh = await resp.Content.ReadAsStringAsync();
                     var claims = new List<Claim>();
                     var doc = JsonDocument.Parse(gh);
                     foreach (var prop in doc.RootElement.EnumerateObject())
@@ -100,8 +101,30 @@ public static partial class AppServiceAuthenticationExtensions
                             prop.Value.ValueKind != JsonValueKind.Array &&
                             prop.Value.ToString() is { Length: > 0 } value)
                         {
-                            // For compatiblity with the app service principal populated claims.
-                            claims.Add(new Claim("urn:github:" + prop.Name, value));
+                            // Make sure we're (mostly?) compatible with the app service auth claims
+                            claims.Add(prop.Name switch
+                            {
+                                "id" => new(ClaimTypes.NameIdentifier, value),
+                                "name" => new(ClaimTypes.Name, value),
+                                "email" => new(ClaimTypes.Email, value),
+                                _ => new("urn:github:" + prop.Name, value)
+                            });
+                        }
+                    }
+
+                    // Retrieve verified emails too if possible
+                    resp = await http.GetAsync("https://api.github.com/user/emails");
+                    if (resp.IsSuccessStatusCode &&
+                        await resp.Content.ReadFromJsonAsync<Email[]>() is { Length: > 0 } emails)
+                    {
+                        var primary = claims.Find(x =>x.Type == ClaimTypes.Email);
+                        // NOTE: we already added the 'email' claim above, so we don't need to add it again.
+                        // We only populate verified emails, otherwise, it would be trivial to fake.
+                        foreach (var email in emails.Where(x => x.verified))
+                        {
+                            // Don't duplicate the primary email.
+                            if (primary?.Value != email.email)
+                                claims.Add(new(ClaimTypes.Email, email.email));
                         }
                     }
 
@@ -109,13 +132,14 @@ public static partial class AppServiceAuthenticationExtensions
                         new ClaimsIdentity(claims, "github")));
 
                     var token = auth[Scheme.Length..];
-                    // NOTE: we don't set any explicit expiration as we can't determine that from 
-                    // the token itself.
+                    // NOTE: we don't set any explicit expiration as we can't determine that from the token itself.
                     context.Features.Set(new AccessToken(token, DateTimeOffset.MaxValue));
                 }
             }
 
             await next(context);
         }
+            
+        record Email(string email, bool verified);
     }
 }
