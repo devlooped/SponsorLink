@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Condition="$(ShowSponsorLinkInProject) == 'true'" 
+    <Compile Condition="$(ShowSponsorLinkInProject) == 'true'"
              Update="@(Compile -> WithMetadataValue('NuGetPackageId', 'Devlooped.SponsorLink'))">
       <Link>SponsorLink\%(Filename)%(Extension)</Link>
     </Compile>
@@ -18,7 +18,15 @@
   </ItemGroup>
 
   <!-- Helper target to automatically populate [assembly: Funding(sponsorable)] from local FUNDING.yml -->
-  <Target Name="AddFundingAccounts" DependsOnTargets="ReadFunding;ParseSponsorable;AddAttributes" BeforeTargets="GetAssemblyAttributes" />
+  <Target Name="AddFundingAccounts" DependsOnTargets="DefaultFunding;ReadFunding;ParseSponsorable;AddAttributes" BeforeTargets="GetAssemblyAttributes" />
+
+  <Target Name="DefaultFunding" Condition="$(FundingFile) == ''" DependsOnTargets="InitializeSourceControlInformationFromSourceControlManager">
+    <PropertyGroup>
+      <_SourceRoot>@(SourceRoot -&gt; WithMetadataValue('SourceControl', 'git'))</_SourceRoot>
+      <_FundingFile>$(_SourceRoot)/.github/FUNDING.yml</_FundingFile>
+      <FundingFile Condition="Exists('$(_FundingFile)')">$(_FundingFile)</FundingFile>
+    </PropertyGroup>
+  </Target>
 
   <Target Name="ReadFunding" Condition="$(FundingFile) != '' and Exists('$(FundingFile)')">
     <ReadLinesFromFile File="$(FundingFile)">
