@@ -32,6 +32,7 @@ jobs:
 
       - name: ⌛ rate
         shell: pwsh
+        if: ${{ !github.event.sender && !github.event.pusher }}      
         run: |
           # add random sleep since we run on fixed schedule
           sleep (get-random -max 60)
