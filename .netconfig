@@ -5,8 +5,8 @@
 	weak
 [file ".gitignore"]
 	url = https://github.com/devlooped/oss/blob/main/.gitignore
-	sha = ef852e7d2ec9a845dac272dfc479909c0bc6d9f3
-	etag = a556d6108892aa8e7e63476f4fad3a898b3ec1deda94332dd4e89d2fb6b555ca
+	sha = 02811fa23b0a102b9b33048335d41e515bf75737
+	etag = a9c37ae312afac14b78436a7d018af4483d88736b5f780576f2c5a0b3f14998c
 	weak
 [file ".gitattributes"]
 	url = https://github.com/devlooped/oss/blob/main/.gitattributes
@@ -40,13 +40,13 @@
 	weak
 [file "samples/dotnet/Directory.Build.props"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
-	sha = b1d14c6379e5820eb2c30e08bedbdf6e9c8e8cb2
-	etag = 33cd19e0f599f444c320406da3452e9e84d28c3bb13c09e9190d9d2e7f129545
+	sha = 6dfe21fbd4a8390448958c714f8e9006fc4ac3ca
+	etag = de7c6b643bac2fc6651fa08f69d628cbbe12e7050829b981ac771e1b9ccccd89
 	weak
 [file "src/Directory.Build.props"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
-	sha = b1d14c6379e5820eb2c30e08bedbdf6e9c8e8cb2
-	etag = 33cd19e0f599f444c320406da3452e9e84d28c3bb13c09e9190d9d2e7f129545
+	sha = 6dfe21fbd4a8390448958c714f8e9006fc4ac3ca
+	etag = de7c6b643bac2fc6651fa08f69d628cbbe12e7050829b981ac771e1b9ccccd89
 	weak
 [file "src/Directory.Build.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
@@ -100,13 +100,13 @@
 	weak
 [file "src/Web/Microsoft/Azure/Functions/AppServiceAuthenticationExtensions.cs"]
 	url = https://github.com/devlooped/catbag/blob/main/Microsoft/Azure/Functions/AppServiceAuthenticationExtensions.cs
-	sha = 54bc673ff259a49c4079567d40e8a0a70f69288e
-	etag = ee878c6dc1dde32a357f937ca24e7a9347450a6d79402fc4ff47ab0180b5b78b
+	sha = 4431859b8d13c727e3b5ae9362e42464f7bed2ef
+	etag = 305a8644adbd5dc46c858867f34643e1b531f81e81696e65499ae268e88e066c
 	weak
 [file "src/Web/Microsoft/Azure/Functions/AppServiceGitHubAuthenticationExtension.cs"]
 	url = https://github.com/devlooped/catbag/blob/main/Microsoft/Azure/Functions/AppServiceGitHubAuthenticationExtension.cs
-	sha = 2a362c40b2652c9393c1206178f36837cbe2efb2
-	etag = 7abc4e1c516777a2c388ebbc33ffe1050863655e84eb3edb2ada99b43b198b8f
+	sha = c2ac80ac2e9a5e8426f4b048c0d352a68d467538
+	etag = 2753533c49b7623a1b603ed1a8714e7e1456ccd1c5db0ac43c877015c316a1ae
 	weak
 [file "src/Web/Microsoft/Azure/Functions/AccessTokenMessageHandler.cs"]
 	url = https://github.com/devlooped/catbag/blob/main/Microsoft/Azure/Functions/AccessTokenMessageHandler.cs
