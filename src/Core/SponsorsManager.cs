@@ -32,14 +32,14 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
             using var http = httpFactory.CreateClient("sponsorable");
             var response = await http.GetAsync(url);
 
-            logger.Assert(response.IsSuccessStatusCode, 
-                "Failed to retrieve manifest from {Url}: {StatusCode} {Reason}", 
+            logger.Assert(response.IsSuccessStatusCode,
+                "Failed to retrieve manifest from {Url}: {StatusCode} {Reason}",
                 url, (int)response.StatusCode, await response.Content.ReadAsStringAsync());
 
             var yaml = await response.Content.ReadAsStringAsync();
             manifest = serializer.Deserialize<SponsorableManifest>(yaml);
 
-            logger.Assert(manifest is not null, 
+            logger.Assert(manifest is not null,
                 "Failed to deserialize YAML manifest from {Url}", url);
 
             // Audience defaults to the manifest url user/org
@@ -84,7 +84,7 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
         var accounts = new HashSet<string>(sponsoring ?? []);
 
         // User is checked for auth on first line above
-        if (principal.FindFirst("urn:github:login") is { Value.Length: > 0 } claim && 
+        if (principal.FindFirst("urn:github:login") is { Value.Length: > 0 } claim &&
             accounts.Contains(claim.Value))
         {
             // the user is directly sponsoring
@@ -102,7 +102,7 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
         // private and verified, and then use them to access the be considered an org sponsor.
 
         var contribs = await sponsor.QueryAsync<string[]>(GraphQueries.UserContributions);
-        if (contribs is not null && 
+        if (contribs is not null &&
             contribs.Contains(manifest.Audience))
         {
             return SponsorType.Contributor;

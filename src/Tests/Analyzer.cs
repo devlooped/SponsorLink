@@ -126,7 +126,7 @@ public class AnalyzerTests(ITestOutputHelper Output)
 
         if ((email = ReadEmail(
             Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), 
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".gitconfig"))) != null)
         {
             Output.WriteLine(email);

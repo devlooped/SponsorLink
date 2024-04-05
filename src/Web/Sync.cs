@@ -1,40 +1,46 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text.Json;
 using System.Text.Json.Nodes;
-using CliWrap;
-using CliWrap.Buffered;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using SharpYaml.Serialization;
 
 namespace Devlooped.Sponsors;
 
 /// <summary>
 /// Returns a JWT or JSON manifest of the authenticated user's claims.
 /// </summary>
-class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa)
+class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, ILogger<Sync> logger)
 {
+    [Function("version")]
+    public IActionResult Version([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+        => new ContentResult
+        {
+            Content = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3),
+            ContentType = "text/plain",
+            StatusCode = 200,
+        };
+
     [Function("me")]
     public async Task<IActionResult> UserAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
-        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true} principal)
+        var clientId = configuration["WEBSITE_AUTH_GITHUB_CLIENT_ID"];
+
+        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
         {
             // Implement manual auto-redirect to GitHub, since we cannot turn it on in the portal
             // or the token-based principal population won't work.
             // Never redirect requests for JWT, as they are likely from a CLI or other non-browser client.
-            if (!req.Headers.Accept.Contains("application/jwt") &&
-                configuration["WEBSITE_AUTH_GITHUB_CLIENT_ID"] is { Length: > 0 } clientId)
-            {
+            if (!req.Headers.Accept.Contains("application/jwt") && !string.IsNullOrEmpty(clientId))
                 return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/me");
-            }
+
+            logger.LogError("Ensure GitHub identity provider is configured for the functions app.");
 
             // Otherwise, just 401
             return new UnauthorizedResult();
@@ -47,12 +53,19 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         var body = await response.Content.ReadFromJsonAsync<JsonObject>();
         body?.Add("emails", emails);
 
+        // Claims can have duplicates, so we group them and turn them into arrays, which is what JWT does too.
+        var claims = principal.Claims.GroupBy(x => x.Type)
+            .Select(g => new { g.Key, Value = (object)(g.Count() == 1 ? g.First().Value : g.Select(x => x.Value).ToArray()) })
+            .ToDictionary(x => x.Key, x => x.Value);
+
+        // Allows the client to authenticate directly with the OAuth app if needed too.
+        if (!string.IsNullOrEmpty(clientId))
+            claims["client_id"] = clientId;
+
         return new JsonResult(new
         {
             body,
-            claims = principal.Claims.GroupBy(x => x.Type)
-                .Select(g => new { g.Key, Value = (object)(g.Count() == 1 ? g.First().Value : g.Select(x => x.Value).ToArray()) })
-                .ToDictionary(x => x.Key, x => x.Value),
+            claims,
             request = req.Headers.ToDictionary(x => x.Key, x => x.Value.ToString().Trim('"')),
             response = response.Headers.ToDictionary(x => x.Key, x => string.Join(',', x.Value))
         })
@@ -67,16 +80,17 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
     [Function("sponsor")]
     public async Task<IActionResult> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
+        var clientId = configuration["WEBSITE_AUTH_GITHUB_CLIENT_ID"];
+
         if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
         {
             // Implement manual auto-redirect to GitHub, since we cannot turn it on in the portal
             // or the token-based principal population won't work.
             // Never redirect requests for JWT, as they are likely from a CLI or other non-browser client.
-            if (!req.Headers.Accept.Contains("application/jwt") &&
-                configuration["WEBSITE_AUTH_GITHUB_CLIENT_ID"] is { Length: > 0 } clientId)
-            {
+            if (!req.Headers.Accept.Contains("application/jwt") && !string.IsNullOrEmpty(clientId))
                 return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/sponsor");
-            }
+
+            logger.LogError("Ensure GitHub identity provider is configured for the functions app.");
 
             // Otherwise, just 401
             return new UnauthorizedResult();
@@ -96,6 +110,10 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
             new("sponsor", sponsor.ToString().ToLowerInvariant()),
         };
 
+        // Allows the client to authenticate directly with the OAuth app if needed too.
+        if (!string.IsNullOrEmpty(clientId))
+            claims.Add(new("client_id", clientId));
+
         // Use shorthand JWT claim for email too. See https://www.iana.org/assignments/jwt/jwt.xhtml
         claims.AddRange(principal.Claims.Where(x => x.Type == ClaimTypes.Email).Select(x => new Claim("email", x.Value)));
 
@@ -114,8 +132,12 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         {
             issuer = manifest.Issuer,
             audience = manifest.Audience,
-            // Claims can have duplicates, so we group them and turn them into arrays, which is what JWT does too.
-            claims = principal.Claims.GroupBy(x => x.Type)
+            claims = principal.Claims
+                // We already added the "email" claim above, so we skip it here.
+                .Where(x => x.Type != ClaimTypes.Email)
+                .Concat(claims)
+                .GroupBy(x => x.Type)
+                // Claims can have duplicates, so we group them and turn them into arrays, which is what JWT does too.
                 .Select(g => new { g.Key, Value = (object)(g.Count() == 1 ? g.First().Value : g.Select(x => x.Value).ToArray()) })
                 .ToDictionary(x => x.Key, x => x.Value),
 #if DEBUG

@@ -1,21 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
-using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using static Devlooped.SponsorLink;
 
 namespace Devlooped.Sponsors;
 
@@ -24,19 +21,21 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
 {
     public class Settings : CommandSettings
     {
-        [Description("The OpenID issuer URL, used to fetch OpenID configuration automatically.")]
+        [Description("The base URL of the manifest issuer web app.")]
         [CommandArgument(0, "<issuer>")]
         public required string Issuer { get; init; }
 
-        [Description("The base URL of the deployed SponsorLink API that can initialize and sign manifests.")]
-        [CommandArgument(0, "<audience>")]
-        public required string Audience { get; init; }
+        [Description("The Client ID of the GitHub OAuth application created by the sponsorable account.")]
+        [CommandArgument(1, "<clientId>")]
+        public required string ClientId { get; init; }
+
+        [Description("Sponsorable account, if different from the authenticated user.")]
+        [CommandArgument(2, "[audience]")]
+        public required string? Audience { get; init; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var status = AnsiConsole.Status();
-
         // Authenticated user must match GH user
         var principal = await Session.AuthenticateAsync();
         if (principal == null)
@@ -54,102 +53,94 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
             return -1;
         }
 
+        var audience = settings.Audience ?? user.Login;
+
         // Generate key pair
         var rsa = RSA.Create(2048);
+        var pub = Convert.ToBase64String(rsa.ExportRSAPublicKey());
 
-        var keyFile = new FileInfo("signing.key");
-        var pubFile = new FileInfo("signing.pub");
+        var options = new JsonSerializerOptions(JsonSerializerOptions.Default)
+        {
+            WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault | JsonIgnoreCondition.WhenWritingNull,
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver
+            {
+                Modifiers =
+                {
+                    info =>
+                    {
+                        if (info.Type != typeof(JsonWebKey))
+                            return;
 
-        await File.WriteAllBytesAsync(keyFile.FullName, rsa.ExportRSAPrivateKey());
-        await File.WriteAllTextAsync(keyFile.FullName + ".txt", Convert.ToBase64String(rsa.ExportRSAPrivateKey()));
-        await File.WriteAllBytesAsync(pubFile.FullName, rsa.ExportRSAPublicKey());
-        await File.WriteAllTextAsync(pubFile.FullName + ".txt", Convert.ToBase64String(rsa.ExportRSAPublicKey()));
+                        foreach (var prop in info.Properties)
+                        {
+                            // Don't serialize empty lists, makes for more concise JWKs
+                            prop.ShouldSerialize = (obj, value) =>
+                                value is not null &&
+                                (value is not IList<string> list || list.Count > 0);
+                        }
+                    }
+                }
+            }
+        };
 
         AnsiConsole.MarkupLine($":check_mark_button: Generated new signing key");
-        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: {keyFile.FullName}");
-        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: {keyFile.FullName}.txt (base64-encoded)");
-        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: {pubFile.FullName}");
-        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: {pubFile.FullName}.txt (base64-encoded)");
 
-        using var http = new HttpClient();
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Variables.AccessToken);
+        var baseName = Path.Combine(Directory.GetCurrentDirectory(), audience);
 
-        var baseUri = new Uri(settings.Audience.EndsWith('/') ? settings.Audience : settings.Audience + "/");
+        await File.WriteAllBytesAsync($"{audience}.key", rsa.ExportRSAPrivateKey());
+        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key[/]     [grey](private key)[/]");
 
-        var payload = new
+        await File.WriteAllTextAsync($"{audience}.key.txt",
+            Convert.ToBase64String(rsa.ExportRSAPublicKey()),
+            Encoding.UTF8);
+        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key.txt[/] [grey](base64-encoded)[/]");
+
+        await File.WriteAllTextAsync($"{audience}.key.jwk",
+            JsonSerializer.Serialize(
+                JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(true))),
+                options),
+            Encoding.UTF8);
+        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key.jwk[/] [grey](JWK string)[/]");
+
+        await File.WriteAllBytesAsync($"{audience}.pub", rsa.ExportRSAPublicKey());
+        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub[/]     [grey](public key)[/]");
+
+        await File.WriteAllTextAsync($"{audience}.pub.txt", pub, Encoding.UTF8);
+        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.txt[/] [grey](base64-encoded)[/]");
+
+        await File.WriteAllTextAsync($"{audience}.pub.jwk",
+            JsonSerializer.Serialize(
+                JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(false))),
+                options),
+            Encoding.UTF8);
+        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.jwk[/] [grey](JWK string)[/]");
+
+        var issuer = settings.Issuer.EndsWith('/') ? settings.Issuer : settings.Issuer + "/";
+        var claims = new List<Claim>
         {
-            iss = settings.Issuer.EndsWith('/') ? settings.Issuer : settings.Issuer + "/",
-            aud = baseUri.AbsoluteUri,
-            pub = Convert.ToBase64String(rsa.ExportRSAPublicKey())
+            new("client_id", settings.ClientId),
+            new("pub", pub),
         };
 
-        // NOTE: to test the local flow end to end, run the SponsorLink functions App project locally. You will 
-        var url = Debugger.IsAttached ? "http://localhost:7288/init" : $"{baseUri.AbsoluteUri}init";
+        var securityKey = new RsaSecurityKey(rsa.ExportParameters(true));
+        var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
 
-        var response = await status.StartAsync(ThisAssembly.Strings.Sync.Signing, async _
-            => await http.PostAsJsonAsync(url, payload));
+        var token = new JwtSecurityToken(
+            issuer: issuer,
+            audience: audience,
+            claims: claims,
+            signingCredentials: signingCredentials);
 
-        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-        {
-            AnsiConsole.MarkupLine(":cross_mark: Could not create new manifest: unauthorized.");
-            return -1;
-        }
-        else if (!response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            if (content is { Length: > 0 })
-                content = $" ({content})";
+        // Serialize the token and return as a string
+        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+        var sponsorable = new FileInfo("sponsorable.jwt");
+        await File.WriteAllTextAsync(sponsorable.FullName, jwt, Encoding.UTF8);
 
-            AnsiConsole.MarkupLine($":cross_mark: Could not sign new manifest: {response.StatusCode}{content}");
-            return -1;
-        }
+        AnsiConsole.MarkupLine($":check_mark_button: Generated new sponsorable JWT");
+        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{sponsorable.FullName}[/] [grey](upload to .github repo)[/]");
+        AnsiConsole.MarkupLine($"\t:magnifying_glass_tilted_right: [grey]{jwt}[/]");
 
-        // Attempt to validate the JWT we just got against the known public key from SL
-        var token = await response.Content.ReadAsStringAsync();
-        var validation = new TokenValidationParameters
-        {
-            IgnoreTrailingSlashWhenValidatingAudience = true,
-            ValidAudience = payload.aud,
-            ValidateAudience = true,
-            ValidIssuer = "https://sponsorlink.us.auth0.com/",
-            ValidateIssuer = true,
-            ValidateLifetime = false,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new RsaSecurityKey(SponsorLink.PublicKey)
-        };
-
-        try
-        {
-#if DEBUG
-            IdentityModelEventSource.ShowPII = true;
-#endif
-
-            new JwtSecurityTokenHandler().ValidateToken(token, validation, out var validated);
-
-            var tokenFile = new FileInfo("sponsorlink.jwt");
-            await File.WriteAllTextAsync(tokenFile.FullName, token);
-            AnsiConsole.MarkupLine($":check_mark_button: Persisted new sponsorable token :backhand_index_pointing_right: {tokenFile.FullName}");
-
-            var jsonFile = new FileInfo("sponsorlink.json");
-            await File.WriteAllTextAsync(jsonFile.FullName,
-                JsonSerializer.Serialize(payload,
-                new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }));
-
-            AnsiConsole.MarkupLine($":check_mark_button: Persisted new sponsorable manifest :backhand_index_pointing_right: {jsonFile.FullName}");
-            AnsiConsole.MarkupLine($":information: Please upload both files to your [lime][[user/org]]/.github[/] repository.");
-
-            return 0;
-        }
-        catch (SecurityTokenInvalidSignatureException)
-        {
-            AnsiConsole.MarkupLine(":cross_mark: The manifest signature is invalid.");
-            return -2;
-        }
-        catch (SecurityTokenException ex)
-        {
-            AnsiConsole.MarkupLine($":cross_mark: The manifest is invalid.");
-            AnsiConsole.WriteException(ex);
-            return -3;
-        }
+        return 0;
     }
 }

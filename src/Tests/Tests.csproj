@@ -12,6 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="chromium" Version="2024.4.1" />
+    <PackageReference Include="chromium.linux-x64" Version="2024.4.1" />
     <PackageReference Include="CliWrap" Version="3.6.6" />
     <PackageReference Include="Devlooped.JQ" Version="1.7.1.1" />
     <PackageReference Include="Azure.Core" Version="1.37.0" />
@@ -20,8 +22,10 @@
     <PackageReference Include="LibGit2Sharp" Version="0.27.2" />
     <PackageReference Include="Microsoft.Build.Tasks.Git" Version="1.1.1" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.XUnit" Version="1.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.7.2" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.42.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.3.1" />
     <PackageReference Include="xunit" Version="2.5.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.0" />

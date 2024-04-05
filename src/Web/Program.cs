@@ -58,7 +58,7 @@ var host = new HostBuilder()
             if (config["SPONSORLINK_KEY"] is not { Length: > 0 } key)
             {
                 sp.GetRequiredService<ILogger<Sync>>().LogError("Missing required configration SPONSORLINK_KEY");
-                throw new InvalidOperationException("Missing required configuration SPONSORLINK_KEY");  
+                throw new InvalidOperationException("Missing required configuration SPONSORLINK_KEY");
             }
 
             // The key (as well as the yaml manifest) can be generated using gh sponsors init

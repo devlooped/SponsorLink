@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Scriban;
+﻿using Scriban;
 using GraphQuery = (string Query, string? JQ);
 
 namespace Devlooped.Sponsors;

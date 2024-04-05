@@ -118,3 +118,13 @@
 	sha = 2e84192eea07ecc84d5c15fca6f48f3a7e29bb59
 	etag = 966d76b2bfff876a7805d794d43e7bfdee18fe8ae64b73979da23bb27bac21b7
 	weak
+[file "src/Tests/System/Threading/Tasks/AsyncLazy.cs"]
+	url = https://github.com/devlooped/catbag/blob/main/System/Threading/Tasks/AsyncLazy.cs
+	sha = 9f3330f09713aa5f746047e3a50ee839147a5797
+	etag = 73320600b7a18e0eb25cadc3d687c69dc79181b0458facf526666e150c634782
+	weak
+[file "src/Tests/Microsoft/Extensions/DependencyInjection/AddAsyncLazyExtension.cs"]
+	url = https://github.com/devlooped/catbag/blob/main/Microsoft/Extensions/DependencyInjection/AddAsyncLazyExtension.cs
+	sha = 2f8a7d3dffc4409dbda61afb43326ab9d871c1ec
+	etag = c8f63b95f4631df1e1bdc1e3fa592260f40c86e36032a979b572b880cf5a4fff
+	weak

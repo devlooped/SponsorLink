@@ -14,7 +14,7 @@ public class SecretsFactAttribute : FactAttribute
 
         foreach (var secret in secrets)
         {
-            if (configuration[secret] is not { Length: > 0 })
+            if (string.IsNullOrEmpty(configuration[secret]))
                 missing.Add(secret);
         }
 
