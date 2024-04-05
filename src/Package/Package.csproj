@@ -26,7 +26,7 @@
     <PackageReference Include="NuGetizer" Version="1.2.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" Pack="false" />
     <PackageReference Include="PolySharp" Version="1.13.2" PrivateAssets="all" Pack="false" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.35.0" PrivateAssets="all" Pack="true" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" PrivateAssets="all" Pack="true" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" PrivateAssets="all" Pack="true" />
   </ItemGroup>
 
