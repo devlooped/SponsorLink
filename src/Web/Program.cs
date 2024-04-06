@@ -7,7 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using static Google.Protobuf.Compiler.CodeGeneratorResponse.Types;
 
 var host = new HostBuilder()
     .ConfigureAppConfiguration((context, builder) =>
@@ -55,10 +54,10 @@ var host = new HostBuilder()
         services.AddSingleton(sp =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
-            if (config["SPONSORLINK_KEY"] is not { Length: > 0 } key)
+            if (config["SponsorLink:Private"] is not { Length: > 0 } key)
             {
-                sp.GetRequiredService<ILogger<Sync>>().LogError("Missing required configration SPONSORLINK_KEY");
-                throw new InvalidOperationException("Missing required configuration SPONSORLINK_KEY");
+                sp.GetRequiredService<ILogger<Sync>>().LogError("Missing required configuration 'SponsorLink:Private'.");
+                throw new InvalidOperationException("Missing required configuration 'SponsorLink:Private'.");
             }
 
             // The key (as well as the yaml manifest) can be generated using gh sponsors init
