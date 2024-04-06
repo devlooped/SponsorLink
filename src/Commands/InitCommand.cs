@@ -30,8 +30,12 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
         public required string ClientId { get; init; }
 
         [Description("Sponsorable account, if different from the authenticated user.")]
-        [CommandArgument(2, "[audience]")]
+        [CommandOption("-a|--audience")]
         public required string? Audience { get; init; }
+
+        [Description("Existing private key to use. By default, creates a new one.")]
+        [CommandOption("-k|--key")]
+        public required string? Key { get; init; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
@@ -57,6 +61,17 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
 
         // Generate key pair
         var rsa = RSA.Create(2048);
+        if (settings.Key is not null)
+        {
+            if (!File.Exists(settings.Key))
+            {
+                AnsiConsole.MarkupLine($":cross_mark: Key file '{settings.Key}' does not exist.");
+                return -1;
+            }
+
+            rsa.ImportRSAPrivateKey(await File.ReadAllBytesAsync(settings.Key), out _);
+        }
+
         var pub = Convert.ToBase64String(rsa.ExportRSAPublicKey());
 
         var options = new JsonSerializerOptions(JsonSerializerOptions.Default)
