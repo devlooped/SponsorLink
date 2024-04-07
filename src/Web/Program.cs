@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using Azure.Identity;
 using Devlooped.Sponsors;
@@ -13,7 +12,7 @@ var host = new HostBuilder()
     .ConfigureAppConfiguration((context, builder) =>
     {
         builder.AddUserSecrets("A85AC898-E41C-4D9D-AD9B-52ED748D9901");
-        if (context.Configuration["KeyVaultName"] is string kv)
+        if (context.Configuration["Azure:KeyVault"] is string kv)
             builder.AddAzureKeyVault(new Uri($"https://{kv}.vault.azure.net/"), new DefaultAzureCredential());
     })
     .ConfigureFunctionsWebApplication(builder =>

@@ -7,6 +7,8 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Azure.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using static Devlooped.SponsorLink;
@@ -35,6 +37,21 @@ public class Signing(ITestOutputHelper Output)
         File.WriteAllBytes(@"../../../signing.key", rsa.ExportRSAPrivateKey());
 
         File.WriteAllBytes(@"../../../signing.pub2", RSA.Create(2048).ExportRSAPublicKey());
+    }
+
+    [LocalFact]
+    public void CanReadFromKeyVault()
+    {
+        var config = new ConfigurationBuilder()
+            .AddAzureKeyVault(new Uri("https://devlooped.vault.azure.net/"), new DefaultAzureCredential())
+            .Build();
+
+        Assert.NotNull(config["SponsorLink:Private"]);
+
+        foreach (var pair in config.AsEnumerable())
+        {
+            Output.WriteLine($"{pair.Key} = {pair.Value}");
+        }
     }
 
     [Fact]
