@@ -22,16 +22,9 @@ public class Signing(ITestOutputHelper Output)
     {
         IdentityModelEventSource.ShowPII = true;
         IdentityModelEventSource.LogCompleteSecurityArtifact = true;
-    }
 
-    // NOTE: if you want to locally regenerate the keys, uncomment the following line
-    // NOTE: if you want to run locally the SL Functions App, you need to set the public 
-    // key as Base64 encoded string in the SPONSORLINK_KEY environment variable
-    [Fact]
-    public void CreateKeyPair()
-    {
-        // Generate key pair
-        RSA rsa = RSA.Create(2048);
+        // Ensure we have keys for tests
+        RSA rsa = RSA.Create(3072);
 
         File.WriteAllBytes(@"../../../signing.pub", rsa.ExportRSAPublicKey());
         File.WriteAllText(@"../../../signing.txt", Convert.ToBase64String(rsa.ExportRSAPublicKey()), Encoding.UTF8);
