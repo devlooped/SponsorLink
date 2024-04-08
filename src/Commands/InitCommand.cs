@@ -107,7 +107,7 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
         AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key[/]     [grey](private key)[/]");
 
         await File.WriteAllTextAsync($"{audience}.key.txt",
-            Convert.ToBase64String(rsa.ExportRSAPublicKey()),
+            Convert.ToBase64String(rsa.ExportRSAPrivateKey()),
             Encoding.UTF8);
         AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key.txt[/] [grey](base64-encoded)[/]");
 
