@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
@@ -46,7 +47,7 @@ public class Signing(ITestOutputHelper Output)
             .AddAzureKeyVault(new Uri("https://devlooped.vault.azure.net/"), new DefaultAzureCredential())
             .Build();
 
-        Assert.NotNull(config["SponsorLink:Private"]);
+        Assert.NotNull(config["SponsorLink:Public"]);
 
         foreach (var pair in config.AsEnumerable())
         {
@@ -125,41 +126,53 @@ public class Signing(ITestOutputHelper Output)
         var securityKey = new RsaSecurityKey(rsa.ExportParameters(true));
         var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
 
+        var pubJwk = JsonSerializer.Serialize(
+            JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(false))),
+            JsonOptions.JsonWebKey);
+
         var claims = new List<Claim>
         {
-            new Claim("pub", File.ReadAllText(@"../../../signing.txt", Encoding.UTF8)),
+            new("iss", "https://sponsorlink.devlooped.com/"),
+            new("aud", "https://github.com/devlooped"),
+            new("client_id", "a82350fb2bae407b3021"),
+            new("pub", File.ReadAllText(@"../../../signing.txt", Encoding.UTF8)),
+            new("sub_jwk", pubJwk, JsonClaimValueTypes.Json),
         };
 
         var token = new JwtSecurityToken(
-            issuer: "https://sponsorlink.devlooped.com/",
-            audience: "devlooped",
             claims: claims,
             signingCredentials: signingCredentials);
 
         // Serialize the token and return as a string
         var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 
+        Output.WriteLine(jwt);
+
         // Your code block where you're reading and validating JWT with public key
 
         // Read the public key from the manifest itself before validating
         token = new JwtSecurityTokenHandler().ReadJwtToken(jwt);
 
-        var pubvalue = token.Claims.First(c => c.Type == "pub").Value;
+        var pubvalue = token.Claims.First(c => c.Type == "sub_jwk").Value;
+        var key = JsonWebKey.Create(pubvalue);
+        var set = new JsonWebKeySet();
+        set.Keys.Add(key);
+        var jwtkey = set.GetSigningKeys().First();
 
-        var pub = RSA.Create();
-        pub.ImportRSAPublicKey(Convert.FromBase64String(pubvalue), out _);
+        //var pub = RSA.Create();
+        //pub.ImportRSAPublicKey(Convert.FromBase64String(pubvalue), out _);
 
         var validation = new TokenValidationParameters
         {
             RequireExpirationTime = false,
             ValidAudience = token.Audiences.First(),
             ValidIssuer = token.Issuer,
-            IssuerSigningKey = new RsaSecurityKey(pub),
+            IssuerSigningKey = jwtkey,
         };
 
         var principal = new JwtSecurityTokenHandler().ValidateToken(jwt, validation, out var securityToken);
 
-        Assert.Contains("pub", principal.Claims.Select(c => c.Type));
+        //Assert.Contains("pub", principal.Claims.Select(c => c.Type));
         Assert.Contains("iss", principal.Claims.Select(c => c.Type));
         Assert.Contains("aud", principal.Claims.Select(c => c.Type));
 

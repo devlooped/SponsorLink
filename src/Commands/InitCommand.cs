@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
@@ -72,7 +71,10 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
             rsa.ImportRSAPrivateKey(await File.ReadAllBytesAsync(settings.Key), out _);
         }
 
-        var pub = Convert.ToBase64String(rsa.ExportRSAPublicKey());
+        var pub64 = Convert.ToBase64String(rsa.ExportRSAPublicKey());
+        var pubJwk = JsonSerializer.Serialize(
+            JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(false))),
+            JsonOptions.JsonWebKey);
 
         AnsiConsole.MarkupLine($":check_mark_button: Generated new signing key");
 
@@ -96,29 +98,30 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
         await File.WriteAllBytesAsync($"{audience}.pub", rsa.ExportRSAPublicKey());
         AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub[/]     [grey](public key)[/]");
 
-        await File.WriteAllTextAsync($"{audience}.pub.txt", pub, Encoding.UTF8);
+        await File.WriteAllTextAsync($"{audience}.pub.txt", pub64, Encoding.UTF8);
         AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.txt[/] [grey](base64-encoded)[/]");
 
         await File.WriteAllTextAsync($"{audience}.pub.jwk",
-            JsonSerializer.Serialize(
-                JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(false))),
-                JsonOptions.JsonWebKey),
+            pubJwk,
             Encoding.UTF8);
         AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.jwk[/] [grey](JWK string)[/]");
 
         var issuer = settings.Issuer.EndsWith('/') ? settings.Issuer : settings.Issuer + "/";
         var claims = new List<Claim>
         {
+            new("iss", issuer),
+            new("aud", $"https://github.com/{audience}"),
             new("client_id", settings.ClientId),
-            new("pub", pub),
+            // non-standard claim containing the base64-encoded public key
+            new("pub", pub64),
+            // Serializes as a JSON string, not an encoded JSON object
+            new("sub_jwk", pubJwk, JsonClaimValueTypes.Json),
         };
 
-        var securityKey = new RsaSecurityKey(rsa.ExportParameters(true));
-        var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
+        var rsaKey = new RsaSecurityKey(rsa.ExportParameters(true));
+        var signingCredentials = new SigningCredentials(rsaKey, SecurityAlgorithms.RsaSha256);
 
         var token = new JwtSecurityToken(
-            issuer: issuer,
-            audience: audience,
             claims: claims,
             signingCredentials: signingCredentials);
 
@@ -130,6 +133,21 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
         AnsiConsole.MarkupLine($":check_mark_button: Generated new sponsorable JWT");
         AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{sponsorable.FullName}[/] [grey](upload to .github repo)[/]");
         AnsiConsole.MarkupLine($"\t:magnifying_glass_tilted_right: [grey]{jwt}[/]");
+
+        // Showcases how use the JWK to perform validation (in this case of the sponsorable manifest itself).
+        var jwk = JsonWebKey.Create(pubJwk);
+        var set = new JsonWebKeySet();
+        set.Keys.Add(jwk);
+        var secKey = set.GetSigningKeys().First();
+
+        // If signature is valid, this will return a principal with the claims, otherwise, it would throw.
+        var jwtPrincipal = new JwtSecurityTokenHandler().ValidateToken(jwt, new TokenValidationParameters
+        {
+            RequireExpirationTime = false,
+            ValidAudience = token.Audiences.First(),
+            ValidIssuer = token.Issuer,
+            IssuerSigningKey = secKey,
+        }, out var _);
 
         return 0;
     }
