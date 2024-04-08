@@ -1,4 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json;
+using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Devlooped.Sponsors;
@@ -7,15 +9,24 @@ namespace Devlooped.Sponsors;
 /// The serializable manifest of a sponsorable user, as persisted 
 /// in the .github/sponsorlink.jwt file.
 /// </summary>
-public class SponsorableManifest
+public class SponsorableManifest(Uri issuer, Uri audience, string clientId, SecurityKey publicKey, string publicRsaKey)
 {
+    int? hashcode;
+
+    /// <summary>
+    /// Parses a JWT into a <see cref="SponsorableManifest"/>.
+    /// </summary>
+    /// <param name="jwt">The JWT containing the sponsorable information.</param>
+    /// <returns>A validated manifest.</returns>
+    /// <exception cref="ArgumentException">A required claim was not found in the JWT.</exception>
     public static SponsorableManifest FromJwt(string jwt)
     {
         var token = new JwtSecurityTokenHandler().ReadJwtToken(jwt);
         var issuer = token.Issuer;
-        var audience = token.Audiences.FirstOrDefault() ?? throw new ArgumentException("Missing issuer claim", nameof(jwt));
-        var pub = token.Claims.FirstOrDefault(c => c.Type == "pub")?.Value ?? throw new ArgumentException("Missing pub claim", nameof(jwt));
-        var jwk = token.Claims.FirstOrDefault(c => c.Type == "sub_jwk")?.Value ?? throw new ArgumentException("Missing sub_jwk claim", nameof(jwt));
+        var audience = token.Audiences.FirstOrDefault() ?? throw new ArgumentException("Missing 'issuer' claim", nameof(jwt));
+        var clientId = token.Claims.FirstOrDefault(c => c.Type == "client_id")?.Value ?? throw new ArgumentException("Missing 'client_id' claim", nameof(jwt));
+        var pub = token.Claims.FirstOrDefault(c => c.Type == "pub")?.Value ?? throw new ArgumentException("Missing 'pub' claim", nameof(jwt));
+        var jwk = token.Claims.FirstOrDefault(c => c.Type == "sub_jwk")?.Value ?? throw new ArgumentException("Missing 'sub_jwk' claim", nameof(jwt));
 
         var key = new JsonWebKeySet
         {
@@ -25,33 +36,65 @@ public class SponsorableManifest
             }
         }.GetSigningKeys().First();
 
-        return new SponsorableManifest
-        {
-            Issuer = issuer,
-            Audience = audience,
-            PublicKey = pub,
-            SecurityKey = key,
-        };
+        return new SponsorableManifest(new Uri(issuer), new Uri(audience), clientId,key, pub);
+    }
+
+    /// <summary>
+    /// Converts (and optionally signs) the manifest into a JWT.
+    /// </summary>
+    /// <param name="signing">Optional credentials when signing the resulting manifest.</param>
+    /// <returns>The JWT manifest.</returns>
+    public string ToJwt(SigningCredentials? signing = default)
+    {
+        var jwk = JsonWebKeyConverter.ConvertFromSecurityKey(SecurityKey);
+
+        var token = new JwtSecurityToken(
+            claims:
+            [
+                new("iss", Issuer),
+                new("aud", Audience),
+                new("client_id", clientId),
+                new("pub", publicRsaKey),
+                new("sub_jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
+            ],
+            signingCredentials: signing);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     /// <summary>
     /// The web endpoint that issues signed JWT to authenticated users.
     /// </summary>
-    public required string Issuer { get; set; }
+    /// <remarks>
+    /// See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.1
+    /// </remarks>
+    public string Issuer => issuer.AbsoluteUri;
     /// <summary>
     /// The audience for the JWT, which is the sponsorable account.
     /// </summary>
-    public required string Audience { get; set; }
+    /// <remarks>
+    /// See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.3
+    /// </remarks>
+    public string Audience => audience.AbsoluteUri;
     /// <summary>
-    /// The type of account of <see cref="Audience"/>.
+    /// The OAuth client ID (i.e. GitHub OAuth App ID) that is used to 
+    /// authenticate the user.
     /// </summary>
-    public AccountType AccountType { get; set; }
+    /// <remarks>
+    /// See https://www.rfc-editor.org/rfc/rfc8693.html#name-client_id-client-identifier
+    /// </remarks>
+    public string ClientId => clientId;
     /// <summary>
     /// Public key that can be used to verify JWT signatures.
     /// </summary>
-    public required string PublicKey { get; set; }
+    public string PublicKey => publicRsaKey;
     /// <summary>
     /// Public key in a format that can be used to verify JWT signatures.
     /// </summary>
-    public required SecurityKey SecurityKey { get; set; }
+    public SecurityKey SecurityKey => publicKey;
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => hashcode ??= HashCode.Combine(Issuer, Audience, ClientId, PublicKey);
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is SponsorableManifest other && GetHashCode() == other.GetHashCode();
 }

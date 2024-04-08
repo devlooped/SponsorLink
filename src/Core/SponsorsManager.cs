@@ -41,7 +41,7 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
 
             var sponsorable = await http.QueryAsync<Sponsorable>(GraphQueries.Sponsorable(audience));
             // If we could retrieve the manifest, we can assume the account is valid
-            manifest.AccountType = sponsorable!.Type;
+            //manifest.AccountType = sponsorable!.Type;
 
             manifest = cache.Set(typeof(SponsorableManifest), manifest, new MemoryCacheEntryOptions
             {
@@ -78,8 +78,9 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
         if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
             audience = audienceUri.Segments[^1].TrimEnd('/');
 
-        // Use the sponsorable token since it has access to sponsorship info even if it's private?
-        var sponsoring = await sponsorable.QueryAsync<string[]>(GraphQueries.IsSponsoredBy(audience, manifest.AccountType, logins));
+        // Use the sponsorable token since it has access to sponsorship info even if it's private
+        // TODO:
+        var sponsoring = await sponsorable.QueryAsync<string[]>(GraphQueries.IsSponsoredBy(audience, AccountType.Organization, logins));
         var accounts = new HashSet<string>(sponsoring ?? []);
 
         // User is checked for auth on first line above
@@ -98,7 +99,7 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
         // user has multiple GH accounts, one for each org he works for (i.e. a consultant), and a 
         // personal account. The personal account would not be otherwise associated with any of his 
         // client's orgs, but he could still add his work emails to his personal account, keep them 
-        // private and verified, and then use them to access the be considered an org sponsor.
+        // private and verified, and then use them to access and be considered an org sponsor.
 
         var contribs = await sponsor.QueryAsync<string[]>(GraphQueries.UserContributions);
         if (contribs is not null &&

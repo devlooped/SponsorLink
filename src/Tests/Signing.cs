@@ -115,13 +115,10 @@ public class Signing(ITestOutputHelper Output)
     {
         var rsa = RSA.Create();
         rsa.ImportRSAPrivateKey(File.ReadAllBytes(@"../../../signing.key"), out _);
-
+        
         var securityKey = new RsaSecurityKey(rsa.ExportParameters(true));
         var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
-
-        var pubJwk = JsonSerializer.Serialize(
-            JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(false))),
-            JsonOptions.JsonWebKey);
+        var pubJwk = JsonWebKeyConverter.ConvertFromSecurityKey(new RsaSecurityKey(rsa.ExportParameters(false)));
 
         var claims = new List<Claim>
         {
@@ -129,7 +126,7 @@ public class Signing(ITestOutputHelper Output)
             new("aud", "https://github.com/devlooped"),
             new("client_id", "a82350fb2bae407b3021"),
             new("pub", File.ReadAllText(@"../../../signing.txt", Encoding.UTF8)),
-            new("sub_jwk", pubJwk, JsonClaimValueTypes.Json),
+            new("sub_jwk", JsonSerializer.Serialize(pubJwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
         };
 
         var token = new JwtSecurityToken(
@@ -146,31 +143,41 @@ public class Signing(ITestOutputHelper Output)
         // Read the public key from the manifest itself before validating
         token = new JwtSecurityTokenHandler().ReadJwtToken(jwt);
 
-        var pubvalue = token.Claims.First(c => c.Type == "sub_jwk").Value;
-        var key = JsonWebKey.Create(pubvalue);
-        var set = new JsonWebKeySet();
-        set.Keys.Add(key);
-        var jwtkey = set.GetSigningKeys().First();
+        var jwkJson = token.Claims.First(c => c.Type == "sub_jwk").Value;
+        var jwk = JsonWebKey.Create(jwkJson);
+        var jws = new JsonWebKeySet();
+        jws.Keys.Add(jwk);
+        var jwtKey = jws.GetSigningKeys().First();
+        
+        // NOTE: we cannot recreate the RSAPublicKey from the JWK, so we can never 
+        // compare the raw string, but we can still validate with either one.
 
-        //var pub = RSA.Create();
-        //pub.ImportRSAPublicKey(Convert.FromBase64String(pubvalue), out _);
+        var principal1 = new JwtSecurityTokenHandler().ValidateToken(jwt,
+            new TokenValidationParameters
+            {
+                RequireExpirationTime = false,
+                ValidAudience = token.Audiences.First(),
+                ValidIssuer = token.Issuer,
+                IssuerSigningKey = jwtKey,
+            }, out var securityToken1);
 
-        var validation = new TokenValidationParameters
-        {
-            RequireExpirationTime = false,
-            ValidAudience = token.Audiences.First(),
-            ValidIssuer = token.Issuer,
-            IssuerSigningKey = jwtkey,
-        };
+        var pubRsa = RSA.Create();
+        pubRsa.ImportRSAPublicKey(rsa.ExportRSAPublicKey(), out _);
 
-        var principal = new JwtSecurityTokenHandler().ValidateToken(jwt, validation, out var securityToken);
+        var principal2 = new JwtSecurityTokenHandler().ValidateToken(jwt,
+            new TokenValidationParameters
+            {
+                RequireExpirationTime = false,
+                ValidAudience = token.Audiences.First(),
+                ValidIssuer = token.Issuer,
+                IssuerSigningKey = new RsaSecurityKey(pubRsa),
+            }, out var securityToken2);
 
-        //Assert.Contains("pub", principal.Claims.Select(c => c.Type));
-        Assert.Contains("iss", principal.Claims.Select(c => c.Type));
-        Assert.Contains("aud", principal.Claims.Select(c => c.Type));
+        Assert.Equal(principal1.Claims, principal2.Claims, (Claim a, Claim b) => a.ToString() == b.ToString());
+        Assert.Equal(securityToken1.UnsafeToString(), securityToken2.UnsafeToString());
 
         // Now you can use the principal to extract the claims and do whatever you need to do
-        foreach (var claim in principal.Claims)
+        foreach (var claim in principal1.Claims)
         {
             Output.WriteLine($"{claim.Type}: {claim.Value}");
         }
