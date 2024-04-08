@@ -60,7 +60,7 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
         var audience = settings.Audience ?? user.Login;
 
         // Generate key pair
-        var rsa = RSA.Create(2048);
+        var rsa = RSA.Create(3072);
         if (settings.Key is not null)
         {
             if (!File.Exists(settings.Key))
