@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Spectre.Console.Json;
 
 namespace Devlooped.Sponsors;
 
@@ -132,7 +133,9 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
 
         AnsiConsole.MarkupLine($":check_mark_button: Generated new sponsorable JWT");
         AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{sponsorable.FullName}[/] [grey](upload to .github repo)[/]");
+#if DEBUG
         AnsiConsole.MarkupLine($"\t:magnifying_glass_tilted_right: [grey]{jwt}[/]");
+#endif
 
         // Showcases how use the JWK to perform validation (in this case of the sponsorable manifest itself).
         var jwk = JsonWebKey.Create(pubJwk);
@@ -148,6 +151,11 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
             ValidIssuer = token.Issuer,
             IssuerSigningKey = secKey,
         }, out var _);
+
+        AnsiConsole.Write(new Panel(new JsonText(token.Payload.SerializeToJson()))
+        {
+            Header = new PanelHeader(" JWT Payload "),
+        });
 
         return 0;
     }
