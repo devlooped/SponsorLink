@@ -12,6 +12,7 @@ var host = new HostBuilder()
     .ConfigureAppConfiguration(builder =>
     {
         builder.AddUserSecrets("A85AC898-E41C-4D9D-AD9B-52ED748D9901");
+        // Optionally, use key vault for secrets instead of plain-text app service configuration
         if (Environment.GetEnvironmentVariable("AZURE_KEYVAULT") is string kv)
             builder.AddAzureKeyVault(new Uri($"https://{kv}.vault.azure.net/"), new DefaultAzureCredential());
     })
@@ -33,10 +34,10 @@ var host = new HostBuilder()
         services.AddHttpClient("sponsorable", (sp, http) =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
-            if (config["GH_TOKEN"] is not { Length: > 0 } ghtoken)
+            if (config["GitHub:Token"] is not { Length: > 0 } ghtoken)
             {
-                sp.GetRequiredService<ILogger<Sync>>().LogWarning("Missing required configuration GH_TOKEN");
-                throw new InvalidOperationException("Missing required configuration GH_TOKEN");
+                sp.GetRequiredService<ILogger<Sync>>().LogWarning("Missing required configuration 'GitHub:Token'");
+                throw new InvalidOperationException("Missing required configuration 'GitHub:Token'");
             }
 
             http.BaseAddress = new Uri("https://api.github.com");
@@ -58,8 +59,8 @@ var host = new HostBuilder()
             var config = sp.GetRequiredService<IConfiguration>();
             if (config["SponsorLink:Private"] is not { Length: > 0 } key)
             {
-                sp.GetRequiredService<ILogger<Sync>>().LogError("Missing required configuration 'SponsorLink:Private'.");
-                throw new InvalidOperationException("Missing required configuration 'SponsorLink:Private'.");
+                sp.GetRequiredService<ILogger<Sync>>().LogError("Missing required configuration 'SponsorLink:Private'");
+                throw new InvalidOperationException("Missing required configuration 'SponsorLink:Private'");
             }
 
             // The key (as well as the yaml manifest) can be generated using gh sponsors init

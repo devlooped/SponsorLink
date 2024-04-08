@@ -37,8 +37,8 @@ public class SponsorManagerTests : IDisposable
         services.AddHttpClient("sponsor", (sp, http) =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
-            if (config["GH_SPONSOR"] is not { Length: > 0 } ghtoken)
-                throw new InvalidOperationException("Missing required configuration GH_TOKEN");
+            if (config["GitHub:Token"] is not { Length: > 0 } ghtoken)
+                throw new InvalidOperationException("Missing required configuration GitHub:Token");
 
             http.BaseAddress = new Uri("https://api.github.com");
             http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Devlooped.SponsorLink.Tests", ThisAssembly.Info.InformationalVersion));
@@ -48,8 +48,8 @@ public class SponsorManagerTests : IDisposable
         services.AddHttpClient("sponsorable", (sp, http) =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
-            if (config["GH_TOKEN"] is not { Length: > 0 } ghtoken)
-                throw new InvalidOperationException("Missing required configuration GH_TOKEN");
+            if (config["GitHub:Sponsorable"] is not { Length: > 0 } ghtoken)
+                throw new InvalidOperationException("Missing required configuration GitHub:Sponsorable");
 
             http.BaseAddress = new Uri("https://api.github.com");
             http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Devlooped.SponsorLink.Tests", ThisAssembly.Info.InformationalVersion));
@@ -75,7 +75,7 @@ public class SponsorManagerTests : IDisposable
         ClaimsPrincipal.ClaimsPrincipalSelector = () => principal;
     }
 
-    [SecretsFact("GH_SPONSOR", "GH_TOKEN")]
+    [SecretsFact("GitHub:Token", "GitHub:Sponsorable")]
     public async Task AnonymousUserIsNoSponsor()
     {
         var manager = new SponsorsManager(
@@ -86,24 +86,7 @@ public class SponsorManagerTests : IDisposable
         Assert.Equal(SponsorType.None, await manager.GetSponsorAsync());
     }
 
-    [SecretsFact("GH_SPONSOR", "GH_TOKEN")]
-    public async Task GetManifestOverridesTokenAccountFromConfig()
-    {
-        var manager = new SponsorsManager(
-            configuration, httpFactory,
-            services.GetRequiredService<IMemoryCache>(),
-            Mock.Of<ILogger<SponsorsManager>>());
-
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => await manager.GetManifestAsync());
-
-        configuration["SPONSORLINK_ACCOUNT"] = "devlooped";
-
-        var manifest = await manager.GetManifestAsync();
-
-        Assert.Equal("devlooped", manifest.Audience);
-    }
-
-    [SecretsFact("GH_SPONSOR", "GH_TOKEN")]
+    [SecretsFact("GitHub:Token", "GitHub:Sponsorable")]
     public async Task GetUserOrOrganization()
     {
         using var http = httpFactory.CreateClient("sponsorable");
@@ -115,11 +98,11 @@ public class SponsorManagerTests : IDisposable
             (await http.QueryAsync<Sponsorable>(GraphQueries.Sponsorable("kzu")))?.Type);
     }
 
-    [SecretsFact("GH_TOKEN", "GH_USER_PRIVATE")]
+    [SecretsFact("GitHub:PrivateUser", "GitHub:Sponsorable")]
     public async Task GetPrivateUserSponsor()
     {
-        configuration["SPONSORLINK_ACCOUNT"] = "devlooped";
-        configuration["GH_SPONSOR"] = configuration["GH_USER_PRIVATE"];
+        configuration["SponsorLink:Account"] = "devlooped";
+        configuration["GitHub:Token"] = configuration["GitHub:PrivateUser"];
 
         await Authenticate();
 
@@ -131,11 +114,11 @@ public class SponsorManagerTests : IDisposable
         Assert.Equal(SponsorType.User, await manager.GetSponsorAsync());
     }
 
-    [SecretsFact("GH_TOKEN", "GH_ORG_PUBLIC")]
+    [SecretsFact("GitHub:Token", "GitHub:PublicOrg")]
     public async Task GetPublicOrgSponsor()
     {
-        configuration["SPONSORLINK_ACCOUNT"] = "devlooped";
-        configuration["GH_SPONSOR"] = configuration["GH_ORG_PUBLIC"];
+        configuration["SponsorLink:Account"] = "devlooped";
+        configuration["GitHub:Token"] = configuration["GitHub:PublicOrg"];
 
         await Authenticate();
 

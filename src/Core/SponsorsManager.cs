@@ -2,32 +2,26 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using SharpYaml.Serialization;
 
 namespace Devlooped.Sponsors;
 
 public class SponsorsManager(IConfiguration configuration, IHttpClientFactory httpFactory, IMemoryCache cache, ILogger<SponsorsManager> logger)
 {
-    static readonly Serializer serializer = new(new SerializerSettings
-    {
-        NamingConvention = new CamelCaseNamingConvention()
-    });
-
     public async Task<SponsorableManifest> GetManifestAsync()
     {
         if (!cache.TryGetValue<SponsorableManifest>(typeof(SponsorableManifest), out var manifest) || manifest is null)
         {
             // Populate manifest
-            if (configuration["SPONSORLINK_ACCOUNT"] is not { Length: > 0 } account)
+            if (configuration["SponsorLink:Account"] is not { Length: > 0 } account)
             {
-                // Auto-discovery by fetching from [user]/.github/sponsorlink.yml
+                // Auto-discovery by fetching from [user]/.github/sponsorlink.jwt
                 using var gh = httpFactory.CreateClient("sponsorable");
                 account = await gh.QueryAsync(GraphQueries.ViewerLogin);
 
-                logger.Assert(account is { Length: > 0 }, "Failed to determine sponsorable user from configured GH_TOKEN");
+                logger.Assert(account?.Length > 0, "Failed to determine sponsorable user from configured GitHub token.");
             }
 
-            var url = $"https://github.com/{account}/.github/raw/main/sponsorlink.yml";
+            var url = $"https://github.com/{account}/.github/raw/main/sponsorlink.jwt";
 
             using var http = httpFactory.CreateClient("sponsorable");
             var response = await http.GetAsync(url);
@@ -36,17 +30,16 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
                 "Failed to retrieve manifest from {Url}: {StatusCode} {Reason}",
                 url, (int)response.StatusCode, await response.Content.ReadAsStringAsync());
 
-            var yaml = await response.Content.ReadAsStringAsync();
-            manifest = serializer.Deserialize<SponsorableManifest>(yaml);
+            var jwt = await response.Content.ReadAsStringAsync();
+            manifest = SponsorableManifest.FromJwt(jwt);
 
-            logger.Assert(manifest is not null,
-                "Failed to deserialize YAML manifest from {Url}", url);
-
-            // Audience defaults to the manifest url user/org
-            manifest.Audience ??= new Uri(url).Segments[1].Trim('/');
+            var audience = manifest.Audience;
 
             // Set the account type
-            var sponsorable = await http.QueryAsync<Sponsorable>(GraphQueries.Sponsorable(manifest.Audience));
+            if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
+                audience = audienceUri.Segments[^1].TrimEnd('/');
+
+            var sponsorable = await http.QueryAsync<Sponsorable>(GraphQueries.Sponsorable(audience));
             // If we could retrieve the manifest, we can assume the account is valid
             manifest.AccountType = sponsorable!.Type;
 
@@ -79,8 +72,14 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
         var manifest = await GetManifestAsync();
         logger.Assert(manifest is not null, "Failed to retrieve sponsorable manifest");
 
+        var audience = manifest.Audience;
+
+        // Set the account type
+        if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
+            audience = audienceUri.Segments[^1].TrimEnd('/');
+
         // Use the sponsorable token since it has access to sponsorship info even if it's private?
-        var sponsoring = await sponsorable.QueryAsync<string[]>(GraphQueries.IsSponsoredBy(manifest.Audience, manifest.AccountType, logins));
+        var sponsoring = await sponsorable.QueryAsync<string[]>(GraphQueries.IsSponsoredBy(audience, manifest.AccountType, logins));
         var accounts = new HashSet<string>(sponsoring ?? []);
 
         // User is checked for auth on first line above

@@ -38,13 +38,13 @@ public static class GraphQueries
             query { 
                 {{ type }}(login: "{{ account }}") {
                     {{ for login in candidates }}
-                    {{ login }}: isSponsoredBy(accountLogin:"{{ login }}")
+                    {{ login | string.replace "-" "___" }}: isSponsoredBy(accountLogin:"{{ login }}")
                     {{ end }}
                 }
             }
             """).Render(new { account, type = type.ToString().ToLowerInvariant(), candidates }),
         """
-        [(.data.[] | to_entries[] | select(.value == true) | .key)]
+        [(.data.[] | to_entries[] | select(.value == true) | .key | gsub("___"; "-"))]
         """);
 
     public static GraphQuery UserSponsorCandidates => (
