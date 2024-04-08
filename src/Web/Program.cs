@@ -9,10 +9,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 var host = new HostBuilder()
-    .ConfigureAppConfiguration((context, builder) =>
+    .ConfigureAppConfiguration(builder =>
     {
         builder.AddUserSecrets("A85AC898-E41C-4D9D-AD9B-52ED748D9901");
-        if (context.Configuration["Azure:KeyVault"] is string kv)
+        if (Environment.GetEnvironmentVariable("AZURE_KEYVAULT") is string kv)
             builder.AddAzureKeyVault(new Uri($"https://{kv}.vault.azure.net/"), new DefaultAzureCredential());
     })
     .ConfigureFunctionsWebApplication(builder =>
