@@ -129,23 +129,32 @@
   <data name="FirstRun_How" xml:space="preserve">
     <value>As a GitHub CLI extension, SponsorLink leverages your currently authenticated user [lime]{0}[/] to locate your personal sponsorships, as well as your organizations'. It does this entirely locally, communicating exclusively with the GitHub API itself.
 
-This information is used to locally create a JWT token with hash claims of [blue]base62(sha256([/][green][[salt]][/][blue]+[/][green][[user/org]][/][blue]+[/][green][[sponsored]][/][blue]))[/].
+This information is then used to locate sponsored accounts that use SponsorLink, by looking up their JWT manifest, located at [link=https://github.com/devlooped/.github/blob/main/sponsorlink.jwt][blue]https://github.com/[/][grey][[user/org]][/][blue]/.github/sponsorlink.jwt[/][/]. If the manifest is present, we will:
 
-The [bold]random salt[/] is initialized to a GUID the first time you run this extension. Once hashed, the values are entirely opaque. Packages can use this JWT manifest to check (entirely offline) for hashed claims matching the salt + current user + sponsorable account.
+:backhand_index_pointing_right: read from the manifest: issuer URI, public key and GitHub OAuth client (app) ID
+:backhand_index_pointing_right: request GitHub OAuth app authorization via the default browser to get a limited acccess token
+:backhand_index_pointing_right: issue a GET request with that token to [blue][[issuer]]/sponsor[/] and get a sponsorship JWT token 
+:backhand_index_pointing_right: verify and save token for later offline access and validation by libraries and tools
 
-This manifest needs to be explicitly sync'ed once a month, which is the only point at which it is sent to our backend purely for signing with SponsorLink's private key (and refreshing the expiration date).</value>
+You can revoke access to your information at any time at [link]https://github.com/settings/applications[/]. You can also inspect both the manifest and sponsorship JWT tokens at any time using [link]https://jwt.io/[/], for example. Both are persisted under [blue]~/.sponsorlink[/] ([blue]%userprofile%\.sponsorlink[/] on Windows).
+
+This manifest needs to be sync'ed and downloaded once a month, which is the only point at which each sponsored backend computes, signs your sponsorship token and sets a new expiration date, purely on demand.
+
+Learn more about SponsorLink at [link]https://www.devlooped.com/SponsorLink/[/].</value>
     <comment>How</comment>
   </data>
   <data name="FirstRun_HowTitle" xml:space="preserve">
     <value>How it works</value>
   </data>
-  <data name="FirstRun_Privacy" xml:space="preserve">
+  <data name="FirstRun_Privacy" xml:space="preserve">y
     <value>SponsorLink is build by developers for developers. As such, we don't have an attorney or a big corporation backing this. If you're running this tool, it's likely because you are currently sponsoring or considering sponsoring the developer of a package you enjoy.
 
-The short story is: we never persist or access *any* personally identifying information, with the sole exception being your GitHub user identifier (an integer like [grey]169707[/]) which you authorize as part of authenticating with your GitHub account to our backend API (we use Auth0 for this). This identifier is already public for everyone on GitHub (i.e. open [link]https://api.github.com/users/dependabot-bot[/] or [link]https://api.github.com/orgs/dependabot[/]).
+The short story is: 
+:backhand_index_pointing_right: sponsorship manifests are purely local and offline :check_mark_button: no info persisted in the cloud
+:backhand_index_pointing_right: the backend uses a limited GitHub OAuth app token  :check_mark_button: only email addresses are used to determine sponsorships
+:backhand_index_pointing_right: you can be a direct or indirect supporter/sponsor  :purple_heart: direct sponsorship, via an organization or active project contributions 
 
-Everything else is hashed and salted locally with a random GUID so the resulting hashes cannot be used to uncover any of the original information. All checks are performed fully offline with no connnection back to any external servers. 
-
+Code for the backend as well as this CLI extension is open source and available at [link]https://www.devlooped.com/SponsorLink/[/].
 Please read the full privacy policy at [link]https://github.com/devlooped/SponsorLink/blob/main/privacy.md[/] to learn more.</value>
     <comment>Privacy</comment>
   </data>

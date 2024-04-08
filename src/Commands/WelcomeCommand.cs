@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using static Devlooped.SponsorLink;
 
 namespace Devlooped.Sponsors;
 
@@ -38,30 +40,12 @@ public class WelcomeCommand(ICommandApp app, Account user) : Command
             return -1;
         }
 
-        //var choices = new[] { ThisAssembly.Strings.FirstRun.Accept, ThisAssembly.Strings.FirstRun.Cancel };
-        //var selection = AnsiConsole.Prompt(new SelectionPrompt<string>()
-        //        .Title(ThisAssembly.Strings.FirstRun.Acceptance)
-        //        .AddChoices(choices));
-
-        //if (selection == choices[1])
-        //{
-        //    return -1;
-        //}
+        Variables.FirstRunCompleted = true;
 
         if (AnsiConsole.Confirm(ThisAssembly.Strings.FirstRun.SyncNow))
         {
-            return app.Run(new[] { "sync" });
+            return app.Run(["sync"]);
         }
-
-        //var choices = new[] { ThisAssembly.Strings.Yes, ThisAssembly.Strings.No };
-        //var selection = AnsiConsole.Prompt(new SelectionPrompt<string>()
-        //        .Title(ThisAssembly.Strings.FirstRun.SyncNow)
-        //        .AddChoices(choices));
-
-        //if (selection == choices[0])
-        //{
-        //    return app.Run(new[] { "sync" });
-        //}
 
         return 0;
     }

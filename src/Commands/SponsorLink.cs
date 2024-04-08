@@ -106,6 +106,11 @@ public static partial class SponsorLink
     public class Constants
     {
         /// <summary>
+        /// Whether the first run experience has been completed.
+        /// </summary>
+        public const string FirstRunVariable = "SPONSORLINK_FIRSTRUN";
+
+        /// <summary>
         /// Base64-encoded public key used to verify the manifest JWT token.
         /// </summary>
         public const string PublicKey = "MIIBCgKCAQEAo5bLk9Iim5twrxGVzJ4OxfxDuvy3ladTNvcFNv4Hm9/1No89SISKTXZ1bSABTnqH6z/DpklcHveGMSmsncEvUebrg7tX6+M3byVXU6Q/d82PtwgbDXT9d10A4lePS2ioJQqlHWQy/fuNwe7FjptV+yguf5IUxVRdZ77An1IyGUk9Cj6n4RuYIPrP5O0AmFPHOwEzywUWVaV1NHYRe0Th6i5/hyDV13K7+LP9VzwucnWEvzujtnL6ywZDeaKkwfeFsXZyYywHj6oJK9Obed/nu1e+69fmUqprtc0t/3A9uHc0G/0sDNLLAd83j2NSOS2IHJo17azOLFuhekka8dSKnQIDAQAB";
@@ -143,6 +148,15 @@ public static partial class SponsorLink
     /// </summary>
     public static partial class Variables
     {
+        /// <summary>
+        /// Gets/sets whether the first run experience has been completed.
+        /// </summary>
+        public static bool FirstRunCompleted
+        {
+            get => !bool.TryParse(Environment.GetEnvironmentVariable(Constants.FirstRunVariable, EnvironmentVariableTarget.User), out var run) || !run;
+            set => Environment.SetEnvironmentVariable(Constants.FirstRunVariable, value.ToString().ToLowerInvariant(), EnvironmentVariableTarget.User);
+        }
+
         /// <summary>
         /// Last used access token to invoke SponsorLink backend APIs.
         /// </summary>
