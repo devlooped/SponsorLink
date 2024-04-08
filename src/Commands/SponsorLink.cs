@@ -230,7 +230,7 @@ public static partial class SponsorLink
         public static ManifestStatus TryRead(out Manifest? manifest)
             => TryRead(out manifest, PublicKey, Variables.Manifest, Variables.InstallationId);
 
-        internal static ManifestStatus TryRead(out Manifest? manifest, RSA rsa, string? jwt, string? salt)
+        public static ManifestStatus TryRead(out Manifest? manifest, RSA rsa, string? jwt, string? salt)
         {
             manifest = default;
 
@@ -267,7 +267,7 @@ public static partial class SponsorLink
         /// <summary>
         /// Reads a manifest and validates it using the given public key.
         /// </summary>
-        internal static Manifest Read(string token, string salt, RSA rsa)
+        public static Manifest Read(string token, string salt, RSA rsa)
         {
             var validation = new TokenValidationParameters
             {
@@ -311,7 +311,7 @@ public static partial class SponsorLink
         /// <param name="emails">Email(s) of the manifest owner.</param>
         /// <param name="domains">Verified organization domains the user belongs to.</param>
         /// <param name="sponsoring">The accounts the manifest owner is sponsoring.</param>
-        internal static Manifest Create(string salt, string user, string[] emails, string[] domains, string[] sponsoring, DateTime expiration)
+        public static Manifest Create(string salt, string user, string[] emails, string[] domains, string[] sponsoring, DateTime expiration)
         {
             var linked = new HashSet<string>();
 

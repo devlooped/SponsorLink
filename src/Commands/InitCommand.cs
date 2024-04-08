@@ -74,31 +74,6 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
 
         var pub = Convert.ToBase64String(rsa.ExportRSAPublicKey());
 
-        var options = new JsonSerializerOptions(JsonSerializerOptions.Default)
-        {
-            WriteIndented = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault | JsonIgnoreCondition.WhenWritingNull,
-            TypeInfoResolver = new DefaultJsonTypeInfoResolver
-            {
-                Modifiers =
-                {
-                    info =>
-                    {
-                        if (info.Type != typeof(JsonWebKey))
-                            return;
-
-                        foreach (var prop in info.Properties)
-                        {
-                            // Don't serialize empty lists, makes for more concise JWKs
-                            prop.ShouldSerialize = (obj, value) =>
-                                value is not null &&
-                                (value is not IList<string> list || list.Count > 0);
-                        }
-                    }
-                }
-            }
-        };
-
         AnsiConsole.MarkupLine($":check_mark_button: Generated new signing key");
 
         var baseName = Path.Combine(Directory.GetCurrentDirectory(), audience);
@@ -114,7 +89,7 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
         await File.WriteAllTextAsync($"{audience}.key.jwk",
             JsonSerializer.Serialize(
                 JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(true))),
-                options),
+                JsonOptions.JsonWebKey),
             Encoding.UTF8);
         AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key.jwk[/] [grey](JWK string)[/]");
 
@@ -127,7 +102,7 @@ public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settin
         await File.WriteAllTextAsync($"{audience}.pub.jwk",
             JsonSerializer.Serialize(
                 JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(false))),
-                options),
+                JsonOptions.JsonWebKey),
             Encoding.UTF8);
         AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.jwk[/] [grey](JWK string)[/]");
 
