@@ -1,6 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Json;
-using System.Reflection;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
@@ -18,15 +17,6 @@ namespace Devlooped.Sponsors;
 /// </summary>
 class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, ILogger<Sync> logger)
 {
-    [Function("version")]
-    public IActionResult Version([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
-        => new ContentResult
-        {
-            Content = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3),
-            ContentType = "text/plain",
-            StatusCode = 200,
-        };
-
     [Function("me")]
     public async Task<IActionResult> UserAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
