@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
-using System.Threading.Tasks;
 using SharpYaml;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -46,7 +41,7 @@ public partial class SyncCommand(Account user) : AsyncCommand
         // TODO: we'll need to account for pagination after 100 sponsorships is commonplace :)
         if (status.Start("Querying user sponsorships", _ =>
         {
-            if (!GitHub.TryQuery(GraphQL.UserSponsorships, out json) || string.IsNullOrEmpty(json))
+            if (!GitHub.TryQuery(GraphQueries.ViewerSponsorships, out json) || string.IsNullOrEmpty(json))
             {
                 AnsiConsole.MarkupLine("[red]x[/] Could not query GitHub for user sponsorships.");
                 return -1;
@@ -63,7 +58,7 @@ public partial class SyncCommand(Account user) : AsyncCommand
         // It's unlikely that any account would belong to more than 100 orgs.
         if (status.Start("Querying user organizations", _ =>
         {
-            if (!GitHub.TryQuery(GraphQL.UserOrganizations, out json) || string.IsNullOrEmpty(json))
+            if (!GitHub.TryQuery(GraphQueries.ViewerOrganizations, out json) || string.IsNullOrEmpty(json))
             {
                 AnsiConsole.MarkupLine("[red]x[/] Could not query GitHub for user organizations.");
                 return -1;
@@ -105,7 +100,7 @@ public partial class SyncCommand(Account user) : AsyncCommand
                 ctx.Status($"Querying {org.Login} sponsorships");
 
                 // TODO: we'll need to account for pagination after 100 sponsorships is commonplace :)
-                if (GitHub.TryQuery(GraphQL.OrganizationSponsorships, out json, ("login", org.Login)) &&
+                if (GitHub.TryQuery(GraphQueries.OrganizationSponsorships(org.Login), out json) &&
                     json?.Length > 0 &&
                     JsonSerializer.Deserialize<string[]>(json, JsonOptions.Default) is { } sponsored &&
                     sponsored.Length > 0)
@@ -201,7 +196,7 @@ public partial class SyncCommand(Account user) : AsyncCommand
     {
         var contributed = new HashSet<string>();
 
-        if (!GitHub.TryQuery(GraphQL.UserContributions, out var json) || !(json?.Length > 0))
+        if (!GitHub.TryQuery(GraphQueries.ViewerContributions, out var json) || !(json?.Length > 0))
         {
             AnsiConsole.MarkupLine("[red]x[/] Could not query GitHub for user sponsorships.");
             return contributed;

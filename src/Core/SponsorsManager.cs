@@ -101,7 +101,7 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
         // client's orgs, but he could still add his work emails to his personal account, keep them 
         // private and verified, and then use them to access and be considered an org sponsor.
 
-        var contribs = await sponsor.QueryAsync<string[]>(GraphQueries.UserContributions);
+        var contribs = await sponsor.QueryAsync<string[]>(GraphQueries.ViewerContributions);
         if (contribs is not null &&
             contribs.Contains(manifest.Audience))
         {
