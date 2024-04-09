@@ -28,7 +28,6 @@ jobs:
       - name: 🙏 build
         run: |
           dotnet build -m:1
-          dotnet pack src/Package
           dotnet build ./samples/dotnet/
           dotnet build src/Web --output ./app
 

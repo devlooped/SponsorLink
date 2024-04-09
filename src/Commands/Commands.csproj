@@ -5,6 +5,7 @@
     <RootNamespace>Devlooped.Sponsors</RootNamespace>
     <TargetFramework>net8.0</TargetFramework>
     <PackageId>Devlooped.Sponsors.Commands</PackageId>
+    <Description>$(PackageId)</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +13,7 @@
     <PackageReference Include="JWT" Version="10.1.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="7.5.1" />
+    <PackageReference Include="NuGetizer" Version="1.2.1" PrivateAssets="all" />
     <PackageReference Include="Spectre.Console.Analyzer" Version="0.47.0" PrivateAssets="all" />
     <PackageReference Include="Spectre.Console.Cli" Version="0.47.0" />
     <PackageReference Include="Spectre.Console.Json" Version="0.47.0" />

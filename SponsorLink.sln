@@ -8,17 +8,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "src\Tests\Tests.cs
 		{B671E85F-9735-4864-9B66-69952FC0D52A} = {B671E85F-9735-4864-9B66-69952FC0D52A}
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4647FAB9-797D-4EAF-9488-DA68A030D6F9}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-		.netconfig = .netconfig
-		src\Directory.props = src\Directory.props
-		src\Directory.targets = src\Directory.targets
-		privacy.md = privacy.md
-		readme.md = readme.md
-		src\readme.md = src\readme.md
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Package", "src\Package\Package.csproj", "{B671E85F-9735-4864-9B66-69952FC0D52A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Commands", "src\Commands\Commands.csproj", "{7BFC5488-26EB-47FF-8EF8-59BBD227EA3B}"
@@ -27,7 +16,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web", "src\Web\Web.csproj",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "src\Core\Core.csproj", "{B6A94443-3F18-4BBD-997B-3DEB38D2E8C8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cli", "src\Cli\Cli.csproj", "{9C7A2F6C-B633-453A-AFAB-2EB1115569EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cli", "src\Cli\Cli.csproj", "{9C7A2F6C-B633-453A-AFAB-2EB1115569EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
