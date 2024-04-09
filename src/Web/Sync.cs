@@ -1,7 +1,9 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +11,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 
 namespace Devlooped.Sponsors;
 
@@ -20,7 +23,8 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
     [Function("me")]
     public async Task<IActionResult> UserAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
-        var clientId = configuration["WEBSITE_AUTH_GITHUB_CLIENT_ID"];
+        if (!TryGetClientId(configuration, logger, out var clientId))
+            return new StatusCodeResult(500);
 
         if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
         {
@@ -70,7 +74,8 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
     [Function("sponsor")]
     public async Task<IActionResult> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
-        var clientId = configuration["WEBSITE_AUTH_GITHUB_CLIENT_ID"];
+        if (!TryGetClientId(configuration, logger, out var clientId))
+            return new StatusCodeResult(500);
 
         if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
         {
@@ -87,6 +92,13 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         }
 
         var manifest = await sponsors.GetManifestAsync();
+
+        if (manifest.ClientId != clientId)
+        {
+            logger.LogError("Ensure the GitHub identity provider client ID matches the one in the manifest.");
+            return new StatusCodeResult(500);
+        }
+
         var sponsor = await sponsors.GetSponsorAsync();
 
         if (sponsor == SponsorType.None ||
@@ -139,6 +151,30 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         };
     }
 
+    static bool TryGetClientId(IConfiguration configuration, ILogger logger, [NotNullWhen(true)] out string? clientId)
+    {
+        clientId = null;
+        if (!bool.TryParse(configuration["WEBSITE_AUTH_ENABLED"], out var authEnabled) || !authEnabled)
+        {
+            logger.LogError("Ensure App Service authentication is enabled.");
+            return false;
+        }
+
+        if (configuration["WEBSITE_AUTH_V2_CONFIG_JSON"] is not { Length: > 0 } json || 
+            JObject.Parse(json) is not { } data || 
+            data.SelectToken("$.identityProviders.gitHub") is not { } provider ||
+            JsonSerializer.Deserialize<GitHubProvider>(provider.ToString(), new JsonSerializerOptions(JsonSerializerDefaults.Web)) is not { } github || 
+            !github.Enabled)
+        {
+            logger.LogError("Ensure GitHub identity provider is configured in App Service authentication.");
+            return false;
+        }
+
+        clientId = github.Registration.ClientId;
+
+        return !string.IsNullOrEmpty(clientId);
+    }
+
     static string CreateJwt(RSA rsa, SponsorableManifest manifest, List<Claim> claims)
     {
         var signing = new SigningCredentials(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256);
@@ -153,14 +189,18 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
             DateTime.UtcNow.Millisecond,
             DateTimeKind.Utc);
 
+        claims.Insert(0, new("iss", manifest.Issuer));
+        claims.Insert(1, new("aud", manifest.Audience));
+
         var jwt = new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
-            issuer: manifest.Issuer,
-            audience: manifest.Audience,
+            claims: claims,
             expires: expiration,
-            signingCredentials: signing,
-            claims: claims
+            signingCredentials: signing
         ));
 
         return jwt;
     }
+
+    public record GitHubProvider(bool Enabled, Registration Registration);
+    public record Registration(string ClientId);
 }
