@@ -1,29 +1,34 @@
 ﻿using System.Security.Claims;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Devlooped.Sponsors;
 
-public class SponsorsManager(IConfiguration configuration, IHttpClientFactory httpFactory, IMemoryCache cache, ILogger<SponsorsManager> logger)
+public class SponsorsManager(
+    IConfiguration configuration, IHttpClientFactory httpFactory, 
+    IGraphQueryClientFactory graphFactory,
+    IMemoryCache cache, ILogger<SponsorsManager> logger)
 {
     public async Task<SponsorableManifest> GetManifestAsync()
     {
         if (!cache.TryGetValue<SponsorableManifest>(typeof(SponsorableManifest), out var manifest) || manifest is null)
         {
+            var client = graphFactory.Create("sponsorable");
+
             // Populate manifest
             if (configuration["SponsorLink:Account"] is not { Length: > 0 } account)
             {
                 // Auto-discovery by fetching from [user]/.github/sponsorlink.jwt
-                using var gh = httpFactory.CreateClient("sponsorable");
-                account = await gh.QueryAsync(GraphQueries.ViewerLogin);
-
+                account = await client.QueryAsync(GraphQueries.ViewerLogin);
                 logger.Assert(account?.Length > 0, "Failed to determine sponsorable user from configured GitHub token.");
             }
 
             var url = $"https://github.com/{account}/.github/raw/main/sponsorlink.jwt";
 
-            using var http = httpFactory.CreateClient("sponsorable");
+            // Manifest should be public, so no need for any special HTTP client.
+            using var http = httpFactory.CreateClient();
             var response = await http.GetAsync(url);
 
             logger.Assert(response.IsSuccessStatusCode,
@@ -39,7 +44,7 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
             if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
                 audience = audienceUri.Segments[^1].TrimEnd('/');
 
-            var sponsorable = await http.QueryAsync<Sponsorable>(GraphQueries.Sponsorable(audience));
+            //var sponsorable = await client.QueryAsync<Account>(GraphQueries.Sponsorable(audience));
             // If we could retrieve the manifest, we can assume the account is valid
             //manifest.AccountType = sponsorable!.Type;
 
@@ -62,11 +67,11 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
         if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
             return SponsorType.None;
 
-        // This uses the current authenticated user to query GH API
-        using var sponsor = httpFactory.CreateClient("sponsor");
-        using var sponsorable = httpFactory.CreateClient("sponsorable");
+        var sponsor = graphFactory.Create("sponsor");
+        var sponsorable = graphFactory.Create("sponsorable");
 
-        var logins = await sponsor.QueryAsync<string[]>(GraphQueries.UserSponsorCandidates);
+        // This uses the current authenticated user to query GH API
+        var logins = await sponsor.QueryAsync<string[]>(GraphQueries.ViewerSponsorableCandidates);
         logger.Assert(logins is not null, "Failed to retrieve user sponsor candidates");
 
         var manifest = await GetManifestAsync();
@@ -79,7 +84,7 @@ public class SponsorsManager(IConfiguration configuration, IHttpClientFactory ht
             audience = audienceUri.Segments[^1].TrimEnd('/');
 
         // Use the sponsorable token since it has access to sponsorship info even if it's private
-        // TODO:
+        // TODO: check user account type (user/org)
         var sponsoring = await sponsorable.QueryAsync<string[]>(GraphQueries.IsSponsoredBy(audience, AccountType.Organization, logins));
         var accounts = new HashSet<string>(sponsoring ?? []);
 

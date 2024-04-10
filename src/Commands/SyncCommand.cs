@@ -11,7 +11,7 @@ using static Devlooped.SponsorLink;
 namespace Devlooped.Sponsors;
 
 [Description("Synchronizes the sponsorships manifest")]
-public partial class SyncCommand(Account user) : AsyncCommand
+public partial class SyncCommand(AccountInfo user) : AsyncCommand
 {
     record Organization(string Login, string Email, string WebsiteUrl);
     record OrgSponsor(string Login, string[] Sponsorables);
@@ -41,7 +41,7 @@ public partial class SyncCommand(Account user) : AsyncCommand
         // TODO: we'll need to account for pagination after 100 sponsorships is commonplace :)
         if (status.Start("Querying user sponsorships", _ =>
         {
-            if (!GitHub.TryQuery(GraphQueries.ViewerSponsorships, out json) || string.IsNullOrEmpty(json))
+            if (!GitHub.TryQuery(GraphQueries.ViewerSponsored, out json) || string.IsNullOrEmpty(json))
             {
                 AnsiConsole.MarkupLine("[red]x[/] Could not query GitHub for user sponsorships.");
                 return -1;

@@ -30,8 +30,9 @@ public class SponsorManagerTests : IDisposable
             .Build();
 
         var services = new ServiceCollection();
-        services.AddHttpClient();
         services.AddMemoryCache();
+
+        services.AddHttpClient(Options.DefaultName, c => c.BaseAddress = new Uri("https://api.github.com"));
 
         // Simulates the registration of the services in the Web app
         services.AddHttpClient("sponsor", (sp, http) =>
@@ -56,6 +57,7 @@ public class SponsorManagerTests : IDisposable
             http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghtoken);
         });
 
+        services.AddGraphQueryClient();
         services.AddSingleton<IConfiguration>(configuration);
         this.services = services.BuildServiceProvider();
         httpFactory = this.services.GetRequiredService<IHttpClientFactory>();
@@ -80,6 +82,7 @@ public class SponsorManagerTests : IDisposable
     {
         var manager = new SponsorsManager(
             configuration, httpFactory,
+            services.GetRequiredService<IGraphQueryClientFactory>(),
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
@@ -92,10 +95,10 @@ public class SponsorManagerTests : IDisposable
         using var http = httpFactory.CreateClient("sponsorable");
 
         Assert.Equal(AccountType.Organization,
-            (await http.QueryAsync<Sponsorable>(GraphQueries.Sponsorable("devlooped")))?.Type);
+            (await http.QueryAsync<Account>(GraphQueries.Sponsorable("devlooped")))?.Type);
 
         Assert.Equal(AccountType.User,
-            (await http.QueryAsync<Sponsorable>(GraphQueries.Sponsorable("kzu")))?.Type);
+            (await http.QueryAsync<Account>(GraphQueries.Sponsorable("kzu")))?.Type);
     }
 
     [SecretsFact("GitHub:PrivateUser", "GitHub:Sponsorable")]
@@ -108,6 +111,7 @@ public class SponsorManagerTests : IDisposable
 
         var manager = new SponsorsManager(
             configuration, httpFactory,
+            services.GetRequiredService<IGraphQueryClientFactory>(),
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
@@ -124,6 +128,7 @@ public class SponsorManagerTests : IDisposable
 
         var manager = new SponsorsManager(
             configuration, httpFactory,
+            services.GetRequiredService<IGraphQueryClientFactory>(),
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 

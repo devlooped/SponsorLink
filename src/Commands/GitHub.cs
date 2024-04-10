@@ -1,11 +1,8 @@
-﻿
-using System;
-using System.Text.Json;
-using GraphQuery = (string Query, string? JQ);
+﻿using System.Text.Json;
 
 namespace Devlooped.Sponsors;
 
-public record Account(int Id, string Login)
+public record AccountInfo(int Id, string Login)
 {
     public string[] Emails { get; init; } = Array.Empty<string>();
 }
@@ -41,7 +38,7 @@ public static class GitHub
         return Process.TryExecute("gh", args, out result);
     }
 
-    public static Account? Authenticate()
+    public static AccountInfo? Authenticate()
     {
         if (!Process.TryExecute("gh", "auth status -h github.com", out var output) || output is null)
             return default;
@@ -52,7 +49,7 @@ public static class GitHub
         if (!Process.TryExecute("gh", "api user", out output) || output is null)
             return default;
 
-        if (JsonSerializer.Deserialize<Account>(output, JsonOptions.Default) is not { } account)
+        if (JsonSerializer.Deserialize<AccountInfo>(output, JsonOptions.Default) is not { } account)
             return default;
 
         if (!TryApi("user/emails", "[.[] | select(.verified == true) | .email]", out output) ||

@@ -12,7 +12,7 @@ using Spectre.Console.Json;
 namespace Devlooped.Sponsors;
 
 [Description("Initializes a sponsorable manifest and token")]
-public partial class InitCommand(Account user) : AsyncCommand<InitCommand.Settings>
+public partial class InitCommand(AccountInfo user) : AsyncCommand<InitCommand.Settings>
 {
     public class Settings : CommandSettings
     {

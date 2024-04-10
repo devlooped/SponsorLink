@@ -35,12 +35,18 @@ class Version(IConfiguration configuration, ILogger<Version> logger, IWebHostEnv
     [Function("pub")]
     public IActionResult Test([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
+        if (configuration["SponsorLink:Public"] is not { Length: > 0 } key)
+        {
+            logger.LogError("Missing required configuration 'SponsorLink:Public'");
+            return new StatusCodeResult(500);
+        }
+
         if (req.GetTypedHeaders().Accept?.Any(x =>
                 x.MediaType == "application/json" ||
                 x.MediaType == "application/jwk+json") == true)
         {
             var rsa = RSA.Create();
-            rsa.ImportRSAPublicKey(Convert.FromBase64String(configuration["SponsorLink:Public"]!), out _);
+            rsa.ImportRSAPublicKey(Convert.FromBase64String(key), out _);
             return new ContentResult
             {
                 Content = JsonSerializer.Serialize(
@@ -53,7 +59,7 @@ class Version(IConfiguration configuration, ILogger<Version> logger, IWebHostEnv
 
         return new ContentResult
         {
-            Content = configuration["SponsorLink:Public"],
+            Content = key,
             ContentType = "text/plain",
             StatusCode = 200,
         };

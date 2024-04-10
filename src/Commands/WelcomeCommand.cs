@@ -7,7 +7,7 @@ using static Devlooped.SponsorLink;
 namespace Devlooped.Sponsors;
 
 [Description("Executes the first-run experience")]
-public class WelcomeCommand(ICommandApp app, Account user) : Command
+public class WelcomeCommand(ICommandApp app, AccountInfo user) : Command
 {
     public override int Execute(CommandContext context)
     {

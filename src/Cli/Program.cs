@@ -64,6 +64,7 @@ else if (account.Emails.Length == 0)
 // Provide the authenticated GH CLI user account via DI
 var registrations = new ServiceCollection();
 registrations.AddSingleton(account);
+registrations.AddSingleton<IGraphQueryClient>(new CliGraphQueryClient());
 var registrar = new TypeRegistrar(registrations);
 
 var app = new CommandApp<SyncCommand>(registrar);
@@ -77,6 +78,7 @@ app.Configure(config =>
 #endif
 
     config.AddCommand<InitCommand>();
+    config.AddCommand<ListCommand>();
     config.AddCommand<WelcomeCommand>();
 
 #if DEBUG

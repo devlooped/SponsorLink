@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Text.Json;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -8,9 +6,10 @@ using Spectre.Console.Cli;
 namespace Devlooped.Sponsors;
 
 [Description("Lists user and organization sponsorships")]
-public class ListCommand(Account account) : Command
+public class ListCommand(AccountInfo account, IGraphQueryClient client) : AsyncCommand
 {
-    record Sponsorship(string Sponsorable, [property: DisplayName("Tier (USD)")] int Dollars,
+    record Sponsorship(string Sponsorable, 
+        [property: DisplayName("Tier (USD)")] int Dollars,
 #if NET6_0_OR_GREATER
         DateOnly CreatedAt,
 #else
@@ -19,13 +18,14 @@ public class ListCommand(Account account) : Command
         [property: DisplayName("One-time")] bool OneTime);
     record Organization(string Login, string[] Sponsorables);
 
-    public override int Execute(CommandContext context)
+    public override async Task<int> ExecuteAsync(CommandContext context)
     {
         var status = AnsiConsole.Status();
         string? json = default;
-        if (status.Start("Querying user sponsorships", _ =>
+
+        if (await status.StartAsync("Querying user sponsorships", async _ =>
             {
-                if (!GitHub.TryQuery(
+                if (await client.QueryAsync(new(
                     """
                     query { 
                       viewer { 
@@ -51,12 +51,13 @@ public class ListCommand(Account account) : Command
                     """,
                     """
                     [.data.viewer.sponsorshipsAsSponsor.nodes.[] | { sponsorable: .sponsorable.login, dollars: .tier.monthlyPriceInDollars, oneTime: .isOneTimePayment, createdAt } ]
-                    """, out json) || string.IsNullOrEmpty(json))
+                    """)) is not { Length: > 0 } response)
                 {
                     AnsiConsole.MarkupLine("[red]Could not query GitHub for user sponsorships.[/]");
                     return -1;
                 }
 
+                json = response;
                 return 0;
             }) == -1)
         {
@@ -65,10 +66,10 @@ public class ListCommand(Account account) : Command
 
         var usersponsored = JsonSerializer.Deserialize<Sponsorship[]>(json!, JsonOptions.Default);
 
-        if (status.Start("Querying user organizations", _ =>
+        if (await status.StartAsync("Querying user organizations", async _ =>
             {
                 // It's unlikely that any account would belong to more than 100 orgs.
-                if (!GitHub.TryQuery(
+                if (await client.QueryAsync(new(
                     """
                     query { 
                       viewer { 
@@ -82,12 +83,13 @@ public class ListCommand(Account account) : Command
                     """,
                     """
                     [.data.viewer.organizations.nodes.[].login]
-                    """, out json) || string.IsNullOrEmpty(json))
+                    """)) is not { Length: > 0 } response)
                 {
                     AnsiConsole.MarkupLine("[red]Could not query GitHub for user organizations.[/]");
                     return -1;
                 }
 
+                json = response;
                 return 0;
             }) == -1)
         {
@@ -97,7 +99,7 @@ public class ListCommand(Account account) : Command
         var orgs = JsonSerializer.Deserialize<string[]>(json!, JsonOptions.Default) ?? Array.Empty<string>();
         var orgsponsored = new List<Organization>();
 
-        status.Start("Querying organization sponsorships", ctx =>
+        await status.StartAsync("Querying organization sponsorships", async ctx =>
         {
             // Collect org-sponsored accounts. NOTE: these must be public sponsorships 
             // since the current user would typically NOT be an admin of these orgs.
@@ -105,7 +107,7 @@ public class ListCommand(Account account) : Command
             {
                 ctx.Status($"Querying {org} sponsorships");
                 // TODO: we'll need to account for pagination after 100 sponsorships is commonplace :)
-                if (GitHub.TryQuery(
+                if (await client.QueryAsync<string[]>(
                     $$"""
                     query($login: String!) { 
                       organization(login: $login) { 
@@ -126,10 +128,7 @@ public class ListCommand(Account account) : Command
                     """,
                     """
                     [.data.organization.sponsorshipsAsSponsor.nodes.[].sponsorable.login]
-                    """, out json, ("login", org)) &&
-                    json?.Length > 0 &&
-                    JsonSerializer.Deserialize<string[]>(json, JsonOptions.Default) is { } sponsored &&
-                    sponsored.Length > 0)
+                    """, ("login", org)) is { Length: > 0 } sponsored)
                 {
                     orgsponsored.Add(new Organization(org, sponsored));
                 }

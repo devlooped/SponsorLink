@@ -1,7 +1,6 @@
 ﻿using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using GraphQuery = (string Query, string? JQ);
 
 namespace Devlooped.Sponsors;
 

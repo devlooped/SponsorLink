@@ -53,6 +53,8 @@ var host = new HostBuilder()
             http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
         }).AddHttpMessageHandler<AccessTokenMessageHandler>();
 
+        services.AddGraphQueryClient();
+
         // RSA key for JWT signing
         services.AddSingleton(sp =>
         {
