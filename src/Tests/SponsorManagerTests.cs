@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,13 +53,23 @@ public class SponsorManagerTests : IDisposable
 
         services.AddGraphQueryClient();
         services.AddSingleton<IConfiguration>(configuration);
+        services.AddOptions();
+        JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+        services
+            .AddOptions<SponsorLinkOptions>()
+            .Configure<IConfiguration>((options, configuration) =>
+            {
+                configuration.GetSection("SponsorLink").Bind(options);
+            });
+
         this.services = services.BuildServiceProvider();
         httpFactory = this.services.GetRequiredService<IHttpClientFactory>();
 
         principal = new AsyncLazy<ClaimsPrincipal>(async () =>
         {
-            var login = await httpFactory.CreateClient("sponsor").QueryAsync(GraphQueries.ViewerLogin);
-            return new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("urn:github:login", login) }, "github"));
+            var login = await httpFactory.CreateClient("sponsor").QueryAsync<Account>(GraphQueries.ViewerAccount);
+            Assert.NotNull(login);
+            return new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("urn:github:login", login.Login) }, "github"));
         });
     }
 
@@ -81,7 +85,8 @@ public class SponsorManagerTests : IDisposable
     public async Task AnonymousUserIsNoSponsor()
     {
         var manager = new SponsorsManager(
-            configuration, httpFactory,
+            services.GetRequiredService<IOptions<SponsorLinkOptions>>(), 
+            httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
@@ -110,7 +115,8 @@ public class SponsorManagerTests : IDisposable
         await Authenticate();
 
         var manager = new SponsorsManager(
-            configuration, httpFactory,
+            services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
+            httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
@@ -127,7 +133,8 @@ public class SponsorManagerTests : IDisposable
         await Authenticate();
 
         var manager = new SponsorsManager(
-            configuration, httpFactory,
+            services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
+            httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());

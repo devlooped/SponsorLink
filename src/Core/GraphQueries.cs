@@ -7,12 +7,17 @@ namespace Devlooped.Sponsors;
 /// </summary>
 public static class GraphQueries
 {
-    public static GraphQuery ViewerLogin => new(
+    public static GraphQuery ViewerAccount => new(
         """
-        query { viewer { login } }
+        query {
+        	viewer {
+            login,
+            type:__typename
+          }
+        }
         """,
         """
-        .data.viewer.login
+        .data.viewer
         """);
 
     public static GraphQuery ViewerOrganizations { get; } = new(
@@ -55,6 +60,10 @@ public static class GraphQueries
         [.data.viewer.sponsorshipsAsSponsor.nodes.[].sponsorable.login]
         """);
 
+    /// <summary>
+    /// If a single user contributes to more than 100 repositories, we'd have a problem 
+    /// and would need to implement pagination.
+    /// </summary>
     public static GraphQuery ViewerContributions { get; } = new(
         """
         query {

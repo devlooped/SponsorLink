@@ -73,7 +73,7 @@ public class GraphQueriesTests
     {
         var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
 
-        var login = await client.QueryAsync(GraphQueries.ViewerLogin);
+        var login = await client.QueryAsync(GraphQueries.ViewerAccount);
 
         Assert.NotNull(login);
         Assert.NotEmpty(login);
@@ -97,7 +97,7 @@ public class GraphQueriesTests
         var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
 
         var candidates = await client.QueryAsync<HashSet<string>>(GraphQueries.ViewerSponsorableCandidates);
-        var viewer = await client.QueryAsync(GraphQueries.ViewerLogin);
+        var viewer = await client.QueryAsync(GraphQueries.ViewerAccount);
         var orgs = await client.QueryAsync<Organization[]>(GraphQueries.ViewerOrganizations);
 
         Assert.NotNull(candidates);

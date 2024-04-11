@@ -1,31 +1,32 @@
 ﻿using System.Security.Claims;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Devlooped.Sponsors;
 
 public class SponsorsManager(
-    IConfiguration configuration, IHttpClientFactory httpFactory, 
+    IOptions<SponsorLinkOptions> options, IHttpClientFactory httpFactory, 
     IGraphQueryClientFactory graphFactory,
     IMemoryCache cache, ILogger<SponsorsManager> logger)
 {
+    SponsorLinkOptions options = options.Value;
+
     public async Task<SponsorableManifest> GetManifestAsync()
     {
         if (!cache.TryGetValue<SponsorableManifest>(typeof(SponsorableManifest), out var manifest) || manifest is null)
         {
             var client = graphFactory.Create("sponsorable");
+            
+            var account = string.IsNullOrEmpty(options.Account) ?
+                // default to the authenticated user login
+                await client.QueryAsync<Account>(GraphQueries.ViewerAccount) 
+                    ?? throw new ArgumentException("Failed to determine sponsorable user from configured GitHub token.") :
+                await client.QueryAsync<Account>(GraphQueries.FindOrganization(options.Account)) 
+                    ?? await client.QueryAsync<Account>(GraphQueries.FindUser(options.Account)) 
+                    ?? throw new ArgumentException("Failed to determine sponsorable user from configured GitHub token.");
 
-            // Populate manifest
-            if (configuration["SponsorLink:Account"] is not { Length: > 0 } account)
-            {
-                // Auto-discovery by fetching from [user]/.github/sponsorlink.jwt
-                account = await client.QueryAsync(GraphQueries.ViewerLogin);
-                logger.Assert(account?.Length > 0, "Failed to determine sponsorable user from configured GitHub token.");
-            }
-
-            var url = $"https://github.com/{account}/.github/raw/main/sponsorlink.jwt";
+            var url = $"https://github.com/{account.Login}/.github/raw/main/sponsorlink.jwt";
 
             // Manifest should be public, so no need for any special HTTP client.
             using var http = httpFactory.CreateClient();
@@ -44,9 +45,9 @@ public class SponsorsManager(
             if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
                 audience = audienceUri.Segments[^1].TrimEnd('/');
 
-            //var sponsorable = await client.QueryAsync<Account>(GraphQueries.Sponsorable(audience));
-            // If we could retrieve the manifest, we can assume the account is valid
-            //manifest.AccountType = sponsorable!.Type;
+            // Manifest audience should match the sponsorable account to avoid weird issues?
+            if (account.Login != audience)
+                throw new InvalidOperationException("Manifest audience does not match configured sponsorable account.");
 
             manifest = cache.Set(typeof(SponsorableManifest), manifest, new MemoryCacheEntryOptions
             {

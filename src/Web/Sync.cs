@@ -5,10 +5,13 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
@@ -18,12 +21,12 @@ namespace Devlooped.Sponsors;
 /// <summary>
 /// Returns a JWT or JSON manifest of the authenticated user's claims.
 /// </summary>
-class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, ILogger<Sync> logger)
+class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, IWebHostEnvironment host, ILogger<Sync> logger)
 {
     [Function("me")]
     public async Task<IActionResult> UserAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
-        if (!TryGetClientId(configuration, logger, out var clientId))
+        if (!configuration.TryGetClientId(logger, out var clientId))
             return new StatusCodeResult(500);
 
         if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
@@ -32,7 +35,12 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
             // or the token-based principal population won't work.
             // Never redirect requests for JWT, as they are likely from a CLI or other non-browser client.
             if (!req.Headers.Accept.Contains("application/jwt") && !string.IsNullOrEmpty(clientId))
-                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/me");
+            {
+                var redirectHost = host.IsDevelopment() ?
+                    "donkey-emerging-civet.ngrok-free.app" : req.Headers["Host"].ToString();
+
+                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{redirectHost}/.auth/login/github/callback&state=redir=/me");
+            }
 
             logger.LogError("Ensure GitHub identity provider is configured for the functions app.");
 
@@ -74,7 +82,7 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
     [Function("sponsor")]
     public async Task<IActionResult> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
-        if (!TryGetClientId(configuration, logger, out var clientId))
+        if (!configuration.TryGetClientId(logger, out var clientId))
             return new StatusCodeResult(500);
 
         if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
@@ -149,30 +157,6 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         {
             StatusCode = 200
         };
-    }
-
-    static bool TryGetClientId(IConfiguration configuration, ILogger logger, [NotNullWhen(true)] out string? clientId)
-    {
-        clientId = null;
-        if (!bool.TryParse(configuration["WEBSITE_AUTH_ENABLED"], out var authEnabled) || !authEnabled)
-        {
-            logger.LogError("Ensure App Service authentication is enabled.");
-            return false;
-        }
-
-        if (configuration["WEBSITE_AUTH_V2_CONFIG_JSON"] is not { Length: > 0 } json || 
-            JObject.Parse(json) is not { } data || 
-            data.SelectToken("$.identityProviders.gitHub") is not { } provider ||
-            JsonSerializer.Deserialize<GitHubProvider>(provider.ToString(), new JsonSerializerOptions(JsonSerializerDefaults.Web)) is not { } github || 
-            !github.Enabled)
-        {
-            logger.LogError("Ensure GitHub identity provider is configured in App Service authentication.");
-            return false;
-        }
-
-        clientId = github.Registration.ClientId;
-
-        return !string.IsNullOrEmpty(clientId);
     }
 
     static string CreateJwt(RSA rsa, SponsorableManifest manifest, List<Claim> claims)

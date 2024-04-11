@@ -1,7 +1,7 @@
 ﻿namespace Devlooped.Sponsors;
 
 /// <summary>
-/// The type of sponsor the user is.
+/// The type of sponsor.
 /// </summary>
 public enum SponsorType
 {
@@ -10,13 +10,13 @@ public enum SponsorType
     /// </summary>
     None,
     /// <summary>
-    /// The user is considered a sponsor because it is 
+    /// The user is considered a sponsor because he is 
     /// a contributor to a project.
     /// </summary>
     Contributor,
     /// <summary>
     /// The user is considered a sponsor because an 
-    /// organization it belongs to is sponsoring.
+    /// organization he belongs to is sponsoring.
     /// </summary>
     Organization,
     /// <summary>
