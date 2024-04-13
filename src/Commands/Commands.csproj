@@ -15,7 +15,7 @@
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="7.5.1" />
     <PackageReference Include="NuGetizer" Version="1.2.1" PrivateAssets="all" />
     <PackageReference Include="Spectre.Console.Analyzer" Version="0.48.0" PrivateAssets="all" />
-    <PackageReference Include="Spectre.Console.Cli" Version="0.47.0" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.48.0" />
     <PackageReference Include="Spectre.Console.Json" Version="0.48.0" />
     <PackageReference Include="ThisAssembly.Strings" Version="1.4.3" PrivateAssets="all" />
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.0" PrivateAssets="all" Condition="$(TargetFramework) == 'netstandard2.0'" />
