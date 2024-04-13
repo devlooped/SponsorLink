@@ -45,6 +45,9 @@ public class CliGraphQueryClient : IGraphQueryClient
             if (typeof(T) == typeof(string))
                 return (T?)(object)result;
 
+            if (string.IsNullOrEmpty(result))
+                return default;
+
             return JsonSerializer.Deserialize<T>(result, JsonOptions.Default);
         }
 

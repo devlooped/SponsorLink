@@ -52,6 +52,9 @@ public class HttpGraphQueryClient(IHttpClientFactory factory, string name) : IGr
         if (typeof(T) == typeof(string))
             return (T)(object)json;
 
+        if (string.IsNullOrEmpty(json))
+            return default;
+        
         return JsonSerializer.Deserialize<T>(json, JsonOptions.Default);
     }
 }
