@@ -11,8 +11,10 @@ namespace Devlooped.Sponsors;
 [DebuggerDisplay("{JQ}")]
 public class GraphQuery<T>(string query, string? jq = null)
 {
+    // Private variable to aid while debugging, to easily copy/paste to the CLI the 
+    // various invocation styles for a given query.
     [DebuggerBrowsable(DebuggerBrowsableState.Collapsed)]
-    GraphQueryCli CLI => new(query, jq, Variables);
+    GraphQueryDebugger CLI => new(query, jq, Variables);
 
     /// <summary>
     /// The GraphQL query to execute.
@@ -35,6 +37,55 @@ public class GraphQuery<T>(string query, string? jq = null)
     public override int GetHashCode() => HashCode.Combine(Query, JQ);
 
     public override bool Equals(object? obj) => obj is GraphQuery<T> other && Query == other.Query && JQ == other.JQ;
+
+    class GraphQueryDebugger
+    {
+        public GraphQueryDebugger(string query, string? jq, Dictionary<string, object> variables)
+        {
+            http = variables.Count > 0 ?
+            JsonSerializer.Serialize(new
+            {
+                query,
+                variables
+            }, JsonOptions.Default) :
+            JsonSerializer.Serialize(new { query }, JsonOptions.Default);
+
+            var sb = new StringBuilder();
+            sb.Append("gh api graphql");
+
+            foreach (var (name, value) in variables)
+                sb.Append($" -F {name}={JsonSerializer.Serialize(value)}");
+
+            sb.Append(" -f query='").Append(query).Append('\'');
+
+            if (jq?.Length > 0)
+                sb.Append(" --jq '").Append(jq).Append('\'');
+
+            github = sb.ToString();
+
+            sb.Clear();
+            sb.Append("curl -X POST -H \"Authorization: Bearer $(gh auth token)\" -d '");
+            sb.Append(http).Append("' https://api.github.com/graphql | convertfrom-json | convertto-json -depth 10");
+
+            if (jq?.Length > 0)
+                sb.Append(" | %{ write-host $_; $_ } | jq -r '").Append(jq).Append('\'');
+
+            curl = sb.ToString();
+        }
+
+        /// <summary>
+        /// Raw HTTP request body.
+        /// </summary>
+        public string http { get; }
+        /// <summary>
+        /// GH CLI command.
+        /// </summary>
+        public string github { get; }
+        /// <summary>
+        /// PWSH curl + jq command.
+        /// </summary>
+        public string curl { get; }
+    }
 }
 
 /// <summary>
@@ -42,104 +93,6 @@ public class GraphQuery<T>(string query, string? jq = null)
 /// </summary>
 public class GraphQuery(string query, string? jq = null) : GraphQuery<string>(query, jq)
 {
-}
-
-class GraphQueryCli
-{
-    public GraphQueryCli(string query, string? jq, Dictionary<string, object> variables)
-    {
-        http = variables.Count > 0 ?
-        JsonSerializer.Serialize(new
-        {
-            query,
-            variables
-        }, JsonOptions.Default) :
-        JsonSerializer.Serialize(new { query }, JsonOptions.Default);
-
-        var sb = new StringBuilder();
-        sb.Append("gh api graphql");
-
-        foreach (var (name, value) in variables)
-            sb.Append($" -F {name}={JsonSerializer.Serialize(value)}");
-
-        sb.Append(" -f query='").Append(query).Append('\'');
-
-        if (jq?.Length > 0)
-            sb.Append(" --jq '").Append(jq).Append('\'');
-
-        github = sb.ToString();
-
-        sb.Clear();
-        sb.Append("curl -X POST -H \"Authorization: Bearer $(gh auth token)\" -d '");
-        sb.Append(http).Append("' https://api.github.com/graphql | convertfrom-json | convertto-json -depth 10");
-
-        if (jq?.Length > 0)
-            sb.Append(" | %{ write-host $_; $_ } | jq -r '").Append(jq).Append('\'');
-
-        curl = sb.ToString();
-    }
-
-    /// <summary>
-    /// Raw HTTP request body.
-    /// </summary>
-    public string http { get; }
-    /// <summary>
-    /// GH CLI command.
-    /// </summary>
-    public string github { get; }
-    /// <summary>
-    /// PWSH curl + jq command.
-    /// </summary>
-    public string curl { get; }
-}
-
-class GraphQueryDebugView
-{
-    public GraphQueryDebugView(GraphQuery graph)
-    {
-        http = graph.Variables.Count > 0 ?
-            JsonSerializer.Serialize(new
-            {
-                query = graph.Query,
-                variables = graph.Variables
-            }, JsonOptions.Default) :
-            JsonSerializer.Serialize(new { query = graph.Query }, JsonOptions.Default);
-
-        var sb = new StringBuilder();
-        sb.Append("gh api graphql");
-
-        foreach (var (name, value) in graph.Variables)
-            sb.Append($" -F {name}={JsonSerializer.Serialize(value)}");
-
-        sb.Append(" -f query='").Append(graph.Query).Append('\'');
-
-        if (graph.JQ?.Length > 0)
-            sb.Append(" --jq '").Append(graph.JQ).Append('\'');
-
-        cli = sb.ToString();
-
-        sb.Clear();
-        sb.Append("curl -X POST -H \"Authorization: Bearer $(gh auth token)\" -d '");
-        sb.Append(http).Append("' https://api.github.com/graphql | convertfrom-json | convertto-json -depth 10");
-
-        if (graph.JQ?.Length > 0)
-            sb.Append(" | %{ write-host $_; $_ } | jq -r '").Append(graph.JQ).Append('\'');
-
-        curl = sb.ToString();
-    }
-
-    /// <summary>
-    /// Raw HTTP request body.
-    /// </summary>
-    public string http { get; }
-    /// <summary>
-    /// GH CLI command.
-    /// </summary>
-    public string cli { get; }
-    /// <summary>
-    /// PWSH curl + jq command.
-    /// </summary>
-    public string curl { get; }
 }
 
 /// <summary>
@@ -208,6 +161,47 @@ public static class GraphQueries
         """
         [.data.viewer.sponsorshipsAsSponsor.nodes.[].sponsorable.login]
         """);
+
+    /// <summary>
+    /// Gets the tier details for a directly sponsored account by the current user.
+    /// </summary>
+    /// <param name="account">The account being sponsored.</param>
+    /// <remarks>
+    /// NOTE: for organization-wide sponsorships, we can't look up what the tier is
+    /// (by default? ever?) using the token of a member. Likewise, for contribution-inferred 
+    /// "sponsoring" where there's no such thing as a tier. So this is incremental and 
+    /// optional information we we'd put on the signed sponsor JWT manifest emitted by the 
+    /// sponsorable backend.
+    /// </remarks>
+    public static GraphQuery<Sponsorship> ViewerSponsorship(string account) => new(
+        """
+        query($login: String!) {
+          viewer {
+            sponsorshipsAsSponsor(
+              maintainerLogins: [$login]
+              activeOnly: true
+              first: 1
+            ) {
+              nodes {
+                isOneTimePayment
+                tier {
+                  description
+                  monthlyPriceInDollars
+                }
+              }
+            }
+          }
+        }
+        """,
+        """
+        .data.viewer.sponsorshipsAsSponsor.nodes[].tier | { tier: .description, amount: .monthlyPriceInDollars }
+        """)
+    {
+        Variables =
+        {
+            {"login", account }
+        }
+    };
 
     /// <summary>
     /// Returns the unique repository owners of all repositories the user has contributed 

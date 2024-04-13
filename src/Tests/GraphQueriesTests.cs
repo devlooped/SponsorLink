@@ -140,4 +140,23 @@ public class GraphQueriesTests
         Assert.NotNull(sponsorships);
         Assert.NotEmpty(sponsorships);
     }
+
+    [SecretsFact("SponsorLink:Account", "GitHub:Token")]
+    public async Task GetUserSponsorship()
+    {
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+
+        var sponsorships = await client.QueryAsync(GraphQueries.ViewerSponsored);
+
+        Assert.NotNull(sponsorships);
+
+        foreach (var sponsorable in sponsorships)
+        {
+            var sponsorship = await client.QueryAsync(GraphQueries.ViewerSponsorship(sponsorable));
+
+            Assert.NotNull(sponsorship);
+            Assert.NotNull(sponsorship.Tier);
+            Assert.NotEqual(0, sponsorship.Amount);
+        }
+    }
 }
