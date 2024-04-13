@@ -3,11 +3,6 @@
 namespace Devlooped.Sponsors;
 
 /// <summary>
-/// Represents a GraphQL query and optional JQ filter.
-/// </summary>
-public record GraphQuery(string Query, string? JQ = null);
-
-/// <summary>
 /// Usability overloads for executing GraphQL queries.
 /// </summary>
 public static class GraphQueryExtensions
@@ -19,18 +14,35 @@ public static class GraphQueryExtensions
         => client.QueryAsync(new GraphQuery(query, jq), variables);
 
     public static Task<T?> QueryAsync<T>(this IGraphQueryClient client, string query, params (string name, object value)[] variables)
-        => client.QueryAsync<T>(new GraphQuery(query), variables);
+        => client.QueryAsync(new GraphQuery<T>(query), variables);
 
     public static Task<T?> QueryAsync<T>(this IGraphQueryClient client, string query, string jq, params (string name, object value)[] variables)
-        => client.QueryAsync<T>(new GraphQuery(query, jq), variables);
+        => client.QueryAsync(new GraphQuery<T>(query, jq), variables);
 
-    public static async Task<T?> QueryAsync<T>(this IGraphQueryClient client, GraphQuery query, params (string name, object value)[] variables)
-    {
-        if (await client.QueryAsync(query, variables) is { Length: > 0 } result)
-            return JsonSerializer.Deserialize<T>(result, JsonOptions.Default);
+    ///// <summary>
+    ///// Executes the query and returns the result as a strong, or null if the query failed.
+    ///// </summary>
+    ///// <param name="query">GraphQL query containing optional JQ filter.</param>
+    ///// <param name="variables">Optional variables that parameterize the query.</param>
+    ///// <returns>The query result as a string, or null if the query failed.</returns>
+    //public static Task<string?> QueryAsync(this IGraphQueryClient client, GraphQuery query, params (string name, object value)[] variables)
+    //    => client.QueryAsync(query, variables);
 
-        return default;
-    }
+    //public static async Task<T?> QueryAsync<T>(this IGraphQueryClient client, GraphQuery query, params (string name, object value)[] variables)
+    //{
+    //    if (await client.QueryAsync(query, variables) is { Length: > 0 } result)
+    //        return JsonSerializer.Deserialize<T>(result, JsonOptions.Default);
+
+    //    return default;
+    //}
+
+    //public static async Task<T?> QueryAsync<T>(this IGraphQueryClient client, GraphQuery<T> query, params (string name, object value)[] variables)
+    //{
+    //    if (await client.QueryAsync(query, variables) is { Length: > 0 } result)
+    //        return JsonSerializer.Deserialize<T>(result, JsonOptions.Default);
+
+    //    return default;
+    //}
 }
 
 /// <summary>
@@ -43,7 +55,7 @@ public interface IGraphQueryClientFactory
     /// Creates a new <see cref="IGraphQueryClient"/> instance using the specified name.
     /// </summary>
     /// <param name="name">The client name, typically matching a named <see cref="HttpClient"/> via <see cref="IHttpClientFactory"/>.</param>
-    IGraphQueryClient Create(string name);
+    IGraphQueryClient CreateClient(string name);
 }
 
 /// <summary>
@@ -57,5 +69,5 @@ public interface IGraphQueryClient
     /// <param name="query">GraphQL query containing optional JQ filter.</param>
     /// <param name="variables">Optional variables that parameterize the query.</param>
     /// <returns>The query result as a string, or null if the query failed.</returns>
-    Task<string?> QueryAsync(GraphQuery query, params (string name, object value)[] variables);
+    Task<T?> QueryAsync<T>(GraphQuery<T> query, params (string name, object value)[] variables);
 }

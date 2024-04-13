@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <UserSecretsId>5af5cb1f-8a66-4238-b07b-032b4cf1a44d</UserSecretsId>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <RootNamespace>Devlooped.Tests</RootNamespace>
     <!-- IVT+ThisAssembly -->

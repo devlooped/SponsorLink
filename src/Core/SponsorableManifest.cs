@@ -1,7 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
-using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 
 namespace Devlooped.Sponsors;
 
@@ -12,6 +12,17 @@ namespace Devlooped.Sponsors;
 public class SponsorableManifest(Uri issuer, Uri audience, string clientId, SecurityKey publicKey, string publicRsaKey)
 {
     int? hashcode;
+
+    /// <summary>
+    /// Creates a new manifest with a new RSA key pair.
+    /// </summary>
+    public static SponsorableManifest Create(Uri issuer, Uri audience, string clientId)
+    {
+        var rsa = RSA.Create(3072);
+        var pub = Convert.ToBase64String(rsa.ExportRSAPublicKey());
+
+        return new SponsorableManifest(issuer, audience, clientId, new RsaSecurityKey(rsa), pub);
+    }
 
     /// <summary>
     /// Parses a JWT into a <see cref="SponsorableManifest"/>.
@@ -27,14 +38,7 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
         var clientId = token.Claims.FirstOrDefault(c => c.Type == "client_id")?.Value ?? throw new ArgumentException("Missing 'client_id' claim", nameof(jwt));
         var pub = token.Claims.FirstOrDefault(c => c.Type == "pub")?.Value ?? throw new ArgumentException("Missing 'pub' claim", nameof(jwt));
         var jwk = token.Claims.FirstOrDefault(c => c.Type == "sub_jwk")?.Value ?? throw new ArgumentException("Missing 'sub_jwk' claim", nameof(jwt));
-
-        var key = new JsonWebKeySet
-        {
-            Keys =
-            {
-                JsonWebKey.Create(jwk)
-            }
-        }.GetSigningKeys().First();
+        var key = new JsonWebKeySet { Keys = { JsonWebKey.Create(jwk) } }.GetSigningKeys().First();
 
         return new SponsorableManifest(new Uri(issuer), new Uri(audience), clientId,key, pub);
     }
@@ -48,13 +52,24 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
     {
         var jwk = JsonWebKeyConverter.ConvertFromSecurityKey(SecurityKey);
 
+        // Automatically sign if the manifest was created with a private key
+        if (SecurityKey is RsaSecurityKey rsa && rsa.PrivateKeyStatus == PrivateKeyStatus.Exists)
+        {
+            signing ??= new SigningCredentials(rsa, SecurityAlgorithms.RsaSha256);
+
+            // Ensure we never serialize the private key
+            jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.Rsa.ExportParameters(false)));
+        }
+
         var token = new JwtSecurityToken(
             claims:
             [
                 new("iss", Issuer),
                 new("aud", Audience),
                 new("client_id", clientId),
+                // non-standard claim containing the base64-encoded public key
                 new("pub", publicRsaKey),
+                // standard claim, serialized as a JSON string, not an encoded JSON object
                 new("sub_jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
             ],
             signingCredentials: signing);

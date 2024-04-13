@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Devlooped.SponsorLink;
@@ -7,7 +6,7 @@ using static Devlooped.SponsorLink;
 namespace Devlooped.Sponsors;
 
 [Description("Executes the first-run experience")]
-public class WelcomeCommand(ICommandApp app, AccountInfo user) : Command
+public class WelcomeCommand(AccountInfo user) : Command
 {
     public override int Execute(CommandContext context)
     {
@@ -42,10 +41,10 @@ public class WelcomeCommand(ICommandApp app, AccountInfo user) : Command
 
         Variables.FirstRunCompleted = true;
 
-        if (AnsiConsole.Confirm(ThisAssembly.Strings.FirstRun.SyncNow))
-        {
-            return app.Run(["sync"]);
-        }
+        //if (AnsiConsole.Confirm(ThisAssembly.Strings.FirstRun.SyncNow))
+        //{
+        //    return app.Run(["sync"]);
+        //}
 
         return 0;
     }

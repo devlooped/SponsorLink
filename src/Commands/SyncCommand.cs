@@ -11,15 +11,13 @@ using static Devlooped.SponsorLink;
 namespace Devlooped.Sponsors;
 
 [Description("Synchronizes the sponsorships manifest")]
-public partial class SyncCommand(AccountInfo user) : AsyncCommand
+public partial class SyncCommand(AccountInfo user, IGraphQueryClient client) : AsyncCommand
 {
-    record Organization(string Login, string Email, string WebsiteUrl);
     record OrgSponsor(string Login, string[] Sponsorables);
 
     public override async Task<int> ExecuteAsync(CommandContext context)
     {
         var status = AnsiConsole.Status();
-        string? json = default;
 
         // Authenticated user must match GH user
         var principal = await Session.AuthenticateAsync();
@@ -38,38 +36,41 @@ public partial class SyncCommand(AccountInfo user) : AsyncCommand
             return -1;
         }
 
+        var usersponsored = new HashSet<string>();
+
         // TODO: we'll need to account for pagination after 100 sponsorships is commonplace :)
-        if (status.Start("Querying user sponsorships", _ =>
+        if (await status.StartAsync("Querying user sponsorships", async _ =>
         {
-            if (!GitHub.TryQuery(GraphQueries.ViewerSponsored, out json) || string.IsNullOrEmpty(json))
+            if (await client.QueryAsync(GraphQueries.ViewerSponsored) is not { } sponsored)
             {
                 AnsiConsole.MarkupLine("[red]x[/] Could not query GitHub for user sponsorships.");
                 return -1;
             }
+            usersponsored = new HashSet<string>(sponsored);
             return 0;
         }) == -1)
         {
             return -1;
         }
 
-        var usersponsored = JsonSerializer.Deserialize<HashSet<string>>(json!, JsonOptions.Default) ?? new HashSet<string>();
         var usercontribs = await GetUserContributions();
+        var orgs = Array.Empty<Organization>();
 
         // It's unlikely that any account would belong to more than 100 orgs.
-        if (status.Start("Querying user organizations", _ =>
+        if (await status.StartAsync("Querying user organizations", async _ =>
         {
-            if (!GitHub.TryQuery(GraphQueries.ViewerOrganizations, out json) || string.IsNullOrEmpty(json))
+            if (await client.QueryAsync(GraphQueries.ViewerOrganizations) is not { } viewerorgs)
             {
                 AnsiConsole.MarkupLine("[red]x[/] Could not query GitHub for user organizations.");
                 return -1;
             }
+            orgs = viewerorgs;
             return 0;
         }) == -1)
         {
             return -1;
         }
 
-        var orgs = JsonSerializer.Deserialize<Organization[]>(json!, JsonOptions.Default) ?? Array.Empty<Organization>();
         var domains = new HashSet<string>();
         // Collect unique domains from verified org website and email
         foreach (var org in orgs)
@@ -93,17 +94,14 @@ public partial class SyncCommand(AccountInfo user) : AsyncCommand
 
         // Collect org-sponsored accounts. NOTE: these must be public sponsorships 
         // since the current user would typically NOT be an admin of these orgs.
-        status.Start("Querying organization sponsorships", ctx =>
+        await status.StartAsync("Querying organization sponsorships", async ctx =>
         {
             foreach (var org in orgs)
             {
                 ctx.Status($"Querying {org.Login} sponsorships");
 
                 // TODO: we'll need to account for pagination after 100 sponsorships is commonplace :)
-                if (GitHub.TryQuery(GraphQueries.OrganizationSponsorships(org.Login), out json) &&
-                    json?.Length > 0 &&
-                    JsonSerializer.Deserialize<string[]>(json, JsonOptions.Default) is { } sponsored &&
-                    sponsored.Length > 0)
+                if (await client.QueryAsync(GraphQueries.OrganizationSponsorships(org.Login)) is { Length: > 0 } sponsored)
                 {
                     orgsponsors.Add(new OrgSponsor(org.Login, sponsored));
                     foreach (var login in sponsored)
@@ -196,7 +194,7 @@ public partial class SyncCommand(AccountInfo user) : AsyncCommand
     {
         var contributed = new HashSet<string>();
 
-        if (!GitHub.TryQuery(GraphQueries.ViewerContributions, out var json) || !(json?.Length > 0))
+        if (await client.QueryAsync(GraphQueries.ViewerContributions) is not { Length: > 0 } viewerContribs)
         {
             AnsiConsole.MarkupLine("[red]x[/] Could not query GitHub for user sponsorships.");
             return contributed;
@@ -240,7 +238,7 @@ public partial class SyncCommand(AccountInfo user) : AsyncCommand
             }
         }
 
-        foreach (var ownerRepo in JsonSerializer.Deserialize<string[]>(json, JsonOptions.Default) ?? Array.Empty<string>())
+        foreach (var ownerRepo in viewerContribs)
         {
             var parts = ownerRepo.Split('/');
             if (parts.Length != 2)

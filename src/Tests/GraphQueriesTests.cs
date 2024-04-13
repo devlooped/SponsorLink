@@ -73,10 +73,10 @@ public class GraphQueriesTests
     {
         var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
 
-        var login = await client.QueryAsync(GraphQueries.ViewerAccount);
+        var account = await client.QueryAsync(GraphQueries.ViewerAccount);
 
-        Assert.NotNull(login);
-        Assert.NotEmpty(login);
+        Assert.NotNull(account);
+        Assert.NotEmpty(account.Login);
     }
 
     [SecretsFact("GitHub:Token")]
@@ -96,7 +96,7 @@ public class GraphQueriesTests
     {
         var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
 
-        var candidates = await client.QueryAsync<HashSet<string>>(GraphQueries.ViewerSponsorableCandidates);
+        var candidates = await client.QueryAsync(GraphQueries.ViewerSponsorableCandidates);
         var viewer = await client.QueryAsync(GraphQueries.ViewerAccount);
         var orgs = await client.QueryAsync<Organization[]>(GraphQueries.ViewerOrganizations);
 
@@ -104,7 +104,40 @@ public class GraphQueriesTests
         Assert.NotNull(viewer);
         Assert.NotNull(orgs);
 
-        Assert.Contains(viewer, candidates);
+        Assert.Contains(viewer.Login, candidates);
         Assert.All(orgs, org => candidates.Contains(org.Login));
+    }
+
+    [SecretsFact("GitHub:Token")]
+    public async Task GetUserOrganizations()
+    {
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+
+        var orgs = await client.QueryAsync<Organization[]>(GraphQueries.UserOrganizations("davidfowl"));
+
+        Assert.NotNull(orgs);
+        Assert.Contains(orgs, x => x.Login == "dotnet");
+    }
+
+    [SecretsFact("GitHub:Token")]
+    public async Task GetUserOrganizations2()
+    {
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+
+        var orgs = await client.QueryAsync<Organization[]>(GraphQueries.UserOrganizations("paxan"));
+
+        Assert.NotNull(orgs);
+        Assert.Contains(orgs, x => x.Login == "aws");
+    }
+
+    [SecretsFact("SponsorLink:Account")]
+    public async Task GetSponsorships()
+    {
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+
+        var sponsorships = await client.QueryAsync(GraphQueries.VerifiedSponsoringOrganizations(Helpers.Configuration["SponsorLink:Account"]!));
+
+        Assert.NotNull(sponsorships);
+        Assert.NotEmpty(sponsorships);
     }
 }

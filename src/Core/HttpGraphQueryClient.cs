@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Std;
 
 namespace Devlooped.Sponsors;
 
@@ -18,28 +20,38 @@ public static class GraphQueryClientExtensions
 
     class GraphQueryClientFactory(IHttpClientFactory http) : IGraphQueryClientFactory
     {
-        public IGraphQueryClient Create(string name) => new HttpGraphQueryClient(http, name);
+        public IGraphQueryClient CreateClient(string name) => new HttpGraphQueryClient(http, name);
     }
 }
 
 public class HttpGraphQueryClient(IHttpClientFactory factory, string name) : IGraphQueryClient
 {
-    public async Task<string?> QueryAsync(GraphQuery query, params (string name, object value)[] variables)
+    public async Task<T?> QueryAsync<T>(GraphQuery<T> query, params (string name, object value)[] variables)
     {
         using var http = factory.CreateClient(name);
 
-        var result = await http.PostAsJsonAsync("https://api.github.com/graphql", new
-        {
-            query = query.Query,
-            variables = variables.DistinctBy(x => x.name).ToDictionary(x => x.name, x => x.value)
-        });
+        var vars = new Dictionary<string, object>(query.Variables);
+        foreach (var (name, value) in variables)
+            vars[name] = value;
 
-        if (!result.IsSuccessStatusCode)
-            return null;
+        var response = query.IsLegacy ? 
+            await http.GetAsync(UriTemplate.Expand("https://api.github.com" + query.Query, vars)) :
+            await http.PostAsJsonAsync("https://api.github.com/graphql", new
+            {
+                query = query.Query,
+                variables = vars
+            });
 
-        if (query.JQ?.Length > 0)
-            return await JQ.ExecuteAsync(await result.Content.ReadAsStringAsync(), query.JQ);
+        if (!response.IsSuccessStatusCode)
+            return default;
 
-        return await result.Content.ReadAsStringAsync();
+        var json = query.JQ?.Length > 0 ? 
+            await JQ.ExecuteAsync(await response.Content.ReadAsStringAsync(), query.JQ) :
+            await response.Content.ReadAsStringAsync();
+
+        if (typeof(T) == typeof(string))
+            return (T)(object)json;
+
+        return JsonSerializer.Deserialize<T>(json, JsonOptions.Default);
     }
 }

@@ -129,16 +129,20 @@
   <data name="FirstRun_How" xml:space="preserve">
     <value>As a GitHub CLI extension, SponsorLink leverages your currently authenticated user [lime]{0}[/] to locate your personal sponsorships, as well as your organizations'. It does this entirely locally, communicating exclusively with the GitHub API itself.
 
-This information is then used to locate sponsored accounts that use SponsorLink, by looking up their JWT manifest, located at [link=https://github.com/devlooped/.github/blob/main/sponsorlink.jwt][blue]https://github.com/[/][grey][[user/org]][/][blue]/.github/sponsorlink.jwt[/][/]. If the manifest is present, we will:
+This information is then used to locate sponsored accounts that use SponsorLink, by looking up their sponsorlink JWT manifest, located at [link=https://github.com/devlooped/.github/blob/main/sponsorlink.jwt][blue]https://github.com/[/][grey][[user/org]][/][blue]/.github/sponsorlink.jwt[/][/]. If the manifest is present, we will:
 
-:backhand_index_pointing_right: read from the manifest: issuer URI, public key and GitHub OAuth client (app) ID
+:backhand_index_pointing_right: read from the manifest the issuer URI, public key and GitHub OAuth client (app) ID
 :backhand_index_pointing_right: request GitHub OAuth app authorization via the default browser to get a limited acccess token
-:backhand_index_pointing_right: issue a GET request with that token to [blue][[issuer]]/sponsor[/] and get a sponsorship JWT token 
-:backhand_index_pointing_right: verify and save token for later offline access and validation by libraries and tools
+   :eyes: read the permissions requested by the sponsor account carefully
+   :check_mark_button: you can revoke these permissions at any time at [link]https://github.com/settings/applications[/]
+:backhand_index_pointing_right: issue a GET request with that limited token to [blue][[issuer URI]]/sponsor[/] and get a sponsorship JWT manifest 
+   :eyes: the backend will only be able to access the information you have authorized it to access
+:backhand_index_pointing_right: verify and save sponsorship JWT manifest for later offline access and validation by libraries and tools
 
-You can revoke access to your information at any time at [link]https://github.com/settings/applications[/]. You can also inspect both the manifest and sponsorship JWT tokens at any time using [link]https://jwt.io/[/], for example. Both are persisted under [blue]~/.sponsorlink[/] ([blue]%userprofile%\.sponsorlink[/] on Windows).
+You can also inspect the JWT of both the sponsorlink account and your sponsorship manifest using [link]https://jwt.io/[/], for example. 
+Both are persisted under [blue]~/.sponsorlink[/] ([blue]%userprofile%\.sponsorlink[/] on Windows).
 
-This manifest needs to be sync'ed and downloaded once a month, which is the only point at which each sponsored backend computes, signs your sponsorship token and sets a new expiration date, purely on demand.
+This manifest needs to be sync'ed and downloaded once a month, which is the only point at which each sponsorlink backend computes, signs your sponsorship token and sets a new expiration date.
 
 Learn more about SponsorLink at [link]https://www.devlooped.com/SponsorLink/[/].</value>
     <comment>How</comment>
@@ -151,24 +155,24 @@ Learn more about SponsorLink at [link]https://www.devlooped.com/SponsorLink/[/].
 
 The short story is: 
 :backhand_index_pointing_right: sponsorship manifests are purely local and offline :check_mark_button: no info persisted in the cloud
-:backhand_index_pointing_right: the backend uses a limited GitHub OAuth app token  :check_mark_button: only email addresses are used to determine sponsorships
-:backhand_index_pointing_right: you can be a direct or indirect supporter/sponsor  :purple_heart: direct sponsorship, via an organization or active project contributions 
+:backhand_index_pointing_right: the backend uses a limited GitHub OAuth app token  :check_mark_button: only email(s) and organization membership determine sponsorships
+:backhand_index_pointing_right: you can be a direct or indirect supporter/sponsor  :purple_heart: direct sponsorship, via an organization or project contributions 
 
-Code for the backend as well as this CLI extension is open source and available at [link]https://www.devlooped.com/SponsorLink/[/].
-Please read the full privacy policy at [link]https://github.com/devlooped/SponsorLink/blob/main/privacy.md[/] to learn more.</value>
+Code for the backend as well as this CLI extension are [link=https://www.devlooped.com/SponsorLink/]open source[/].
+Please read the [link=https://github.com/devlooped/SponsorLink/blob/main/privacy.md]full privacy policy[/] to learn more.</value>
     <comment>Privacy</comment>
   </data>
   <data name="FirstRun_PrivacyTitle" xml:space="preserve">
     <value>Privacy policy</value>
   </data>
   <data name="FirstRun_SyncNow" xml:space="preserve">
-    <value>[lime]?[/] [white]Do you want to sync your sponsors manifest now?[/]</value>
+    <value>[lime]?[/] [white]Do you want to sync your sponsor manifests now?[/]</value>
   </data>
   <data name="FirstRun_Welcome" xml:space="preserve">
     <value>Welcome to SponsorLink</value>
   </data>
   <data name="FirstRun_What" xml:space="preserve">
-    <value>SponsorLink is an offline, manifest-based (JWT) mechanism for associating your git user with your GitHub sponsorships. This allows package authors that leverage SponsorLink to provide selective functionality to sponsors, whether individual or organization-wide.</value>
+    <value>SponsorLink is a manifest-based (JWT) mechanism for associating your git user with your GitHub sponsorships. This allows package authors that leverage SponsorLink to provide selective functionality to sponsors, whether individual or organization-wide.</value>
     <comment>What</comment>
   </data>
   <data name="GitHub_Login" xml:space="preserve">

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace Devlooped.Sponsors;
 
 public class SponsorsManager(
-    IOptions<SponsorLinkOptions> options, IHttpClientFactory httpFactory, 
+    IOptions<SponsorLinkOptions> options, IHttpClientFactory httpFactory,
     IGraphQueryClientFactory graphFactory,
     IMemoryCache cache, ILogger<SponsorsManager> logger)
 {
@@ -16,14 +16,14 @@ public class SponsorsManager(
     {
         if (!cache.TryGetValue<SponsorableManifest>(typeof(SponsorableManifest), out var manifest) || manifest is null)
         {
-            var client = graphFactory.Create("sponsorable");
-            
+            var client = graphFactory.CreateClient("sponsorable");
+
             var account = string.IsNullOrEmpty(options.Account) ?
                 // default to the authenticated user login
-                await client.QueryAsync<Account>(GraphQueries.ViewerAccount) 
+                await client.QueryAsync(GraphQueries.ViewerAccount)
                     ?? throw new ArgumentException("Failed to determine sponsorable user from configured GitHub token.") :
-                await client.QueryAsync<Account>(GraphQueries.FindOrganization(options.Account)) 
-                    ?? await client.QueryAsync<Account>(GraphQueries.FindUser(options.Account)) 
+                await client.QueryAsync(GraphQueries.FindOrganization(options.Account))
+                    ?? await client.QueryAsync(GraphQueries.FindUser(options.Account))
                     ?? throw new ArgumentException("Failed to determine sponsorable user from configured GitHub token.");
 
             var url = $"https://github.com/{account.Login}/.github/raw/main/sponsorlink.jwt";
@@ -68,11 +68,11 @@ public class SponsorsManager(
         if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
             return SponsorType.None;
 
-        var sponsor = graphFactory.Create("sponsor");
-        var sponsorable = graphFactory.Create("sponsorable");
+        var sponsor = graphFactory.CreateClient("sponsor");
+        var sponsorable = graphFactory.CreateClient("sponsorable");
 
         // This uses the current authenticated user to query GH API
-        var logins = await sponsor.QueryAsync<string[]>(GraphQueries.ViewerSponsorableCandidates);
+        var logins = await sponsor.QueryAsync(GraphQueries.ViewerSponsorableCandidates);
         logger.Assert(logins is not null, "Failed to retrieve user sponsor candidates");
 
         var manifest = await GetManifestAsync();
@@ -84,20 +84,33 @@ public class SponsorsManager(
         if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
             audience = audienceUri.Segments[^1].TrimEnd('/');
 
+        var account = await sponsorable.QueryAsync(GraphQueries.Sponsorable(audience));
+        logger.Assert(account is not null, "Failed to retrieve sponsorable account");
+
+        if (logins.Contains(account.Login))
+            return SponsorType.Member;
+
         // Use the sponsorable token since it has access to sponsorship info even if it's private
-        // TODO: check user account type (user/org)
-        var sponsoring = await sponsorable.QueryAsync<string[]>(GraphQueries.IsSponsoredBy(audience, AccountType.Organization, logins));
-        var accounts = new HashSet<string>(sponsoring ?? []);
+        var sponsoring = await sponsorable.QueryAsync(GraphQueries.IsSponsoredBy(audience, logins));
+        logger.Assert(sponsoring is not null);
 
         // User is checked for auth on first line above
         if (principal.FindFirst("urn:github:login") is { Value.Length: > 0 } claim &&
-            accounts.Contains(claim.Value))
+            sponsoring.Contains(claim.Value))
         {
             // the user is directly sponsoring
             return SponsorType.User;
         }
 
-        if (accounts.Count > 0)
+        // Next we check for direct contributions, which is more "valuable" than indirect org sponsorship
+        var contribs = await sponsor.QueryAsync(GraphQueries.ViewerContributions);
+        if (contribs is not null &&
+            contribs.Contains(manifest.Audience))
+        {
+            return SponsorType.Contributor;
+        }
+
+        if (sponsoring.Length > 0)
             return SponsorType.Organization;
 
         // TODO: add verified org email(s) > user's emails check (even if user's email is not public 
@@ -107,11 +120,36 @@ public class SponsorsManager(
         // client's orgs, but he could still add his work emails to his personal account, keep them 
         // private and verified, and then use them to access and be considered an org sponsor.
 
-        var contribs = await sponsor.QueryAsync<string[]>(GraphQueries.ViewerContributions);
-        if (contribs is not null &&
-            contribs.Contains(manifest.Audience))
+        // TODO: cache this?
+        var sponsoringOrgs = await sponsorable.QueryAsync(GraphQueries.VerifiedSponsoringOrganizations(account.Login));
+        if (sponsoringOrgs is null || sponsoringOrgs.Length == 0)
+            return SponsorType.None;
+
+        var domains = new HashSet<string>();
+
+        // Collect unique domains from verified org website and email
+        foreach (var org in sponsoringOrgs)
         {
-            return SponsorType.Contributor;
+            if (Uri.TryCreate(org.WebsiteUrl, UriKind.Absolute, out var uri))
+                domains.Add(uri.Host);
+
+            if (string.IsNullOrEmpty(org.Email))
+                continue;
+
+            var domain = org.Email.Split('@')[1];
+            if (!string.IsNullOrEmpty(domain))
+                domains.Add(domain);
+        }
+
+        var emails = await sponsor.QueryAsync(GraphQueries.ViewerEmails);
+        if (emails?.Length > 0)
+        {
+            foreach (var email in emails)
+            {
+                var domain = email.Split('@')[1];
+                if (domains.Contains(domain))
+                    return SponsorType.Organization;
+            }
         }
 
         return SponsorType.None;

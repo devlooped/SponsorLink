@@ -25,7 +25,7 @@ public class ListCommand(AccountInfo account, IGraphQueryClient client) : AsyncC
 
         if (await status.StartAsync("Querying user sponsorships", async _ =>
             {
-                if (await client.QueryAsync(new(
+                if (await client.QueryAsync(new GraphQuery(
                     """
                     query { 
                       viewer { 
@@ -69,7 +69,7 @@ public class ListCommand(AccountInfo account, IGraphQueryClient client) : AsyncC
         if (await status.StartAsync("Querying user organizations", async _ =>
             {
                 // It's unlikely that any account would belong to more than 100 orgs.
-                if (await client.QueryAsync(new(
+                if (await client.QueryAsync(new GraphQuery(
                     """
                     query { 
                       viewer { 

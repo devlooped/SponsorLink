@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -103,26 +104,11 @@ public partial class InitCommand(AccountInfo user) : AsyncCommand<InitCommand.Se
         AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.jwk[/] [grey](JWK string)[/]");
 
         var issuer = settings.Issuer.EndsWith('/') ? settings.Issuer : settings.Issuer + "/";
-        var claims = new List<Claim>
-        {
-            new("iss", issuer),
-            new("aud", $"https://github.com/{audience}"),
-            new("client_id", settings.ClientId),
-            // non-standard claim containing the base64-encoded public key
-            new("pub", pub64),
-            // Serializes as a JSON string, not an encoded JSON object
-            new("sub_jwk", pubJwk, JsonClaimValueTypes.Json),
-        };
-
-        var rsaKey = new RsaSecurityKey(rsa.ExportParameters(true));
-        var signingCredentials = new SigningCredentials(rsaKey, SecurityAlgorithms.RsaSha256);
-
-        var token = new JwtSecurityToken(
-            claims: claims,
-            signingCredentials: signingCredentials);
+        var manifest = new SponsorableManifest(new Uri(issuer), new Uri($"https://github.com/{audience}"), settings.ClientId, new RsaSecurityKey(rsa), pub64);
 
         // Serialize the token and return as a string
-        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+        var jwt = manifest.ToJwt();
+
         var sponsorable = new FileInfo("sponsorable.jwt");
         await File.WriteAllTextAsync(sponsorable.FullName, jwt, Encoding.UTF8);
 
@@ -134,22 +120,24 @@ public partial class InitCommand(AccountInfo user) : AsyncCommand<InitCommand.Se
 
         // Showcases how use the JWK to perform validation (in this case of the sponsorable manifest itself).
         var jwk = JsonWebKey.Create(pubJwk);
-        var set = new JsonWebKeySet();
-        set.Keys.Add(jwk);
-        var secKey = set.GetSigningKeys().First();
+        var secKey = new JsonWebKeySet { Keys = { jwk } }.GetSigningKeys().First();
 
         // If signature is valid, this will return a principal with the claims, otherwise, it would throw.
         var jwtPrincipal = new JwtSecurityTokenHandler().ValidateToken(jwt, new TokenValidationParameters
         {
             RequireExpirationTime = false,
-            ValidAudience = token.Audiences.First(),
-            ValidIssuer = token.Issuer,
+            ValidAudience = manifest.Audience,
+            ValidIssuer = manifest.Issuer,
             IssuerSigningKey = secKey,
-        }, out var _);
+        }, out var secToken);
+
+        var token = new JwtSecurityToken(
+            claims: jwtPrincipal.Claims,
+            signingCredentials: new SigningCredentials(secKey, SecurityAlgorithms.RsaSha256));
 
         AnsiConsole.Write(new Panel(new JsonText(token.Payload.SerializeToJson()))
         {
-            Header = new PanelHeader(" JWT Payload "),
+            Header = new PanelHeader("| JWT Payload |"),
         });
 
         return 0;

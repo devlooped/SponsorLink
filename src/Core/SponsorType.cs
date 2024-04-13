@@ -23,4 +23,8 @@ public enum SponsorType
     /// The user is directly sponsoring.
     /// </summary>
     User,
+    /// <summary>
+    /// The user is the sponsorable account or member of the organization.
+    /// </summary>
+    Member,
 }

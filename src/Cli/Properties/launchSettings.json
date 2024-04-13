@@ -2,7 +2,7 @@
   "profiles": {
     "Cli": {
       "commandName": "Project",
-      "commandLineArgs": "list"
+      "commandLineArgs": "init https://sponsorlink.amazon.com a82350fb2bae407b3021 -a aws"
     }
   }
 }

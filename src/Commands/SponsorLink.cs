@@ -153,7 +153,7 @@ public static partial class SponsorLink
         /// </summary>
         public static bool FirstRunCompleted
         {
-            get => !bool.TryParse(Environment.GetEnvironmentVariable(Constants.FirstRunVariable, EnvironmentVariableTarget.User), out var run) || !run;
+            get => bool.TryParse(Environment.GetEnvironmentVariable(Constants.FirstRunVariable, EnvironmentVariableTarget.User), out var completed) && completed;
             set => Environment.SetEnvironmentVariable(Constants.FirstRunVariable, value.ToString().ToLowerInvariant(), EnvironmentVariableTarget.User);
         }
 

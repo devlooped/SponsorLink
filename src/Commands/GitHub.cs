@@ -23,21 +23,6 @@ public static class GitHub
         return Process.TryExecute("gh", args, out json);
     }
 
-    public static bool TryQuery(GraphQuery query, out string? result, params (string name, string value)[] fields)
-        => TryQuery(query.Query, query.JQ, out result, fields);
-
-    public static bool TryQuery(string query, string? jq, out string? result, params (string name, string value)[] fields)
-    {
-        var args = $"api graphql -f query=\"{query}\"";
-        if (jq?.Length > 0)
-            args += $" --jq \"{jq.Trim()}\"";
-
-        foreach (var (name, value) in fields)
-            args += $" -f {name}={value}";
-
-        return Process.TryExecute("gh", args, out result);
-    }
-
     public static AccountInfo? Authenticate()
     {
         if (!Process.TryExecute("gh", "auth status -h github.com", out var output) || output is null)

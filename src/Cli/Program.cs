@@ -10,9 +10,6 @@ if (!GitHub.IsInstalled)
     return -1;
 }
 
-if (!Variables.FirstRunCompleted)
-    args = ["welcome"];
-
 if (GitHub.Authenticate() is not { } account)
 {
     if (!AnsiConsole.Confirm(ThisAssembly.Strings.GitHub.Login))
@@ -67,7 +64,13 @@ registrations.AddSingleton(account);
 registrations.AddSingleton<IGraphQueryClient>(new CliGraphQueryClient());
 var registrar = new TypeRegistrar(registrations);
 
-var app = new CommandApp<SyncCommand>(registrar);
+if (!Variables.FirstRunCompleted)
+{
+    if (await new CommandApp<WelcomeCommand>(registrar).RunAsync([]) != 0)
+        return -1;
+}
+
+var app = new CommandApp<InitCommand>(registrar);
 registrations.AddSingleton<ICommandApp>(app);
 
 app.Configure(config =>
@@ -95,6 +98,7 @@ if (args.Length == 0)
             .AddChoices(
             [
                 "init",
+                "list",
                 "welcome",
             ]));
 

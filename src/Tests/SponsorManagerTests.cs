@@ -14,6 +14,7 @@ public class SponsorManagerTests : IDisposable
 {
     IServiceProvider services;
     IHttpClientFactory httpFactory;
+    IGraphQueryClientFactory clientFactory;
     IConfiguration configuration;
     AsyncLazy<ClaimsPrincipal> principal;
 
@@ -64,10 +65,11 @@ public class SponsorManagerTests : IDisposable
 
         this.services = services.BuildServiceProvider();
         httpFactory = this.services.GetRequiredService<IHttpClientFactory>();
+        clientFactory = this.services.GetRequiredService<IGraphQueryClientFactory>();
 
         principal = new AsyncLazy<ClaimsPrincipal>(async () =>
         {
-            var login = await httpFactory.CreateClient("sponsor").QueryAsync<Account>(GraphQueries.ViewerAccount);
+            var login = await clientFactory.CreateClient("sponsor").QueryAsync(GraphQueries.ViewerAccount);
             Assert.NotNull(login);
             return new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("urn:github:login", login.Login) }, "github"));
         });
@@ -97,19 +99,18 @@ public class SponsorManagerTests : IDisposable
     [SecretsFact("GitHub:Token", "GitHub:Sponsorable")]
     public async Task GetUserOrOrganization()
     {
-        using var http = httpFactory.CreateClient("sponsorable");
+        var graph = clientFactory.CreateClient("sponsorable");
 
         Assert.Equal(AccountType.Organization,
-            (await http.QueryAsync<Account>(GraphQueries.Sponsorable("devlooped")))?.Type);
+            (await graph.QueryAsync(GraphQueries.Sponsorable("devlooped")))?.Type);
 
         Assert.Equal(AccountType.User,
-            (await http.QueryAsync<Account>(GraphQueries.Sponsorable("kzu")))?.Type);
+            (await graph.QueryAsync(GraphQueries.Sponsorable("kzu")))?.Type);
     }
 
     [SecretsFact("GitHub:PrivateUser", "GitHub:Sponsorable")]
-    public async Task GetPrivateUserSponsor()
+    public async Task PrivateUserIsMemberOfSponsorable()
     {
-        configuration["SponsorLink:Account"] = "devlooped";
         configuration["GitHub:Token"] = configuration["GitHub:PrivateUser"];
 
         await Authenticate();
@@ -121,13 +122,12 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorType.User, await manager.GetSponsorAsync());
+        Assert.Equal(SponsorType.Member, await manager.GetSponsorAsync());
     }
 
     [SecretsFact("GitHub:Token", "GitHub:PublicOrg")]
     public async Task GetPublicOrgSponsor()
     {
-        configuration["SponsorLink:Account"] = "devlooped";
         configuration["GitHub:Token"] = configuration["GitHub:PublicOrg"];
 
         await Authenticate();
@@ -136,6 +136,73 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
             httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
+            services.GetRequiredService<IMemoryCache>(),
+            Mock.Of<ILogger<SponsorsManager>>());
+
+        Assert.Equal(SponsorType.Organization, await manager.GetSponsorAsync());
+    }
+
+    [SecretsFact("GitHub:Token")]
+    public async Task GetSponsorshipViaOrganizationMembership()
+    {
+        await Authenticate();
+
+        var cache = services.GetRequiredService<IMemoryCache>();
+        cache.Set(typeof(SponsorableManifest),
+            SponsorableManifest.Create(new Uri("https://sl.amazon.com"), new Uri("https://github.com/aws"), "ASDF1324"));
+
+        var sponsorable = services.GetRequiredService<IGraphQueryClientFactory>().CreateClient("sponsorable");
+        var sponsor = services.GetRequiredService<IGraphQueryClientFactory>().CreateClient("sponsor");
+
+        var graph = new Mock<IGraphQueryClient>();
+
+        // Replace candidates
+        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerSponsorableCandidates, It.IsAny<(string, object)[]>()))
+            .Returns(() => sponsor.QueryAsync(GraphQueries.UserSponsorableCandidates("paulbartell")));
+
+        // Replace contributions
+        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerContributions, It.IsAny<(string, object)[]>()))
+            .Returns(() => sponsor.QueryAsync(GraphQueries.UserContributions("paulbartell")));
+
+        var manager = new SponsorsManager(
+            services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
+            httpFactory,
+            Mock.Of<IGraphQueryClientFactory>(x =>
+                x.CreateClient("sponsorable") == sponsorable &&
+                x.CreateClient("sponsor") == graph.Object),
+            services.GetRequiredService<IMemoryCache>(),
+            Mock.Of<ILogger<SponsorsManager>>());
+
+        Assert.Equal(SponsorType.Member, await manager.GetSponsorAsync());
+    }
+
+    [SecretsFact("GitHub:Token")]
+    public async Task GetSponsorshipViaOrganizationEmail()
+    {
+        await Authenticate();
+
+        var sponsorable = services.GetRequiredService<IGraphQueryClientFactory>().CreateClient("sponsorable");
+        var sponsor = services.GetRequiredService<IGraphQueryClientFactory>().CreateClient("sponsor");
+
+        var graph = new Mock<IGraphQueryClient>();
+
+        // Replace candidates
+        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerSponsorableCandidates, It.IsAny<(string, object)[]>()))
+            .Returns(() => sponsor.QueryAsync(GraphQueries.UserSponsorableCandidates("testclarius")));
+
+        // Replace contributions
+        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerContributions, It.IsAny<(string, object)[]>()))
+            .Returns(() => sponsor.QueryAsync(GraphQueries.UserContributions("testclarius")));
+
+        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerEmails, It.IsAny<(string, object)[]>()))
+            .ReturnsAsync(() => new string[] { "test@clarius.org" });
+
+        var manager = new SponsorsManager(
+            services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
+            httpFactory,
+            Mock.Of<IGraphQueryClientFactory>(x => 
+                x.CreateClient("sponsorable") == sponsorable && 
+                x.CreateClient("sponsor") == graph.Object),
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
