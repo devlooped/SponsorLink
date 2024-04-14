@@ -102,7 +102,10 @@ public static class GraphQueries
 {
     public static GraphQuery<string[]> ViewerEmails => new(
         "/user/emails",
-        "[.[] | select(.verified == true) | .email]")
+        // see https://stackoverflow.com/a/2387072/24684
+        """
+        [.[] | select(.verified == true) | select(.email | test("^((?!noreply.github.com).)*$")) | .email]
+        """)
     {
         IsLegacy = true
     };
