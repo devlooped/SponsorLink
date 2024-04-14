@@ -1,7 +1,8 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Cryptography;
 
 namespace Devlooped.Sponsors;
 
@@ -40,7 +41,7 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
         var jwk = token.Claims.FirstOrDefault(c => c.Type == "sub_jwk")?.Value ?? throw new ArgumentException("Missing 'sub_jwk' claim", nameof(jwt));
         var key = new JsonWebKeySet { Keys = { JsonWebKey.Create(jwk) } }.GetSigningKeys().First();
 
-        return new SponsorableManifest(new Uri(issuer), new Uri(audience), clientId,key, pub);
+        return new SponsorableManifest(new Uri(issuer), new Uri(audience), clientId, key, pub);
     }
 
     /// <summary>
@@ -76,6 +77,70 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    public string Sign(IEnumerable<Claim> claims, TimeSpan? expiration = default)
+    {
+        if (SecurityKey is not RsaSecurityKey rsa || rsa.PrivateKeyStatus != PrivateKeyStatus.Exists)
+            throw new NotSupportedException("Current manifest does not contain a private key to sign with.");
+
+        var signing = new SigningCredentials(rsa, SecurityAlgorithms.RsaSha256);
+
+        var expirationDate = expiration != null ?
+            DateTime.UtcNow.Add(expiration.Value) :
+            // Expire the first day of the next month
+            new DateTime(
+                DateTime.UtcNow.AddMonths(1).Year, 
+                DateTime.UtcNow.AddMonths(1).Month, 1,
+                // Use current time so they don't expire all at the same time
+                DateTime.UtcNow.Hour,
+                DateTime.UtcNow.Minute,
+                DateTime.UtcNow.Second,
+                DateTime.UtcNow.Millisecond,
+                DateTimeKind.Utc);
+
+        var tokenClaims = claims.ToList();
+
+        if (tokenClaims.Find(c => c.Type == "iss") is { } issuer)
+        {
+            if (issuer.Value != Issuer)
+                throw new ArgumentException($"The received claims contain an incompatible issuer claim. If present, the claim must contain the value '{Issuer}' but was '{issuer.Value}'.");
+        }
+        else
+        {
+            tokenClaims.Insert(0, new("iss", Issuer));
+        }
+
+        if (tokenClaims.Find(c => c.Type == "aud") is { } audience)
+        {
+            if (audience.Value != Audience)
+                throw new ArgumentException($"The received claims contain an incompatible audience claim. If present, the claim must contain the value '{Audience}' but was '{audience.Value}'.");
+        }
+        else
+        {
+            tokenClaims.Insert(1, new("aud", Audience));
+        }
+
+        var jwt = new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
+            claims: tokenClaims,
+            expires: expirationDate,
+            signingCredentials: signing
+        ));
+
+        return jwt;
+    }
+
+    public ClaimsPrincipal Validate(string jwt, out SecurityToken? token) => new JwtSecurityTokenHandler().ValidateToken(jwt, new TokenValidationParameters
+    {
+        RequireExpirationTime = true,
+        // NOTE: setting this to false allows checking sponsorships even when the manifest is expired. 
+        // This might be useful if package authors want to extend the manifest lifetime beyond the default 
+        // 30 days and issue a warning on expiration, rather than an error and a forced sync.
+        // If this is not set (or true), a SecurityTokenExpiredException exception will be thrown.
+        ValidateLifetime = false,
+        ValidAudience = Audience,
+        ValidIssuer = Issuer,
+        IssuerSigningKey = SecurityKey,
+    }, out token);
 
     /// <summary>
     /// The web endpoint that issues signed JWT to authenticated users.

@@ -1,6 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -71,7 +72,17 @@ public class SponsorManagerTests : IDisposable
         {
             var login = await clientFactory.CreateClient("sponsor").QueryAsync(GraphQueries.ViewerAccount);
             Assert.NotNull(login);
-            return new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("urn:github:login", login.Login) }, "github"));
+
+            var claims = new List<Claim>()
+            {
+                new("urn:github:login", login.Login)
+            };
+
+            var emails = await clientFactory.CreateClient("sponsor").QueryAsync(GraphQueries.ViewerEmails);
+            if (emails?.Length > 0)
+                claims.AddRange(emails.Select(x => new Claim(ClaimTypes.Email, x)));
+            
+            return new ClaimsPrincipal(new ClaimsIdentity(claims, "github"));
         });
     }
 
@@ -93,7 +104,7 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorType.None, await manager.GetSponsorAsync());
+        Assert.Equal(SponsorType.None, await manager.GetSponsorTypeAsync());
     }
 
     [SecretsFact("GitHub:Token", "GitHub:Sponsorable")]
@@ -122,7 +133,7 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorType.Member, await manager.GetSponsorAsync());
+        Assert.Equal(SponsorType.Member, await manager.GetSponsorTypeAsync());
     }
 
     [SecretsFact("GitHub:Token", "GitHub:PublicOrg")]
@@ -139,7 +150,7 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorType.Organization, await manager.GetSponsorAsync());
+        Assert.Equal(SponsorType.Organization, await manager.GetSponsorTypeAsync());
     }
 
     [SecretsFact("GitHub:Token")]
@@ -173,7 +184,7 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorType.Member, await manager.GetSponsorAsync());
+        Assert.Equal(SponsorType.Member, await manager.GetSponsorTypeAsync());
     }
 
     [SecretsFact("GitHub:Token")]
@@ -206,6 +217,43 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorType.Organization, await manager.GetSponsorAsync());
+        Assert.Equal(SponsorType.Organization, await manager.GetSponsorTypeAsync());
+    }
+
+    [SecretsFact("GitHub:Token", "GitHub:PublicOrg")]
+    public async Task GetSponsorshipClaims()
+    {
+        configuration["GitHub:Token"] = configuration["GitHub:PublicOrg"];
+
+        await Authenticate();
+
+        var manager = new SponsorsManager(
+            services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
+            httpFactory,
+            services.GetRequiredService<IGraphQueryClientFactory>(),
+            services.GetRequiredService<IMemoryCache>(),
+            Mock.Of<ILogger<SponsorsManager>>());
+
+        var claims = await manager.GetSponsorClaimsAsync();
+
+        Assert.NotNull(claims);
+        Assert.Equal("organization", claims.Find(c => c.Type == "sponsor")?.Value);
+
+        var manifest = SponsorableManifest.Create(new Uri("https://sponsorlink.devlooped.com"), new Uri("https://github.com/devlooped"), "ASDF1234");
+
+        var jwt = manifest.Sign(claims);
+        
+        Assert.NotNull(jwt);
+
+        var principal = manifest.Validate(jwt, out var token);
+        Assert.NotNull(principal);
+        Assert.NotNull(token);
+        Assert.Equal(token.Issuer, manifest.Issuer);
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        // Expiration will be the first day of next month.
+        var expiry = new DateOnly(today.AddMonths(1).Year, today.AddMonths(1).Month, 1);
+
+        Assert.Equal(expiry, DateOnly.FromDateTime(token.ValidTo));
     }
 }

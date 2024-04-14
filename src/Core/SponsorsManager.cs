@@ -63,9 +63,11 @@ public class SponsorsManager(
     /// that are sponsoring the sponsorable account. These can be the 
     /// current user or any organization he belongs to.
     /// </summary>
-    public async Task<SponsorType> GetSponsorAsync()
+    public async Task<SponsorType> GetSponsorTypeAsync(ClaimsPrincipal? principal = default)
     {
-        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
+        principal ??= ClaimsPrincipal.Current;
+
+        if (principal is not { Identity.IsAuthenticated: true })
             return SponsorType.None;
 
         var sponsor = graphFactory.CreateClient("sponsor");
@@ -153,5 +155,31 @@ public class SponsorsManager(
         }
 
         return SponsorType.None;
+    }
+
+    public async Task<List<Claim>?> GetSponsorClaimsAsync(ClaimsPrincipal? principal = default)
+    {
+        principal ??= ClaimsPrincipal.Current;
+        var manifest = await GetManifestAsync();
+
+        var sponsor = await GetSponsorTypeAsync(principal);
+        if (sponsor == SponsorType.None ||
+            principal?.FindFirst("urn:github:login")?.Value is not string id)
+            return null;
+
+        // TODO: add more claims in the future? tier, others?
+        var claims = new List<Claim>
+        {
+            new("iss", manifest.Issuer),
+            new("aud", manifest.Audience),
+            new("client_id", manifest.ClientId),
+            new("sub", id),
+            new("sponsor", sponsor.ToString().ToLowerInvariant()),
+        };
+
+        // Use shorthand JWT claim for emails. See https://www.iana.org/assignments/jwt/jwt.xhtml
+        claims.AddRange(principal.Claims.Where(x => x.Type == ClaimTypes.Email).Select(x => new Claim("email", x.Value)));
+
+        return claims;
     }
 }

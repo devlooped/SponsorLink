@@ -3,7 +3,6 @@ using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using static Devlooped.Sponsors.Sync;
 
 namespace Devlooped.Sponsors;
 
@@ -49,4 +48,6 @@ static class GitHubAuthExtensions
         return !string.IsNullOrEmpty(clientId);
     }
 
+    public record GitHubProvider(bool Enabled, Registration Registration);
+    public record Registration(string ClientId);
 }

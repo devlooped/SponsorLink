@@ -1,20 +1,14 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
 
 namespace Devlooped.Sponsors;
 
@@ -100,50 +94,34 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         }
 
         var manifest = await sponsors.GetManifestAsync();
-
+        // Shield against misconfiguration that can cause unpredictable behavior.
         if (manifest.ClientId != clientId)
         {
-            logger.LogError("Ensure the GitHub identity provider client ID matches the one in the manifest.");
+            logger.LogError("Ensure the configured GitHub identity provider client ID matches the one in the manifest.");
             return new StatusCodeResult(500);
         }
 
-        var sponsor = await sponsors.GetSponsorAsync();
-
-        if (sponsor == SponsorType.None ||
-            principal.FindFirstValue("urn:github:login") is not string id)
+        if (await sponsors.GetSponsorClaimsAsync() is not { } claims)
             return new NotFoundObjectResult("You are not a sponsor");
-
-        // TODO: add more claims in the future? tier, others?
-        var claims = new List<Claim>
-        {
-            new("sub", id),
-            new("sponsor", sponsor.ToString().ToLowerInvariant()),
-        };
-
-        // Allows the client to authenticate directly with the OAuth app if needed too.
-        if (!string.IsNullOrEmpty(clientId))
-            claims.Add(new("client_id", clientId));
-
-        // Use shorthand JWT claim for email too. See https://www.iana.org/assignments/jwt/jwt.xhtml
-        claims.AddRange(principal.Claims.Where(x => x.Type == ClaimTypes.Email).Select(x => new Claim("email", x.Value)));
 
         // We always respond authenticated requests either with a JWT or JSON, depending on the Accept header.
         if (req.Headers.Accept.Contains("application/jwt"))
         {
             return new ContentResult
             {
-                Content = CreateJwt(rsa, manifest, claims),
+                Content = manifest.Sign(claims),
                 ContentType = "application/jwt",
                 StatusCode = 200
             };
         }
 
+        // We try to make the json look as much as possible as the JWT
         return new JsonResult(new
         {
             issuer = manifest.Issuer,
             audience = manifest.Audience,
             claims = principal.Claims
-                // We already added the "email" claim above, so we skip it here.
+                // The "email" claim is already added by the GetSponsorClaimsAsync.
                 .Where(x => x.Type != ClaimTypes.Email)
                 .Concat(claims)
                 .GroupBy(x => x.Type)
@@ -158,33 +136,4 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
             StatusCode = 200
         };
     }
-
-    static string CreateJwt(RSA rsa, SponsorableManifest manifest, List<Claim> claims)
-    {
-        var signing = new SigningCredentials(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256);
-        // Expire the first day of the next month
-        var expiration = DateTime.UtcNow.AddMonths(1);
-
-        // Use current time so they don't expire all at the same time
-        expiration = new DateTime(expiration.Year, expiration.Month, 1,
-            DateTime.UtcNow.Hour,
-            DateTime.UtcNow.Minute,
-            DateTime.UtcNow.Second,
-            DateTime.UtcNow.Millisecond,
-            DateTimeKind.Utc);
-
-        claims.Insert(0, new("iss", manifest.Issuer));
-        claims.Insert(1, new("aud", manifest.Audience));
-
-        var jwt = new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
-            claims: claims,
-            expires: expiration,
-            signingCredentials: signing
-        ));
-
-        return jwt;
-    }
-
-    public record GitHubProvider(bool Enabled, Registration Registration);
-    public record Registration(string ClientId);
 }
