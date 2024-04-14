@@ -7,7 +7,7 @@
     <!-- Allows dogfooding a local build of the SL package -->
     <DevPath>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\..\bin))</DevPath>
 
-    <RestoreSources>https://pkg.kzu.appp/index.json;https://api.nuget.org/v3/index.json</RestoreSources>
+    <RestoreSources>https://pkg.kzu.app/index.json;https://api.nuget.org/v3/index.json</RestoreSources>
     <RestoreSources Condition="Exists('$(DevPath)')">$(DevPath);$(RestoreSources)</RestoreSources>
   </PropertyGroup>
 
