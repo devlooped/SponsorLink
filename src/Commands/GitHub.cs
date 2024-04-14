@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using Spectre.Console;
 
 namespace Devlooped.Sponsors;
 
@@ -21,6 +23,43 @@ public static class GitHub
             args += $" --jq \"{jq}\"";
 
         return Process.TryExecute("gh", args, out json);
+    }
+
+    public static bool TryAuthenticate([NotNullWhen(true)] out AccountInfo? account)
+    {
+        account = null;
+
+        if (!IsInstalled)
+        {
+            AnsiConsole.MarkupLine("[yellow]Please install GitHub CLI from [/][link]https://cli.github.com/[/]");
+            return false;
+        }
+
+        account = Authenticate();
+        if (account is null)
+        {
+            if (!AnsiConsole.Confirm(ThisAssembly.Strings.GitHub.Login))
+            {
+                AnsiConsole.MarkupLine("[grey]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
+                return false;
+            }
+
+            var process = System.Diagnostics.Process.Start("gh", "auth login");
+
+            process.WaitForExit();
+            if (process.ExitCode != 0)
+                return false;
+
+            account = Authenticate();
+            if (account is null)
+            {
+                AnsiConsole.MarkupLine("[red]x[/] Could not retrieve authenticated user with GitHub CLI.");
+                AnsiConsole.MarkupLine("[grey]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public static AccountInfo? Authenticate()

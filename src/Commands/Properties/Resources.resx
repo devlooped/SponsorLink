@@ -150,7 +150,7 @@ Learn more about SponsorLink at [link]https://www.devlooped.com/SponsorLink/[/].
   <data name="FirstRun_HowTitle" xml:space="preserve">
     <value>How it works</value>
   </data>
-  <data name="FirstRun_Privacy" xml:space="preserve">y
+  <data name="FirstRun_Privacy" xml:space="preserve">
     <value>SponsorLink is build by developers for developers. As such, we don't have an attorney or a big corporation backing this. If you're running this tool, it's likely because you are currently sponsoring or considering sponsoring the developer of a package you enjoy.
 
 The short story is: 
@@ -180,6 +180,9 @@ Please read the [link=https://github.com/devlooped/SponsorLink/blob/main/privacy
   </data>
   <data name="GitHub_UserScope" xml:space="preserve">
     <value>[lime]?[/] [white]Allow read-access to your GitHub account email address(es)?[/] (Required for manifest generation)</value>
+  </data>
+  <data name="Init_NoAudience" xml:space="preserve">
+    <value>[lime]?[/] [white]No sponsorable account provided. Do you want to use your GitHub CLI account?[/]</value>
   </data>
   <data name="No" xml:space="preserve">
     <value>No</value>

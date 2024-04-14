@@ -6,7 +6,7 @@ using static Devlooped.SponsorLink;
 
 namespace Devlooped.Sponsors;
 
-[Description("Validates the active sponsorships manifest, if any")]
+[Description("Validates the active sponsorships manifests, if any")]
 public partial class ValidateCommand : Command
 {
     public override int Execute(CommandContext context)

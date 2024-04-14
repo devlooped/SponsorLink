@@ -1,9 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Devlooped.SponsorLink;

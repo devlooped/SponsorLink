@@ -4,63 +4,8 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 using static Devlooped.SponsorLink;
 
-if (!GitHub.IsInstalled)
-{
-    AnsiConsole.MarkupLine("[yellow]Please install GitHub CLI from [/][link]https://cli.github.com/[/]");
-    return -1;
-}
-
-if (GitHub.Authenticate() is not { } account)
-{
-    if (!AnsiConsole.Confirm(ThisAssembly.Strings.GitHub.Login))
-    {
-        AnsiConsole.MarkupLine("[grey]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
-        return -1;
-    }
-
-    var process = System.Diagnostics.Process.Start("gh", "auth login");
-
-    process.WaitForExit();
-    if (process.ExitCode != 0)
-        return process.ExitCode;
-
-    account = GitHub.Authenticate();
-    if (account is null)
-    {
-        AnsiConsole.MarkupLine("[red]x[/] Could not retrieve authenticated user with GitHub CLI.");
-        AnsiConsole.MarkupLine("[grey]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
-        return -1;
-    }
-}
-else if (account.Emails.Length == 0)
-{
-    if (AnsiConsole.Confirm(ThisAssembly.Strings.GitHub.UserScope))
-    {
-        var process = System.Diagnostics.Process.Start("gh", "auth refresh -h github.com -s user");
-        process.WaitForExit();
-        if (process.ExitCode != 0)
-            return process.ExitCode;
-
-        // Re-authenticate to read emails again.
-        account = GitHub.Authenticate();
-        if (account is null)
-        {
-            AnsiConsole.MarkupLine("[red]x[/] Could not retrieve authenticated user with GitHub CLI.");
-            AnsiConsole.MarkupLine("[grey]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
-            return -1;
-        }
-    }
-    else
-    {
-        AnsiConsole.MarkupLine("[red]x[/] Could not retrieve authenticated user's email(s). This is required to sync your sponsorship manifest.");
-        AnsiConsole.MarkupLine("[grey]-[/] Please run [yellow]gh auth refresh -h github.com -s user[/] to enable 'user' scope and fix that manually.");
-        return -1;
-    }
-}
-
 // Provide the authenticated GH CLI user account via DI
 var registrations = new ServiceCollection();
-registrations.AddSingleton(account);
 registrations.AddSingleton<IGraphQueryClient>(new CliGraphQueryClient());
 var registrar = new TypeRegistrar(registrations);
 
@@ -70,7 +15,7 @@ if (!Variables.FirstRunCompleted)
         return -1;
 }
 
-var app = new CommandApp<InitCommand>(registrar);
+var app = new CommandApp(registrar);
 registrations.AddSingleton<ICommandApp>(app);
 
 app.Configure(config =>

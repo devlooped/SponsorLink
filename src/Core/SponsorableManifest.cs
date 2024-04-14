@@ -45,9 +45,9 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
     }
 
     /// <summary>
-    /// Converts (and optionally signs) the manifest into a JWT.
+    /// Converts (and optionally signs) the manifest into a JWT. Never exports the private key.
     /// </summary>
-    /// <param name="signing">Optional credentials when signing the resulting manifest.</param>
+    /// <param name="signing">Optional credentials when signing the resulting manifest. Defaults to the <see cref="SecurityKey"/> if it has a private key.</param>
     /// <returns>The JWT manifest.</returns>
     public string ToJwt(SigningCredentials? signing = default)
     {

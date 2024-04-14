@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -13,7 +13,7 @@ using Spectre.Console.Json;
 namespace Devlooped.Sponsors;
 
 [Description("Initializes a sponsorable manifest and token")]
-public partial class InitCommand(AccountInfo user) : AsyncCommand<InitCommand.Settings>
+public partial class InitCommand(ICommandApp app) : GitHubAsyncCommand<InitCommand.Settings>(app)
 {
     public class Settings : CommandSettings
     {
@@ -26,8 +26,8 @@ public partial class InitCommand(AccountInfo user) : AsyncCommand<InitCommand.Se
         public required string ClientId { get; init; }
 
         [Description("Sponsorable account, if different from the authenticated user.")]
-        [CommandOption("-a|--audience")]
-        public required string? Audience { get; init; }
+        [CommandOption("-a|--account")]
+        public required string? Account { get; init; }
 
         [Description("Existing private key to use. By default, creates a new one.")]
         [CommandOption("-k|--key")]
@@ -36,24 +36,25 @@ public partial class InitCommand(AccountInfo user) : AsyncCommand<InitCommand.Se
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        // Authenticated user must match GH user
-        var principal = await Session.AuthenticateAsync();
-        if (principal == null)
-            return -1;
+        var audience = settings.Account;
 
-        if (!int.TryParse(principal.FindFirst(ClaimTypes.NameIdentifier)?.Value.Split('|')?[1], out var id))
+        if (audience == null) 
         {
-            AnsiConsole.MarkupLine(":cross_mark: Could not determine authenticated user id.");
-            return -1;
+            if (!AnsiConsole.Confirm(ThisAssembly.Strings.Init.NoAudience))
+                return -1;
+
+            if (await base.ExecuteAsync(context, settings) is var result &&
+                result < 0)
+                return result;
+            else 
+                audience = Account?.Login;
         }
 
-        if (user.Id != id)
+        if (audience == null)
         {
-            AnsiConsole.MarkupLine($":cross_mark: SponsorLink authenticated user id ({id}) does not match GitHub CLI user id ({user.Id}).");
+            AnsiConsole.MarkupLine($":cross_mark: Could not determine sponsorable account to use for manifest.");
             return -1;
         }
-
-        var audience = settings.Audience ?? user.Login;
 
         // Generate key pair
         var rsa = RSA.Create(3072);
@@ -103,8 +104,9 @@ public partial class InitCommand(AccountInfo user) : AsyncCommand<InitCommand.Se
             Encoding.UTF8);
         AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.jwk[/] [grey](JWK string)[/]");
 
-        var issuer = settings.Issuer.EndsWith('/') ? settings.Issuer : settings.Issuer + "/";
-        var manifest = new SponsorableManifest(new Uri(issuer), new Uri($"https://github.com/{audience}"), settings.ClientId, new RsaSecurityKey(rsa), pub64);
+        // NOTE: this is a GitHub-specific command, so we hardcode the audience. Eventually, if 
+        // we support other sponsoring platforms, we'd have other commands.
+        var manifest = new SponsorableManifest(new Uri(settings.Issuer), new Uri($"https://github.com/{audience}"), settings.ClientId, new RsaSecurityKey(rsa), pub64);
 
         // Serialize the token and return as a string
         var jwt = manifest.ToJwt();
@@ -131,14 +133,17 @@ public partial class InitCommand(AccountInfo user) : AsyncCommand<InitCommand.Se
             IssuerSigningKey = secKey,
         }, out var secToken);
 
-        var token = new JwtSecurityToken(
-            claims: jwtPrincipal.Claims,
-            signingCredentials: new SigningCredentials(secKey, SecurityAlgorithms.RsaSha256));
-
-        AnsiConsole.Write(new Panel(new JsonText(token.Payload.SerializeToJson()))
+        if (secToken is JwtSecurityToken jwtToken)
         {
-            Header = new PanelHeader("| JWT Payload |"),
-        });
+            AnsiConsole.Write(new Panel(new JsonText(jwtToken.Header.SerializeToJson()))
+            {
+                Header = new PanelHeader("| JWT Header |"),
+            });
+            AnsiConsole.Write(new Panel(new JsonText(jwtToken.Payload.SerializeToJson()))
+            {
+                Header = new PanelHeader("| JWT Payload |"),
+            });
+        }
 
         return 0;
     }
