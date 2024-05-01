@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+﻿using System.ComponentModel;
 using System.Text;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -20,7 +17,7 @@ public static class Extensions
     public static Table AsTable<T>(this IEnumerable<T> items)
     {
         var table = new Table();
-        var props = TypeDescriptor.GetProperties(typeof(T)).Cast<PropertyDescriptor>().ToList();
+        var props = TypeDescriptor.GetProperties(typeof(T)).Cast<PropertyDescriptor>().Where(x => x.IsBrowsable).ToList();
 
         foreach (var prop in props)
         {

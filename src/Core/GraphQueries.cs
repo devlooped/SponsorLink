@@ -100,9 +100,16 @@ public class GraphQuery(string query, string? jq = null) : GraphQuery<string>(qu
 /// </summary>
 public static class GraphQueries
 {
+    /// <summary>
+    /// Viewer emails are not available in GraphQL (yet?). So we must use a 
+    /// legacy query via REST API.
+    /// </summary>
+    /// <remarks>
+    /// See https://github.com/orgs/community/discussions/24389#discussioncomment-3243994
+    /// </remarks>
     public static GraphQuery<string[]> ViewerEmails => new(
         "/user/emails",
-        // see https://stackoverflow.com/a/2387072/24684
+        // see https://stackoverflow.com/a/2387072/24684 on how this works to exclude noreply addresses
         """
         [.[] | select(.verified == true) | select(.email | test("^((?!noreply.github.com).)*$")) | .email]
         """)
@@ -110,6 +117,9 @@ public static class GraphQueries
         IsLegacy = true
     };
 
+    /// <summary>
+    /// Returns a tuple of (login, type) for the viewer.
+    /// </summary>
     public static GraphQuery<Account> ViewerAccount => new(
         """
         query {
@@ -123,6 +133,10 @@ public static class GraphQueries
         .data.viewer
         """);
 
+    /// <summary>
+    /// Gets the organizations the viewer belongs to, filtering out 
+    /// those entries without a verified email or websiteUrl.
+    /// </summary>
     public static GraphQuery<Organization[]> ViewerOrganizations { get; } = new(
         """
         query { 
@@ -142,6 +156,9 @@ public static class GraphQueries
         [.data.viewer.organizations.nodes.[] | select(.isVerified == true)]
         """);
 
+    /// <summary>
+    /// Gets the account logins that the viewer is sponsoring.
+    /// </summary>
     public static GraphQuery<string[]> ViewerSponsored { get; } = new(
         """
         query { 
@@ -186,7 +203,16 @@ public static class GraphQueries
               first: 1
             ) {
               nodes {
+                createdAt
                 isOneTimePayment
+                sponsorable {
+                  ... on Organization {
+                      login
+                  }
+                  ... on User {
+                      login
+                  }
+                }
                 tier {
                   description
                   monthlyPriceInDollars
@@ -197,7 +223,7 @@ public static class GraphQueries
         }
         """,
         """
-        .data.viewer.sponsorshipsAsSponsor.nodes[].tier | { tier: .description, amount: .monthlyPriceInDollars }
+        .data.viewer.sponsorshipsAsSponsor.nodes.[] | { sponsorable: .sponsorable.login, tier: .tier.description, amount: .tier.monthlyPriceInDollars, oneTime: .isOneTimePayment, createdAt }
         """)
     {
         Variables =
@@ -205,6 +231,45 @@ public static class GraphQueries
             {"login", account }
         }
     };
+
+    /// <summary>
+    /// Gets the tier details for all directly sponsored accounts by the current user.
+    /// </summary>
+    /// <remarks>
+    /// NOTE: for organization-wide sponsorships, we can't look up what the tier is
+    /// (by default? ever?) using the token of a member. Likewise, for contribution-inferred 
+    /// "sponsoring" where there's no such thing as a tier. So this is incremental and 
+    /// optional information we we'd put on the signed sponsor JWT manifest emitted by the 
+    /// sponsorable backend.
+    /// </remarks>
+    public static GraphQuery<Sponsorship[]> ViewerSponsorships => new(
+        """
+        query {
+          viewer {
+            sponsorshipsAsSponsor(activeOnly: true, first: 100) {
+              nodes {
+                createdAt
+                isOneTimePayment
+                sponsorable {
+                  ... on Organization {
+                      login
+                  }
+                  ... on User {
+                      login
+                  }
+                }
+                tier {
+                  description
+                  monthlyPriceInDollars
+                }
+              }
+            }
+          }
+        }
+        """,
+        """
+        [.data.viewer.sponsorshipsAsSponsor.nodes.[] | { sponsorable: .sponsorable.login, tier: .tier.description, amount: .tier.monthlyPriceInDollars, oneTime: .isOneTimePayment, createdAt }]
+        """);
 
     /// <summary>
     /// Returns the unique repository owners of all repositories the user has contributed 
@@ -239,7 +304,7 @@ public static class GraphQueries
     /// implement SponsorLink.
     /// </summary>
     public static GraphQuery<string[]> ViewerSponsorableCandidates => new(
-            """
+        """
         query {
             viewer {
                 login
@@ -251,10 +316,15 @@ public static class GraphQueries
             }
         }
         """,
-            """
+        """
         [.data.viewer.login] + [.data.viewer.organizations.nodes[].login]
         """);
 
+    /// <summary>
+    /// Gets the account logins that the given organization is actively sponsoring.
+    /// </summary>
+    /// <param name="organization"></param>
+    /// <returns></returns>
     public static GraphQuery<string[]> OrganizationSponsorships(string organization) => new(
         $$"""
         query($login: String!) { 
