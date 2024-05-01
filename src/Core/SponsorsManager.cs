@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Scriban.Syntax;
 using SharpYaml.Serialization;
 
 namespace Devlooped.Sponsors;
@@ -62,19 +61,19 @@ public partial class SponsorsManager(
     }
 
     /// <summary>
-    /// Gets the list of accounts related to the authenticated user, 
-    /// that are sponsoring the sponsorable account. These can be the 
-    /// current user or any organization he belongs to.
+    /// Direct or indirect sponsorship types for the the authenticated user.
     /// </summary>
-    public async Task<SponsorType> GetSponsorTypeAsync(ClaimsPrincipal? principal = default)
+    public async Task<SponsorTypes> GetSponsorTypeAsync(ClaimsPrincipal? principal = default)
     {
         principal ??= ClaimsPrincipal.Current;
 
         if (principal is not { Identity.IsAuthenticated: true })
-            return SponsorType.None;
+            return SponsorTypes.None;
 
         var sponsor = graphFactory.CreateClient("sponsor");
         var sponsorable = graphFactory.CreateClient("sponsorable");
+
+        var type = SponsorTypes.None;
 
         // This uses the current authenticated user to query GH API
         var logins = await sponsor.QueryAsync(GraphQueries.ViewerSponsorableCandidates);
@@ -93,7 +92,7 @@ public partial class SponsorsManager(
         logger.Assert(account is not null, "Failed to retrieve sponsorable account");
 
         if (logins.Contains(account.Login))
-            return SponsorType.Member;
+            type |= SponsorTypes.Team;
 
         // Use the sponsorable token since it has access to sponsorship info even if it's private
         var sponsoring = await sponsorable.QueryAsync(GraphQueries.IsSponsoredBy(audience, logins));
@@ -104,60 +103,83 @@ public partial class SponsorsManager(
             sponsoring.Contains(claim.Value))
         {
             // the user is directly sponsoring
-            return SponsorType.User;
+            type |= SponsorTypes.User;
+        }
+        else if (sponsoring.Length > 0)
+        {
+            // the user is a member of a sponsoring organization
+            // note that both could be true at the same time, yet 
+            // we consider user sponsoring to be a higher priority
+            // and we won't therefore have both User and Organization 
+            // for any user.
+            type |= SponsorTypes.Organization;
         }
 
-        // Next we check for direct contributions, which is more "valuable" than indirect org sponsorship
+        // Next we check for direct contributions too. 
+        // TODO: should this be configurable?
         var contribs = await sponsor.QueryAsync(GraphQueries.ViewerContributions);
         if (contribs is not null &&
             contribs.Contains(manifest.Audience))
         {
-            return SponsorType.Contributor;
+            type |= SponsorTypes.Contributor;
         }
 
-        if (sponsoring.Length > 0)
-            return SponsorType.Organization;
-
-        // TODO: add verified org email(s) > user's emails check (even if user's email is not public 
+        // Add verified org email(s) > user's emails check (even if user's email is not public 
         // and the logged in account does not belong to the org). This covers the scenario where a 
         // user has multiple GH accounts, one for each org he works for (i.e. a consultant), and a 
         // personal account. The personal account would not be otherwise associated with any of his 
         // client's orgs, but he could still add his work emails to his personal account, keep them 
         // private and verified, and then use them to access and be considered an org sponsor.
 
-        // TODO: cache this?
-        var sponsoringOrgs = await sponsorable.QueryAsync(GraphQueries.VerifiedSponsoringOrganizations(account.Login));
-        if (sponsoringOrgs is null || sponsoringOrgs.Length == 0)
-            return SponsorType.None;
+        // Only do this if we couldn't already determine if the user is a sponsor (directly or indirectly), 
+        // since it's expensive.
+        if (type != SponsorTypes.None)
+            return type;
 
-        var domains = new HashSet<string>();
-
-        // Collect unique domains from verified org website and email
-        foreach (var org in sponsoringOrgs)
+        if (!cache.TryGetValue<Organization[]>(typeof(Organization[]), out var sponsoringOrgs) || sponsoringOrgs is null)
         {
-            if (Uri.TryCreate(org.WebsiteUrl, UriKind.Absolute, out var uri))
-                domains.Add(uri.Host);
-
-            if (string.IsNullOrEmpty(org.Email))
-                continue;
-
-            var domain = org.Email.Split('@')[1];
-            if (!string.IsNullOrEmpty(domain))
-                domains.Add(domain);
+            sponsoringOrgs = await sponsorable.QueryAsync(GraphQueries.VerifiedSponsoringOrganizations(account.Login));
+            cache.Set(typeof(Organization[]), sponsoringOrgs, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+            });
         }
 
-        var emails = await sponsor.QueryAsync(GraphQueries.ViewerEmails);
-        if (emails?.Length > 0)
+        if (sponsoringOrgs?.Length > 0)
         {
-            foreach (var email in emails)
+            var domains = new HashSet<string>();
+
+            // Collect unique domains from verified org website and email
+            foreach (var org in sponsoringOrgs)
             {
-                var domain = email.Split('@')[1];
-                if (domains.Contains(domain))
-                    return SponsorType.Organization;
+                if (Uri.TryCreate(org.WebsiteUrl, UriKind.Absolute, out var uri))
+                    domains.Add(uri.Host);
+
+                if (string.IsNullOrEmpty(org.Email))
+                    continue;
+
+                var domain = org.Email.Split('@')[1];
+                if (!string.IsNullOrEmpty(domain))
+                    domains.Add(domain);
+            }
+
+            var emails = await sponsor.QueryAsync(GraphQueries.ViewerEmails);
+            if (emails?.Length > 0)
+            {
+                foreach (var email in emails)
+                {
+                    var domain = email.Split('@')[1];
+                    if (domains.Contains(domain))
+                    {
+                        type |= SponsorTypes.Organization;
+                        // One is enough.
+                        break;
+                    }
+                }
             }
         }
 
-        return SponsorType.None;
+        return type;
     }
 
     public async Task<List<Claim>?> GetSponsorClaimsAsync(ClaimsPrincipal? principal = default)
@@ -166,19 +188,27 @@ public partial class SponsorsManager(
         var manifest = await GetManifestAsync();
 
         var sponsor = await GetSponsorTypeAsync(principal);
-        if (sponsor == SponsorType.None ||
+        if (sponsor == SponsorTypes.None ||
             principal?.FindFirst("urn:github:login")?.Value is not string id)
             return null;
 
-        // TODO: add more claims in the future? tier, others?
         var claims = new List<Claim>
         {
             new("iss", manifest.Issuer),
             new("aud", manifest.Audience),
             new("client_id", manifest.ClientId),
             new("sub", id),
-            new("sponsor", sponsor.ToString().ToLowerInvariant()),
         };
+
+        // check for each flags SponsorTypes and add claims accordingly
+        if (sponsor.HasFlag(SponsorTypes.Team))
+            claims.Add(new("role", "team"));
+        if (sponsor.HasFlag(SponsorTypes.Organization))
+            claims.Add(new("role", "org"));
+        if (sponsor.HasFlag(SponsorTypes.User))
+            claims.Add(new("role", "user"));
+        if (sponsor.HasFlag(SponsorTypes.Contributor))
+            claims.Add(new("role", "contrib"));
 
         // Use shorthand JWT claim for emails. See https://www.iana.org/assignments/jwt/jwt.xhtml
         claims.AddRange(principal.Claims.Where(x => x.Type == ClaimTypes.Email).Select(x => new Claim("email", x.Value)));
@@ -188,47 +218,55 @@ public partial class SponsorsManager(
 
     public async Task<List<Tier>> GetTiers()
     {
-        var manifest = await GetManifestAsync();
-        var client = graphFactory.CreateClient("sponsorable");
-        var tiers = new List<Tier>();
-
-        var audience = manifest.Audience;
-        if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
-            audience = audienceUri.Segments[^1].TrimEnd('/');
-
-        var json = await client.QueryAsync(GraphQueries.Tiers(audience));
-
-        // TODO: should be an error?
-        if (string.IsNullOrEmpty(json) ||
-            JsonSerializer.Deserialize<RawTier[]>(json, JsonOptions.Default) is not { Length: > 0 } raw)
-            return tiers;
-
-        foreach (var item in raw)
+        if (!cache.TryGetValue<List<Tier>>(typeof(List<Tier>), out var tiers) || tiers is null)
         {
-            var tier = new Tier(item.Name, YamlRegex().Replace(item.Description, ""), item.Amount, item.OneTime);
-            var current = item;
-            while (true)
+            var manifest = await GetManifestAsync();
+            var client = graphFactory.CreateClient("sponsorable");
+            tiers = [];
+
+            var audience = manifest.Audience;
+            if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
+                audience = audienceUri.Segments[^1].TrimEnd('/');
+
+            var json = await client.QueryAsync(GraphQueries.Tiers(audience));
+
+            // TODO: should be an error?
+            if (string.IsNullOrEmpty(json) ||
+                JsonSerializer.Deserialize<RawTier[]>(json, JsonOptions.Default) is not { Length: > 0 } raw)
+                return tiers;
+
+            foreach (var item in raw)
             {
-                var yaml = YamlRegex().Match(current.Description)?.Groups["yaml"]?.Value;
-                if (!string.IsNullOrEmpty(yaml) &&
-                    serializer.Deserialize<Dictionary<string, string>>(yaml) is { } meta)
+                var tier = new Tier(item.Name, YamlRegex().Replace(item.Description, ""), item.Amount, item.OneTime);
+                var current = item;
+                while (true)
                 {
-                    foreach (var entry in meta)
+                    var yaml = YamlRegex().Match(current.Description)?.Groups["yaml"]?.Value;
+                    if (!string.IsNullOrEmpty(yaml) &&
+                        serializer.Deserialize<Dictionary<string, string>>(yaml) is { } meta)
                     {
-                        // An existing value should not be overwritten
-                        tier.Meta.TryAdd(entry.Key, entry.Value);
+                        foreach (var entry in meta)
+                        {
+                            // An existing value should not be overwritten
+                            tier.Meta.TryAdd(entry.Key, entry.Value);
+                        }
                     }
+
+                    // Walk the tiers to aggregate metadata provided by lower tiers.
+                    // This avoids having to repeat metadata in each tier.
+                    if (string.IsNullOrEmpty(current.Previous) ||
+                        raw.FirstOrDefault(x => x.Name == current.Previous) is not { } previous)
+                        break;
+
+                    current = previous;
                 }
-
-                // Walk the tiers to aggregate metadata provided by lower tiers.
-                // This avoids having to repeat metadata in each tier.
-                if (string.IsNullOrEmpty(current.Previous) || 
-                    raw.FirstOrDefault(x => x.Name == current.Previous) is not { } previous)
-                    break;
-
-                current = previous;
+                tiers.Add(tier);
             }
-            tiers.Add(tier);
+
+            tiers = cache.Set(typeof(List<Tier>), tiers, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+            });
         }
 
         return tiers;

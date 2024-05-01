@@ -104,7 +104,7 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorType.None, await manager.GetSponsorTypeAsync());
+        Assert.Equal(SponsorTypes.None, await manager.GetSponsorTypeAsync());
     }
 
     [SecretsFact("GitHub:Token", "GitHub:Sponsorable")]
@@ -133,7 +133,8 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorType.Member, await manager.GetSponsorTypeAsync());
+        var types = await manager.GetSponsorTypeAsync();
+        Assert.True(types.HasFlag(SponsorTypes.Team));
     }
 
     [SecretsFact("GitHub:Token", "GitHub:PublicOrg")]
@@ -150,7 +151,7 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorType.Organization, await manager.GetSponsorTypeAsync());
+        Assert.Equal(SponsorTypes.Organization, await manager.GetSponsorTypeAsync());
     }
 
     [SecretsFact("GitHub:Token")]
@@ -184,7 +185,7 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorType.Member, await manager.GetSponsorTypeAsync());
+        Assert.Equal(SponsorTypes.Team, await manager.GetSponsorTypeAsync());
     }
 
     [SecretsFact("GitHub:Token")]
@@ -217,7 +218,9 @@ public class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorType.Organization, await manager.GetSponsorTypeAsync());
+        var types = await manager.GetSponsorTypeAsync();
+
+        Assert.True(types.HasFlag(SponsorTypes.Organization));
     }
 
     [SecretsFact("GitHub:Token", "GitHub:PublicOrg")]
@@ -237,7 +240,7 @@ public class SponsorManagerTests : IDisposable
         var claims = await manager.GetSponsorClaimsAsync();
 
         Assert.NotNull(claims);
-        Assert.Equal("organization", claims.Find(c => c.Type == "sponsor")?.Value);
+        Assert.Contains(claims, claim => claim.Type == "role" && claim.Value == "org");
 
         var manifest = SponsorableManifest.Create(new Uri("https://sponsorlink.devlooped.com"), new Uri("https://github.com/devlooped"), "ASDF1234");
 
