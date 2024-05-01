@@ -15,7 +15,7 @@ namespace Devlooped.Sponsors;
 /// <summary>
 /// Returns a JWT or JSON manifest of the authenticated user's claims.
 /// </summary>
-class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, IWebHostEnvironment host, ILogger<Sync> logger)
+class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, IWebHostEnvironment host, ILogger<Sync> logger)
 {
     [Function("me")]
     public async Task<IActionResult> UserAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
