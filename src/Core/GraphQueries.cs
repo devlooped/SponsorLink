@@ -571,6 +571,51 @@ public static class GraphQueries
     public static GraphQuery<string[]> IsSponsoredBy(string account, params string[] candidates)
         => IsSponsoredBy(account, (IEnumerable<string>)candidates);
 
+    public static GraphQuery Tiers(string account) => new(
+        """
+        query ($login: String!) {
+          user(login: $login) {
+            sponsorsListing {
+              tiers(first: 100){
+                nodes {
+                  name,
+                  description,
+                  monthlyPriceInDollars,
+                  isOneTime,
+                  closestLesserValueTier {
+                    name
+                  },
+                }
+              }
+            }
+          }
+          organization(login: $login) {
+            sponsorsListing {
+              tiers(first: 100){
+                nodes {
+                  name,
+                  description,
+                  monthlyPriceInDollars,
+                  isOneTime,
+                  closestLesserValueTier {
+                    name
+                  },
+                }
+              }
+            }
+          }
+        }
+        """,
+        """
+        [(.data.user? + .data.organization?).sponsorsListing.tiers.nodes.[] | { name, description, amount: .monthlyPriceInDollars, oneTime: .isOneTime, previous: .closestLesserValueTier.name }]
+        """)
+    {
+        Variables =
+        {
+            { "login", account }
+        }
+    };
+
     public static GraphQuery<Organization[]> VerifiedSponsoringOrganizations(string account) => new(
         """
         query ($owner: String!, $endCursor: String) {

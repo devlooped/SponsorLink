@@ -111,7 +111,7 @@ public class GraphQueriesTests
     [SecretsFact("GitHub:Token")]
     public async Task GetUserOrganizations()
     {
-        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
         var orgs = await client.QueryAsync<Organization[]>(GraphQueries.UserOrganizations("davidfowl"));
 
@@ -122,7 +122,7 @@ public class GraphQueriesTests
     [SecretsFact("GitHub:Token")]
     public async Task GetUserOrganizations2()
     {
-        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
         var orgs = await client.QueryAsync<Organization[]>(GraphQueries.UserOrganizations("paxan"));
 
@@ -130,10 +130,10 @@ public class GraphQueriesTests
         Assert.Contains(orgs, x => x.Login == "aws");
     }
 
-    [SecretsFact("SponsorLink:Account")]
+    [SecretsFact("SponsorLink:Account", "GitHub:Token")]
     public async Task GetSponsorships()
     {
-        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
         var sponsorships = await client.QueryAsync(GraphQueries.VerifiedSponsoringOrganizations(Helpers.Configuration["SponsorLink:Account"]!));
 
@@ -144,7 +144,7 @@ public class GraphQueriesTests
     [SecretsFact("SponsorLink:Account", "GitHub:Token")]
     public async Task GetUserSponsorship()
     {
-        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
         var sponsorships = await client.QueryAsync(GraphQueries.ViewerSponsored);
 
@@ -163,11 +163,21 @@ public class GraphQueriesTests
     [SecretsFact("SponsorLink:Account", "GitHub:Token")]
     public async Task GetUserSponsorships()
     {
-        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
         var sponsorships = await client.QueryAsync(GraphQueries.ViewerSponsorships);
 
         Assert.NotNull(sponsorships);
         Assert.NotEmpty(sponsorships);
+    }
+
+    [SecretsFact("SponsorLink:Account", "GitHub:Sponsorable")]
+    public async Task GetUserOrOrganization()
+    {
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Sponsorable");
+
+        var tiers = await client.QueryAsync(GraphQueries.Tiers(Helpers.Configuration["SponsorLink:Account"]!));
+
+        Assert.NotNull(tiers);
     }
 }

@@ -50,6 +50,23 @@ class Helpers
                 http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
                 http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghtoken);
             });
+
+            collection.AddHttpClient("GitHub:Token", http =>
+            {
+                http.BaseAddress = new Uri("https://api.github.com");
+                http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
+                http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghtoken);
+            });
+        }
+
+        if (Configuration["GitHub:Sponsorable"] is { Length: > 0 } ghsponsorable)
+        {
+            collection.AddHttpClient("GitHub:Sponsorable", http =>
+            {
+                http.BaseAddress = new Uri("https://api.github.com");
+                http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
+                http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghsponsorable);
+            });
         }
 
         Services = collection.BuildServiceProvider();

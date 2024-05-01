@@ -256,4 +256,26 @@ public class SponsorManagerTests : IDisposable
 
         Assert.Equal(expiry, DateOnly.FromDateTime(token.ValidTo));
     }
+
+    [SecretsFact("GitHub:Sponsorable")]
+    public async Task GetTiersWithMetadata()
+    {
+        var manager = new SponsorsManager(
+            services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
+            httpFactory,
+            services.GetRequiredService<IGraphQueryClientFactory>(),
+            services.GetRequiredService<IMemoryCache>(),
+            Mock.Of<ILogger<SponsorsManager>>());
+
+        var tiers = await manager.GetTiers();
+
+        // Meta is populated from <!-- --> comments in the sponsor listing description, 
+        // which is used to hold a yaml block with metadata.
+        // The metadata is aggregated across all tiers, with the closest to the tier 
+        // taking precedence in case of conflicts.
+
+        Assert.NotNull(tiers);
+        Assert.NotEmpty(tiers);
+        Assert.Contains(tiers, x => x.Meta.ContainsKey("tier"));
+    }
 }

@@ -1,15 +1,20 @@
 ﻿using System.Security.Claims;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Scriban.Syntax;
+using SharpYaml.Serialization;
 
 namespace Devlooped.Sponsors;
 
-public class SponsorsManager(
+public partial class SponsorsManager(
     IOptions<SponsorLinkOptions> options, IHttpClientFactory httpFactory,
     IGraphQueryClientFactory graphFactory,
     IMemoryCache cache, ILogger<SponsorsManager> logger)
 {
+    static readonly Serializer serializer = new();
     SponsorLinkOptions options = options.Value;
 
     public async Task<SponsorableManifest> GetManifestAsync()
@@ -40,8 +45,6 @@ public class SponsorsManager(
             manifest = SponsorableManifest.FromJwt(jwt);
 
             var audience = manifest.Audience;
-
-            // Set the account type
             if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
                 audience = audienceUri.Segments[^1].TrimEnd('/');
 
@@ -182,4 +185,57 @@ public class SponsorsManager(
 
         return claims;
     }
+
+    public async Task<List<Tier>> GetTiers()
+    {
+        var manifest = await GetManifestAsync();
+        var client = graphFactory.CreateClient("sponsorable");
+        var tiers = new List<Tier>();
+
+        var audience = manifest.Audience;
+        if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
+            audience = audienceUri.Segments[^1].TrimEnd('/');
+
+        var json = await client.QueryAsync(GraphQueries.Tiers(audience));
+
+        // TODO: should be an error?
+        if (string.IsNullOrEmpty(json) ||
+            JsonSerializer.Deserialize<RawTier[]>(json, JsonOptions.Default) is not { Length: > 0 } raw)
+            return tiers;
+
+        foreach (var item in raw)
+        {
+            var tier = new Tier(item.Name, YamlRegex().Replace(item.Description, ""), item.Amount, item.OneTime);
+            var current = item;
+            while (true)
+            {
+                var yaml = YamlRegex().Match(current.Description)?.Groups["yaml"]?.Value;
+                if (!string.IsNullOrEmpty(yaml) &&
+                    serializer.Deserialize<Dictionary<string, string>>(yaml) is { } meta)
+                {
+                    foreach (var entry in meta)
+                    {
+                        // An existing value should not be overwritten
+                        tier.Meta.TryAdd(entry.Key, entry.Value);
+                    }
+                }
+
+                // Walk the tiers to aggregate metadata provided by lower tiers.
+                // This avoids having to repeat metadata in each tier.
+                if (string.IsNullOrEmpty(current.Previous) || 
+                    raw.FirstOrDefault(x => x.Name == current.Previous) is not { } previous)
+                    break;
+
+                current = previous;
+            }
+            tiers.Add(tier);
+        }
+
+        return tiers;
+    }
+
+    record RawTier(string Name, string Description, int Amount, bool OneTime, string? Previous);
+
+    [GeneratedRegex("<!--(?<yaml>.*)-->")]
+    private static partial Regex YamlRegex();
 }

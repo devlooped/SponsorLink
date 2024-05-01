@@ -19,3 +19,8 @@ public record Sponsorship(string Sponsorable, [property: Browsable(false)] strin
     DateTime CreatedAt,
 #endif
     [property: DisplayName("One-time")] bool OneTime);
+
+public record Tier(string Name, string Description, int Amount, bool OneTime)
+{
+    public Dictionary<string, string> Meta { get; init; } = [];
+}
