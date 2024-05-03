@@ -72,17 +72,6 @@ public class GitHubTests(ITestOutputHelper output)
         output.WriteLine(data);
     }
 
-    [SecretsFact("SponsorLink:Account")]
-    public async Task GetSponsorships()
-    {
-        var client = new CliGraphQueryClient();
-
-        var sponsorships = await client.QueryAsync(GraphQueries.VerifiedSponsoringOrganizations(Helpers.Configuration["SponsorLink:Account"]!));
-
-        Assert.NotNull(sponsorships);
-        Assert.NotEmpty(sponsorships);
-    }
-
     [CollectionDefinition("GitHub")]
     public class GitHubCollection : ICollectionFixture<GitHubCollection.GitHubFixture>
     {

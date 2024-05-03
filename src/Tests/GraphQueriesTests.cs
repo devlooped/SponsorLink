@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Devlooped.Sponsors;
+﻿using Devlooped.Sponsors;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using static Devlooped.Helpers;
 
 namespace Devlooped.Tests;
@@ -116,6 +110,7 @@ public class GraphQueriesTests
         var orgs = await client.QueryAsync<Organization[]>(GraphQueries.UserOrganizations("davidfowl"));
 
         Assert.NotNull(orgs);
+        Assert.True(orgs.Length > 2);
         Assert.Contains(orgs, x => x.Login == "dotnet");
     }
 
@@ -131,14 +126,123 @@ public class GraphQueriesTests
     }
 
     [SecretsFact("SponsorLink:Account", "GitHub:Token")]
-    public async Task GetSponsorships()
+    public async Task GetHttpSponsorships()
     {
         var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+        var sponsorable = Helpers.Configuration["SponsorLink:Account"];
 
-        var sponsorships = await client.QueryAsync(GraphQueries.VerifiedSponsoringOrganizations(Helpers.Configuration["SponsorLink:Account"]!));
+        Assert.NotNull(sponsorable);
+
+        var account =
+            await client.QueryAsync(GraphQueries.FindUser(sponsorable)) ??
+            await client.QueryAsync(GraphQueries.FindOrganization(sponsorable));
+
+        Assert.NotNull(account);
+
+        var sponsorships = await GetSponsoringOrganizations(client, account, sponsorable);
 
         Assert.NotNull(sponsorships);
         Assert.NotEmpty(sponsorships);
+
+        // NOTE: this would only pass if you have at least 2 sponsoring (verified) orgs. 
+        Assert.True(sponsorships.Count() > 2);
+    }
+
+    [LocalFact("SponsorLink:Account")]
+    public async Task GetCliSponsorships()
+    {
+        var client = new CliGraphQueryClient();
+        var sponsorable = Helpers.Configuration["SponsorLink:Account"];
+
+        if (string.IsNullOrEmpty(sponsorable))
+            return;
+
+        var account =
+            await client.QueryAsync(GraphQueries.FindUser(sponsorable)) ??
+            await client.QueryAsync(GraphQueries.FindOrganization(sponsorable));
+
+        Assert.NotNull(account);
+
+        var sponsorships = await GetSponsoringOrganizations(client, account, sponsorable);
+
+        Assert.NotNull(sponsorships);
+        Assert.NotEmpty(sponsorships);
+
+        // NOTE: this would only pass if you have at least 2 sponsoring (verified) orgs. 
+        Assert.True(sponsorships.Count() > 2);
+    }
+
+    [LocalFact("SponsorLink:Account", "GitHub:Token")]
+    public async Task GetPagedSponsorships()
+    {
+        var cli = new CliGraphQueryClient();
+        var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+        var sponsorable = Helpers.Configuration["SponsorLink:Account"];
+
+        if (string.IsNullOrEmpty(sponsorable))
+            return;
+
+        var account =
+            await cli.QueryAsync(GraphQueries.FindUser(sponsorable)) ??
+            await cli.QueryAsync(GraphQueries.FindOrganization(sponsorable));
+
+        Assert.NotNull(account);
+
+        var clidata = await GetSponsoringOrganizations(cli, account, sponsorable, 2);
+        var httpdata = await GetSponsoringOrganizations(http, account, sponsorable, 2);
+
+        Assert.NotNull(clidata);
+        Assert.NotNull(httpdata);
+        Assert.Equal(clidata, httpdata);
+
+        // NOTE: this would only pass if you have at least 2 sponsoring (verified) orgs. 
+        Assert.True(httpdata.Count() > 2);
+    }
+
+    async Task<Organization[]?> GetSponsoringOrganizations(IGraphQueryClient client, Account account, string sponsorable, int pageSize = 100)
+    {
+        var sponsorships = account.Type == Sponsors.AccountType.User ?
+            await client.QueryAsync(GraphQueries.SponsoringOrganizationsForUser(sponsorable, pageSize)) :
+            await client.QueryAsync(GraphQueries.SponsoringOrganizationsForOrg(sponsorable, pageSize));
+
+        Assert.NotNull(sponsorships);
+        Assert.NotEmpty(sponsorships);
+
+        return sponsorships;
+    }
+
+    [LocalFact("GitHub:Token")]
+    public async Task GetPagedViewerSponsored()
+    {
+        var cli = new CliGraphQueryClient();
+        var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+
+        var clidata = await cli.QueryAsync(GraphQueries.CoreViewerSponsored(2));
+        var httpdata = await http.QueryAsync(GraphQueries.CoreViewerSponsored(2));
+
+        Assert.NotNull(clidata);
+        Assert.NotNull(httpdata);
+        Assert.Equal(clidata, httpdata);
+
+        // NOTE: this would only pass if you have at least 2 sponsorships
+        Assert.True(httpdata.Count() > 2);
+    }
+
+    [LocalFact("GitHub:Token")]
+    public async Task GetPagedViewerSponsorships()
+    {
+        var cli = new CliGraphQueryClient();
+        var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+
+        var clidata = await cli.QueryAsync(GraphQueries.CoreViewerSponsorships(2));
+        var httpdata = await http.QueryAsync(GraphQueries.CoreViewerSponsorships(2));
+
+        Assert.NotNull(clidata);
+        Assert.NotNull(httpdata);
+        Assert.Equal(clidata, httpdata);
+
+        // NOTE: this would only pass if you have at least 2 sponsorships
+        Assert.True(httpdata.Count() > 2);
     }
 
     [SecretsFact("SponsorLink:Account", "GitHub:Token")]
@@ -179,5 +283,87 @@ public class GraphQueriesTests
         var tiers = await client.QueryAsync(GraphQueries.Tiers(Helpers.Configuration["SponsorLink:Account"]!));
 
         Assert.NotNull(tiers);
+    }
+
+    [LocalFact]
+    public async Task GetPagedContributions()
+    {
+        var cli = new CliGraphQueryClient();
+        var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+
+        var httpdata = await http.QueryAsync(GraphQueries.UserContributions("kzu", 5));
+        var clidata = await cli.QueryAsync(GraphQueries.UserContributions("kzu", 10));
+
+        Assert.NotNull(httpdata);
+        Assert.NotNull(clidata);
+
+        var sortedhttp = new HashSet<string>(httpdata).OrderBy(x => x).ToArray();
+        var sortedcli = new HashSet<string>(clidata).OrderBy(x => x).ToArray();
+
+        Assert.Equal(sortedhttp, sortedcli);
+    }
+
+    [LocalFact]
+    public async Task GetPagedRepositoryContributions()
+    {
+        var cli = new CliGraphQueryClient();
+        var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+
+        var httpcontribs = await http.QueryAsync(GraphQueries.CoreViewerRepositoryContributions(5));
+        var clicontribs = await cli.QueryAsync(GraphQueries.CoreViewerRepositoryContributions(5));
+
+        Assert.Equal(httpcontribs, clicontribs);
+    }
+
+    [LocalFact]
+    public async Task GetPagedOrganizationSponsorships()
+    {
+        var cli = new CliGraphQueryClient();
+        var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+
+        var httpcontribs = await http.QueryAsync(GraphQueries.OrganizationSponsorships("github", 4));
+        var clicontribs = await cli.QueryAsync(GraphQueries.OrganizationSponsorships("github", 4));
+
+        Assert.True(httpcontribs?.Count() > 4);
+        Assert.Equal(httpcontribs, clicontribs);
+    }
+
+    [LocalFact]
+    public async Task GetPagedViewerOwnerContributions()
+    {
+        var cli = new CliGraphQueryClient();
+        var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+
+        var httpcontribs = await http.QueryAsync(GraphQueries.CoreViewerOwnerContributions(2));
+        var clicontribs = await cli.QueryAsync(GraphQueries.CoreViewerOwnerContributions(2));
+
+        Assert.True(httpcontribs?.Count() > 2);
+        Assert.Equal(httpcontribs, clicontribs);
+    }
+
+    [LocalFact]
+    public async Task GetPagedUserSponsorships()
+    {
+        var cli = new CliGraphQueryClient();
+        var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+
+        var httpdata = await http.QueryAsync(GraphQueries.UserSponsorships("sindresorhus", 2));
+        var clidata = await cli.QueryAsync(GraphQueries.UserSponsorships("sindresorhus", 2));
+
+        Assert.True(httpdata?.Count() > 2);
+        Assert.Equal(httpdata, clidata);
+    }
+
+    [SecretsFact("GitHub:Token")]
+    public async Task GetPagedUserOrganizations()
+    {
+        var cli = new CliGraphQueryClient();
+        var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+
+        var clidata = await cli.QueryAsync<Organization[]>(GraphQueries.UserOrganizations("davidfowl", 2));
+        var httpdata = await cli.QueryAsync<Organization[]>(GraphQueries.UserOrganizations("davidfowl", 2));
+
+        Assert.True(httpdata?.Count() > 2);
+        Assert.Equal(httpdata, clidata);
     }
 }

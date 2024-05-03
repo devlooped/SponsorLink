@@ -173,7 +173,7 @@ public class SponsorManagerTests : IDisposable
             .Returns(() => sponsor.QueryAsync(GraphQueries.UserSponsorableCandidates("paulbartell")));
 
         // Replace contributions
-        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerContributions, It.IsAny<(string, object)[]>()))
+        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerOwnerContributions, It.IsAny<(string, object)[]>()))
             .Returns(() => sponsor.QueryAsync(GraphQueries.UserContributions("paulbartell")));
 
         var manager = new SponsorsManager(
@@ -203,7 +203,7 @@ public class SponsorManagerTests : IDisposable
             .Returns(() => sponsor.QueryAsync(GraphQueries.UserSponsorableCandidates("testclarius")));
 
         // Replace contributions
-        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerContributions, It.IsAny<(string, object)[]>()))
+        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerOwnerContributions, It.IsAny<(string, object)[]>()))
             .Returns(() => sponsor.QueryAsync(GraphQueries.UserContributions("testclarius")));
 
         graph.Setup(x => x.QueryAsync(GraphQueries.ViewerEmails, It.IsAny<(string, object)[]>()))

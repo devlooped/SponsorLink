@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Std;
@@ -20,6 +21,11 @@ public class CliGraphQueryClient : IGraphQueryClient
 
         if (query.JQ?.Length > 0)
             args += $" --jq \"{query.JQ.Trim()}\"";
+
+        // For now, we only add support for auto-pagination of array results.
+        var paginate = typeof(T).IsArray && query.Query.Contains("$endCursor") && query.Query.Contains("first:");
+        if (paginate)
+            args += " --paginate";
 
         var success = Process.TryExecute("gh", args, out var result);
         if (result is null)
@@ -48,9 +54,26 @@ public class CliGraphQueryClient : IGraphQueryClient
             if (string.IsNullOrEmpty(result))
                 return default;
 
+            if (paginate && typeof(T).IsArray)
+            {
+                var items = new List<object>();
+                foreach (var array in result.Split('[', StringSplitOptions.RemoveEmptyEntries).Select(x => JsonSerializer.Deserialize<T>("[" + x, JsonOptions.Default)))
+                {
+                    if (array is IEnumerable<object> elements)
+                        items.AddRange(elements);
+                }
+                
+                // Convert the object list to the destination array type.
+                var typed = Array.CreateInstance(typeof(T).GetElementType()!, items.Count);
+                Array.Copy(items.ToArray(), typed, items.Count);
+                return (T?)(object)typed;
+            }
+
             return JsonSerializer.Deserialize<T>(result, JsonOptions.Default);
         }
 
         return default;
     }
+
+
 }

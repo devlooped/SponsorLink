@@ -117,7 +117,7 @@ public partial class SponsorsManager(
 
         // Next we check for direct contributions too. 
         // TODO: should this be configurable?
-        var contribs = await sponsor.QueryAsync(GraphQueries.ViewerContributions);
+        var contribs = await sponsor.QueryAsync(GraphQueries.ViewerOwnerContributions);
         if (contribs is not null &&
             contribs.Contains(manifest.Audience))
         {
@@ -138,7 +138,10 @@ public partial class SponsorsManager(
 
         if (!cache.TryGetValue<Organization[]>(typeof(Organization[]), out var sponsoringOrgs) || sponsoringOrgs is null)
         {
-            sponsoringOrgs = await sponsorable.QueryAsync(GraphQueries.VerifiedSponsoringOrganizations(account.Login));
+            sponsoringOrgs = account.Type == AccountType.User ? 
+                await sponsorable.QueryAsync(GraphQueries.SponsoringOrganizationsForUser(account.Login)) :
+                await sponsorable.QueryAsync(GraphQueries.SponsoringOrganizationsForOrg(account.Login));
+
             cache.Set(typeof(Organization[]), sponsoringOrgs, new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)

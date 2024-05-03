@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Spectre.Console.Cli;
+﻿using Spectre.Console.Cli;
 using static Devlooped.Sponsors.GitHubCommand;
 
 namespace Devlooped.Sponsors;

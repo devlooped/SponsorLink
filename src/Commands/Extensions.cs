@@ -7,6 +7,12 @@ namespace Devlooped.Sponsors;
 
 public static class Extensions
 {
+    public static void AddRange<T>(this ICollection<T> collection, IEnumerable<T> values)
+    {
+        foreach (var value in values)
+            collection.Add(value);
+    }
+
     public static ICommandConfigurator AddCommand<TCommand>(this IConfigurator configurator)
         where TCommand : class, ICommand
     {
