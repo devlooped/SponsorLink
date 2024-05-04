@@ -73,7 +73,7 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
     /// <summary>
     /// Depending on the Accept header, returns a JWT or JSON manifest of the authenticated user's claims.
     /// </summary>
-    [Function("sponsor")]
+    [Function("sync")]
     public async Task<IActionResult> FetchAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         if (!configuration.TryGetClientId(logger, out var clientId))
@@ -85,7 +85,7 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
             // or the token-based principal population won't work.
             // Never redirect requests for JWT, as they are likely from a CLI or other non-browser client.
             if (!req.Headers.Accept.Contains("application/jwt") && !string.IsNullOrEmpty(clientId))
-                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/sponsor");
+                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/sync");
 
             logger.LogError("Ensure GitHub identity provider is configured for the functions app.");
 
