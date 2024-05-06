@@ -47,7 +47,7 @@ public class SponsorableManifestTests
 
         var jwt = manifest.ToJwt(new SigningCredentials(key, SecurityAlgorithms.RsaSha256));
 
-        var roundtripped = SponsorableManifest.FromJwt(jwt);
+        Assert.True(SponsorableManifest.TryRead(jwt, out var roundtripped, out _));
 
         Assert.Equal(manifest, roundtripped);
     }

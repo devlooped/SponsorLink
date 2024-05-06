@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -29,19 +30,47 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
     /// Parses a JWT into a <see cref="SponsorableManifest"/>.
     /// </summary>
     /// <param name="jwt">The JWT containing the sponsorable information.</param>
+    /// <param name="manifest">The parsed manifest, if not required claims are missing.</param>
+    /// <param name="missingClaim">The missing required claim, if any.</param>
     /// <returns>A validated manifest.</returns>
-    /// <exception cref="ArgumentException">A required claim was not found in the JWT.</exception>
-    public static SponsorableManifest FromJwt(string jwt)
+    public static bool TryRead(string jwt, [NotNullWhen(true)] out SponsorableManifest? manifest, out string? missingClaim)
     {
         var token = new JwtSecurityTokenHandler().ReadJwtToken(jwt);
         var issuer = token.Issuer;
-        var audience = token.Audiences.FirstOrDefault() ?? throw new ArgumentException("Missing 'issuer' claim", nameof(jwt));
-        var clientId = token.Claims.FirstOrDefault(c => c.Type == "client_id")?.Value ?? throw new ArgumentException("Missing 'client_id' claim", nameof(jwt));
-        var pub = token.Claims.FirstOrDefault(c => c.Type == "pub")?.Value ?? throw new ArgumentException("Missing 'pub' claim", nameof(jwt));
-        var jwk = token.Claims.FirstOrDefault(c => c.Type == "sub_jwk")?.Value ?? throw new ArgumentException("Missing 'sub_jwk' claim", nameof(jwt));
-        var key = new JsonWebKeySet { Keys = { JsonWebKey.Create(jwk) } }.GetSigningKeys().First();
+        missingClaim = null;
 
-        return new SponsorableManifest(new Uri(issuer), new Uri(audience), clientId, key, pub);
+        if (token.Audiences.FirstOrDefault() is not string audience)
+        {
+            missingClaim = "aud";
+            manifest = default;
+            return false;
+        }
+
+        if (token.Claims.FirstOrDefault(c => c.Type == "client_id")?.Value is not string clientId)
+        {
+            missingClaim = "client_id";
+            manifest = default;
+            return false;
+        }
+
+        if (token.Claims.FirstOrDefault(c => c.Type == "pub")?.Value is not string pub)
+        {
+            missingClaim = "pub";
+            manifest = default;
+            return false;
+        }
+
+        if (token.Claims.FirstOrDefault(c => c.Type == "sub_jwk")?.Value is not string jwk)
+        {
+            missingClaim = "sub_jwk";
+            manifest = default;
+            return false;
+        }
+
+        var key = new JsonWebKeySet { Keys = { JsonWebKey.Create(jwk) } }.GetSigningKeys().First();
+        manifest = new SponsorableManifest(new Uri(issuer), new Uri(audience), clientId, key, pub);
+
+        return true;
     }
 
     /// <summary>
@@ -96,7 +125,7 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
             DateTime.UtcNow.Add(expiration.Value) :
             // Expire the first day of the next month
             new DateTime(
-                DateTime.UtcNow.AddMonths(1).Year, 
+                DateTime.UtcNow.AddMonths(1).Year,
                 DateTime.UtcNow.AddMonths(1).Month, 1,
                 // Use current time so they don't expire all at the same time
                 DateTime.UtcNow.Hour,

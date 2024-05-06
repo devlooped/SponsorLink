@@ -41,7 +41,8 @@ public partial class SponsorsManager(
                 url, (int)response.StatusCode, await response.Content.ReadAsStringAsync());
 
             var jwt = await response.Content.ReadAsStringAsync();
-            manifest = SponsorableManifest.FromJwt(jwt);
+            logger.Assert(SponsorableManifest.TryRead(jwt, out manifest, out var missing),
+                "Failed to read manifest due to missing required claim '{0}'", missing);
 
             var audience = manifest.Audience;
             if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
