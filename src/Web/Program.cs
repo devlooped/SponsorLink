@@ -29,7 +29,7 @@ class Program
                 builder.UseGitHubDeviceFlowAuthentication();
         #endif
                 builder.UseAppServiceAuthentication();
-                builder.UseGitHubAuthentication();
+                builder.UseGitHubAuthentication(populateEmails: true, verifiedOnly: true);
                 builder.UseClaimsPrincipal();
             })
             .ConfigureServices(services =>
