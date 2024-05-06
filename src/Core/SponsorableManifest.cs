@@ -78,10 +78,17 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public string Sign(IEnumerable<Claim> claims, TimeSpan? expiration = default)
+    /// <summary>
+    /// Sign the JWT claims with the provided RSA key.
+    /// </summary>
+    public string Sign(IEnumerable<Claim> claims, RSA rsa, TimeSpan? expiration = default)
+        => Sign(claims, new RsaSecurityKey(rsa), expiration);
+
+    public string Sign(IEnumerable<Claim> claims, RsaSecurityKey? key = default, TimeSpan? expiration = default)
     {
-        if (SecurityKey is not RsaSecurityKey rsa || rsa.PrivateKeyStatus != PrivateKeyStatus.Exists)
-            throw new NotSupportedException("Current manifest does not contain a private key to sign with.");
+        var rsa = key ?? SecurityKey as RsaSecurityKey;
+        if (rsa?.PrivateKeyStatus != PrivateKeyStatus.Exists)
+            throw new NotSupportedException("No private key found to sign the manifest.");
 
         var signing = new SigningCredentials(rsa, SecurityAlgorithms.RsaSha256);
 
@@ -119,6 +126,15 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
         {
             tokenClaims.Insert(1, new("aud", Audience));
         }
+
+        // The other claims (client_id, pub, sub_jwk) claims are mostly for the SL manifest itself,
+        // not for the user, so for now we don't add them. 
+
+        // Don't allow mismatches of public manifest key and the one used to sign, to avoid 
+        // weird run-time errors verifiying manifests that were signed with a different key.
+        var pubKey = Convert.ToBase64String(rsa.Rsa.ExportRSAPublicKey());
+        if (pubKey != PublicKey)
+            throw new ArgumentException($"Cannot sign with a private key that does not match the manifest public key.");
 
         var jwt = new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
             claims: tokenClaims,
