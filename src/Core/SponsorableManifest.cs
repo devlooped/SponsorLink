@@ -208,7 +208,11 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
     /// <remarks>
     /// See https://www.rfc-editor.org/rfc/rfc8693.html#name-client_id-client-identifier
     /// </remarks>
-    public string ClientId => clientId;
+    public string ClientId
+    {
+        get => clientId;
+        internal set => clientId = value;
+    }
     /// <summary>
     /// Public key that can be used to verify JWT signatures.
     /// </summary>

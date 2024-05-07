@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <None Update="@(None)" CopyToOutputDirectory="PreserveNewest" />
-    <InternalsVisibleTo Include="Tests" />
+    <InternalsVisibleTo Include="Tests;Web" />
   </ItemGroup>
 
 </Project>

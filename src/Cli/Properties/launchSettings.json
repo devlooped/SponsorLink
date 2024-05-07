@@ -2,7 +2,7 @@
   "profiles": {
     "Cli": {
       "commandName": "Project",
-      "commandLineArgs": "list"
+      "commandLineArgs": "sync -i http://localhost:4242"
     }
   }
 }

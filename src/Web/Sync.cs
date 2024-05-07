@@ -94,6 +94,15 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         }
 
         var manifest = await sponsors.GetManifestAsync();
+
+        // When running localhost, we use a different GH app (and therefore client ID) 
+        // which redirects to localhost:4242. Since GH apps cannot provide more than one 
+        // redirect URL, this is unavoidable as of now. 
+        // So if we're running in a dev environment, we need to adjust the client ID 
+        // that's also used in the GitHubAuthExtensions
+        if (host.IsDevelopment())
+            manifest.ClientId = clientId;
+
         // Shield against misconfiguration that can cause unpredictable behavior.
         if (manifest.ClientId != clientId)
         {
