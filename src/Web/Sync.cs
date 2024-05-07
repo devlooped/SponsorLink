@@ -62,11 +62,12 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         {
             body,
             claims,
-            request = req.Headers.ToDictionary(x => x.Key, x => x.Value.ToString().Trim('"')),
-            response = response.Headers.ToDictionary(x => x.Key, x => string.Join(',', x.Value))
+            request = host.IsDevelopment() ? req.Headers.ToDictionary(x => x.Key, x => x.Value.ToString().Trim('"')) : null,
+            response = host.IsDevelopment() ? response.Headers.ToDictionary(x => x.Key, x => string.Join(',', x.Value)) : null
         })
         {
-            StatusCode = (int)response.StatusCode
+            StatusCode = (int)response.StatusCode, 
+            SerializerSettings = JsonOptions.Default
         };
     }
 
