@@ -7,14 +7,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Devlooped.Sponsors;
 
-class Version(IConfiguration configuration, ILogger<Version> logger, IWebHostEnvironment hosting)
+class Version(IConfiguration configuration, ILogger<Version> logger, IOptions<SponsorLinkOptions> options, IWebHostEnvironment hosting)
 {
+    SponsorLinkOptions options = options.Value;
+
     [Function("version")]
-    public IActionResult Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    public IActionResult GetVersion([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         if (hosting.EnvironmentName == "Development" || configuration["DEBUG"] == "true")
         {
@@ -33,11 +36,11 @@ class Version(IConfiguration configuration, ILogger<Version> logger, IWebHostEnv
     }
 
     [Function("pub")]
-    public IActionResult Test([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    public IActionResult GetPublicKey([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
-        if (configuration["SponsorLink:Public"] is not { Length: > 0 } key)
+        if (options.PublicKey is not { Length: > 0 } key)
         {
-            logger.LogError("Missing required configuration 'SponsorLink:Public'");
+            logger.LogError($"Missing required configuration 'SponsorLink:{nameof(SponsorLinkOptions.PublicKey)}'");
             return new StatusCodeResult(500);
         }
 

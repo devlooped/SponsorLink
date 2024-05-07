@@ -75,7 +75,7 @@ class Program
                 {
                     var options = sp.GetRequiredService<IOptions<SponsorLinkOptions>>();
                     if (string.IsNullOrEmpty(options.Value.PrivateKey))
-                        throw new InvalidOperationException("Missing required configuration 'SponsorLink:PrivateKey'");
+                        throw new InvalidOperationException($"Missing required configuration 'SponsorLink:{nameof(SponsorLinkOptions.PrivateKey)}'");
 
                     // The key (as well as the yaml manifest) can be generated using gh sponsors init
                     // Install with: gh extension install devlooped/gh-sponsors
