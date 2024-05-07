@@ -12,7 +12,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
     <PackageReference Include="NuGetizer" Version="1.2.1" PrivateAssets="all" />
-    <PackageReference Include="Scriban" Version="5.9.1" />
+    <PackageReference Include="Scriban" Version="5.10.0" />
     <PackageReference Include="Std.UriTemplate" Version="0.0.56" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
