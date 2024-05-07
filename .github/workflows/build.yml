@@ -14,10 +14,6 @@ env:
   VersionLabel: ${{ github.ref }}
   Configuration: Release
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
   build:
     runs-on: windows-latest
@@ -40,12 +36,13 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: ⚙ func 4.x
+        if: github.ref == 'refs/heads/main'
         run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
 
       - name: 🚀 deploy
         if: github.ref == 'refs/heads/main'
         working-directory: src\Web
-        run: func azure functionapp publish sl-beta
+        run: func azure functionapp publish sl-beta --dotnet-isolated
 
       - name: 🚀 sleet
         env:
