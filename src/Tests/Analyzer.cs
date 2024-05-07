@@ -59,7 +59,7 @@ public class AnalyzerTests(ITestOutputHelper Output)
     }
 
     // Showcases how to read the user's email using LibGit2Sharp
-    [Fact]
+    [LocalFact]
     public void LibGitConfig()
     {
         var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
@@ -84,7 +84,7 @@ public class AnalyzerTests(ITestOutputHelper Output)
         Output.WriteLine(email);
     }
 
-    [Fact]
+    [LocalFact]
     public void RawGitConfig()
     {
         string? email = null;
@@ -152,7 +152,7 @@ public class AnalyzerTests(ITestOutputHelper Output)
     }
 
     // Showcases how to read the user's email using an external process
-    [Fact]
+    [LocalFact]
     public void GitConfig()
     {
         var proc = Process.Start(new ProcessStartInfo("git", "config --get user.email")
@@ -165,13 +165,10 @@ public class AnalyzerTests(ITestOutputHelper Output)
 
         proc!.WaitForExit();
 
-        Assert.Equal(0, proc.ExitCode);
+        Skip.If(proc.ExitCode != 0, "Could not run git.");
 
-        if (proc.ExitCode == 0)
-        {
-            var email = proc.StandardOutput.ReadToEnd().Trim();
-            Assert.Contains("@", email);
-            Output.WriteLine(email);
-        }
+        var email = proc.StandardOutput.ReadToEnd().Trim();
+        Assert.Contains("@", email);
+        Output.WriteLine(email);
     }
 }
