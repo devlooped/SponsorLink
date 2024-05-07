@@ -1,0 +1,10 @@
+{
+  "proxies": {
+    "EmptyRouteProxy": {
+      "matchCondition": {
+        "route": "/"
+      },
+      "backendUri": "http://localhost:4242/me"
+    }
+  }
+}

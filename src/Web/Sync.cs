@@ -74,7 +74,7 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
     /// Depending on the Accept header, returns a JWT or JSON manifest of the authenticated user's claims.
     /// </summary>
     [Function("sync")]
-    public async Task<IActionResult> FetchAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    public async Task<IActionResult> FetchAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "sync")] HttpRequest req)
     {
         if (!configuration.TryGetClientId(logger, out var clientId))
             return new StatusCodeResult(500);
@@ -137,8 +137,8 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         };
     }
 
-    [Function("sponsor")]
-    public IActionResult Delete([HttpTrigger(AuthorizationLevel.Anonymous, "delete")] HttpRequest req)
+    [Function("delete")]
+    public IActionResult Delete([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "sync")] HttpRequest req)
     {
         if (!configuration.TryGetClientId(logger, out var clientId))
             return new StatusCodeResult(500);

@@ -2,7 +2,7 @@
   "profiles": {
     "Web": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7198",
+      "commandLineArgs": "--port 4242",
       "launchBrowser": false
     }
   }
