@@ -35,6 +35,11 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
 
+      - name: 🔓 login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: 🚀 deploy
         if: github.ref == 'refs/heads/main'
         working-directory: src\Web
