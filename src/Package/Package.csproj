@@ -16,6 +16,7 @@
     <PackNone>true</PackNone>
     <PackBuildOutput>false</PackBuildOutput>
     <PackOnBuild>true</PackOnBuild>
+    <IsPackable>false</IsPackable>
 
     <!-- Roslyn caches analyzers aggressively so we are better off using a very dynamic version number 
          for local builds where a quick devloop is key. We bump version every 10 seconds -->
