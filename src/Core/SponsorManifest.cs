@@ -135,8 +135,9 @@ public class SponsorManifest
             var claims = manifest.Validate(jwt, out var sectoken);
 
             progress.Report($"Found sponsor roles: {string.Join(',', claims.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => $"[lime]{c.Value}[/]"))}");
-            // save the manifest for later use
-            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SponsorLink", ".gitub");
+
+            // save the manifest for later use. note that for now, we only support GitHub sponsors manifests.
+            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SponsorLink", "GitHub");
             Directory.CreateDirectory(dir);
             File.WriteAllText(Path.Combine(dir, sponsorable + ".jwt"), jwt);
 
