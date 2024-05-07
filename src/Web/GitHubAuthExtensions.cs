@@ -20,6 +20,7 @@ static class GitHubAuthExtensions
             logger.LogWarning("Missing required configuration/secret 'GitHub:ClientID'.");
             return false;
         }
+        return true;
 #endif
 
         if (!bool.TryParse(configuration["WEBSITE_AUTH_ENABLED"], out var authEnabled) || !authEnabled)
