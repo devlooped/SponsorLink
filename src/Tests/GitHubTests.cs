@@ -31,7 +31,7 @@ public class GitHubTests(ITestOutputHelper output)
 
     }
 
-    [Fact]
+    [SecretsFact("GitHub:Token")]
     public async Task RunQuery()
     {
         var http = new HttpClient();

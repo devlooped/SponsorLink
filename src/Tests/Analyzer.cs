@@ -62,9 +62,22 @@ public class AnalyzerTests(ITestOutputHelper Output)
     [Fact]
     public void LibGitConfig()
     {
-        var path = new DirectoryInfo(@"..\..\..\..\..").FullName;
-        Output.WriteLine(path);
-        var config = LibGit2Sharp.Configuration.BuildFrom(path);
+        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+        var root = default(string);
+        while (dir != null)
+        {
+            if (Path.Combine(dir.FullName, ".git") is string path &&
+                Directory.Exists(path))
+            {
+                root = path;
+                break;
+            }
+            dir = dir.Parent;
+        }
+
+        Skip.If(root == null, "No git repository found.");
+
+        var config = LibGit2Sharp.Configuration.BuildFrom(root);
         var email = config.Get<string>("user.email").Value;
 
         Assert.Contains("@", email);
@@ -117,6 +130,8 @@ public class AnalyzerTests(ITestOutputHelper Output)
 
             dir = dir.Parent;
         }
+
+        Skip.If(cfg == null, "No git repository found.");
 
         if ((email = ReadEmail(cfg)) != null)
         {
