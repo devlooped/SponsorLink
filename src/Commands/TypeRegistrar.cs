@@ -3,9 +3,11 @@ using Spectre.Console.Cli;
 
 namespace Devlooped.Sponsors;
 
-public sealed class TypeRegistrar(IServiceCollection builder) : ITypeRegistrar
+public sealed class TypeRegistrar(IServiceCollection? builder = default) : ITypeRegistrar
 {
-    readonly IServiceCollection builder = builder;
+    readonly IServiceCollection builder = builder ?? new ServiceCollection();
+
+    public IServiceCollection Services => builder;
 
     public ITypeResolver Build() => new TypeResolver(builder.BuildServiceProvider());
 
