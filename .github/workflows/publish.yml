@@ -30,10 +30,6 @@ jobs:
       - name: 🧪 test
         run: dotnet test 
         
-      - name: 📦 pack
-        working-directory: src/Package
-        run: dotnet pack -m:1 -p:version="$($env:GITHUB_REF.Replace('refs/tags/', '').TrimStart('v'))"
-
       - name: ⚙ func 4.x
         if: github.ref == 'refs/heads/main'
         run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
@@ -42,6 +38,3 @@ jobs:
         if: github.ref == 'refs/heads/main'
         working-directory: src\Web
         run: func azure functionapp publish sponsorlink --dotnet-isolated
-
-      - name: 🚀 nuget
-        run: dotnet nuget push bin\*.nupkg -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
