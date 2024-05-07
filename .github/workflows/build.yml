@@ -20,7 +20,7 @@ defaults:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: 🤘 checkout
         uses: actions/checkout@v2
@@ -28,7 +28,6 @@ jobs:
       - name: 🙏 build
         run: |
           dotnet build -m:1
-          dotnet build src/Web --output ./app
           dotnet pack --no-build
 
       - name: 🧪 test
@@ -40,12 +39,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: ⚙ func 4.x
+        run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
+
       - name: 🚀 deploy
         if: github.ref == 'refs/heads/main'
-        uses: Azure/functions-action@v1
-        with:
-          app-name: ${{ vars.AZURE_APPNAME }}
-          package: ./app
+        working-directory: src\Web
+        run: func azure functionapp publish sl-beta
 
       - name: 🚀 sleet
         env:
