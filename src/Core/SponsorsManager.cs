@@ -44,13 +44,9 @@ public partial class SponsorsManager(
             logger.Assert(SponsorableManifest.TryRead(jwt, out manifest, out var missing),
                 "Failed to read manifest due to missing required claim '{0}'", missing);
 
-            var audience = manifest.Audience;
-            if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
-                audience = audienceUri.Segments[^1].TrimEnd('/');
-
             // Manifest audience should match the sponsorable account to avoid weird issues?
-            if (account.Login != audience)
-                throw new InvalidOperationException("Manifest audience does not match configured sponsorable account.");
+            if (account.Login != manifest.Sponsorable)
+                throw new InvalidOperationException("Manifest sponsorable account does not match configured sponsorable account.");
 
             manifest = cache.Set(typeof(SponsorableManifest), manifest, new MemoryCacheEntryOptions
             {
@@ -83,20 +79,14 @@ public partial class SponsorsManager(
         var manifest = await GetManifestAsync();
         logger.Assert(manifest is not null, "Failed to retrieve sponsorable manifest");
 
-        var audience = manifest.Audience;
-
-        // Set the account type
-        if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
-            audience = audienceUri.Segments[^1].TrimEnd('/');
-
-        var account = await sponsorable.QueryAsync(GraphQueries.Sponsorable(audience));
+        var account = await sponsorable.QueryAsync(GraphQueries.Sponsorable(manifest.Sponsorable));
         logger.Assert(account is not null, "Failed to retrieve sponsorable account");
 
         if (logins.Contains(account.Login))
             type |= SponsorTypes.Team;
 
         // Use the sponsorable token since it has access to sponsorship info even if it's private
-        var sponsoring = await sponsorable.QueryAsync(GraphQueries.IsSponsoredBy(audience, logins));
+        var sponsoring = await sponsorable.QueryAsync(GraphQueries.IsSponsoredBy(account.Login, logins));
         logger.Assert(sponsoring is not null);
 
         // User is checked for auth on first line above
@@ -118,9 +108,9 @@ public partial class SponsorsManager(
 
         // Next we check for direct contributions too. 
         // TODO: should this be configurable?
-        var contribs = await sponsor.QueryAsync(GraphQueries.ViewerOwnerContributions);
+        var contribs = await sponsor.QueryAsync(GraphQueries.ViewerContributedRepoOwners);
         if (contribs is not null &&
-            contribs.Contains(manifest.Audience))
+            contribs.Contains(manifest.Sponsorable))
         {
             type |= SponsorTypes.Contributor;
         }
@@ -199,10 +189,11 @@ public partial class SponsorsManager(
         var claims = new List<Claim>
         {
             new("iss", manifest.Issuer),
-            new("aud", manifest.Audience),
-            new("client_id", manifest.ClientId),
-            new("sub", id),
         };
+
+        claims.AddRange(manifest.Audience.Select(x => new Claim("aud", x)));
+        claims.Add(new("client_id", manifest.ClientId));
+        claims.Add(new("sub", id));
 
         // check for each flags SponsorTypes and add claims accordingly
         if (sponsor.HasFlag(SponsorTypes.Team))
@@ -228,11 +219,7 @@ public partial class SponsorsManager(
             var client = graphFactory.CreateClient("sponsorable");
             tiers = [];
 
-            var audience = manifest.Audience;
-            if (Uri.TryCreate(manifest.Audience, UriKind.Absolute, out var audienceUri))
-                audience = audienceUri.Segments[^1].TrimEnd('/');
-
-            var json = await client.QueryAsync(GraphQueries.Tiers(audience));
+            var json = await client.QueryAsync(GraphQueries.Tiers(manifest.Sponsorable));
 
             // TODO: should be an error?
             if (string.IsNullOrEmpty(json) ||

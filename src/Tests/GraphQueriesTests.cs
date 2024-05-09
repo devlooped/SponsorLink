@@ -309,8 +309,8 @@ public class GraphQueriesTests
         var cli = new CliGraphQueryClient();
         var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
-        var httpcontribs = await http.QueryAsync(GraphQueries.CoreViewerRepositoryContributions(5));
-        var clicontribs = await cli.QueryAsync(GraphQueries.CoreViewerRepositoryContributions(5));
+        var httpcontribs = await http.QueryAsync(GraphQueries.CoreViewerContributedRepositories(5));
+        var clicontribs = await cli.QueryAsync(GraphQueries.CoreViewerContributedRepositories(5));
 
         Assert.Equal(httpcontribs, clicontribs);
     }
@@ -334,8 +334,8 @@ public class GraphQueriesTests
         var cli = new CliGraphQueryClient();
         var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
-        var httpcontribs = await http.QueryAsync(GraphQueries.CoreViewerOwnerContributions(2));
-        var clicontribs = await cli.QueryAsync(GraphQueries.CoreViewerOwnerContributions(2));
+        var httpcontribs = await http.QueryAsync(GraphQueries.CoreViewerContributedRepoOwners(2));
+        var clicontribs = await cli.QueryAsync(GraphQueries.CoreViewerContributedRepoOwners(2));
 
         Assert.True(httpcontribs?.Count() > 2);
         Assert.Equal(httpcontribs, clicontribs);

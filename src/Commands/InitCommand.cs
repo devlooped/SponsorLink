@@ -13,48 +13,53 @@ using Spectre.Console.Json;
 namespace Devlooped.Sponsors;
 
 [Description("Initializes a sponsorable manifest and token")]
-public partial class InitCommand(ICommandApp app) : GitHubAsyncCommand<InitCommand.Settings>(app)
+public partial class InitCommand: AsyncCommand<InitCommand.Settings>
 {
     public class Settings : CommandSettings
     {
         [Description("The base URL of the manifest issuer web app.")]
-        [CommandArgument(0, "<issuer>")]
+        [CommandOption("-i|--issuer")]
         public required string Issuer { get; init; }
 
-        [Description("The Client ID of the GitHub OAuth application created by the sponsorable account.")]
-        [CommandArgument(1, "<clientId>")]
-        public required string ClientId { get; init; }
+        [Description("The intended audience or supported sponsorship platforms, like https://github.com/sponsors/curl, https://patreon.com/curl).")]
+        [CommandOption("-a|--audience <VALUES>")]
+        public required Uri[] Audience { get; init; }
 
-        [Description("Sponsorable account, if different from the authenticated user.")]
-        [CommandOption("-a|--account")]
-        public required string? Account { get; init; }
+        [Description("The Client ID of the GitHub OAuth application created by the sponsorable account.")]
+        [CommandOption("-c|--clientId")]
+        public required string ClientId { get; init; }
 
         [Description("Existing private key to use. By default, creates a new one.")]
         [CommandOption("-k|--key")]
         public required string? Key { get; init; }
+
+        public override ValidationResult Validate()
+        {
+            if (string.IsNullOrWhiteSpace(Issuer))
+                return ValidationResult.Error("Issuer URL is required.");
+
+            // must provide at least one audience
+            if (Audience.Length == 0)
+                return ValidationResult.Error("At least one audience is required.");
+
+            if (Audience.Any(x => !x.IsAbsoluteUri))
+                return ValidationResult.Error("Audiences must be absolute URIs.");
+
+            if (!Audience.Any(x => x.Host == "github.com"))
+                return ValidationResult.Error("At least one of the intended audiences must be a GitHub sponsors URL.");
+
+            if (string.IsNullOrWhiteSpace(ClientId))
+                return ValidationResult.Error("Client ID is required.");
+
+            return base.Validate();
+        }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var audience = settings.Account;
-
-        if (audience == null) 
-        {
-            if (!AnsiConsole.Confirm(ThisAssembly.Strings.Init.NoAudience))
-                return -1;
-
-            if (await base.ExecuteAsync(context, settings) is var result &&
-                result < 0)
-                return result;
-            else 
-                audience = Account?.Login;
-        }
-
-        if (audience == null)
-        {
-            AnsiConsole.MarkupLine($":cross_mark: Could not determine sponsorable account to use for manifest.");
-            return -1;
-        }
+        var sponsorable = settings.Audience
+            .Where(x => x.Host == "github.com")
+            .First().Segments[^1];
 
         // Generate key pair
         var rsa = RSA.Create(3072);
@@ -68,54 +73,60 @@ public partial class InitCommand(ICommandApp app) : GitHubAsyncCommand<InitComma
 
             rsa.ImportRSAPrivateKey(await File.ReadAllBytesAsync(settings.Key), out _);
         }
+        else
+        {
+            AnsiConsole.MarkupLine($":check_mark_button: Generated new signing key");
+        }
 
         var pub64 = Convert.ToBase64String(rsa.ExportRSAPublicKey());
         var pubJwk = JsonSerializer.Serialize(
             JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(false))),
             JsonOptions.JsonWebKey);
 
-        AnsiConsole.MarkupLine($":check_mark_button: Generated new signing key");
+        var baseName = Path.Combine(Directory.GetCurrentDirectory(), sponsorable);
 
-        var baseName = Path.Combine(Directory.GetCurrentDirectory(), audience);
+        // Only re-export if we generated a new key
+        if (settings.Key == null)
+        {
+            await File.WriteAllBytesAsync($"{sponsorable}.key", rsa.ExportRSAPrivateKey());
+            AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key[/]     [grey](private key)[/]");
 
-        await File.WriteAllBytesAsync($"{audience}.key", rsa.ExportRSAPrivateKey());
-        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key[/]     [grey](private key)[/]");
+            await File.WriteAllTextAsync($"{sponsorable}.key.txt",
+                Convert.ToBase64String(rsa.ExportRSAPrivateKey()),
+                Encoding.UTF8);
+            AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key.txt[/] [grey](base64-encoded)[/]");
 
-        await File.WriteAllTextAsync($"{audience}.key.txt",
-            Convert.ToBase64String(rsa.ExportRSAPrivateKey()),
-            Encoding.UTF8);
-        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key.txt[/] [grey](base64-encoded)[/]");
+            await File.WriteAllTextAsync($"{sponsorable}.key.jwk",
+                JsonSerializer.Serialize(
+                    JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(true))),
+                    JsonOptions.JsonWebKey),
+                Encoding.UTF8);
+            AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key.jwk[/] [grey](JWK string)[/]");
 
-        await File.WriteAllTextAsync($"{audience}.key.jwk",
-            JsonSerializer.Serialize(
-                JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(true))),
-                JsonOptions.JsonWebKey),
-            Encoding.UTF8);
-        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.key.jwk[/] [grey](JWK string)[/]");
+            await File.WriteAllBytesAsync($"{sponsorable}.pub", rsa.ExportRSAPublicKey());
+            AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub[/]     [grey](public key)[/]");
 
-        await File.WriteAllBytesAsync($"{audience}.pub", rsa.ExportRSAPublicKey());
-        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub[/]     [grey](public key)[/]");
+            await File.WriteAllTextAsync($"{sponsorable}.pub.txt", pub64, Encoding.UTF8);
+            AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.txt[/] [grey](base64-encoded)[/]");
 
-        await File.WriteAllTextAsync($"{audience}.pub.txt", pub64, Encoding.UTF8);
-        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.txt[/] [grey](base64-encoded)[/]");
+            await File.WriteAllTextAsync($"{sponsorable}.pub.jwk",
+                pubJwk,
+                Encoding.UTF8);
+            AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.jwk[/] [grey](JWK string)[/]");
+        }
 
-        await File.WriteAllTextAsync($"{audience}.pub.jwk",
-            pubJwk,
-            Encoding.UTF8);
-        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.jwk[/] [grey](JWK string)[/]");
-
-        // NOTE: this is a GitHub-specific command, so we hardcode the audience. Eventually, if 
-        // we support other sponsoring platforms, we'd have other commands.
-        var manifest = new SponsorableManifest(new Uri(settings.Issuer), new Uri($"https://github.com/{audience}"), settings.ClientId, new RsaSecurityKey(rsa), pub64);
+        var manifest = new SponsorableManifest(new Uri(settings.Issuer), 
+            settings.Audience, 
+            settings.ClientId, new RsaSecurityKey(rsa), pub64);
 
         // Serialize the token and return as a string
         var jwt = manifest.ToJwt();
 
-        var sponsorable = new FileInfo("sponsorable.jwt");
-        await File.WriteAllTextAsync(sponsorable.FullName, jwt, Encoding.UTF8);
+        var path = new FileInfo("sponsorable.jwt");
+        await File.WriteAllTextAsync(path.FullName, jwt, Encoding.UTF8);
 
         AnsiConsole.MarkupLine($":check_mark_button: Generated new sponsorable JWT");
-        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{sponsorable.FullName}[/] [grey](upload to .github repo)[/]");
+        AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{path.FullName}[/] [grey](upload to .github repo)[/]");
 #if DEBUG
         AnsiConsole.MarkupLine($"\t:magnifying_glass_tilted_right: [grey]{jwt}[/]");
 #endif
@@ -128,7 +139,8 @@ public partial class InitCommand(ICommandApp app) : GitHubAsyncCommand<InitComma
         var jwtPrincipal = new JwtSecurityTokenHandler().ValidateToken(jwt, new TokenValidationParameters
         {
             RequireExpirationTime = false,
-            ValidAudience = manifest.Audience,
+            // The audiences must match each of the intended audiences
+            AudienceValidator = (audiences, token, parameters) => audiences.All(audience => settings.Audience.Any(uri => uri.AbsoluteUri == audience)),
             ValidIssuer = manifest.Issuer,
             IssuerSigningKey = secKey,
         }, out var secToken);

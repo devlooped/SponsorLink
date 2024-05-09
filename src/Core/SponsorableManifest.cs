@@ -11,19 +11,64 @@ namespace Devlooped.Sponsors;
 /// The serializable manifest of a sponsorable user, as persisted 
 /// in the .github/sponsorlink.jwt file.
 /// </summary>
-public class SponsorableManifest(Uri issuer, Uri audience, string clientId, SecurityKey publicKey, string publicRsaKey)
+public class SponsorableManifest
 {
-    int? hashcode;
+    /// <summary>
+    /// Overall manifest status.
+    /// </summary>
+    public enum Status
+    {
+        /// <summary>
+        /// SponsorLink manifest is invalid.
+        /// </summary>
+        Invalid,
+        /// <summary>
+        /// The manifest has an audience that doesn't match the sponsorable account.
+        /// </summary>
+        AccountMismatch,
+        /// <summary>
+        /// SponsorLink manifest not found for the given account, so it's not supported.
+        /// </summary>
+        NotFound,
+        /// <summary>
+        /// Manifest was successfully fetched and validated.
+        /// </summary>
+        OK,
+    }
 
     /// <summary>
     /// Creates a new manifest with a new RSA key pair.
     /// </summary>
-    public static SponsorableManifest Create(Uri issuer, Uri audience, string clientId)
+    public static SponsorableManifest Create(Uri issuer, Uri[] audience, string clientId)
     {
         var rsa = RSA.Create(3072);
         var pub = Convert.ToBase64String(rsa.ExportRSAPublicKey());
 
         return new SponsorableManifest(issuer, audience, clientId, new RsaSecurityKey(rsa), pub);
+    }
+
+    public static async Task<(Status, SponsorableManifest?)> FetchAsync(string sponsorable, HttpClient? http = default)
+    {
+        // Try to detect sponsorlink manifest in the sponsorable .github repo
+        var url = $"https://github.com/{sponsorable}/.github/raw/main/sponsorlink.jwt";
+
+        // Manifest should be public, so no need for any special HTTP client.
+        using (http ??= new HttpClient())
+        {
+            var response = await http.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+                return (Status.NotFound, default);
+
+            var jwt = await response.Content.ReadAsStringAsync();
+            if (!TryRead(jwt, out var manifest, out var missingClaim))
+                return (Status.Invalid, default);
+
+            // Manifest audience should match the sponsorable account to avoid weird issues?
+            if (sponsorable != manifest.Sponsorable)
+                return (Status.AccountMismatch, default);
+
+            return (Status.OK, manifest);
+        }
     }
 
     /// <summary>
@@ -39,7 +84,7 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
         var issuer = token.Issuer;
         missingClaim = null;
 
-        if (token.Audiences.FirstOrDefault() is not string audience)
+        if (token.Audiences.FirstOrDefault(x => x.StartsWith("https://github.com/")) is null)
         {
             missingClaim = "aud";
             manifest = default;
@@ -68,9 +113,20 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
         }
 
         var key = new JsonWebKeySet { Keys = { JsonWebKey.Create(jwk) } }.GetSigningKeys().First();
-        manifest = new SponsorableManifest(new Uri(issuer), new Uri(audience), clientId, key, pub);
+        manifest = new SponsorableManifest(new Uri(issuer), token.Audiences.Select(x => new Uri(x)).ToArray(), clientId, key, pub);
 
         return true;
+    }
+
+    public SponsorableManifest(Uri issuer, Uri[] audience, string clientId, SecurityKey publicKey, string publicRsaKey)
+    {
+        Issuer = issuer.AbsoluteUri;
+        Audience = audience.Select(a => a.AbsoluteUri.TrimEnd('/')).ToArray();
+        ClientId = clientId;
+        SecurityKey = publicKey;
+        PublicKey = publicRsaKey;
+        Sponsorable = audience.Where(x => x.Host == "github.com").Select(x => x.Segments.LastOrDefault()?.TrimEnd('/')).FirstOrDefault() ??
+            throw new ArgumentException("At least one of the intended audience must be a GitHub sponsors URL.");
     }
 
     /// <summary>
@@ -92,16 +148,17 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
         }
 
         var token = new JwtSecurityToken(
-            claims:
-            [
-                new("iss", Issuer),
-                new("aud", Audience),
-                new("client_id", clientId),
-                // non-standard claim containing the base64-encoded public key
-                new("pub", publicRsaKey),
-                // standard claim, serialized as a JSON string, not an encoded JSON object
-                new("sub_jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
-            ],
+            claims: 
+                new[] { new Claim("iss", Issuer) }
+                .Concat(Audience.Select(x => new Claim("aud", x)))
+                .Concat(
+                [
+                    new("client_id", ClientId),
+                    // non-standard claim containing the base64-encoded public key
+                    new("pub", PublicKey),
+                    // standard claim, serialized as a JSON string, not an encoded JSON object
+                    new("sub_jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
+                ]),
             signingCredentials: signing);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
@@ -146,14 +203,12 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
             tokenClaims.Insert(0, new("iss", Issuer));
         }
 
-        if (tokenClaims.Find(c => c.Type == "aud") is { } audience)
+        // Avoid duplicating audience claims
+        foreach (var audience in Audience)
         {
-            if (audience.Value != Audience)
-                throw new ArgumentException($"The received claims contain an incompatible audience claim. If present, the claim must contain the value '{Audience}' but was '{audience.Value}'.");
-        }
-        else
-        {
-            tokenClaims.Insert(1, new("aud", Audience));
+            // Always compare ignoring trailing /
+            if (tokenClaims.Find(c => c.Type == "aud" && c.Value.TrimEnd('/') == audience.TrimEnd('/')) == null)
+                tokenClaims.Insert(1, new("aud", audience));
         }
 
         // The other claims (client_id, pub, sub_jwk) claims are mostly for the SL manifest itself,
@@ -182,10 +237,18 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
         // 30 days and issue a warning on expiration, rather than an error and a forced sync.
         // If this is not set (or true), a SecurityTokenExpiredException exception will be thrown.
         ValidateLifetime = false,
-        ValidAudience = Audience,
+        RequireAudience = true,
+        // At least one of the audiences must match the manifest audiences
+        AudienceValidator = (audiences, _, _) => Audience.Intersect(audiences.Select(x => x.TrimEnd('/'))).Any(),
+        ValidateAudience = true,
         ValidIssuer = Issuer,
         IssuerSigningKey = SecurityKey,
     }, out token);
+
+    /// <summary>
+    /// Gets the GitHub sponsorable account.
+    /// </summary>
+    public string Sponsorable { get; }
 
     /// <summary>
     /// The web endpoint that issues signed JWT to authenticated users.
@@ -193,14 +256,16 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
     /// <remarks>
     /// See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.1
     /// </remarks>
-    public string Issuer => issuer.AbsoluteUri;
+    public string Issuer { get; }
+
     /// <summary>
-    /// The audience for the JWT, which is the sponsorable account.
+    /// The audience for the JWT, which includes the sponsorable account and potentially other sponsoring platforms.
     /// </summary>
     /// <remarks>
     /// See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.3
     /// </remarks>
-    public string Audience => audience.AbsoluteUri;
+    public string[] Audience { get; }
+
     /// <summary>
     /// The OAuth client ID (i.e. GitHub OAuth App ID) that is used to 
     /// authenticate the user.
@@ -208,22 +273,21 @@ public class SponsorableManifest(Uri issuer, Uri audience, string clientId, Secu
     /// <remarks>
     /// See https://www.rfc-editor.org/rfc/rfc8693.html#name-client_id-client-identifier
     /// </remarks>
-    public string ClientId
-    {
-        get => clientId;
-        internal set => clientId = value;
-    }
+    public string ClientId { get; internal set; }
+
     /// <summary>
     /// Public key that can be used to verify JWT signatures.
     /// </summary>
-    public string PublicKey => publicRsaKey;
+    public string PublicKey { get; }
+
     /// <summary>
     /// Public key in a format that can be used to verify JWT signatures.
     /// </summary>
-    public SecurityKey SecurityKey => publicKey;
+    public SecurityKey SecurityKey { get; }
 
     /// <inheritdoc/>
-    public override int GetHashCode() => hashcode ??= HashCode.Combine(Issuer, Audience, ClientId, PublicKey);
+    public override int GetHashCode() => new HashCode().Add(Issuer, ClientId, PublicKey).AddRange(Audience).ToHashCode();
+
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is SponsorableManifest other && GetHashCode() == other.GetHashCode();
 }

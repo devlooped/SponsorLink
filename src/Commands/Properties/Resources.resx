@@ -181,9 +181,6 @@ Please read the [link=https://github.com/devlooped/SponsorLink/blob/main/privacy
   <data name="GitHub_UserScope" xml:space="preserve">
     <value>[lime]?[/] [white]Allow read-access to your GitHub account email address(es)?[/] (Required for manifest generation)</value>
   </data>
-  <data name="Init_NoAudience" xml:space="preserve">
-    <value>[lime]?[/] [white]No sponsorable account provided. Do you want to use your GitHub CLI account?[/]</value>
-  </data>
   <data name="No" xml:space="preserve">
     <value>No</value>
   </data>

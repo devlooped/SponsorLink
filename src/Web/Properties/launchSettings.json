@@ -3,10 +3,7 @@
     "Web": {
       "commandName": "Project",
       "commandLineArgs": "--port 4242",
-      "launchBrowser": false,
-      "environmentVariables": {
-        "AZURE_FUNCTIONS_ENVIRONMENT": "Development"
-      }
+      "launchBrowser": false
     }
   }
 }

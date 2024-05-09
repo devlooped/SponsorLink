@@ -13,7 +13,7 @@ public class SponsorableManifestTests
     [Fact]
     public void CanCreateManifest()
     {
-        var manifest = SponsorableManifest.Create(new Uri("https://foo.com"), new Uri("https://bar.com"), "ASDF1234");
+        var manifest = SponsorableManifest.Create(new Uri("https://foo.com"), [new Uri("https://bar.com")], "ASDF1234");
 
         var jwt = manifest.ToJwt();
 
@@ -21,7 +21,8 @@ public class SponsorableManifestTests
         var principal = new JwtSecurityTokenHandler().ValidateToken(jwt, new TokenValidationParameters
         {
             RequireExpirationTime = false,
-            ValidAudience = manifest.Audience,
+            ValidateAudience = true,
+            AudienceValidator = (audiences, token, parameters) => audiences.Any(x => x == "https://bar.com"),
             ValidIssuer = manifest.Issuer,
             IssuerSigningKey = new RsaSecurityKey(((RsaSecurityKey)manifest.SecurityKey).Rsa.ExportParameters(false)),
         }, out var secToken);
@@ -43,7 +44,7 @@ public class SponsorableManifestTests
         var key = new RsaSecurityKey(rsa);
         var pub = Convert.ToBase64String(rsa.ExportRSAPublicKey());
 
-        var manifest = new SponsorableManifest(new Uri("https://foo.com"), new Uri("https://bar.com"), "ASDF1234", key, pub);
+        var manifest = new SponsorableManifest(new Uri("https://foo.com"), [new Uri("https://bar.com")], "ASDF1234", key, pub);
 
         var jwt = manifest.ToJwt(new SigningCredentials(key, SecurityAlgorithms.RsaSha256));
 

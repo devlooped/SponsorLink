@@ -161,7 +161,7 @@ public class SponsorManagerTests : IDisposable
 
         var cache = services.GetRequiredService<IMemoryCache>();
         cache.Set(typeof(SponsorableManifest),
-            SponsorableManifest.Create(new Uri("https://sl.amazon.com"), new Uri("https://github.com/aws"), "ASDF1324"));
+            SponsorableManifest.Create(new Uri("https://sl.amazon.com"), [new Uri("https://github.com/aws")], "ASDF1324"));
 
         var sponsorable = services.GetRequiredService<IGraphQueryClientFactory>().CreateClient("sponsorable");
         var sponsor = services.GetRequiredService<IGraphQueryClientFactory>().CreateClient("sponsor");
@@ -173,7 +173,7 @@ public class SponsorManagerTests : IDisposable
             .Returns(() => sponsor.QueryAsync(GraphQueries.UserSponsorableCandidates("paulbartell")));
 
         // Replace contributions
-        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerOwnerContributions, It.IsAny<(string, object)[]>()))
+        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerContributedRepoOwners, It.IsAny<(string, object)[]>()))
             .Returns(() => sponsor.QueryAsync(GraphQueries.UserContributions("paulbartell")));
 
         var manager = new SponsorsManager(
@@ -203,7 +203,7 @@ public class SponsorManagerTests : IDisposable
             .Returns(() => sponsor.QueryAsync(GraphQueries.UserSponsorableCandidates("testclarius")));
 
         // Replace contributions
-        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerOwnerContributions, It.IsAny<(string, object)[]>()))
+        graph.Setup(x => x.QueryAsync(GraphQueries.ViewerContributedRepoOwners, It.IsAny<(string, object)[]>()))
             .Returns(() => sponsor.QueryAsync(GraphQueries.UserContributions("testclarius")));
 
         graph.Setup(x => x.QueryAsync(GraphQueries.ViewerEmails, It.IsAny<(string, object)[]>()))
@@ -242,7 +242,7 @@ public class SponsorManagerTests : IDisposable
         Assert.NotNull(claims);
         Assert.Contains(claims, claim => claim.Type == "role" && claim.Value == "org");
 
-        var manifest = SponsorableManifest.Create(new Uri("https://sponsorlink.devlooped.com"), new Uri("https://github.com/devlooped"), "ASDF1234");
+        var manifest = SponsorableManifest.Create(new Uri("https://sponsorlink.devlooped.com"), [new Uri("https://github.com/devlooped")], "ASDF1234");
 
         var jwt = manifest.Sign(claims);
         

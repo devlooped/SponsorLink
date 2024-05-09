@@ -219,13 +219,13 @@ public static class GraphQueries
     /// Returns the unique repository owners of all repositories the user has contributed 
     /// commits to.
     /// </summary>
-    public static GraphQuery<string[]> ViewerOwnerContributions { get; } = CoreViewerOwnerContributions();
+    public static GraphQuery<string[]> ViewerContributedRepoOwners { get; } = CoreViewerContributedRepoOwners();
 
     /// <summary>
     /// Returns the unique repository owners of all repositories the user has contributed 
     /// commits to.
     /// </summary>
-    internal static GraphQuery<string[]> CoreViewerOwnerContributions(int pageSize = 100) => new(
+    internal static GraphQuery<string[]> CoreViewerContributedRepoOwners(int pageSize = 100) => new(
         """
         query($pageSize: Int!, $endCursor: String) {
             viewer {
@@ -257,13 +257,13 @@ public static class GraphQueries
     /// Returns the unique repository name+owner of all repositories the user has contributed 
     /// commits to.
     /// </summary>
-    public static GraphQuery<string[]> ViewerRepositoryContributions { get; } = CoreViewerRepositoryContributions();
+    public static GraphQuery<string[]> ViewerContributedRepositories { get; } = CoreViewerContributedRepositories();
 
     /// <summary>
     /// Returns the unique repository name+owner of all repositories the user has contributed 
     /// commits to.
     /// </summary>
-    internal static GraphQuery<string[]> CoreViewerRepositoryContributions(int pageSize = 100) => new(
+    internal static GraphQuery<string[]> CoreViewerContributedRepositories(int pageSize = 100) => new(
         """
         query($pageSize: Int!, $endCursor: String) {
             viewer {

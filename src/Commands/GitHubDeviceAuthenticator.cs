@@ -10,7 +10,7 @@ namespace Devlooped.Sponsors;
 
 public interface IGitHubDeviceAuthenticator
 {
-    Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress);
+    Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive);
 }
 
 public class GitHubDeviceAuthenticator(IHttpClientFactory httpFactory) : IGitHubDeviceAuthenticator
@@ -25,7 +25,7 @@ public class GitHubDeviceAuthenticator(IHttpClientFactory httpFactory) : IGitHub
     // confusing experience for the user, with multiple browser tabs opening.
     readonly SemaphoreSlim semaphore = new(1, 1);
 
-    public async Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress)
+    public async Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive)
     {
         using var http = httpFactory.CreateClient("GitHub");
 
@@ -47,6 +47,9 @@ public class GitHubDeviceAuthenticator(IHttpClientFactory httpFactory) : IGitHub
             }
         }
 
+        if (!interactive)
+            return null;
+
         // Perform device flow auth. See https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps#device-flow
 
         var codeUrl = $"https://github.com/login/device/code?client_id={clientId}&scope=read:user,user:email,read:org";
@@ -58,10 +61,6 @@ public class GitHubDeviceAuthenticator(IHttpClientFactory httpFactory) : IGitHub
         }
 
         TryCopy(auth.user_code, progress);
-
-        // Render the auth response as JSON to console, user should copy the code to paste on the URL in the browser
-        //AnsiConsole.Write(new JsonText(JsonSerializer.Serialize(auth, options)));
-        //AnsiConsole.WriteLine();
 
         await semaphore.WaitAsync();
         try
@@ -99,8 +98,6 @@ public class GitHubDeviceAuthenticator(IHttpClientFactory httpFactory) : IGitHub
                     }
 
                     TryCopy(auth.user_code, progress);
-                    //AnsiConsole.Write(new JsonText(JsonSerializer.Serialize(auth, options)));
-                    //AnsiConsole.WriteLine();
                 }
                 // Continue while we have an error, meaning the code has not been authorized yet.
             } while (code.error != null);
