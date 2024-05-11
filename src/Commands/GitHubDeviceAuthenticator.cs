@@ -60,7 +60,7 @@ public class GitHubDeviceAuthenticator(IHttpClientFactory httpFactory) : IGitHub
             return null;
         }
 
-        TryCopy(auth.user_code, progress);
+        TryCopy(auth.verification_uri, auth.user_code, progress);
 
         await semaphore.WaitAsync();
         try
@@ -97,7 +97,7 @@ public class GitHubDeviceAuthenticator(IHttpClientFactory httpFactory) : IGitHub
                         return null;
                     }
 
-                    TryCopy(auth.user_code, progress);
+                    TryCopy(auth.verification_uri, auth.user_code, progress);
                 }
                 // Continue while we have an error, meaning the code has not been authorized yet.
             } while (code.error != null);
@@ -121,7 +121,7 @@ public class GitHubDeviceAuthenticator(IHttpClientFactory httpFactory) : IGitHub
         }
     }
 
-    static void TryCopy(string code, IProgress<string> progress)
+    static void TryCopy(string url, string code, IProgress<string> progress)
     {
         try
         {
@@ -137,13 +137,13 @@ public class GitHubDeviceAuthenticator(IHttpClientFactory httpFactory) : IGitHub
             });
             clip?.WaitForExit();
             if (clip?.ExitCode == 0)
-                progress.Report($":clipboard: copied device code to clipboard for pasting in the browser [lime]{code}[/]");
+                progress.Report($":clipboard: copied device code to clipboard for pasting in at [link]{url}[/]: [lime]{code}[/]");
             else
-                progress.Report($":clipboard: copy device code to clipboard and paste it in the browser [lime]{code}[/]");
+                progress.Report($":clipboard: copy device code to clipboard and paste it at [link]{url}[/]: [lime]{code}[/]");
         }
         catch (Exception)
         {
-            progress.Report($":clipboard: copy device code to clipboard and paste it in the browser [lime]{code}[/]");
+            progress.Report($":clipboard: copy device code to clipboard and paste it at [link]{url}[/]: [lime]{code}[/]");
         }
     }
 
