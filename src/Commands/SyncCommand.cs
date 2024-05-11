@@ -1,11 +1,10 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
-using System.Security.Claims;
 using SharpYaml;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Spectre.Console.AnsiConsole;
+using static ThisAssembly.Strings;
 
 namespace Devlooped.Sponsors;
 
@@ -14,15 +13,13 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
 {
     public class SyncSettings : CommandSettings
     {
-        [Description("Optional sponsored account to synchronize.")]
+        [Description("Optional sponsored account(s) to synchronize.")]
         [CommandArgument(0, "[sponsorable]")]
-        public string? Sponsorable { get; set; }
+        public string[]? Sponsorable { get; set; }
 
         [CommandOption("-i|--issuer", IsHidden = true)]
         public string? Issuer { get; set; }
     }
-
-    record OrgSponsor(string Login, string[] Sponsorables);
 
     public override async Task<int> ExecuteAsync(CommandContext context, SyncSettings settings)
     {
@@ -33,65 +30,68 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
         Debug.Assert(Account != null, "After authentication, Account should never be null.");
 
         var sponsorables = new HashSet<string>();
-
-        // TODO: we'll need to account for pagination after 100 sponsorships is commonplace :)
-        if (await Status().StartAsync("Querying user sponsorships", async _ =>
+        if (settings.Sponsorable?.Length > 0)
         {
-            if (await client.QueryAsync(GraphQueries.ViewerSponsored) is not { } sponsored)
-            {
-                MarkupLine("[red]x[/] Could not query GitHub for user sponsorships.");
-                return -1;
-            }
-            sponsorables.AddRange(sponsored);
-            return 0;
-        }) == -1)
-        {
-            return -1;
+            sponsorables.AddRange(settings.Sponsorable);
         }
-
-        sponsorables.AddRange(await GetUserContributions());
-
-        var orgs = Array.Empty<Organization>();
-
-        // It's unlikely that any account would belong to more than 100 orgs.
-        if (await Status().StartAsync("Querying user organizations", async _ =>
+        else
         {
-            if (await client.QueryAsync(GraphQueries.ViewerOrganizations) is not { } viewerorgs)
+            // Discover all candidate sponsorables for the current user
+            if (await Status().StartAsync(Sync.QueryingUserSponsorships, async _ =>
             {
-                MarkupLine("[red]x[/] Could not query GitHub for user organizations.");
-                return -1;
-            }
-            orgs = viewerorgs;
-            return 0;
-        }) == -1)
-        {
-            return -1;
-        }
-
-        var orgsponsors = new List<OrgSponsor>();
-
-        // Collect org-sponsored accounts. NOTE: these must be public sponsorships 
-        // since the current user would typically NOT be an admin of these orgs.
-        await Status().StartAsync("Querying organization sponsorships", async ctx =>
-        {
-            foreach (var org in orgs)
-            {
-                ctx.Status($"Querying {org.Login} sponsorships");
-                if (await client.QueryAsync(GraphQueries.OrganizationSponsorships(org.Login)) is { Length: > 0 } sponsored)
+                if (await client.QueryAsync(GraphQueries.ViewerSponsored) is not { } sponsored)
                 {
-                    orgsponsors.Add(new OrgSponsor(org.Login, sponsored));
-                    sponsorables.AddRange(sponsored);
+                    MarkupLine(Sync.QueryingUserSponsorshipsFailed);
+                    return -1;
                 }
+                sponsorables.AddRange(sponsored);
+                return 0;
+            }) == -1)
+            {
+                return -1;
             }
-        });
+
+            sponsorables.AddRange(await GetUserContributions());
+
+            var orgs = Array.Empty<Organization>();
+
+            if (await Status().StartAsync(Sync.QueryingUserOrgs, async _ =>
+            {
+                if (await client.QueryAsync(GraphQueries.ViewerOrganizations) is not { } viewerorgs)
+                {
+                    MarkupLine(Sync.QueryingUserOrgsFailed);
+                    return -1;
+                }
+                orgs = viewerorgs;
+                return 0;
+            }) == -1)
+            {
+                return -1;
+            }
+
+            // Collect org-sponsored accounts. NOTE: we'll typically only get public sponsorships 
+            // since the current user would typically NOT be an admin of these orgs. 
+            // But they can always specify the orgs they are interested in via the command line.
+            await Status().StartAsync(Sync.QueryingUserOrgSponsorships, async ctx =>
+            {
+                foreach (var org in orgs)
+                {
+                    ctx.Status(Sync.QueryingOrgPublicSponsorships(org));
+                    if (await client.QueryAsync(GraphQueries.OrganizationSponsorships(org.Login)) is { Length: > 0 } sponsored)
+                    {
+                        sponsorables.AddRange(sponsored);
+                    }
+                }
+            });
+        }
 
         var manifests = new List<SponsorableManifest>();
 
-        await Status().StartAsync($"Fetching SponsorLink manifests for {sponsorables.Count} accounts", async ctx =>
+        await Status().StartAsync(Sync.FetchingManifests(sponsorables.Count), async ctx =>
         {
             foreach (var sponsorable in sponsorables)
             {
-                ctx.Status = $"Detecting SponsorLink manifest for {sponsorable}";
+                ctx.Status = Sync.DetectingManifest(sponsorable);
                 using var http = httpFactory.CreateClient();
                 var (status, manifest) = await SponsorableManifest.FetchAsync(sponsorable, http);
                 switch (status)
@@ -102,7 +102,7 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
                     case SponsorableManifest.Status.NotFound:
                         break;
                     default:
-                        MarkupLine($":cross_mark: {sponsorable} provided an invalid SponsorLink manifest ({status})");
+                        MarkupLine(Sync.InvalidManifest(sponsorable, status));
                         break;
                 }
             }
@@ -110,7 +110,7 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
 
         var maxlength = manifests.MaxBy(x => x.Sponsorable.Length)?.Sponsorable.Length ?? 10;
         var interactive = new List<SponsorableManifest>();
-        var targetDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SponsorLink", "GitHub");
+        var targetDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink", "github");
         Directory.CreateDirectory(targetDir);
 
         // Sync non-interactive (pre-authenticated) manifests first.
@@ -125,20 +125,28 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
             var (status, jwt) = await SponsorManifest.FetchAsync(manifest, token);
             if (status == SponsorManifest.Status.NotSponsoring)
             {
-                MarkupLine($":folded_hands: [lime]{manifest.Sponsorable.PadRight(maxlength)}[/]: consider sponsoring at [link]{manifest.Audience}[/]");
+                var links = string.Join(", ", manifest.Audience.Select(x => $"[link]{x}[/]"));
+                MarkupLine(Sync.ConsiderSponsoring(manifest.Sponsorable.PadRight(maxlength), links));
                 continue;
             }
 
             if (status == SponsorManifest.Status.Success)
             {
                 File.WriteAllText(Path.Combine(targetDir, manifest.Sponsorable + ".jwt"), jwt);
-                MarkupLine($":check_mark_button: [lime]{manifest.Sponsorable.PadRight(maxlength)}[/]: thanks for sponsoring!");
+                MarkupLine(Sync.Thanks(manifest.Sponsorable.PadRight(maxlength)));
             }
             else
             {
-                MarkupLine($":cross_mark: {manifest.Sponsorable.PadRight(maxlength)} failed to sync status");
+                MarkupLine(Sync.Failed(manifest.Sponsorable.PadRight(maxlength)));
                 continue;
             }
+        }
+
+        if (interactive.Count > 0)
+        {
+
+            //if (AnsiConsole.Confirm($"[lime]?[/] [white] Allow read-access to your public GitHub profile to {sponsorable}?[/] (Required for sponsor manifest sync)"))
+            //    return await authenticator.AuthenticateAsync(clientId, progress, true);
         }
 
         // Sync interactive, which requires user intervention.
@@ -147,37 +155,6 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
             //if (AnsiConsole.Confirm($"[lime]?[/] [white] Allow read-access to your public GitHub profile to {sponsorable}?[/] (Required for sponsor manifest sync)"))
             //    return await authenticator.AuthenticateAsync(clientId, progress, true);
         }
-
-        // Flickering not good, not sure it adds much to do this in paralell.
-        //await AnsiConsole
-        //    .Progress()
-        //    .Columns(
-        //    [
-        //        new SpinnerColumn(),
-        //        new TaskDescriptionColumn(),
-        //    ])
-        //    .StartAsync(async ctx =>
-        //    {
-        //        var length = sponsorables.MaxBy(x => x.Length)?.Length ?? 10;
-        //        var tasks = sponsorables.Select(sponsorable => Task.Run(async () =>
-        //        {
-        //            var prefix = $"[grey]{sponsorable.PadRight(length - sponsorable.Length, ' ')}: [/]";
-        //            var task = ctx.AddTask($"{prefix}detecting SponsorLink support");
-        //            task.IsIndeterminate = true;
-        //            IProgress<string> progress = new Progress<string>(x => task.Description = prefix + x);
-
-        //            try
-        //            {
-        //                await SyncManifest(sponsorable, progress);
-        //            }
-        //            finally
-        //            {
-        //                task.StopTask();
-        //            }
-        //        }));
-
-        //        await Task.WhenAll(tasks);
-        //    });
 
         WriteLine("Done");
 

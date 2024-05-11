@@ -199,8 +199,47 @@ Please read the [link=https://github.com/devlooped/SponsorLink/blob/main/privacy
   <data name="Session_OpenBrowser" xml:space="preserve">
     <value>[lime]?[/] [white]Operation requires authentication on github.com. Open your browser now?[/]</value>
   </data>
+  <data name="Sync_ConsiderSponsoring" xml:space="preserve">
+    <value>:folded_hands: [lime]{sponsorable}[/]: consider sponsoring at {links}</value>
+  </data>
+  <data name="Sync_DetectingManifest" xml:space="preserve">
+    <value>Detecting SponsorLink manifest for {sponsorable}</value>
+  </data>
+  <data name="Sync_Failed" xml:space="preserve">
+    <value>:cross_mark: {sponsorable} failed to sync status</value>
+  </data>
+  <data name="Sync_FetchingManifests" xml:space="preserve">
+    <value>Fetching SponsorLink manifests for {count} accounts</value>
+  </data>
+  <data name="Sync_InteractiveAuthNeeded" xml:space="preserve">
+    <value>[lime]?[/] [white]{count} sponsorable accounts require interactive authentication for synchronization. Do you want to Proceed? ([/]</value>
+  </data>
+  <data name="Sync_InvalidManifest" xml:space="preserve">
+    <value>:cross_mark: {sponsorable} provided an invalid SponsorLink manifest ({status})</value>
+  </data>
+  <data name="Sync_QueryingOrgPublicSponsorships" xml:space="preserve">
+    <value>Querying {org} sponsorships</value>
+  </data>
+  <data name="Sync_QueryingUserOrgs" xml:space="preserve">
+    <value>Querying user organizations</value>
+  </data>
+  <data name="Sync_QueryingUserOrgsFailed" xml:space="preserve">
+    <value>:cross_mark: Could not query GitHub for user organizations.</value>
+  </data>
+  <data name="Sync_QueryingUserOrgSponsorships" xml:space="preserve">
+    <value>Querying organization sponsorships</value>
+  </data>
+  <data name="Sync_QueryingUserSponsorships" xml:space="preserve">
+    <value>Querying user sponsorships</value>
+  </data>
+  <data name="Sync_QueryingUserSponsorshipsFailed" xml:space="preserve">
+    <value>:cross_mark: Could not query GitHub for user sponsorships.</value>
+  </data>
   <data name="Sync_Signing" xml:space="preserve">
     <value>Requesting manifest signing ...</value>
+  </data>
+  <data name="Sync_Thanks" xml:space="preserve">
+    <value>:check_mark_button: [lime]{sponsorable}[/]: thanks for sponsoring!</value>
   </data>
   <data name="Variables_Cleared" xml:space="preserve">
     <value>[green]✓[/] Cleared {0} user environment variable</value>
