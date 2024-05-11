@@ -20,16 +20,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Auth0.AuthenticationApi" Version="7.26.1" />
-    <PackageReference Include="JWT" Version="10.1.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="7.5.1" />
     <PackageReference Include="NuGetizer" Version="1.2.1" PrivateAssets="all" />
     <PackageReference Include="Spectre.Console.Analyzer" Version="0.49.1" PrivateAssets="all" />
     <PackageReference Include="Spectre.Console.Cli" Version="0.49.1" />
     <PackageReference Include="Spectre.Console.Json" Version="0.49.1" />
     <PackageReference Include="ThisAssembly.Strings" Version="1.4.3" PrivateAssets="all" />
-    <PackageReference Include="BouncyCastle.Cryptography" Version="2.3.0" PrivateAssets="all" Condition="$(TargetFramework) == 'netstandard2.0'" />
     <PackageReference Include="Devlooped.CredentialManager" Version="2.4.1" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.4.3" PrivateAssets="all" />
   </ItemGroup>
