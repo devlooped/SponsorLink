@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Caching.Memory;
@@ -183,30 +184,30 @@ public partial class SponsorsManager(
 
         var sponsor = await GetSponsorTypeAsync(principal);
         if (sponsor == SponsorTypes.None ||
-            principal?.FindFirst("urn:github:login")?.Value is not string id)
+            principal?.FindFirst("urn:github:login")?.Value is not string login)
             return null;
 
         var claims = new List<Claim>
         {
-            new("iss", manifest.Issuer),
+            new(JwtRegisteredClaimNames.Iss, manifest.Issuer),
         };
 
-        claims.AddRange(manifest.Audience.Select(x => new Claim("aud", x)));
+        claims.AddRange(manifest.Audience.Select(x => new Claim(JwtRegisteredClaimNames.Aud, x)));
         claims.Add(new("client_id", manifest.ClientId));
-        claims.Add(new("sub", id));
-
+        claims.Add(new(JwtRegisteredClaimNames.Sub, login));
+        
         // check for each flags SponsorTypes and add claims accordingly
         if (sponsor.HasFlag(SponsorTypes.Team))
-            claims.Add(new("role", "team"));
+            claims.Add(new("roles", "team"));
         if (sponsor.HasFlag(SponsorTypes.Organization))
-            claims.Add(new("role", "org"));
+            claims.Add(new("roles", "org"));
         if (sponsor.HasFlag(SponsorTypes.User))
-            claims.Add(new("role", "user"));
+            claims.Add(new("roles", "user"));
         if (sponsor.HasFlag(SponsorTypes.Contributor))
-            claims.Add(new("role", "contrib"));
+            claims.Add(new("roles", "contrib"));
 
         // Use shorthand JWT claim for emails. See https://www.iana.org/assignments/jwt/jwt.xhtml
-        claims.AddRange(principal.Claims.Where(x => x.Type == ClaimTypes.Email).Select(x => new Claim("email", x.Value)));
+        claims.AddRange(principal.Claims.Where(x => x.Type == ClaimTypes.Email).Select(x => new Claim(JwtRegisteredClaimNames.Email, x.Value)));
 
         return claims;
     }

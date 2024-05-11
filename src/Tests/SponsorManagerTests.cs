@@ -240,7 +240,7 @@ public class SponsorManagerTests : IDisposable
         var claims = await manager.GetSponsorClaimsAsync();
 
         Assert.NotNull(claims);
-        Assert.Contains(claims, claim => claim.Type == "role" && claim.Value == "org");
+        Assert.Contains(claims, claim => claim.Type == "roles" && claim.Value == "org");
 
         var manifest = SponsorableManifest.Create(new Uri("https://sponsorlink.devlooped.com"), [new Uri("https://github.com/devlooped")], "ASDF1234");
 
