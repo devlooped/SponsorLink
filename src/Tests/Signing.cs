@@ -40,7 +40,7 @@ public class Signing(ITestOutputHelper Output)
             .AddAzureKeyVault(new Uri("https://devlooped.vault.azure.net/"), new DefaultAzureCredential())
             .Build();
 
-        Assert.NotNull(config["SponsorLink:Public"]);
+        Assert.NotNull(config["SponsorLink:PublicKey"]);
 
         foreach (var pair in config.AsEnumerable())
         {
