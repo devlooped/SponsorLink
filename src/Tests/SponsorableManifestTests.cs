@@ -13,7 +13,7 @@ public class SponsorableManifestTests
     [Fact]
     public void CanCreateManifest()
     {
-        var manifest = SponsorableManifest.Create(new Uri("https://foo.com"), [new Uri("https://bar.com")], "ASDF1234");
+        var manifest = SponsorableManifest.Create(new Uri("https://foo.com"), [new Uri("https://github.com/sponsors/bar")], "ASDF1234");
 
         var jwt = manifest.ToJwt();
 
@@ -22,13 +22,13 @@ public class SponsorableManifestTests
         {
             RequireExpirationTime = false,
             ValidateAudience = true,
-            AudienceValidator = (audiences, token, parameters) => audiences.Any(x => x == "https://bar.com"),
+            AudienceValidator = (audiences, token, parameters) => audiences.Any(x => x == "https://github.com/sponsors/bar"),
             ValidIssuer = manifest.Issuer,
             IssuerSigningKey = new RsaSecurityKey(((RsaSecurityKey)manifest.SecurityKey).Rsa.ExportParameters(false)),
         }, out var secToken);
 
         Assert.Contains(principal.Claims, x => x.Type == "iss" && x.Issuer == "https://foo.com/");
-        Assert.Contains(principal.Claims, x => x.Type == "aud" && x.Value == "https://bar.com/");
+        Assert.Contains(principal.Claims, x => x.Type == "aud" && x.Value == "https://github.com/sponsors/bar");
         Assert.Contains(principal.Claims, x => x.Type == "client_id" && x.Value == "ASDF1234");
         Assert.Contains(principal.Claims, x => x.Type == "pub" && x.Value == manifest.PublicKey);
         Assert.Contains(principal.Claims, x => x.Type == "sub_jwk");
@@ -44,7 +44,7 @@ public class SponsorableManifestTests
         var key = new RsaSecurityKey(rsa);
         var pub = Convert.ToBase64String(rsa.ExportRSAPublicKey());
 
-        var manifest = new SponsorableManifest(new Uri("https://foo.com"), [new Uri("https://bar.com")], "ASDF1234", key, pub);
+        var manifest = new SponsorableManifest(new Uri("https://foo.com"), [new Uri("https://github.com/sponsors/bar")], "ASDF1234", key, pub);
 
         var jwt = manifest.ToJwt(new SigningCredentials(key, SecurityAlgorithms.RsaSha256));
 
