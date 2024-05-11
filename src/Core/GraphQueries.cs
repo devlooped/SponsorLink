@@ -44,6 +44,9 @@ public static class GraphQueries
     /// Gets the organizations the viewer belongs to, filtering out 
     /// those entries without a verified email or websiteUrl.
     /// </summary>
+    /// <remarks>
+    /// NOTE: we only get the first 100 organizations.
+    /// </remarks>
     public static GraphQuery<Organization[]> ViewerOrganizations { get; } = new(
         """
         query { 
