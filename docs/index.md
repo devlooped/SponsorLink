@@ -35,8 +35,8 @@ Whenever a SponsorLink-enabled library is used, the following flow is typical:
    on their local machine to remove the warning message and potentially unlock sponsors-only 
    features.
 
-{: .info }
-> NOTE: SponsorLink does not determine how libraries and tools act upon the presence
+{: .note }
+> SponsorLink does not determine how libraries and tools act upon the presence
 > or absence of the manifest.
 
 The synchronization is performed by a separate tool, which runs interactively so 
@@ -61,7 +61,7 @@ consent to proceed.
 Subsequently (periodically or on-demand), the user runs `gh sponsors` to 
 sync their sponsorships for offline use while consuming sponsorable libraries. 
 
-{: .info }
+{: .highlight }
 > Running `gh sponsor sync [account]` will sync the manifest for the specified account.
 > and typically be much quicker than the entire discovery + sync for all candidate 
 > accounts.
@@ -102,8 +102,8 @@ Whenever run, the tool performs the following steps:
 5. The sponsorable library can now check for the manifest (entirely offline) 
    and change its behavior accordingly.
 
-{: .info }
-> NOTE: the SponsorLink-enabled library may use your configured git email (locally) 
+{: .note }
+> The SponsorLink-enabled library may use your configured git email (locally) 
 > to ensure the synchronized local manifest belongs to the same account. 
 > Read the [privacy policy](privacy.md) for more details.
 
