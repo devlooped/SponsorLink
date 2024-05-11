@@ -1,8 +1,23 @@
 plugins: 
   - jekyll-remote-theme
+  - jekyll-seo-tag
+  - jekyll-github-metadata
+  - jekyll-include-cache
   
 remote_theme: just-the-docs/just-the-docs@v0.6.1
-exclude: [ 'src/', '*.sln', 'Gemfile*', '*.rsp' ]
+exclude: 
+  - app/
+  - bin/
+  - loc/
+  - src/
+  - '*.sln'
+  - Gemfile*
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/ 
 
 # logo: "/assets/img/sponsorlink.png"
 ga_tracking: "G-BL91Q8VYCL"
@@ -10,13 +25,24 @@ ga_tracking: "G-BL91Q8VYCL"
 aux_links_new_tab: true
 aux_links:
   "GitHub":
-    - "//github.com/devlooped/SponsorLink"
+    - "https://github.com/devlooped/SponsorLink"
 
+callouts_level: quiet # or loud
 callouts:
-  warn:
+  highlight:
     color: yellow
-  info:
+  important:
+    title: Important
     color: blue
+  new:
+    title: New
+    color: green
+  note:
+    title: Note
+    color: purple
+  warning:
+    title: Warning
+    color: red
 
 compress_html:
   ignore:
@@ -27,3 +53,12 @@ kramdown:
   syntax_highlighter_opts:
     block:
       line_numbers: true
+
+footer_content: "Copyright &copy; 2024 Daniel Cazzulino."
+
+gh_edit_link: true
+gh_edit_link_text: "Edit on GitHub"
+gh_edit_repository: "https://github.com/devlooped/SponsorLink"
+gh_edit_branch: main
+gh_edit_source: docs
+gh_edit_view_mode: tree

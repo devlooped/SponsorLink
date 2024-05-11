@@ -1,54 +1,71 @@
 ---
 title: FAQ
-nav_order: 2
+nav_order: 3
 page_toc: false
 ---
-# Reference Implementation FAQ
+# FAQ
 <!-- #content -->
-These are some frequently asked questions about the reference implementation 
+These are some frequently asked questions about the [reference implementation](github.md) 
 of the [standard manifest format](spec.md) available in the 
 [SponsorLink](https://github.com/devlooped/SponsorLink/) and 
 [`gh-sponsors`](https://github.com/devlooped/gh-sponsors/) repositories.
 
 1. Does SponsorLink "phone home" or track users?
    
-   NO. 
+   **NO.** 
 
 2. Does SponsorLink require any changes to my project's code?
 
-   NO.
+   **NO.**
 
 3. Does SponsorLink get access to my private sponsorship data?
 
-   NO. The [`gh sponsors`](https://github.com/devlooped/gh-sponsors) tool is 
+   **NO.** The [`gh sponsors`](https://github.com/devlooped/gh-sponsors) tool is 
    OSS and runs entirely locally. It uses your authenticated 
-   [GH CLI](https://cli.github.com/) to read your account's email(s) and generate 
-   a set of [hashes](spec.md#hashing) to represent your sponsorships. 
-   These hashes are sent to the [backend](https://github.com/devlooped/SponsorLink/blob/main/src/App/Functions.cs#L57)
-   exclusively for signing. The backend can never reverse the hashes to get 
-   your email(s) or sponsorship data since they are salted with a locally-generated 
-   GUID on your machine which is never sent to the backend.
+   [GH CLI](https://cli.github.com/) to determine your sponsorships (either 
+   direct or indirect via organization membership or active contributions), 
+   and subsequently requests a sponsor manifest from the sponsored accounts.
+
+4. Does the SponsorLink developer (Devlooped) get access to my profile
+   or sponsorship data?
+
+   **NO.** The backend that signs manifests must be self-hosted by each sponsored 
+   account that wants to leverge SponsorLink. This code is also OSS at the 
+   [SponsorLink repo](https://github.com/devlooped/SponsorLink/).
+   
+5. Are my local [GH CLI](https://cli.github.com/) credentials exposed in any 
+   way to a sponsorable account that uses SponsorLink?
+
+   **NO.** Before invoking the sponsored account backend to provide a signed manifest, 
+   the tool will prompt you to authenticate with GitHub.com using an OAuth app 
+   provided by the sponsored account. You can reject this request or revoke access 
+   at any time in your GitHub settings.
 
 4. Does a SponsorLink-enhanced library get access to my private sponsorship data?
    
-   NO. The library can only create a new [hash](spec.md#hashing) and check for its 
-   presence in the manifest. To do so, it may use your configured git email (locally) 
-   to generate the hash to check locally and offline, but it never sends it anywhere.
+   **NO.** The library and its tools can only check for the presence of a previously
+   sync'ed manifest.
 
 5. Can I remove all traces of SponsorLink locally and remotely?
    
-   YES. You can run `gh sponsors remove` (which will remove even your Auth0 
-   [user account](https://github.com/devlooped/SponsorLink/blob/main/src/App/Functions.cs#L26] 
-   in the backend) and also clear all local environment variables. You can 
+   **YES.** You can run `gh sponsors remove [account|all]`. You can 
    then remove the `gh-sponsors` extension with `gh extension remove sponsors`.
 
 6. Can I use SponsorLink with my own sponsorsing platform?
    
-   YES. SponsorLink is a standard manifest format and you can create equivalent 
+   **YES.** SponsorLink is a standard manifest format and you can create equivalent 
    tools for manifest generation and signing. You can also suggest improvements 
    to the reference implementation to incorporate other platforms that expose 
    sponsorships via API.
 
 7. Is there a privacy policy?
    
-   YES. Read the [privacy policy](privacy.md) for more details.
+   **YES.** Read the [privacy policy](privacy.md) for more details.
+
+8. Does the sponsorable account have access to my sponsorship information?
+
+   **YES.** Accounts you are currently sponsoring already have this information as 
+   part of their profile. SponsorLink itself does not use any information they 
+   don't already have access to, and the SponsorLink developer (Devlooped) does 
+   not have access to any of this information since it doesn't offer hosting for 
+   the backend that signs manifests.
