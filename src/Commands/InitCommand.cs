@@ -21,7 +21,7 @@ public partial class InitCommand: AsyncCommand<InitCommand.Settings>
         [CommandOption("-i|--issuer")]
         public required string Issuer { get; init; }
 
-        [Description("The intended audience or supported sponsorship platforms, like https://github.com/sponsors/curl, https://patreon.com/curl).")]
+        [Description("The intended audience or supported sponsorship platforms, e.g. https://github.com/sponsors/curl.")]
         [CommandOption("-a|--audience <VALUES>")]
         public required Uri[] Audience { get; init; }
 
