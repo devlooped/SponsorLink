@@ -21,7 +21,7 @@ public class CliGraphQueryClient : IGraphQueryClient
             string.Join(" ", vars.Select(x => $"-F {x.Key}={JsonSerializer.Serialize(x.Value)}"));
 
         if (query.JQ?.Length > 0)
-            args += $" --jq \"{query.JQ.Trim()}\"";
+            args += $" --jq \"{query.JQ.Trim().Replace("\"", "\\\"")}\"";
 
         // For now, we only add support for auto-pagination of array results.
         var paginate = typeof(T).IsArray && query.Query.Contains("$endCursor") && query.Query.Contains("first:");
