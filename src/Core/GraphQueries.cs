@@ -553,6 +553,30 @@ public static class GraphQueries
         }
     };
 
+    /// <summary>
+    /// Gets a repository's default branch, if it exists.
+    /// </summary>
+    public static GraphQuery<string?> DefaultBranch(string owner, string repo) => new(
+        """
+        query($owner: String!, $repo: String!) {
+          repository(owner: $owner, name: $repo) {
+            defaultBranchRef {
+              name
+            }
+          }
+        }
+        """,
+        """
+        .data.repository?.defaultBranchRef.name
+        """)
+    {
+        Variables =
+        {
+            { nameof(owner), owner },
+            { nameof(repo), repo },
+        }
+    };
+
     public static GraphQuery<string[]> IsSponsoredBy(string sponsorable, IEnumerable<string> candidateSponsors) => new(
         // NOTE: we replace the '-' char which would be invalid as a return field with '___'
         Template.Parse(

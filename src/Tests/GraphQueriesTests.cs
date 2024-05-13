@@ -7,6 +7,39 @@ namespace Devlooped.Tests;
 public class GraphQueriesTests
 {
     [SecretsFact("GitHub:Token")]
+
+    public async Task GetDefaultBranch()
+    {
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+
+        var branch = await client.QueryAsync(GraphQueries.DefaultBranch("devlooped", ".github"));
+
+        Assert.NotNull(branch);
+        Assert.Equal("main", branch);
+    }
+
+    [SecretsFact("GitHub:Token")]
+
+    public async Task GetDefaultBranchNonExistentReturnsNull()
+    {
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+
+        var branch = await client.QueryAsync(GraphQueries.DefaultBranch("devlooped", "githubs"));
+
+        Assert.Null(branch);
+    }
+
+    [LocalFact]
+
+    public async Task GetDefaultBranchNonExistentReturnsNullCli()
+    {
+        var client = new CliGraphQueryClient();
+
+        var branch = await client.QueryAsync(GraphQueries.DefaultBranch("devlooped", "githubs"));
+
+        Assert.Null(branch);
+    }
+
     [SecretsFact("GitHub:Token")]
     public async Task CanConvertPrimitiveTypesHttp() => await ConvertPrimitiveTypes(new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub"));
 
@@ -76,6 +109,8 @@ public class GraphQueriesTests
         Assert.True(value4 < DateTimeOffset.UtcNow);
 
     }
+
+    [SecretsFact("GitHub:Token")]
     public async Task GetOrganization()
     {
         var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
