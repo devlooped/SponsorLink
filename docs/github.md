@@ -1,7 +1,6 @@
 ---
 title: GitHub Sponsors
 nav_order: 3
-page_toc: false
 ---
 # GitHub Sponsors Reference Implementation
 <!-- #content -->
@@ -71,9 +70,25 @@ an additional claim in the sponsorable manifest:
 > A required [standard client_id OAuth 2.0 client identifier claim](https://www.rfc-editor.org/rfc/rfc8693.html#name-client_id-client-identifier) 
 > provided in the sponsorable manifest for client authentication with the issuer through the GitHub OAuth app.
 
-This authentication is performed using the [device flow](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps#device-flow), 
+Example:
+
+```json
+{
+  "iss": "https://sponsorlink.devlooped.com/",
+  "aud": "https://github.com/sponsors/devlooped",
+  "client_id": "asdf1234",
+  "pub": "MII...=",
+  "sub_jwk": {
+    "e": "AQAB",
+    "kty": "RSA",
+    "n": "5inhv8Q..."
+  }
+}
+```
+
+Authentication is performed using the [device flow](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps#device-flow), 
 where the sponsor gets a chance to review the requested permissions prior to granting access. The access token
-is then used to request the sponsor manifest from the sponsorable account's backend service. 
+is then used to request the sponsor manifest from the sponsorable backend service. 
 
 {: .highlight }
 > The default browser is launched to authenticate and enter the device code that is automatically copied to 
