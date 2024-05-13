@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -16,7 +17,7 @@ public class CliGraphQueryClient : IGraphQueryClient
 
         var args = query.IsLegacy ?
             "api " + UriTemplate.Expand(query.Query, vars) :
-            $"api graphql -f query=\"{query.Query}\" " +
+            $"api graphql -f query=\"{query.Query.Replace("\"", "\\\"")}\" " +
             string.Join(" ", vars.Select(x => $"-F {x.Key}={JsonSerializer.Serialize(x.Value)}"));
 
         if (query.JQ?.Length > 0)
@@ -48,11 +49,16 @@ public class CliGraphQueryClient : IGraphQueryClient
 
         if (success)
         {
+            if (string.IsNullOrEmpty(result) || result == "null")
+                return default;
+
             if (typeof(T) == typeof(string))
                 return (T?)(object)result;
 
-            if (string.IsNullOrEmpty(result))
-                return default;
+            // Primitive types that can be converted from string, return converted.
+            var converter = TypeDescriptor.GetConverter(typeof(T));
+            if (converter.CanConvertFrom(typeof(string)))
+                return (T?)converter.ConvertFromString(result);
 
             if (paginate && typeof(T).IsArray)
             {

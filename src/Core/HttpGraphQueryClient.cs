@@ -59,11 +59,16 @@ public class HttpGraphQueryClient(IHttpClientFactory factory, string name) : IGr
             await JQ.ExecuteAsync(await response.Content.ReadAsStringAsync(), query.JQ) :
             await response.Content.ReadAsStringAsync();
 
+        if (string.IsNullOrEmpty(json) || json == "null")
+            return default;
+
         if (typeof(T) == typeof(string))
             return (T)(object)json;
 
-        if (string.IsNullOrEmpty(json))
-            return default;
+        // Primitive types that can be converted from string, return converted.
+        var converter = TypeDescriptor.GetConverter(typeof(T));
+        if (converter.CanConvertFrom(typeof(string)))
+            return (T?)converter.ConvertFromString(json);
 
         return JsonSerializer.Deserialize<T>(json, JsonOptions.Default);
     }

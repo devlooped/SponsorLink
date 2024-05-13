@@ -7,6 +7,75 @@ namespace Devlooped.Tests;
 public class GraphQueriesTests
 {
     [SecretsFact("GitHub:Token")]
+    [SecretsFact("GitHub:Token")]
+    public async Task CanConvertPrimitiveTypesHttp() => await ConvertPrimitiveTypes(new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub"));
+
+    [LocalFact]
+    public async Task CanConvertPrimitiveTypesCli() => await ConvertPrimitiveTypes(new CliGraphQueryClient());
+
+    static async Task ConvertPrimitiveTypes(IGraphQueryClient client)
+    {
+        var value = await client.QueryAsync<int?>(
+            """
+            query {
+              repository(owner:"devlooped", name:"moq") {
+            	stargazerCount
+              }
+            }
+            """,
+            """
+            .data.repository.stargazerCount
+            """);
+
+        Assert.NotNull(value);
+        Assert.True(value > 0);
+
+        var value2 = await client.QueryAsync<bool?>(
+            """
+            query {
+              repository(owner:"devlooped", name:"moq") {
+                isTemplate
+              }
+            }
+            """,
+            """
+            .data.repository.isTemplate
+            """);
+
+        Assert.NotNull(value2);
+        Assert.False(value2);
+
+        var value3 = await client.QueryAsync<DateTime?>(
+            """
+            query {
+              repository(owner:"devlooped", name:"moq") {
+                createdAt
+              }
+            }
+            """,
+            """
+            .data.repository.createdAt
+            """);
+
+        Assert.NotNull(value3);
+        Assert.True(value3 < DateTime.UtcNow);
+
+        var value4 = await client.QueryAsync<DateTimeOffset?>(
+            """
+            query {
+              repository(owner:"devlooped", name:"moq") {
+                createdAt
+              }
+            }
+            """,
+            """
+            .data.repository.createdAt
+            """);
+
+        Assert.NotNull(value4);
+        Assert.True(value4 < DateTimeOffset.UtcNow);
+
+    }
     public async Task GetOrganization()
     {
         var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
