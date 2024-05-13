@@ -72,6 +72,16 @@ public class ListCommand(ICommandApp app, IGraphQueryClient client) : GitHubAsyn
             AnsiConsole.Write(tree);
         }
 
+        if (await client.GetUserContributionsAsync() is { Count: > 0 } contributions)
+        {
+            var tree = new Tree(new Text("Sponsored by Contributing", new Style(Color.Yellow)));
+
+            foreach (var login in contributions.Keys)
+                tree.AddNode(new TreeNode(new Text(login, new Style(Color.Green))));
+
+            AnsiConsole.Write(tree);
+        }
+
         return 0;
     }
 }
