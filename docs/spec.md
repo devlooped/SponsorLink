@@ -1,6 +1,6 @@
 ---
 title: Manifest Spec 
-nav_order: 4
+nav_order: 2
 has_children: true
 has_toc: false
 current: 1.0.0-rc
@@ -10,9 +10,12 @@ current: 1.0.0-rc
   | default: site.html_pages
   | where: "parent", page.title -%}
 
-[Current](spec/{{ page.current }}.html){: .btn .btn-blue }
 {% for spec in versions -%}
+{% if spec.title == page.current -%}
+[{{ spec.title }}]({{ spec.url | relative_url }}){: .btn .btn-blue }
+{% else -%}
 [{{ spec.title }}]({{ spec.url | relative_url }}){: .btn }
+{% endif -%}
 {% endfor -%}
 
 {% capture source %}{% include_relative spec/{{ page.current }}.md %}{% endcapture %}

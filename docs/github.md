@@ -1,12 +1,17 @@
 ---
-title: GitHub Support
-nav_order: 2
+title: GitHub Sponsors
+nav_order: 3
 page_toc: false
 ---
-# GitHub Reference Implementation
+# GitHub Sponsors Reference Implementation
 <!-- #content -->
 
 ## Overview
+
+The reference implementation of the SponsorLink specification leverages [GitHub Sponsors](https://github.com/sponsors/)
+to provide a simple and secure way for OSS projects on GitHub to properly attribute sponsorsing status to their users 
+on their dev machine, to enable sponsorable libraries and tools to provide sponsor-specific features or benefits.
+
 
 The reference implementation comprises two parts:
 
