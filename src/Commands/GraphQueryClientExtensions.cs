@@ -1,6 +1,4 @@
-﻿using System;
-using SharpYaml;
-using Spectre.Console;
+﻿using Spectre.Console;
 using static Spectre.Console.AnsiConsole;
 
 namespace Devlooped.Sponsors;
@@ -24,73 +22,60 @@ public static class GraphQueryClientExtensions
 
         // Keeps the orgs we have already checked for org-wide funding options
         var checkedorgs = new HashSet<string>();
-        var serializer = new SharpYaml.Serialization.Serializer(new SharpYaml.Serialization.SerializerSettings
-        {
-            IgnoreUnmatchedProperties = true,
-        });
-
         using var http = new HttpClient();
 
-        async Task AddContributedAsync(string ownerRepo)
+        var totalChunks = (int)Math.Ceiling((double)viewerContribs.Length / 20);
+        var currentChunk = 0;
+
+        foreach (var ownerRepo in viewerContribs.Chunk(20))
         {
-            var parts = ownerRepo.Split('/');
-            if (parts.Length != 2)
-                return;
+            currentChunk++;
+            var funding = await client.QueryAsync(GraphQueries.Funding(ownerRepo));
 
-            var branch = await client.QueryAsync(GraphQueries.DefaultBranch(parts[0], parts[1]));
-            if (branch is null)
-                return;
-
-            if (await http!.GetAsync($"https://github.com/{ownerRepo}/raw/{branch}/.github/FUNDING.yml") is { IsSuccessStatusCode: true } repoFunding)
+            if (funding?.Length > 0)
             {
-                var yml = await repoFunding.Content.ReadAsStringAsync();
-
-                try
+                foreach (var repo in funding)
                 {
-                    if (serializer!.Deserialize<SingleSponsorable>(yml) is { github: not null } single)
+                    foreach (var sponsorable in repo.Sponsorables)
                     {
-                        contributed.TryAdd(single.github, []);
-                        contributed[single.github].Add(ownerRepo);
+                        contributed.TryAdd(sponsorable, []);
+                        contributed[sponsorable].Add(repo.OwnerRepo);
                     }
-                }
-                catch (YamlException)
-                {
-                    try
-                    {
-                        if (serializer!.Deserialize<MultipleSponsorable>(yml) is { github.Length: > 0 } multiple)
-                        {
-                            foreach (var account in multiple.github)
-                            {
-                                contributed.TryAdd(account, []);
-                                contributed[account].Add(ownerRepo);
-                            }
-                        }
-                    }
-                    catch (YamlException) { }
                 }
             }
-        }
 
-        foreach (var ownerRepo in viewerContribs)
-        {
-            var parts = ownerRepo.Split('/');
-            if (parts.Length != 2)
-                continue;
+            // Try org-level funding file
+            foreach (var pair in ownerRepo)
+            {
+                var parts = pair.Split('/');
+                if (parts.Length != 2)
+                    continue;
 
-            var owner = parts[0];
-            var repo = parts[1];
+                var owner = parts[0];
+                var repo = parts[1];
 
-            ctx.Status($"Discovering {ownerRepo} funding options");
+                if (checkedorgs.Contains(owner))
+                    continue;
 
-            // First try a repo-level funding file
-            await AddContributedAsync(ownerRepo);
+                // Then try a org-level funding file, we only check it once per org.
+                funding = await client.QueryAsync(GraphQueries.Funding([$"{owner}/.github"]));
+                if (funding?.Length > 0)
+                {
+                    foreach (var gh in funding)
+                    {
+                        foreach (var sponsorable in gh.Sponsorables)
+                        {
+                            contributed.TryAdd(sponsorable, []);
+                            contributed[sponsorable].Add(gh.OwnerRepo);
+                        }
+                    }
+                }
+                checkedorgs.Add(owner);
+            }
 
-            if (checkedorgs.Contains(owner))
-                continue;
-
-            // Then try a org-level funding file, we only check it once per org.
-            await AddContributedAsync(owner + "/.github");
-            checkedorgs.Add(owner);
+            // Calculate percentage and update status
+            var percentage = (int)Math.Round((double)currentChunk / totalChunks * 100);
+            ctx.Status($"Querying user contributions [grey]({percentage}%)[/]");
         }
 
         return contributed;

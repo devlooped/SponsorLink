@@ -51,36 +51,57 @@ public class ListCommand(ICommandApp app, IGraphQueryClient client) : GitHubAsyn
             }
         });
 
+        var tree = new Tree(new Text("Sponsoring:"));
+
         if (usersponsored != null)
         {
-            AnsiConsole.Write(new Paragraph($"Sponsored by {Account.Login}", new Style(Color.Green)));
-            AnsiConsole.WriteLine();
-            AnsiConsole.Write(usersponsored.AsTable());
+            var user = tree.AddNode(new TreeNode(new Markup($"directly by [yellow]{Account.Login}[/]")));
+            var maxlengh = usersponsored.Max(x => x.Sponsorable.Length);
+            user.AddNodes(usersponsored.Select(x => 
+                new TreeNode(new Markup($"[green]{x.Sponsorable.PadRight(maxlengh)}[/] => ${x.Amount} since {x.CreatedAt:yyyy-MM-dd} {(x.OneTime ? "[grey](one-time)[/]" : "")}"))));
         }
 
         if (orgsponsored.Count > 0)
         {
-            var tree = new Tree(new Text("Sponsored by Organizations", new Style(Color.Yellow)));
-
+            var node = tree.AddNode(new Tree(new Markup("indirectly via [yellow]organizations[/]")));
             foreach (var org in orgsponsored)
             {
-                var node = new TreeNode(new Text(org.Login, new Style(Color.Green)));
-                node.AddNodes(org.Sponsorables);
-                tree.AddNode(node);
+                var orgnode = node.AddNode(new TreeNode(new Markup($"[yellow]{org.Login}[/]")));
+                orgnode.AddNodes(org.Sponsorables.Select(x => new TreeNode(new Markup($"[green]{x}[/]"))));
             }
-
-            AnsiConsole.Write(tree);
         }
+
+        var teamorg = new HashSet<string>();
 
         if (await client.GetUserContributionsAsync() is { Count: > 0 } contributions)
         {
-            var tree = new Tree(new Text("Sponsored by Contributing", new Style(Color.Yellow)));
+            var contrib = new Tree(new Markup("indirectly through [yellow]contributions[/]"));
+            foreach (var contribution in contributions)
+            {
+                if (userorgs.Any(x => x.Login == contribution.Key))
+                {
+                    // If the user belongs to the org, consider this a "team" sponsorship, not contrib. 
+                    // This is because the user would typically have contributed to a ton of repos in his org(s).
+                    teamorg.Add(contribution.Key);
+                }
+                else
+                {
+                    var node = contrib.AddNode(new TreeNode(new Text(contribution.Key, new Style(Color.Green))));
+                    node.AddNodes(contribution.Value.Select(x => new TreeNode(new Markup($"[grey]{x}[/]"))));
+                }
+            }
 
-            foreach (var login in contributions.Keys)
-                tree.AddNode(new TreeNode(new Text(login, new Style(Color.Green))));
-
-            AnsiConsole.Write(tree);
+            if (contrib.Nodes.Count > 0)
+                tree.AddNode(contrib);
         }
+
+        if (teamorg.Count > 0)
+        {
+            var node = tree.AddNode(new Tree(new Markup("indirectly as [yellow]team member[/]")));
+            node.AddNodes(teamorg.Select(x => new TreeNode(new Markup($"[green]{x}[/]"))));
+        }
+
+        AnsiConsole.Write(tree);
 
         return 0;
     }

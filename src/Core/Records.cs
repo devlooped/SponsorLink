@@ -24,3 +24,7 @@ public record Tier(string Name, string Description, int Amount, bool OneTime)
 {
     public Dictionary<string, string> Meta { get; init; } = [];
 }
+
+public record OwnerRepo(string Owner, string Repo);
+
+public record FundedRepository(string OwnerRepo, string[] Sponsorables);

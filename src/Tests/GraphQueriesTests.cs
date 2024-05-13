@@ -1,10 +1,11 @@
 ﻿using Devlooped.Sponsors;
 using Microsoft.Extensions.DependencyInjection;
+using Scriban;
 using static Devlooped.Helpers;
 
 namespace Devlooped.Tests;
 
-public class GraphQueriesTests
+public class GraphQueriesTests(ITestOutputHelper output)
 {
     [SecretsFact("GitHub:Token")]
 
@@ -38,6 +39,32 @@ public class GraphQueriesTests
         var branch = await client.QueryAsync(GraphQueries.DefaultBranch("devlooped", "githubs"));
 
         Assert.Null(branch);
+    }
+
+    [SecretsFact("GitHub:Token")]
+
+    public async Task GetFundingHttp()
+    {
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
+
+        var sponsorables = await client.QueryAsync(GraphQueries.Funding(new[] { "PrismLibrary/Prism", "curl/curl", "devlooped/moq" }));
+
+        Assert.NotNull(sponsorables);
+        Assert.NotEmpty(sponsorables);
+        Assert.Contains(sponsorables, x => x.OwnerRepo == "devlooped/moq" && x.Sponsorables.Contains("devlooped"));
+    }
+
+    [LocalFact]
+
+    public async Task GetFundingCli()
+    {
+        var client = new CliGraphQueryClient();
+
+        var sponsorables = await client.QueryAsync(GraphQueries.Funding(new[] { "PrismLibrary/Prism", "curl/curl", "devlooped/moq" }));
+
+        Assert.NotNull(sponsorables);
+        Assert.NotEmpty(sponsorables);
+        Assert.Contains(sponsorables, x => x.OwnerRepo == "devlooped/moq" && x.Sponsorables.Contains("devlooped"));
     }
 
     [SecretsFact("GitHub:Token")]

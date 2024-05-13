@@ -577,6 +577,32 @@ public static class GraphQueries
         }
     };
 
+    public static GraphQuery<FundedRepository[]> Funding(IEnumerable<string> ownerRepos) => new(
+        // NOTE: we replace the '/' char which would be invalid as a return field with '___'
+        Template.Parse(
+            """
+            query { 
+              {{~ i = 0 ~}}
+              {{~ for item in items ~}}
+              repo{{ i }}: repository(owner:"{{ item.owner }}", name:"{{ item.repo }}") {
+                owner {
+                  login
+                }
+                name
+                fundingLinks {
+                  platform
+                  url
+                }
+              }
+              {{~ i = i + 1 ~}}
+              {{~ end ~}}
+            }
+            """).Render(new { items = ownerRepos.Select(x => x.Split('/', StringSplitOptions.RemoveEmptyEntries)).Select(x => new OwnerRepo(x[0], x[1])) }),
+        // At projection time, we replace back the ___ to '/'
+        """
+        [.data | to_entries[] | { ownerRepo: ((.value.owner.login) + "/" + .value.name), sponsorables: [(.value.fundingLinks[] | select(.platform == "GITHUB") | (.url | split("/") | last))] } | select(.sponsorables | length > 0)] 
+        """);
+
     public static GraphQuery<string[]> IsSponsoredBy(string sponsorable, IEnumerable<string> candidateSponsors) => new(
         // NOTE: we replace the '-' char which would be invalid as a return field with '___'
         Template.Parse(
