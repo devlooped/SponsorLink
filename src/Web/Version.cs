@@ -1,5 +1,7 @@
-﻿using System.Reflection;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -9,12 +11,43 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SharpYaml.Tokens;
 
 namespace Devlooped.Sponsors;
 
-class Version(IConfiguration configuration, ILogger<Version> logger, IOptions<SponsorLinkOptions> options, IWebHostEnvironment hosting)
+class Version(IConfiguration configuration, SponsorsManager sponsors, RSA rsa, ILogger<Version> logger, IOptions<SponsorLinkOptions> options, IWebHostEnvironment hosting)
 {
     SponsorLinkOptions options = options.Value;
+
+    [Function("status")]
+    public async Task<IActionResult> GetStatus([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    {
+        var manifest = await sponsors.GetManifestAsync();
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(manifest.ToJwt());
+
+        var json = jwt.Payload.SerializeToJson();
+        var doc = JsonDocument.Parse(json);
+
+        var pubKey = Convert.ToBase64String(rsa.ExportRSAPublicKey());
+        if (pubKey != manifest.PublicKey)
+        {
+            logger.LogError($"Configured private key 'SponsorLink:{nameof(SponsorLinkOptions.PrivateKey)}' does not match the manifest public key.");
+            return new StatusCodeResult(500);
+        }
+
+        if (options.PublicKey != manifest.PublicKey)
+        {
+            logger.LogError($"Configured public key 'SponsorLink:{nameof(SponsorLinkOptions.PublicKey)}' does not match the manifest public key.");
+            return new StatusCodeResult(500);
+        }
+
+        return new ContentResult()
+        {
+            Content = JsonSerializer.Serialize(doc, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }),
+            ContentType = "text/plain",
+            StatusCode = 200,
+        };
+    }
 
     [Function("version")]
     public IActionResult GetVersion([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
