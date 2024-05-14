@@ -22,13 +22,12 @@ app.Configure(config =>
 });
 #endif
 
-if (!Variables.FirstRunCompleted)
+if (!Variables.FirstRunCompleted || args.Contains("--welcome"))
 {
     app.SetDefaultCommand<WelcomeCommand>();
     if (await app.RunAsync([]) != 0)
         return -1;
 }
-
 
 #if DEBUG
 if (args.Length == 0)
