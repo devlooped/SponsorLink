@@ -153,6 +153,8 @@ public class SponsorableManifest
                 .Concat(Audience.Select(x => new Claim("aud", x)))
                 .Concat(
                 [
+                    // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
+                    new("iat", Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()),
                     new("client_id", ClientId),
                     // non-standard claim containing the base64-encoded public key
                     new("pub", PublicKey),
@@ -191,7 +193,10 @@ public class SponsorableManifest
                 DateTime.UtcNow.Millisecond,
                 DateTimeKind.Utc);
 
-        var tokenClaims = claims.ToList();
+        var tokenClaims = claims.Where(x => x.Type != "iat").ToList();
+
+        // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
+        tokenClaims.Add(new("iat", Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()));
 
         if (tokenClaims.Find(c => c.Type == "iss") is { } issuer)
         {
