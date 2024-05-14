@@ -578,7 +578,6 @@ public static class GraphQueries
     };
 
     public static GraphQuery<FundedRepository[]> Funding(IEnumerable<string> ownerRepos) => new(
-        // NOTE: we replace the '/' char which would be invalid as a return field with '___'
         Template.Parse(
             """
             query { 
@@ -598,7 +597,6 @@ public static class GraphQueries
               {{~ end ~}}
             }
             """).Render(new { items = ownerRepos.Select(x => x.Split('/', StringSplitOptions.RemoveEmptyEntries)).Select(x => new OwnerRepo(x[0], x[1])) }),
-        // At projection time, we replace back the ___ to '/'
         """
         [.data | to_entries[] | { ownerRepo: ((.value.owner.login) + "/" + .value.name), sponsorables: [(.value.fundingLinks[] | select(.platform == "GITHUB") | (.url | split("/") | last))] } | select(.sponsorables | length > 0)] 
         """);
