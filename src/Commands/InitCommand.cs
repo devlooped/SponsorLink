@@ -1,7 +1,5 @@
 ﻿using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -122,7 +120,7 @@ public partial class InitCommand: AsyncCommand<InitCommand.Settings>
         // Serialize the token and return as a string
         var jwt = manifest.ToJwt();
 
-        var path = new FileInfo("sponsorable.jwt");
+        var path = new FileInfo("sponsorlink.jwt");
         await File.WriteAllTextAsync(path.FullName, jwt, Encoding.UTF8);
 
         AnsiConsole.MarkupLine($":check_mark_button: Generated new sponsorable JWT");
