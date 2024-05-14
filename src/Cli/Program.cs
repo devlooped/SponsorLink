@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using Devlooped.Sponsors;
 using Spectre.Console;
+using Spectre.Console.Cli;
 using static Devlooped.SponsorLink;
 
 #if DEBUG
@@ -14,6 +15,11 @@ if (args.Contains("--debug"))
 
 var app = App.Create();
 
+if (args.Contains("-?"))
+    args = args.Select(x => x == "-?" ? "-h" : x).ToArray();
+
+app.Configure(config => config.SetApplicationName("sl"));
+
 #if GH
 app.Configure(config =>
 {
@@ -25,8 +31,7 @@ app.Configure(config =>
 if (!Variables.FirstRunCompleted || args.Contains("--welcome"))
 {
     app.SetDefaultCommand<WelcomeCommand>();
-    if (await app.RunAsync([]) != 0)
-        return -1;
+    return await app.RunAsync([]);
 }
 
 #if DEBUG
