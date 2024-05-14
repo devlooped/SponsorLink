@@ -136,7 +136,7 @@
   <data name="FirstRun_How" xml:space="preserve">
     <value>As a GitHub CLI extension, [italic]gh-sponsors[/] leverages your authenticated user to locate your personal sponsorships, as well as your organizations' and your OSS community contributions. It does this entirely locally with no intermediaries, communicating exclusively with the GitHub API itself.
 
-This information is then used to discover GitHub sponsors accounts that have opted-in to use SponsorLink, by looking up their sponsorable JWT manifest, such as [link=https://github.com/devlooped/.github/blob/main/sponsorlink.jwt][blue]https://github.com/[/][grey][[user/org]][/][blue]/.github/sponsorlink.jwt[/][/]. If the manifest is present, the extension will:
+This information is then used to discover GitHub sponsors accounts that have opted-in to use SponsorLink, by looking up their sponsorable JWT manifest, such as [link=https://github.com/devlooped/.github/blob/main/sponsorlink.jwt][blue]https://github.com/[/][dim][[user/org]][/][blue]/.github/sponsorlink.jwt[/][/]. If the manifest is present, the extension will:
 
 :backhand_index_pointing_right: read from the manifest the issuer URI, public key and GitHub OAuth client (app) ID
 :backhand_index_pointing_right: request GitHub OAuth app authorization via the default browser to get a limited acccess token

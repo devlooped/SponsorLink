@@ -75,7 +75,7 @@ public static class GraphQueryClientExtensions
 
             // Calculate percentage and update status
             var percentage = (int)Math.Round((double)currentChunk / totalChunks * 100);
-            ctx.Status($"Querying user contributions [grey]({percentage}%)[/]");
+            ctx.Status($"Querying user contributions [dim]({percentage}%)[/]");
         }
 
         return contributed;

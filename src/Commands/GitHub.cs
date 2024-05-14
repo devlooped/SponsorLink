@@ -40,7 +40,7 @@ public static class GitHub
         {
             if (!AnsiConsole.Confirm(ThisAssembly.Strings.GitHub.Login))
             {
-                AnsiConsole.MarkupLine("[grey]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
+                AnsiConsole.MarkupLine("[dim]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
                 return false;
             }
 
@@ -54,7 +54,7 @@ public static class GitHub
             if (account is null)
             {
                 AnsiConsole.MarkupLine("[red]x[/] Could not retrieve authenticated user with GitHub CLI.");
-                AnsiConsole.MarkupLine("[grey]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
+                AnsiConsole.MarkupLine("[dim]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
                 return false;
             }
         }
