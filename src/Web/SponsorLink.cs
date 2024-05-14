@@ -1,6 +1,8 @@
-﻿using System.Net.Http.Json;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -9,14 +11,17 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Devlooped.Sponsors;
 
 /// <summary>
 /// Returns a JWT or JSON manifest of the authenticated user's claims.
 /// </summary>
-class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, IWebHostEnvironment host, ILogger<Sync> logger)
+class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, IOptions<SponsorLinkOptions> options, IWebHostEnvironment host, ILogger<SponsorLink> logger)
 {
+    SponsorLinkOptions options = options.Value;
+
     [Function("me")]
     public async Task<IActionResult> UserAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
@@ -71,11 +76,30 @@ class Sync(IConfiguration configuration, IHttpClientFactory httpFactory, Sponsor
         };
     }
 
+    [Function("jwt")]
+    public async Task<IActionResult> GetStatus([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    {
+        var manifest = await sponsors.GetManifestAsync();
+        var pubKey = Convert.ToBase64String(rsa.ExportRSAPublicKey());
+        if (pubKey != manifest.PublicKey)
+        {
+            logger.LogError("Configured private key '{option}' does not match the manifest public key.", $"SponsorLink:{nameof(SponsorLinkOptions.PrivateKey)}");
+            return new StatusCodeResult(500);
+        }
+
+        return new ContentResult()
+        {
+            Content = await sponsors.GetRawManifestAsync(),
+            ContentType = "text/plain",
+            StatusCode = 200,
+        };
+    }
+
     /// <summary>
     /// Depending on the Accept header, returns a JWT or JSON manifest of the authenticated user's claims.
     /// </summary>
     [Function("sync")]
-    public async Task<IActionResult> FetchAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "sync")] HttpRequest req)
+    public async Task<IActionResult> SyncAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "sync")] HttpRequest req)
     {
         if (!configuration.TryGetClientId(logger, out var clientId))
             return new StatusCodeResult(500);

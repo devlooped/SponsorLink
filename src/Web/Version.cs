@@ -1,7 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -11,7 +10,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using SharpYaml.Tokens;
 
 namespace Devlooped.Sponsors;
 
@@ -23,7 +21,7 @@ class Version(IConfiguration configuration, SponsorsManager sponsors, RSA rsa, I
     public async Task<IActionResult> GetStatus([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         var manifest = await sponsors.GetManifestAsync();
-        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(manifest.ToJwt());
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(await sponsors.GetRawManifestAsync());
 
         var json = jwt.Payload.SerializeToJson();
         var doc = JsonDocument.Parse(json);
@@ -32,12 +30,6 @@ class Version(IConfiguration configuration, SponsorsManager sponsors, RSA rsa, I
         if (pubKey != manifest.PublicKey)
         {
             logger.LogError($"Configured private key 'SponsorLink:{nameof(SponsorLinkOptions.PrivateKey)}' does not match the manifest public key.");
-            return new StatusCodeResult(500);
-        }
-
-        if (options.PublicKey != manifest.PublicKey)
-        {
-            logger.LogError($"Configured public key 'SponsorLink:{nameof(SponsorLinkOptions.PublicKey)}' does not match the manifest public key.");
             return new StatusCodeResult(500);
         }
 

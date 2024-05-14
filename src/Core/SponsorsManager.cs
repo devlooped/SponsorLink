@@ -14,12 +14,15 @@ public partial class SponsorsManager(
     IGraphQueryClientFactory graphFactory,
     IMemoryCache cache, ILogger<SponsorsManager> logger)
 {
+    const string JwtCacheKey = nameof(SponsorsManager) + ".JWT";
+    const string ManifestCacheKey = nameof(SponsorsManager) + ".Manifest";
+
     static readonly Serializer serializer = new();
     SponsorLinkOptions options = options.Value;
 
-    public async Task<SponsorableManifest> GetManifestAsync()
+    public async Task<string> GetRawManifestAsync()
     {
-        if (!cache.TryGetValue<SponsorableManifest>(typeof(SponsorableManifest), out var manifest) || manifest is null)
+        if (!cache.TryGetValue<string>(JwtCacheKey, out var jwt) || string.IsNullOrEmpty(jwt))
         {
             var client = graphFactory.CreateClient("sponsorable");
 
@@ -41,19 +44,40 @@ public partial class SponsorsManager(
                 "Failed to retrieve manifest from {Url}: {StatusCode} {Reason}",
                 url, (int)response.StatusCode, await response.Content.ReadAsStringAsync());
 
-            var jwt = await response.Content.ReadAsStringAsync();
-            logger.Assert(SponsorableManifest.TryRead(jwt, out manifest, out var missing),
+            jwt = await response.Content.ReadAsStringAsync();
+
+            logger.Assert(SponsorableManifest.TryRead(jwt, out var manifest, out var missing),
                 "Failed to read manifest due to missing required claim '{0}'", missing);
 
             // Manifest audience should match the sponsorable account to avoid weird issues?
             if (account.Login != manifest.Sponsorable)
                 throw new InvalidOperationException("Manifest sponsorable account does not match configured sponsorable account.");
 
-            manifest = cache.Set(typeof(SponsorableManifest), manifest, new MemoryCacheEntryOptions
+            logger.Assert(options.PublicKey == manifest.PublicKey,
+                "Configured public key '{option}' does not match the manifest public key.", 
+                $"SponsorLink:{nameof(SponsorLinkOptions.PublicKey)}");
+
+            jwt = cache.Set(JwtCacheKey, jwt, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+            });
+
+            manifest = cache.Set(ManifestCacheKey, manifest, new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
             });
         }
+
+        return jwt;
+    }
+
+    public async Task<SponsorableManifest> GetManifestAsync()
+    {
+        // Causes the manifest to be cached too.
+        await GetRawManifestAsync();
+
+        logger.Assert(cache.TryGetValue<SponsorableManifest>(ManifestCacheKey, out var manifest) && manifest is not null,
+            "Failed to retrieve sponsorable manifest");
 
         return manifest;
     }
@@ -130,7 +154,7 @@ public partial class SponsorsManager(
 
         if (!cache.TryGetValue<Organization[]>(typeof(Organization[]), out var sponsoringOrgs) || sponsoringOrgs is null)
         {
-            sponsoringOrgs = account.Type == AccountType.User ? 
+            sponsoringOrgs = account.Type == AccountType.User ?
                 await sponsorable.QueryAsync(GraphQueries.SponsoringOrganizationsForUser(account.Login)) :
                 await sponsorable.QueryAsync(GraphQueries.SponsoringOrganizationsForOrg(account.Login));
 
@@ -195,7 +219,7 @@ public partial class SponsorsManager(
         claims.AddRange(manifest.Audience.Select(x => new Claim(JwtRegisteredClaimNames.Aud, x)));
         claims.Add(new("client_id", manifest.ClientId));
         claims.Add(new(JwtRegisteredClaimNames.Sub, login));
-        
+
         // check for each flags SponsorTypes and add claims accordingly
         if (sponsor.HasFlag(SponsorTypes.Team))
             claims.Add(new("roles", "team"));
