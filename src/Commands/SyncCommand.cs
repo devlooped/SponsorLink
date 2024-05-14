@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
-using SharpYaml;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Spectre.Console.AnsiConsole;
@@ -76,7 +75,7 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
             {
                 foreach (var org in orgs)
                 {
-                    ctx.Status(Sync.QueryingOrgPublicSponsorships(org));
+                    ctx.Status(Sync.QueryingOrgPublicSponsorships(org.Login));
                     if (await client.QueryAsync(GraphQueries.OrganizationSponsorships(org.Login)) is { Length: > 0 } sponsored)
                     {
                         sponsorables.AddRange(sponsored);
@@ -142,18 +141,37 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
             }
         }
 
-        if (interactive.Count > 0)
+        if (interactive.Count > 0 && Confirm(interactive.Count == 1 ? Sync.InteractiveAuthNeeded1(interactive[0].Sponsorable) : Sync.InteractiveAuthNeeded(interactive.Count)))
         {
+            maxlength = interactive.MaxBy(x => x.Sponsorable.Length)?.Sponsorable.Length ?? 10;
 
-            //if (AnsiConsole.Confirm($"[lime]?[/] [white] Allow read-access to your public GitHub profile to {sponsorable}?[/] (Required for sponsor manifest sync)"))
-            //    return await authenticator.AuthenticateAsync(clientId, progress, true);
-        }
+            // Sync interactive, which requires user intervention.
+            foreach (var manifest in interactive)
+            {
+                await Status().StartAsync(Sync.Synchronizing(manifest.Sponsorable), async ctx =>
+                {
+                    var progress = new Progress<string>(x => ctx.Status(Sync.SynchronizingProgress(manifest.Sponsorable, x)));
+                    var token = await authenticator.AuthenticateAsync(manifest.ClientId, progress, true);
+                    if (string.IsNullOrEmpty(token))
+                        return;
 
-        // Sync interactive, which requires user intervention.
-        foreach (var manifest in interactive)
-        {
-            //if (AnsiConsole.Confirm($"[lime]?[/] [white] Allow read-access to your public GitHub profile to {sponsorable}?[/] (Required for sponsor manifest sync)"))
-            //    return await authenticator.AuthenticateAsync(clientId, progress, true);
+                    var (status, jwt) = await SponsorManifest.FetchAsync(manifest, token);
+                    if (status == SponsorManifest.Status.NotSponsoring)
+                    {
+                        var links = string.Join(", ", manifest.Audience.Select(x => $"[link]{x}[/]"));
+                        MarkupLine(Sync.ConsiderSponsoring(manifest.Sponsorable.PadRight(maxlength), links));
+                    }
+                    else if (status == SponsorManifest.Status.Success)
+                    {
+                        File.WriteAllText(Path.Combine(targetDir, manifest.Sponsorable + ".jwt"), jwt);
+                        MarkupLine(Sync.Thanks(manifest.Sponsorable.PadRight(maxlength)));
+                    }
+                    else
+                    {
+                        MarkupLine(Sync.Failed(manifest.Sponsorable.PadRight(maxlength)));
+                    }
+                });
+            }
         }
 
         WriteLine("Done");

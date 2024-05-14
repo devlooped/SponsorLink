@@ -196,28 +196,31 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
     <value>[red]x[/] Failed to remove user data. Please report the issue at [link]https://github.com/devlooped/SponsorLink/issues/new[/]</value>
   </data>
   <data name="Session_OpenBrowser" xml:space="preserve">
-    <value>[lime]?[/] [white]Operation requires authentication on github.com. Open your browser now?[/]</value>
+    <value>[lime]?[/] Operation requires authentication on github.com. Open your browser now?</value>
   </data>
   <data name="Sync_ConsiderSponsoring" xml:space="preserve">
-    <value>:folded_hands: [lime]{sponsorable}[/]: consider sponsoring at {links}</value>
+    <value>:folded_hands: [yellow]{sponsorable}[/]: consider sponsoring at {links}</value>
   </data>
   <data name="Sync_DetectingManifest" xml:space="preserve">
-    <value>Detecting SponsorLink manifest for {sponsorable}</value>
+    <value>Detecting SponsorLink manifest for [yellow]{sponsorable}[/]</value>
   </data>
   <data name="Sync_Failed" xml:space="preserve">
-    <value>:cross_mark: {sponsorable} failed to sync status</value>
+    <value>:cross_mark: [yellow]{sponsorable}[/] failed to sync status</value>
   </data>
   <data name="Sync_FetchingManifests" xml:space="preserve">
     <value>Fetching SponsorLink manifests for {count} accounts</value>
   </data>
   <data name="Sync_InteractiveAuthNeeded" xml:space="preserve">
-    <value>[lime]?[/] [white]{count} sponsorable accounts require interactive authentication for synchronization. Do you want to Proceed? ([/]</value>
+    <value>[lime]?[/] {count} sponsorable accounts require [link=https://www.devlooped.com/SponsorLink/github.html#authentication][blue]interactive authentication[/][/] for synchronization. Do you want to Proceed?</value>
+  </data>
+  <data name="Sync_InteractiveAuthNeeded1" xml:space="preserve">
+    <value>[lime]?[/] Sponsors account [yellow]{account}[/] requires [link=https://www.devlooped.com/SponsorLink/github.html#authentication][blue]interactive authentication[/][/] for synchronization. Do you want to Proceed?</value>
   </data>
   <data name="Sync_InvalidManifest" xml:space="preserve">
-    <value>:cross_mark: {sponsorable} provided an invalid SponsorLink manifest ({status})</value>
+    <value>:cross_mark: [yellow]{sponsorable}[/] provided an invalid SponsorLink manifest ({status})</value>
   </data>
   <data name="Sync_QueryingOrgPublicSponsorships" xml:space="preserve">
-    <value>Querying {org} sponsorships</value>
+    <value>Querying [yellow]{org}[/] sponsorships</value>
   </data>
   <data name="Sync_QueryingUserOrgs" xml:space="preserve">
     <value>Querying user organizations</value>
@@ -234,6 +237,12 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
   <data name="Sync_QueryingUserSponsorshipsFailed" xml:space="preserve">
     <value>:cross_mark: Could not query GitHub for user sponsorships.</value>
   </data>
+  <data name="Sync_Synchronizing" xml:space="preserve">
+    <value>Synchronizing [yellow]{sponsorable}[/] sponsorship...</value>
+  </data>
+  <data name="Sync_SynchronizingProgress" xml:space="preserve">
+    <value>Synchronizing [yellow]{sponsorable}[/]: {progress}</value>
+  </data>  
   <data name="Sync_Signing" xml:space="preserve">
     <value>Requesting manifest signing ...</value>
   </data>
@@ -241,7 +250,7 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
     <value>:check_mark_button: [lime]{sponsorable}[/]: thanks for sponsoring!</value>
   </data>
   <data name="Variables_Cleared" xml:space="preserve">
-    <value>[green]✓[/] Cleared {0} user environment variable</value>
+    <value>:check_mark_button: Cleared {0} user environment variable</value>
   </data>
   <data name="Yes" xml:space="preserve">
     <value>Yes</value>
