@@ -31,7 +31,7 @@ Whenever a SponsorLink-enabled library is used, the following flow is typical:
 2. If manifest is not found, users may get a warning, informing them that the 
    library is seeking funding and instructions on how to sponsor.
 3. If the user decides to sponsor the project, and does so on the suggested platform 
-   (i.e. `https://github.com/sponsors/[account]`), they now need to link their sponsorship 
+   (i.e. `https://github.com/sponsors/[sponsorable]`), they now need to link their sponsorship 
    on their local machine to remove the warning message and potentially unlock sponsors-only 
    features.
 
@@ -62,53 +62,43 @@ Subsequently (periodically or on-demand), the user runs `gh sponsors` to
 sync their sponsorships for offline use while consuming sponsorable libraries. 
 
 {: .highlight }
-> Running `gh sponsor sync [account]` will sync the manifest for the specified account.
+> Running `gh sponsor sync [sponsorable]` will sync the manifest for the specified account.
 > and typically be much quicker than the entire discovery + sync for all candidate 
 > accounts.
 
-Whenever run, the tool performs the following steps:
+Whenever run, the tool performs the following steps (entirely locally without 
+any involved intermediary):
 
 1. Determine sponsorable account candidates for the current user, using the
    GitHub API to list all directly sponsored accounts, organizations the user is a 
    member of and their (public) sponsorships, and all repositories the user has contributed
    to, which can be considered as indirect sponsorships.
-2. Each candidate is checked for a SponsorLink manifest at `https://github.com/[account]/.github/raw/main/sponsorlink.jwt`.
+1. Each candidate is checked for a SponsorLink manifest at `https://github.com/[account]/.github/raw/main/sponsorlink.jwt`.
    This location is the same as the.github/ [default community health files](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file)
-3. If found, the manifest consist of a signed [JWT](https://jwt.io) containing the following 
-   claims: 
-   a. [iss (Issuer)](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1): the 
-      sponsorable account's backend service that issued the manifest and can be used 
-      to sync sponsoring users' manifests.
-   b. [aud (Audience)](https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3): one 
-      or more URLs of the supported sponsoring platforms, one of which must be a GitHub 
-      sponsors URL, such as https://github.com/sponsors/devlooped. This URL must match 
-      the user or organization account name.
-   c. [client_id OAuth 2.0 client identifier](https://www.rfc-editor.org/rfc/rfc8693.html#name-client_id-client-identifier): 
-      when consumed by the reference implementation, this is the Client ID of a 
-      [GitHub OAuth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app) 
-      app using Device Flow authorization to authenticate the user and request the necessary
-      permissions for each sponsorable account.
-   d. [sub_jwk](https://openid.net/specs/openid-connect-core-1_0.html#SelfIssuedResponse): 
-      public key used to check the signature of issued sponsor manifests (JWTs).
-   e. pub: custom claim containing the Base64-encoded public key in `sub_jwt` for easier 
-      consumption.
+1. If found, the manifest consist of a signed [JWT](https://jwt.io) containing some 
+   [standard claims](spec.html#sponsorable-manifest) plus a [client_id](https://www.rfc-editor.org/rfc/rfc8693.html#name-client_id-client-identifier)
+   claim. This is the Client ID of a [GitHub OAuth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app) 
+   app belonging to the sponsorable with Device Flow authorization enabled.
+1. At this point the user is directed to authenticate on github.com with an OAuth app provided 
+   by the sponsorable account which requests the necessary permissions to read the user's profile 
+   and email(s) for sponsorship linking. 
+1. A request is made to the issuer's backend using the obtained OAuth access token, to get a 
+   signed [sponsor manifest](spec.html#sponsor-manifest) which is then stored locally at `~/.sponsorlink/github/[sponsorable].jwt`.
 
+{: .highlight }
+The `gh-sponsors` extension uses a different OAuth access token for each sponsorable 
+to guarantee isolation and ensure explicit permissions are granted individually.
 
-2. Each  At this point they authenticate on github.com with an OAuth app provided by 
-   > the sponsored account which requests the necessary permissions to read the 
-   > user's profile and email(s) for sponsorship linking.
-   > The `gh-sponsors` extension uses the OAuth access token of each account to 
-   > sync the manifest while providing minimal information to the sponsored account.
-5. The sponsorable library can now check for the manifest (entirely offline) 
-   and change its behavior accordingly.
+After a successful sync of the [sponsor manifest](spec.html#sponsor-manifest), the 
+libraries and tools can now check for its presence, authenticity and expiration 
+(entirely offline) and change their behavior accordingly.
+
+*SponsorLink* itself does not dictate how a specific library or tool integrates 
+these checks, it only provides the [standard manifest format](spec.md) 
+that a sponsorable account backend needs to provide for local persistence 
+and subsequent (purely offline) checks.
 
 {: .note }
-> The SponsorLink-enabled library may use your configured git email (locally) 
-> to ensure the synchronized local manifest belongs to the same account. 
-> Read the [privacy policy](privacy.md) for more details.
-
-*SponsorLink* itself does not dictate how a specific sponsorable library
-or tool integrates these checks, it only provides the [standard manifest format](spec.md) 
-that a sponsored account backend needs to provide for offline local persistence 
-and subsequent checks. The reference implementation provides tooling to locally 
-discover sponsorships and requests those manifests as needed.
+> A SponsorLink-enabled library may use your locally configured git email 
+> to ensure (purely locally and offline) the existing sponsor manifest belongs 
+> to the same account. Read the [privacy policy](privacy.md) for more details.
