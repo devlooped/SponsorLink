@@ -108,6 +108,30 @@ the libraries and tools themselves would typically embed this public key for pur
 > This *SponsorLink* implementation does not dictate how a specific sponsorable library or tool integrates 
 > these checks, it only provides the [manifest format](spec.md) and predictable location for the manifest.
 
+### Auto Sync
+
+When running the `gh sponsors sync` command, the tool will ask whether to enable auto-sync. If enabled, 
+tools and libraries checking the manifest can attempt to refresh an expired manifest in an exclusively 
+non-interactive way, by using the cached access token to request a new manifest from the sponsorable backend 
+service. 
+
+This unattended refresh is subject to the same consent and permissions as the initial sync, and it may 
+not succeed (i.e. an interactive authentication to get new consent is needed). The user can disable 
+auto-sync at any time by running `gh sponsors sync --autosync=false`.
+
+Tools and libraries can check for this user preference setting by reading the [dotnetconfig](https://dotnetconfig.org/) 
+formatted file at `~/.sponsorlink/.netconfig`.
+
+```
+[sponsorlink]
+  autosync            # enabled
+  autosync = false    # disabled
+```
+
+{: .note }
+> An `autosync` key with no value assigned is shorthand for a `true` value.
+> See [dotnetconfig](https://dotnetconfig.org/#format).
+
 ## Sponsorable Setup
 
 Three steps are required to set up a GitHub account to issue sponsor manifests:

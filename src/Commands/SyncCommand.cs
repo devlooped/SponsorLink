@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
+using DotNetConfig;
+using Microsoft.Extensions.Configuration;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Spectre.Console.AnsiConsole;
@@ -18,6 +20,9 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
 
         [CommandOption("-i|--issuer", IsHidden = true)]
         public string? Issuer { get; set; }
+
+        [CommandOption("--autosync")]
+        public bool? AutoSync { get; set; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, SyncSettings settings)
@@ -172,6 +177,26 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
                     }
                 });
             }
+        }
+
+        var config = Config.Build(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink"));
+        var autosync = settings.AutoSync;
+
+        if (settings.AutoSync == null && 
+            !config.TryGetBoolean("sponsorlink", "autosync", out _) && 
+            Confirm(Sync.AutoSync))
+        {
+            autosync = true;
+        }
+        // NOTE: we'd continue to ask for auto-sync even if they responded no, so they can change their mind.
+
+        if (autosync != null)
+        {
+            config.SetBoolean("sponsorlink", "autosync", autosync.Value);
+            if (autosync == true) 
+                MarkupLine(Sync.AutoSyncEnabled);
+            else
+                MarkupLine(Sync.AutoSyncDisabled);
         }
 
         WriteLine("Done");
