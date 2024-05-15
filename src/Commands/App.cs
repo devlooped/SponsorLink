@@ -13,13 +13,17 @@ public static class App
         var services = new ServiceCollection();
         services.AddSingleton<IGraphQueryClient>(new CliGraphQueryClient());
         services.AddSingleton<IGitHubDeviceAuthenticator>(sp => new GitHubDeviceAuthenticator(sp.GetRequiredService<IHttpClientFactory>()));
-        services.AddHttpClient();
+        services.AddHttpClient().ConfigureHttpClientDefaults(defaults => defaults.ConfigureHttpClient(http => 
         services.AddHttpClient("GitHub", http =>
         {
             http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
             if (Debugger.IsAttached)
                 http.Timeout = TimeSpan.FromMinutes(10);
+        }));
+        services.AddHttpClient("GitHub", http =>
+        {
+            http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
