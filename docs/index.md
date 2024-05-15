@@ -99,6 +99,7 @@ that a sponsorable account backend needs to provide for local persistence
 and subsequent (purely offline) checks.
 
 {: .note }
-> A SponsorLink-enabled library may use your locally configured git email 
-> to ensure (purely locally and offline) the existing sponsor manifest belongs 
-> to the same account. Read the [privacy policy](privacy.md) for more details.
+> A SponsorLink-enabled library *may* use your locally configured git email 
+> to ensure the located sponsor manifest belongs 
+> to the same account by matching the manifest email claim(s). 
+> Read the [privacy statement](privacy.md) for more details.
