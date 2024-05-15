@@ -45,6 +45,7 @@ if (args.Length == 0)
                 "init",
                 "list",
                 "sync",
+                "validate",
                 "welcome",
             ]));
 
