@@ -221,6 +221,8 @@ public partial class SponsorsManager(
         claims.Add(new(JwtRegisteredClaimNames.Sub, login));
 
         // check for each flags SponsorTypes and add claims accordingly
+        // Note that in JWT IANA, roles is plural, unlike the more common role (singular) in claims-based auth.
+        // See https://www.iana.org/assignments/jwt/jwt.xhtml
         if (sponsor.HasFlag(SponsorTypes.Team))
             claims.Add(new("roles", "team"));
         if (sponsor.HasFlag(SponsorTypes.Organization))
