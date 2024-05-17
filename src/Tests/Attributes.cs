@@ -21,30 +21,12 @@ public class SecretsFactAttribute : FactAttribute
     }
 }
 
-public class LocalFactAttribute : FactAttribute
+public class LocalFactAttribute : SecretsFactAttribute
 {
-    public LocalFactAttribute(params string[] secrets)
+    public LocalFactAttribute(params string[] secrets) : base(secrets)
     {
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")))
             Skip = "Non-CI test";
-
-        if (secrets.Length > 0)
-        {
-            var configuration = new ConfigurationBuilder()
-                .AddUserSecrets<SecretsFactAttribute>()
-                .Build();
-
-            var missing = new HashSet<string>();
-
-            foreach (var secret in secrets)
-            {
-                if (string.IsNullOrEmpty(configuration[secret]))
-                    missing.Add(secret);
-            }
-
-            if (missing.Count > 0)
-                Skip = "Missing user secrets: " + string.Join(',', missing);
-        }
     }
 }
 
