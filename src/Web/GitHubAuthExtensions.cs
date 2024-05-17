@@ -21,8 +21,7 @@ static class GitHubAuthExtensions
             return false;
         }
         return true;
-#endif
-
+#else
         if (!bool.TryParse(configuration["WEBSITE_AUTH_ENABLED"], out var authEnabled) || !authEnabled)
         {
             logger.LogError("Ensure App Service authentication is enabled.");
@@ -36,5 +35,6 @@ static class GitHubAuthExtensions
         }
 
         return true;
+#endif
     }
 }
