@@ -21,6 +21,7 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
         [CommandOption("-i|--issuer", IsHidden = true)]
         public string? Issuer { get; set; }
 
+        [Description("Enable or disable automatic synchronization of expired manifests.")]
         [CommandOption("--autosync")]
         public bool? AutoSync { get; set; }
     }
