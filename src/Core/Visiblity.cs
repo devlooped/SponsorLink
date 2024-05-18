@@ -7,4 +7,5 @@
 namespace Devlooped.Sponsors
 {
     public partial class JsonOptions { }
+    public partial class Manifest { }
 }
