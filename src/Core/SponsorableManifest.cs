@@ -193,7 +193,7 @@ public class SponsorableManifest
                 DateTime.UtcNow.Millisecond,
                 DateTimeKind.Utc);
 
-        var tokenClaims = claims.Where(x => x.Type != "iat").ToList();
+        var tokenClaims = claims.Where(x => x.Type != "iat" && x.Type != "exp").ToList();
 
         // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
         tokenClaims.Add(new("iat", Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()));
@@ -201,11 +201,21 @@ public class SponsorableManifest
         if (tokenClaims.Find(c => c.Type == "iss") is { } issuer)
         {
             if (issuer.Value != Issuer)
-                throw new ArgumentException($"The received claims contain an incompatible issuer claim. If present, the claim must contain the value '{Issuer}' but was '{issuer.Value}'.");
+                throw new ArgumentException($"The received claims contain an incompatible 'iss' claim. If present, the claim must contain the value '{Issuer}' but was '{issuer.Value}'.");
         }
         else
         {
             tokenClaims.Insert(0, new("iss", Issuer));
+        }
+
+        if (tokenClaims.Find(c => c.Type == "client_id") is { } clientId)
+        {
+            if (clientId.Value != ClientId)
+                throw new ArgumentException($"The received claims contain an incompatible 'client_id' claim. If present, the claim must contain the value '{ClientId}' but was '{clientId.Value}'.");
+        }
+        else
+        {
+            tokenClaims.Add(new("client_id", ClientId));
         }
 
         // Avoid duplicating audience claims
@@ -245,7 +255,6 @@ public class SponsorableManifest
         RequireAudience = true,
         // At least one of the audiences must match the manifest audiences
         AudienceValidator = (audiences, _, _) => Audience.Intersect(audiences.Select(x => x.TrimEnd('/'))).Any(),
-        ValidateAudience = true,
         ValidIssuer = Issuer,
         IssuerSigningKey = SecurityKey,
     }, out token);
