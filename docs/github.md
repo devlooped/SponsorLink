@@ -119,8 +119,13 @@ This unattended refresh is subject to the same consent and permissions as the in
 not succeed (i.e. an interactive authentication to get new consent is needed). The user can disable 
 auto-sync at any time by running `gh sponsors sync --autosync=false`.
 
-Tools and libraries can check for this user preference setting by reading the [dotnetconfig](https://dotnetconfig.org/) 
-formatted file at `~/.sponsorlink/.netconfig`.
+{: .important }
+> By enabling *autosync*, you agree to allow other tools and libraries to automatically check for 
+> updates to expired sponsor manifests. This involves network access to the manifest issuer.
+
+
+Tools and libraries can check for this user preference setting by reading the 
+[dotnetconfig](https://dotnetconfig.org/)-formatted file at `~/.sponsorlink/.netconfig`.
 
 ```
 [sponsorlink]
