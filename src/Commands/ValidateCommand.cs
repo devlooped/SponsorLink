@@ -2,6 +2,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -32,7 +33,7 @@ public partial class ValidateCommand(IHttpClientFactory clientFactory) : AsyncCo
                 ctx.Status(Validate.ValidatingManifest(relative));
 
                 // Simple reading first to get issuer to retrieve the manifest
-                var jwt = await File.ReadAllTextAsync(file);
+                var jwt = await File.ReadAllTextAsync(file, Encoding.UTF8);
                 if (string.IsNullOrEmpty(jwt))
                 {
                     MarkupLine(Validate.EmptyManifest(account, relative));

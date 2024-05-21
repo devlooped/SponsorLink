@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
+using System.Text;
 using DotNetConfig;
-using Microsoft.Extensions.Configuration;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Spectre.Console.AnsiConsole;
@@ -137,7 +137,7 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
 
             if (status == SponsorManifest.Status.Success)
             {
-                File.WriteAllText(Path.Combine(targetDir, manifest.Sponsorable + ".jwt"), jwt);
+                File.WriteAllText(Path.Combine(targetDir, manifest.Sponsorable + ".jwt"), jwt, Encoding.UTF8);
                 MarkupLine(Sync.Thanks(manifest.Sponsorable.PadRight(maxlength)));
             }
             else
