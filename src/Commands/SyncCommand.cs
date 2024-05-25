@@ -10,7 +10,7 @@ using static ThisAssembly.Strings;
 namespace Devlooped.Sponsors;
 
 [Description("Synchronizes the sponsorships manifest")]
-public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory) : GitHubAsyncCommand<SyncCommand.SyncSettings>(app)
+public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory) : GitHubAsyncCommand<SyncCommand.SyncSettings>(app, config)
 {
     public static class ErrorCodes
     {

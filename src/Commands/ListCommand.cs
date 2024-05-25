@@ -1,13 +1,14 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Text.Json;
+using DotNetConfig;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace Devlooped.Sponsors;
 
 [Description("Lists user and organization sponsorships")]
-public class ListCommand(ICommandApp app, IGraphQueryClient client) : GitHubAsyncCommand(app)
+public class ListCommand(ICommandApp app, Config config, IGraphQueryClient client) : GitHubAsyncCommand(app, config)
 {
     record Organization(string Login, string[] Sponsorables);
 

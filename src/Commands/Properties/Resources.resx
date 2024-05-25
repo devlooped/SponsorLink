@@ -242,7 +242,7 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
   </data>
   <data name="Sync_SynchronizingProgress" xml:space="preserve">
     <value>Synchronizing [yellow]{sponsorable}[/]: {progress}</value>
-  </data>  
+  </data>
   <data name="Sync_Signing" xml:space="preserve">
     <value>Requesting manifest signing ...</value>
   </data>
@@ -254,10 +254,10 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
   </data>
   <data name="Sync_AutoSyncEnabled" xml:space="preserve">
     <value>:information: Sponsor manifests [link=https://www.devlooped.com/SponsorLink/github.html#auto-sync][blue]auto sync[/][/] was [lime]enabled[/]</value>
-  </data>	
+  </data>
   <data name="Sync_AutoSyncDisabled" xml:space="preserve">
     <value>:information: Sponsor manifests [link=https://www.devlooped.com/SponsorLink/github.html#auto-sync][blue]auto sync[/][/] was [yellow]disabled[/]</value>
-  </data>	
+  </data>
   <data name="Variables_Cleared" xml:space="preserve">
     <value>:check_mark_button: Cleared {0} user environment variable</value>
   </data>

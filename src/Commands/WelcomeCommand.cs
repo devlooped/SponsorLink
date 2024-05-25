@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel;
+using DotNetConfig;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using static Devlooped.SponsorLink;
 
 namespace Devlooped.Sponsors;
 
 [Description("Executes the first-run experience")]
-public class WelcomeCommand(ICommandApp app) : Command<WelcomeCommand.WelcomeSettings>
+public class WelcomeCommand(ICommandApp app, Config config) : Command<WelcomeCommand.WelcomeSettings>
 {
     public class WelcomeSettings : CommandSettings
     {
@@ -17,7 +17,6 @@ public class WelcomeCommand(ICommandApp app) : Command<WelcomeCommand.WelcomeSet
     public override int Execute(CommandContext context, WelcomeSettings settings)
     {
         AnsiConsole.Write(new Panel(new Rows(
-            new Rule(ThisAssembly.Strings.FirstRun.Welcome).RuleStyle(Color.Purple_2),
             new Markup(ThisAssembly.Strings.FirstRun.What)))
         {
             Border = BoxBorder.None,
@@ -45,7 +44,7 @@ public class WelcomeCommand(ICommandApp app) : Command<WelcomeCommand.WelcomeSet
             return -1;
         }
 
-        Variables.FirstRunCompleted = true;
+        config.SetBoolean("sponsorlink", "firstrun", true);
 
         if (AnsiConsole.Confirm(ThisAssembly.Strings.FirstRun.SyncNow))
         {

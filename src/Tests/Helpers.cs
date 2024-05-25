@@ -16,6 +16,7 @@ class Helpers
     public static IConfiguration Configuration { get; } = new ConfigurationBuilder()
         .AddUserSecrets<Helpers>()
         .AddEnvironmentVariables()
+        .AddInMemoryCollection()
         .Build();
 
     public static IServiceProvider Services { get; }

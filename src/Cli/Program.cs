@@ -1,9 +1,10 @@
 ﻿#pragma warning disable CS0436 // Type conflicts with imported type
 using System.Diagnostics;
 using Devlooped.Sponsors;
+using DotNetConfig;
+using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using static Devlooped.SponsorLink;
 
 #if DEBUG
 if (args.Contains("--debug"))
@@ -13,7 +14,7 @@ if (args.Contains("--debug"))
 }
 #endif
 
-var app = App.Create();
+var app = App.Create(out var services);
 
 if (args.Contains("-?"))
     args = args.Select(x => x == "-?" ? "-h" : x).ToArray();
@@ -28,7 +29,8 @@ app.Configure(config =>
 });
 #endif
 
-if (!Variables.FirstRunCompleted || args.Contains("--welcome"))
+var firstRunCompleted = services.GetRequiredService<Config>().TryGetBoolean("sponsorlink", "firstrun", out var completed) && completed;
+if (!firstRunCompleted || args.Contains("--welcome"))
 {
     app.SetDefaultCommand<WelcomeCommand>();
     return await app.RunAsync([]);

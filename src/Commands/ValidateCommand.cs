@@ -6,7 +6,6 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using static Devlooped.SponsorLink;
 using static Spectre.Console.AnsiConsole;
 using static ThisAssembly.Strings;
 

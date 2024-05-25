@@ -12,7 +12,6 @@ using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
-using static Devlooped.SponsorLink;
 
 namespace Devlooped.Sponsors;
 
@@ -47,9 +46,6 @@ public class Signing(ITestOutputHelper Output)
             Output.WriteLine($"{pair.Key} = {pair.Value}");
         }
     }
-
-    [Fact]
-    public void WritePublicKey() => Output.WriteLine(Convert.ToBase64String(PublicKey.ExportRSAPublicKey()));
 
     [Fact]
     public void SignFile()

@@ -4,19 +4,23 @@ using Spectre.Console.Cli;
 using static Devlooped.Sponsors.Process;
 using static Devlooped.Helpers;
 using Microsoft.Extensions.DependencyInjection;
+using DotNetConfig;
 
 namespace Devlooped.Tests;
 
 [Collection("GitHub")]
 public class SyncCommandTests
 {
+    Config config = Config.Build();
+
     [Fact]
     public async Task FirstRunWelcome()
     {
-        SponsorLink.Variables.FirstRunCompleted = false;
+        config = config.Unset("sponsorlink", "firstrun");
 
         var command = new SyncCommand(
             Mock.Of<ICommandApp>(x => x.Run(It.Is<IEnumerable<string>>(args => args.Contains("welcome"))) == -42),
+            config,
             Mock.Of<IGraphQueryClient>(MockBehavior.Strict),
             Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
             Mock.Of<IHttpClientFactory>(MockBehavior.Strict));
@@ -29,7 +33,7 @@ public class SyncCommandTests
     [Fact]
     public async Task FirstRunWelcomeCompleted()
     {
-        SponsorLink.Variables.FirstRunCompleted = true;
+        config = config.SetBoolean("sponsorlink", "firstrun", true);
 
         // By forcing an unauthenticated CLI, we can shortcircuit the execution at the login
         if (TryExecute("gh", "auth status", out var status))
@@ -37,6 +41,7 @@ public class SyncCommandTests
 
         var command = new SyncCommand(
             Mock.Of<ICommandApp>(MockBehavior.Strict),
+            config,
             Mock.Of<IGraphQueryClient>(MockBehavior.Strict),
             Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
             Mock.Of<IHttpClientFactory>(MockBehavior.Strict));
@@ -58,6 +63,7 @@ public class SyncCommandTests
 
         var command = new SyncCommand(
             Mock.Of<ICommandApp>(MockBehavior.Strict),
+            config,
             // This allows the graph client to not fail and return null, causing a discovery failure.
             graph.Object,
             Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
@@ -84,6 +90,7 @@ public class SyncCommandTests
 
         var command = new SyncCommand(
             Mock.Of<ICommandApp>(MockBehavior.Strict),
+            config,
             // This allows the graph client to not fail and return null, causing a discovery failure.
             graph.Object,
             Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
@@ -110,6 +117,7 @@ public class SyncCommandTests
 
         var command = new SyncCommand(
             Mock.Of<ICommandApp>(MockBehavior.Strict),
+            config,
             graph.Object,
             Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
             Services.GetRequiredService<IHttpClientFactory>());
@@ -136,6 +144,7 @@ public class SyncCommandTests
 
         var command = new SyncCommand(
             Mock.Of<ICommandApp>(MockBehavior.Strict),
+            config,
             graph.Object,
             Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
             Services.GetRequiredService<IHttpClientFactory>());
@@ -162,6 +171,7 @@ public class SyncCommandTests
 
         var command = new SyncCommand(
             Mock.Of<ICommandApp>(MockBehavior.Strict),
+            config,
             graph.Object,
             new GitHubAppAuthenticator(Services.GetRequiredService<IHttpClientFactory>()),
             Services.GetRequiredService<IHttpClientFactory>());
@@ -179,11 +189,11 @@ public class SyncCommandTests
         Assert.Equal(-6, result);
     }
 
-    // GitHub:NonSponsoring
-
-    static void EnsureAuthenticated(string secret = "GitHub:Token")
+    void EnsureAuthenticated(string secret = "GitHub:Token")
     {
-        SponsorLink.Variables.FirstRunCompleted = true;
+        if (!config.TryGetBoolean("sponsorlink", "firstrun", out var firstRunCompleted) || !firstRunCompleted)
+            config = config.SetBoolean("sponsorlink", "firstrun", true);
+
         if (!TryExecute("gh", "auth status", out var status))
         {
             Assert.True(TryExecute("gh", "auth login --with-token", Configuration[secret]!, out var output));
