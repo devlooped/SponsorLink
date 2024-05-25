@@ -212,6 +212,16 @@ backend other than:
    be verified against the public key provided in the `sponsorlink.jwt` sponsorable manifest.
 1. The returned manifest contains `roles` for the user, determined based on the token provided.
 
+Optional endpoints the backend can provide: 
+1. `/me` endpoint that returns the user's profile and claims, useful for testing the authentication and configuration.
+1. `/pub` endpoint that returns the Base64-encoded public key
+1. `/jwk` endpoint that returns the sponsorable manifest in the [standard format](spec.md)
+1. `/version` endpoint that returns the backend version
+1. `/delete` endpoint that removes all traces of the authenticated user from the backend
+
+{: .highlight }
+The backend reference implementation provides all the optional endpoints.
+
 To deploy and configure the backend: 
 
 1. Fork the [SponsorLink](https://github.com/devlooped/SponsorLink) repository
