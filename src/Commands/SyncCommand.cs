@@ -10,8 +10,19 @@ using static ThisAssembly.Strings;
 namespace Devlooped.Sponsors;
 
 [Description("Synchronizes the sponsorships manifest")]
-public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGitHubDeviceAuthenticator authenticator, IHttpClientFactory httpFactory) : GitHubAsyncCommand<SyncCommand.SyncSettings>(app)
+public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory) : GitHubAsyncCommand<SyncCommand.SyncSettings>(app)
 {
+    public static class ErrorCodes
+    {
+        public const int UnauthenticatedGitHubCLI = -1;
+        public const int GraphDiscoveryFailure = -2;
+        public const int SponsorableManifestNotFound = -3;
+        public const int SponsorableManifestInvalid = -4;
+        public const int InteractiveAuthRequired = -5;
+        public const int NotSponsoring = -6;
+        public const int SyncFailure = -7;
+    }
+
     public class SyncSettings : CommandSettings
     {
         [Description("Optional sponsored account(s) to synchronize.")]
@@ -24,6 +35,22 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
         [Description("Enable or disable automatic synchronization of expired manifests.")]
         [CommandOption("--autosync")]
         public bool? AutoSync { get; set; }
+
+        [Description("Whether to prevent interactive credentials refresh.")]
+        [DefaultValue(false)]
+        [CommandOption("-u|--unattended")]
+        public bool Unattended { get; set; }
+
+        [Description("Perform local-only discovery of accounts to sync from previously cached manifests, if no sponsorables are provided.")]
+        [DefaultValue(false)]
+        [CommandOption("-l|--local")]
+        public bool LocalDiscovery { get; set; }
+
+        /// <summary>
+        /// Property used to modify the namespace from tests for scoping stored passwords.
+        /// </summary>
+        [CommandOption("--namespace", IsHidden = true)]
+        public string Namespace { get; set; } = "com.devlooped";
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, SyncSettings settings)
@@ -32,12 +59,20 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
         if (result != 0)
             return result;
 
+        var ghDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink", "github");
+        Directory.CreateDirectory(ghDir);
+
         Debug.Assert(Account != null, "After authentication, Account should never be null.");
 
         var sponsorables = new HashSet<string>();
         if (settings.Sponsorable?.Length > 0)
         {
             sponsorables.AddRange(settings.Sponsorable);
+        }
+        else if (settings.LocalDiscovery)
+        {
+            sponsorables.AddRange(Directory.EnumerateFiles(ghDir, "*.jwt")
+                .Select(x => Path.GetFileNameWithoutExtension(x)!));
         }
         else
         {
@@ -47,13 +82,13 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
                 if (await client.QueryAsync(GraphQueries.ViewerSponsored) is not { } sponsored)
                 {
                     MarkupLine(Sync.QueryingUserSponsorshipsFailed);
-                    return -1;
+                    return -2;
                 }
                 sponsorables.AddRange(sponsored);
                 return 0;
-            }) == -1)
+            }) == -2)
             {
-                return -1;
+                return -2;
             }
 
             sponsorables.AddRange((await client.GetUserContributionsAsync()).Keys);
@@ -65,13 +100,13 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
                 if (await client.QueryAsync(GraphQueries.ViewerOrganizations) is not { } viewerorgs)
                 {
                     MarkupLine(Sync.QueryingUserOrgsFailed);
-                    return -1;
+                    return -2;
                 }
                 orgs = viewerorgs;
                 return 0;
-            }) == -1)
+            }) == -2)
             {
-                return -1;
+                return -2;
             }
 
             // Collect org-sponsored accounts. NOTE: we'll typically only get public sponsorships 
@@ -98,16 +133,19 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
             {
                 ctx.Status = Sync.DetectingManifest(sponsorable);
                 using var http = httpFactory.CreateClient();
-                var (status, manifest) = await SponsorableManifest.FetchAsync(sponsorable, http);
+                var branch = await client.QueryAsync(GraphQueries.DefaultBranch(sponsorable, ".github"));
+                var (status, manifest) = await SponsorableManifest.FetchAsync(sponsorable, branch, http);
                 switch (status)
                 {
                     case SponsorableManifest.Status.OK when manifest != null:
                         manifests.Add(manifest);
                         break;
                     case SponsorableManifest.Status.NotFound:
+                        result = -3;
                         break;
                     default:
                         MarkupLine(Sync.InvalidManifest(sponsorable, status));
+                        result = -4;
                         break;
                 }
             }
@@ -115,15 +153,19 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
 
         var maxlength = manifests.MaxBy(x => x.Sponsorable.Length)?.Sponsorable.Length ?? 10;
         var interactive = new List<SponsorableManifest>();
-        var targetDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink", "github");
-        Directory.CreateDirectory(targetDir);
 
         // Sync non-interactive (pre-authenticated) manifests first.
         foreach (var manifest in manifests)
         {
-            if (await authenticator.AuthenticateAsync(manifest.ClientId, new Progress<string>(), false) is not { Length: > 0 } token)
+            if (await authenticator.AuthenticateAsync(manifest.ClientId, new Progress<string>(), false, settings.Namespace) is not { Length: > 0 } token)
             {
                 interactive.Add(manifest);
+                // If running unattended, we won't be able to proceed with interactive auth, so set fail return code.
+                if (settings.Unattended)
+                {
+                    MarkupLine(Sync.UnattendedWithInteractiveAuth(manifest.Sponsorable.PadRight(maxlength)));
+                    result = -5;
+                }
                 continue;
             }
 
@@ -132,22 +174,24 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
             {
                 var links = string.Join(", ", manifest.Audience.Select(x => $"[link]{x}[/]"));
                 MarkupLine(Sync.ConsiderSponsoring(manifest.Sponsorable.PadRight(maxlength), links));
+                result = -6;
                 continue;
             }
 
             if (status == SponsorManifest.Status.Success)
             {
-                File.WriteAllText(Path.Combine(targetDir, manifest.Sponsorable + ".jwt"), jwt, Encoding.UTF8);
+                File.WriteAllText(Path.Combine(ghDir, manifest.Sponsorable + ".jwt"), jwt, Encoding.UTF8);
                 MarkupLine(Sync.Thanks(manifest.Sponsorable.PadRight(maxlength)));
             }
             else
             {
                 MarkupLine(Sync.Failed(manifest.Sponsorable.PadRight(maxlength)));
+                result = -7;
                 continue;
             }
         }
 
-        if (interactive.Count > 0 && Confirm(interactive.Count == 1 ? Sync.InteractiveAuthNeeded1(interactive[0].Sponsorable) : Sync.InteractiveAuthNeeded(interactive.Count)))
+        if (!settings.Unattended && interactive.Count > 0 && Confirm(interactive.Count == 1 ? Sync.InteractiveAuthNeeded1(interactive[0].Sponsorable) : Sync.InteractiveAuthNeeded(interactive.Count)))
         {
             maxlength = interactive.MaxBy(x => x.Sponsorable.Length)?.Sponsorable.Length ?? 10;
 
@@ -157,7 +201,7 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
                 await Status().StartAsync(Sync.Synchronizing(manifest.Sponsorable), async ctx =>
                 {
                     var progress = new Progress<string>(x => ctx.Status(Sync.SynchronizingProgress(manifest.Sponsorable, x)));
-                    var token = await authenticator.AuthenticateAsync(manifest.ClientId, progress, true);
+                    var token = await authenticator.AuthenticateAsync(manifest.ClientId, progress, true, settings.Namespace);
                     if (string.IsNullOrEmpty(token))
                         return;
 
@@ -166,15 +210,17 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
                     {
                         var links = string.Join(", ", manifest.Audience.Select(x => $"[link]{x}[/]"));
                         MarkupLine(Sync.ConsiderSponsoring(manifest.Sponsorable.PadRight(maxlength), links));
+                        result = -6;
                     }
                     else if (status == SponsorManifest.Status.Success)
                     {
-                        File.WriteAllText(Path.Combine(targetDir, manifest.Sponsorable + ".jwt"), jwt);
+                        File.WriteAllText(Path.Combine(ghDir, manifest.Sponsorable + ".jwt"), jwt);
                         MarkupLine(Sync.Thanks(manifest.Sponsorable.PadRight(maxlength)));
                     }
                     else
                     {
                         MarkupLine(Sync.Failed(manifest.Sponsorable.PadRight(maxlength)));
+                        result = -7;
                     }
                 });
             }
@@ -183,7 +229,8 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
         var config = Config.Build(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink"));
         var autosync = settings.AutoSync;
 
-        if (settings.AutoSync == null && 
+        if (!settings.Unattended &&
+            settings.AutoSync == null && 
             !config.TryGetBoolean("sponsorlink", "autosync", out _) && 
             Confirm(Sync.AutoSync))
         {
@@ -200,8 +247,6 @@ public partial class SyncCommand(ICommandApp app, IGraphQueryClient client, IGit
                 MarkupLine(Sync.AutoSyncDisabled);
         }
 
-        WriteLine("Done");
-
-        return 0;
+        return result;
     }
 }

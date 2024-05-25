@@ -36,30 +36,33 @@ public static class GitHub
         }
 
         account = Authenticate();
-        if (account is null)
+        if (account is not null)
+            return true;
+
+        // Continuing from here requires an interactive console.
+        // See https://stackoverflow.com/questions/1188658/how-can-a-c-sharp-windows-console-application-tell-if-it-is-run-interactively
+        if (!Environment.UserInteractive || Console.IsInputRedirected || Console.IsOutputRedirected || Console.IsErrorRedirected)
+            return false;
+
+        if (!AnsiConsole.Confirm(ThisAssembly.Strings.GitHub.Login))
         {
-            if (!AnsiConsole.Confirm(ThisAssembly.Strings.GitHub.Login))
-            {
-                AnsiConsole.MarkupLine("[dim]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
-                return false;
-            }
-
-            var process = System.Diagnostics.Process.Start("gh", "auth login");
-
-            process.WaitForExit();
-            if (process.ExitCode != 0)
-                return false;
-
-            account = Authenticate();
-            if (account is null)
-            {
-                AnsiConsole.MarkupLine("[red]x[/] Could not retrieve authenticated user with GitHub CLI.");
-                AnsiConsole.MarkupLine("[dim]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
-                return false;
-            }
+            AnsiConsole.MarkupLine("[dim]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
+            return false;
         }
 
-        return true;
+        var process = System.Diagnostics.Process.Start("gh", "auth login");
+
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+            return false;
+
+        account = Authenticate();
+        if (account is not null)
+            return true;
+
+        AnsiConsole.MarkupLine("[red]x[/] Could not retrieve authenticated user with GitHub CLI.");
+        AnsiConsole.MarkupLine("[dim]-[/] Please run [yellow]gh auth login[/] to authenticate, [yellow]gh auth status -h github.com[/] to verify your status.");
+        return false;
     }
 
     public static AccountInfo? Authenticate()

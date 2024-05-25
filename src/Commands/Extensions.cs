@@ -1,15 +1,13 @@
 ﻿using System.ComponentModel;
 using System.Text;
-using SharpYaml;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using static Spectre.Console.AnsiConsole;
 
 namespace Devlooped.Sponsors;
 
 public static class Extensions
 {
-    public static void AddRange<T>(this ICollection<T> collection, IEnumerable<T> values)
+    public static void AddRange<T>(this ICollection<T> collection, IEnumerable<T> values) where T: notnull
     {
         foreach (var value in values)
             collection.Add(value);

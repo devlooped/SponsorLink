@@ -12,7 +12,7 @@ public static class App
     {
         var services = new ServiceCollection();
         services.AddSingleton<IGraphQueryClient>(new CliGraphQueryClient());
-        services.AddSingleton<IGitHubDeviceAuthenticator>(sp => new GitHubDeviceAuthenticator(sp.GetRequiredService<IHttpClientFactory>()));
+        services.AddSingleton<IGitHubAppAuthenticator>(sp => new GitHubAppAuthenticator(sp.GetRequiredService<IHttpClientFactory>()));
         services.AddHttpClient().ConfigureHttpClientDefaults(defaults => defaults.ConfigureHttpClient(http => 
         {
             http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));

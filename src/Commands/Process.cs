@@ -46,6 +46,8 @@ public static class Process
                 return false;
             }
 
+            var error = proc.StandardError.ReadToEnd();
+            gotError |= error.Length > 0;
             output = output.Trim();
             if (string.IsNullOrEmpty(output))
                 output = null;

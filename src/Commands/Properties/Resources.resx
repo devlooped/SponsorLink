@@ -247,7 +247,7 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
     <value>Requesting manifest signing ...</value>
   </data>
   <data name="Sync_Thanks" xml:space="preserve">
-    <value>:check_mark_button: [lime]{sponsorable}[/]: thanks for sponsoring!</value>
+    <value>:check_mark_button: [lime]{sponsorable}[/]: thanks for sponsoring 💟</value>
   </data>
   <data name="Sync_AutoSync" xml:space="preserve">
     <value>[lime]?[/] Do you want to enable [link=https://www.devlooped.com/SponsorLink/github.html#auto-sync][blue]auto sync[/][/] of expired manifests?</value>
@@ -290,5 +290,8 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
   </data>
   <data name="Validate_Invalid" xml:space="preserve">
     <value>:cross_mark: [lime]{sponsorable}[/]: manifest is invalid. Run [yellow]gh sponsors sync[/] to generate a new one</value>
+  </data>
+  <data name="Sync_UnattendedWithInteractiveAuth" xml:space="preserve">
+    <value>[lime]?[/] Sponsors account [yellow]{account}[/] requires [link=https://www.devlooped.com/SponsorLink/github.html#authentication][blue]interactive authentication[/][/] for synchronization. Please run [yellow]gh sponsors sync {account}[/] interactively.</value>
   </data>
 </root>

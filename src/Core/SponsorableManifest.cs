@@ -47,10 +47,10 @@ public class SponsorableManifest
         return new SponsorableManifest(issuer, audience, clientId, new RsaSecurityKey(rsa), pub);
     }
 
-    public static async Task<(Status, SponsorableManifest?)> FetchAsync(string sponsorable, HttpClient? http = default)
+    public static async Task<(Status, SponsorableManifest?)> FetchAsync(string sponsorable, string? branch, HttpClient? http = default)
     {
         // Try to detect sponsorlink manifest in the sponsorable .github repo
-        var url = $"https://github.com/{sponsorable}/.github/raw/main/sponsorlink.jwt";
+        var url = $"https://github.com/{sponsorable}/.github/raw/{branch ?? "main"}/sponsorlink.jwt";
 
         // Manifest should be public, so no need for any special HTTP client.
         using (http ??= new HttpClient())
@@ -80,35 +80,37 @@ public class SponsorableManifest
     /// <returns>A validated manifest.</returns>
     public static bool TryRead(string jwt, [NotNullWhen(true)] out SponsorableManifest? manifest, out string? missingClaim)
     {
-        var token = new JwtSecurityTokenHandler().ReadJwtToken(jwt);
-        var issuer = token.Issuer;
+        var handler = new JwtSecurityTokenHandler();
         missingClaim = null;
+        manifest = default;
+
+        if (!handler.CanReadToken(jwt))
+            return false;
+
+        var token = handler.ReadJwtToken(jwt);
+        var issuer = token.Issuer;
 
         if (token.Audiences.FirstOrDefault(x => x.StartsWith("https://github.com/")) is null)
         {
             missingClaim = "aud";
-            manifest = default;
             return false;
         }
 
         if (token.Claims.FirstOrDefault(c => c.Type == "client_id")?.Value is not string clientId)
         {
             missingClaim = "client_id";
-            manifest = default;
             return false;
         }
 
         if (token.Claims.FirstOrDefault(c => c.Type == "pub")?.Value is not string pub)
         {
             missingClaim = "pub";
-            manifest = default;
             return false;
         }
 
         if (token.Claims.FirstOrDefault(c => c.Type == "sub_jwk")?.Value is not string jwk)
         {
             missingClaim = "sub_jwk";
-            manifest = default;
             return false;
         }
 

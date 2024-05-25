@@ -8,12 +8,12 @@ using Spectre.Console.Json;
 
 namespace Devlooped.Sponsors;
 
-public interface IGitHubDeviceAuthenticator
+public interface IGitHubAppAuthenticator
 {
-    Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive);
+    Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive, string @namespace = "sponsorlink");
 }
 
-public class GitHubDeviceAuthenticator(IHttpClientFactory httpFactory) : IGitHubDeviceAuthenticator
+public class GitHubAppAuthenticator(IHttpClientFactory httpFactory) : IGitHubAppAuthenticator
 {
     static readonly JsonSerializerOptions options = new(JsonSerializerDefaults.Web)
     {
@@ -25,25 +25,34 @@ public class GitHubDeviceAuthenticator(IHttpClientFactory httpFactory) : IGitHub
     // confusing experience for the user, with multiple browser tabs opening.
     readonly SemaphoreSlim semaphore = new(1, 1);
 
-    public async Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive)
+    public async Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive, string @namespace = "sponsorlink")
     {
         using var http = httpFactory.CreateClient("GitHub");
 
         // Check existing creds, if any
-        var store = GitCredentialManager.CredentialManager.Create("com.devlooped");
+        var store = GitCredentialManager.CredentialManager.Create(@namespace);
         // We use the client ID to persist the token, so it can be used across different apps.
         var creds = store.Get("https://github.com", clientId);
-
+        
         if (creds != null)
         {
             // Try using the creds to see if they are still valid.
-            var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
+            var request = new HttpRequestMessage(interactive ? HttpMethod.Get : HttpMethod.Head, "https://api.github.com/user");
             request.Headers.Authorization = new("Bearer", creds.Password);
             if (await http.SendAsync(request) is HttpResponseMessage { IsSuccessStatusCode: true } response)
             {
-                var user = await response.Content.ReadFromJsonAsync<JsonElement>();
-                progress.Report($":check_mark_button: logged in as [lime]{user.GetProperty("login").GetString()}[/]");
+                if (interactive)
+                {
+                    var user = await response.Content.ReadFromJsonAsync<JsonElement>();
+                    progress.Report($":check_mark_button: logged in as [lime]{user.GetProperty("login").GetString()}[/]");
+                }
+
                 return creds.Password;
+            }
+            else
+            {
+                // If the token is invalid, remove it from the store.
+                store.Remove("https://github.com", clientId);
             }
         }
 
