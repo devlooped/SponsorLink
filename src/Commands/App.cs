@@ -22,7 +22,7 @@ public static class App
 
         collection.AddSingleton<IGraphQueryClient>(new CliGraphQueryClient());
         collection.AddSingleton<IGitHubAppAuthenticator>(sp => new GitHubAppAuthenticator(sp.GetRequiredService<IHttpClientFactory>()));
-        collection.AddHttpClient().ConfigureHttpClientDefaults(defaults => defaults.ConfigureHttpClient(http => 
+        collection.AddHttpClient().ConfigureHttpClientDefaults(defaults => defaults.ConfigureHttpClient(http =>
         {
             http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
             if (Debugger.IsAttached)

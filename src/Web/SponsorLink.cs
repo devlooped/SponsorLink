@@ -71,7 +71,7 @@ class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, 
             response = host.IsDevelopment() ? response.Headers.ToDictionary(x => x.Key, x => string.Join(',', x.Value)) : null
         })
         {
-            StatusCode = (int)response.StatusCode, 
+            StatusCode = (int)response.StatusCode,
             SerializerSettings = JsonOptions.Default
         };
     }

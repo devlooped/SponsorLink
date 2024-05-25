@@ -97,7 +97,7 @@ public static class GitHubDeviceFlowAuthenticationExtensions
 
                 // Be gentle with the backend, wait for the interval before polling again.
                 await Task.Delay(TimeSpan.FromSeconds(auth!.interval));
-                
+
                 // We construct the url again within the loop since we might have restarted the flow after expiration.
                 var url = $"https://github.com/login/oauth/access_token?client_id={clientId}&device_code={auth.device_code}&grant_type=urn:ietf:params:oauth:grant-type:device_code";
 
@@ -134,7 +134,7 @@ public static class GitHubDeviceFlowAuthenticationExtensions
                     {
                         case JsonResult jr:
                             if (jr.Value is not null)
-                                await response.WriteAsJsonAsync(jr.Value, jr.ContentType ?? "application/json; charset=utf-8", 
+                                await response.WriteAsJsonAsync(jr.Value, jr.ContentType ?? "application/json; charset=utf-8",
                                     (HttpStatusCode)(jr.StatusCode ?? 200));
                             else if (jr.StatusCode is not null)
                                 response.StatusCode = (HttpStatusCode)jr.StatusCode;

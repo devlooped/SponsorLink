@@ -111,7 +111,7 @@ public class Signing(ITestOutputHelper Output)
     {
         var rsa = RSA.Create();
         rsa.ImportRSAPrivateKey(File.ReadAllBytes(@"../../../signing.key"), out _);
-        
+
         var securityKey = new RsaSecurityKey(rsa.ExportParameters(true));
         var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
         var pubJwk = JsonWebKeyConverter.ConvertFromSecurityKey(new RsaSecurityKey(rsa.ExportParameters(false)));
@@ -144,7 +144,7 @@ public class Signing(ITestOutputHelper Output)
         var jws = new JsonWebKeySet();
         jws.Keys.Add(jwk);
         var jwtKey = jws.GetSigningKeys().First();
-        
+
         // NOTE: we cannot recreate the RSAPublicKey from the JWK, so we can never 
         // compare the raw string, but we can still validate with either one.
 

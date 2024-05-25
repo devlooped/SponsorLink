@@ -36,8 +36,8 @@ public class CliGraphQueryClient : IGraphQueryClient
         // See if the result is a JSON object with some data, and not a pure error. 
         // NOTE: the JQ command is not processed by the GH CLI in this case, so we must apply it ourselves.
         // This matches the behavior of the HttpGraphQueryClient.
-        if (!success && !query.IsLegacy && 
-            await JsonNode.ParseAsync(new MemoryStream(Encoding.UTF8.GetBytes(result))) is JsonObject json && 
+        if (!success && !query.IsLegacy &&
+            await JsonNode.ParseAsync(new MemoryStream(Encoding.UTF8.GetBytes(result))) is JsonObject json &&
             json.TryGetPropertyValue("data", out _))
         {
             if (query.JQ?.Length > 0)
@@ -68,7 +68,7 @@ public class CliGraphQueryClient : IGraphQueryClient
                     if (array is IEnumerable<object> elements)
                         items.AddRange(elements);
                 }
-                
+
                 // Convert the object list to the destination array type.
                 var typed = Array.CreateInstance(typeof(T).GetElementType()!, items.Count);
                 Array.Copy(items.ToArray(), typed, items.Count);

@@ -58,7 +58,7 @@ public class ListCommand(ICommandApp app, Config config, IGraphQueryClient clien
         {
             var user = tree.AddNode(new TreeNode(new Markup($"directly by [yellow]{Account.Login}[/]")));
             var maxlengh = usersponsored.Max(x => x.Sponsorable.Length);
-            user.AddNodes(usersponsored.Select(x => 
+            user.AddNodes(usersponsored.Select(x =>
                 new TreeNode(new Markup($"[green]{x.Sponsorable.PadRight(maxlengh)}[/] => ${x.Amount} since {x.CreatedAt:yyyy-MM-dd} {(x.OneTime ? "[dim](one-time)[/]" : "")}"))));
         }
 

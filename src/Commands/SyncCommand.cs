@@ -230,8 +230,8 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
         var autosync = settings.AutoSync;
 
         if (!settings.Unattended &&
-            settings.AutoSync == null && 
-            !config.TryGetBoolean("sponsorlink", "autosync", out _) && 
+            settings.AutoSync == null &&
+            !config.TryGetBoolean("sponsorlink", "autosync", out _) &&
             Confirm(Sync.AutoSync))
         {
             autosync = true;
@@ -241,7 +241,7 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
         if (autosync != null)
         {
             config.SetBoolean("sponsorlink", "autosync", autosync.Value);
-            if (autosync == true) 
+            if (autosync == true)
                 MarkupLine(Sync.AutoSyncEnabled);
             else
                 MarkupLine(Sync.AutoSyncDisabled);

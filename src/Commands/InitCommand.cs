@@ -11,7 +11,7 @@ using Spectre.Console.Json;
 namespace Devlooped.Sponsors;
 
 [Description("Initializes a sponsorable manifest and token")]
-public partial class InitCommand: AsyncCommand<InitCommand.Settings>
+public partial class InitCommand : AsyncCommand<InitCommand.Settings>
 {
     public class Settings : CommandSettings
     {
@@ -113,8 +113,8 @@ public partial class InitCommand: AsyncCommand<InitCommand.Settings>
             AnsiConsole.MarkupLine($"\t:backhand_index_pointing_right: [link]{baseName}.pub.jwk[/] [dim](JWK string)[/]");
         }
 
-        var manifest = new SponsorableManifest(new Uri(settings.Issuer), 
-            settings.Audience, 
+        var manifest = new SponsorableManifest(new Uri(settings.Issuer),
+            settings.Audience,
             settings.ClientId, new RsaSecurityKey(rsa), pub64);
 
         // Serialize the token and return as a string

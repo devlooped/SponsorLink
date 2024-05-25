@@ -150,7 +150,7 @@ public class SponsorableManifest
         }
 
         var token = new JwtSecurityToken(
-            claims: 
+            claims:
                 new[] { new Claim("iss", Issuer) }
                 .Concat(Audience.Select(x => new Claim("aud", x)))
                 .Concat(

@@ -81,7 +81,7 @@ public class SponsorManagerTests : IDisposable
             var emails = await clientFactory.CreateClient("sponsor").QueryAsync(GraphQueries.ViewerEmails);
             if (emails?.Length > 0)
                 claims.AddRange(emails.Select(x => new Claim(ClaimTypes.Email, x)));
-            
+
             return new ClaimsPrincipal(new ClaimsIdentity(claims, "github"));
         });
     }
@@ -98,7 +98,7 @@ public class SponsorManagerTests : IDisposable
     public async Task AnonymousUserIsNoSponsor()
     {
         var manager = new SponsorsManager(
-            services.GetRequiredService<IOptions<SponsorLinkOptions>>(), 
+            services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
             httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
             services.GetRequiredService<IMemoryCache>(),
@@ -212,8 +212,8 @@ public class SponsorManagerTests : IDisposable
         var manager = new SponsorsManager(
             services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
             httpFactory,
-            Mock.Of<IGraphQueryClientFactory>(x => 
-                x.CreateClient("sponsorable") == sponsorable && 
+            Mock.Of<IGraphQueryClientFactory>(x =>
+                x.CreateClient("sponsorable") == sponsorable &&
                 x.CreateClient("sponsor") == graph.Object),
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
@@ -245,7 +245,7 @@ public class SponsorManagerTests : IDisposable
         var manifest = SponsorableManifest.Create(new Uri("https://sponsorlink.devlooped.com"), [new Uri("https://github.com/devlooped")], "ASDF1234");
 
         var jwt = manifest.Sign(claims);
-        
+
         Assert.NotNull(jwt);
 
         var principal = manifest.Validate(jwt, out var token);

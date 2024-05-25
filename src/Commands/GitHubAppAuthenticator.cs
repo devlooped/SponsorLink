@@ -33,7 +33,7 @@ public class GitHubAppAuthenticator(IHttpClientFactory httpFactory) : IGitHubApp
         var store = GitCredentialManager.CredentialManager.Create(@namespace);
         // We use the client ID to persist the token, so it can be used across different apps.
         var creds = store.Get("https://github.com", clientId);
-        
+
         if (creds != null)
         {
             // Try using the creds to see if they are still valid.

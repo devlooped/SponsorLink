@@ -1,10 +1,10 @@
 ﻿using Devlooped.Sponsors;
+using DotNetConfig;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Spectre.Console.Cli;
-using static Devlooped.Sponsors.Process;
 using static Devlooped.Helpers;
-using Microsoft.Extensions.DependencyInjection;
-using DotNetConfig;
+using static Devlooped.Sponsors.Process;
 
 namespace Devlooped.Tests;
 
@@ -37,7 +37,7 @@ public class SyncCommandTests
 
         // By forcing an unauthenticated CLI, we can shortcircuit the execution at the login
         if (TryExecute("gh", "auth status", out var status))
-            Assert.True(TryExecute("gh", "auth logout --hostname github.com",  out var output));
+            Assert.True(TryExecute("gh", "auth logout --hostname github.com", out var output));
 
         var command = new SyncCommand(
             Mock.Of<ICommandApp>(MockBehavior.Strict),

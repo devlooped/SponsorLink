@@ -25,9 +25,9 @@ class Program
             {
                 builder.UseFunctionContextAccessor();
                 builder.UseErrorLogging();
-        #if DEBUG
+#if DEBUG
                 builder.UseGitHubDeviceFlowAuthentication();
-        #endif
+#endif
                 builder.UseAppServiceAuthentication();
                 builder.UseGitHubAuthentication(populateEmails: true, verifiedOnly: true);
                 builder.UseClaimsPrincipal();

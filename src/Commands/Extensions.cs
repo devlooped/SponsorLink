@@ -7,7 +7,7 @@ namespace Devlooped.Sponsors;
 
 public static class Extensions
 {
-    public static void AddRange<T>(this ICollection<T> collection, IEnumerable<T> values) where T: notnull
+    public static void AddRange<T>(this ICollection<T> collection, IEnumerable<T> values) where T : notnull
     {
         foreach (var value in values)
             collection.Add(value);

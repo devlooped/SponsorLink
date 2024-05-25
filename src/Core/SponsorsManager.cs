@@ -54,7 +54,7 @@ public partial class SponsorsManager(
                 throw new InvalidOperationException("Manifest sponsorable account does not match configured sponsorable account.");
 
             logger.Assert(options.PublicKey == manifest.PublicKey,
-                "Configured public key '{option}' does not match the manifest public key.", 
+                "Configured public key '{option}' does not match the manifest public key.",
                 $"SponsorLink:{nameof(SponsorLinkOptions.PublicKey)}");
 
             jwt = cache.Set(JwtCacheKey, jwt, new MemoryCacheEntryOptions

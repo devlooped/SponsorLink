@@ -90,14 +90,14 @@ public class HttpGraphQueryClient(IHttpClientFactory factory, string name) : IGr
                 vars["endCursor"] = info.EndCursor;
 
             var response = await http.PostAsJsonAsync("https://api.github.com/graphql", new
-                {
-                    query = query.Query,
-                    variables = vars
-                });
+            {
+                query = query.Query,
+                variables = vars
+            });
 
             if (!response.IsSuccessStatusCode)
                 break;
-            
+
             var raw = await response.Content.ReadAsStringAsync();
             var data = query.JQ?.Length > 0 ?
                 await JQ.ExecuteAsync(raw, query.JQ) :
