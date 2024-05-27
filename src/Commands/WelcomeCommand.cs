@@ -44,7 +44,7 @@ public class WelcomeCommand(ICommandApp app, Config config) : Command<WelcomeCom
             return -1;
         }
 
-        config.SetBoolean("sponsorlink", "firstrun", true);
+        config.SetString("sponsorlink", "firstrun", "true");
 
         if (AnsiConsole.Confirm(ThisAssembly.Strings.FirstRun.SyncNow))
         {
