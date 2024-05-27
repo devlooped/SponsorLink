@@ -238,14 +238,9 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
         }
         // NOTE: we'd continue to ask for auto-sync even if they responded no, so they can change their mind.
 
+        // Let the config be handled by the config command for consistency.
         if (autosync != null)
-        {
-            config.SetBoolean("sponsorlink", "autosync", autosync.Value);
-            if (autosync == true)
-                MarkupLine(Sync.AutoSyncEnabled);
-            else
-                MarkupLine(Sync.AutoSyncDisabled);
-        }
+            new ConfigCommand(config).Execute(context, new ConfigCommand.ConfigSettings { AutoSync = autosync });
 
         return result;
     }

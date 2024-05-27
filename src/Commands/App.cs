@@ -43,6 +43,7 @@ public static class App
 
         app.Configure(config =>
         {
+            config.AddCommand<ConfigCommand>();
             config.AddCommand<InitCommand>();
             config.AddCommand<ListCommand>();
             config.AddCommand<SyncCommand>();
