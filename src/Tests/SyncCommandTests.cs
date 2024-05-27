@@ -13,7 +13,7 @@ public class SyncCommandTests
 {
     Config config = Config.Build();
 
-    [Fact]
+    [LocalFact]
     public async Task FirstRunWelcome()
     {
         config = config.Unset("sponsorlink", "firstrun");
@@ -30,7 +30,7 @@ public class SyncCommandTests
         Assert.Equal(-42, result);
     }
 
-    [Fact]
+    [LocalFact]
     public async Task FirstRunWelcomeCompleted()
     {
         config = config.SetBoolean("sponsorlink", "firstrun", true);
@@ -52,7 +52,7 @@ public class SyncCommandTests
         Assert.Equal(-1, result);
     }
 
-    [SecretsFact("GitHub:Token")]
+    [LocalFact("GitHub:Token")]
     public async Task NoSponsorableOrLocalDiscoveryRunsGraphDiscoveryViewerSponsored()
     {
         EnsureAuthenticated();
@@ -79,7 +79,7 @@ public class SyncCommandTests
         Assert.Equal(-2, result);
     }
 
-    [SecretsFact("GitHub:Token")]
+    [LocalFact("GitHub:Token")]
     public async Task NoSponsorableOrLocalDiscoveryRunsGraphDiscoveryViewerOrgs()
     {
         EnsureAuthenticated();
@@ -106,7 +106,7 @@ public class SyncCommandTests
         Assert.Equal(-2, result);
     }
 
-    [SecretsFact("GitHub:Token")]
+    [LocalFact("GitHub:Token")]
     public async Task ExplicitSponsorableSync_NoSponsorableManifest()
     {
         EnsureAuthenticated();
@@ -133,7 +133,7 @@ public class SyncCommandTests
         Assert.Equal(-3, result);
     }
 
-    [SecretsFact("GitHub:Token")]
+    [LocalFact("GitHub:Token")]
     public async Task ExplicitSponsorableSync_InvalidSponsorableManifest()
     {
         EnsureAuthenticated();
