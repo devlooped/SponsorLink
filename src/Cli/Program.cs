@@ -44,6 +44,7 @@ if (args.Length == 0)
             .Title("Command to run:")
             .AddChoices(
             [
+                "config",
                 "init",
                 "list",
                 "sync",
