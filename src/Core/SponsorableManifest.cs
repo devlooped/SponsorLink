@@ -195,19 +195,19 @@ public class SponsorableManifest
                 DateTime.UtcNow.Millisecond,
                 DateTimeKind.Utc);
 
-        var tokenClaims = claims.Where(x => x.Type != "iat" && x.Type != "exp").ToList();
+        var tokenClaims = claims.Where(x => x.Type != JwtRegisteredClaimNames.Iat && x.Type != JwtRegisteredClaimNames.Exp).ToList();
 
         // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
-        tokenClaims.Add(new("iat", Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()));
+        tokenClaims.Add(new(JwtRegisteredClaimNames.Iat, Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()));
 
-        if (tokenClaims.Find(c => c.Type == "iss") is { } issuer)
+        if (tokenClaims.Find(c => c.Type == JwtRegisteredClaimNames.Iss) is { } issuer)
         {
             if (issuer.Value != Issuer)
                 throw new ArgumentException($"The received claims contain an incompatible 'iss' claim. If present, the claim must contain the value '{Issuer}' but was '{issuer.Value}'.");
         }
         else
         {
-            tokenClaims.Insert(0, new("iss", Issuer));
+            tokenClaims.Insert(0, new(JwtRegisteredClaimNames.Iss, Issuer));
         }
 
         if (tokenClaims.Find(c => c.Type == "client_id") is { } clientId)
@@ -224,8 +224,8 @@ public class SponsorableManifest
         foreach (var audience in Audience)
         {
             // Always compare ignoring trailing /
-            if (tokenClaims.Find(c => c.Type == "aud" && c.Value.TrimEnd('/') == audience.TrimEnd('/')) == null)
-                tokenClaims.Insert(1, new("aud", audience));
+            if (tokenClaims.Find(c => c.Type == JwtRegisteredClaimNames.Aud && c.Value.TrimEnd('/') == audience.TrimEnd('/')) == null)
+                tokenClaims.Insert(1, new(JwtRegisteredClaimNames.Aud, audience));
         }
 
         // The other claims (client_id, pub, sub_jwk) claims are mostly for the SL manifest itself,
