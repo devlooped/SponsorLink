@@ -67,8 +67,6 @@ public partial class ValidateCommand(IHttpClientFactory clientFactory) : AsyncCo
                     RequireExpirationTime = true,
                     AudienceValidator = (audiences, token, parameters) => audiences.All(audience => aud.Any(uri => uri == audience.TrimEnd('/'))),
                     ValidIssuer = sponsorable.Issuer,
-                    // By setting this for the incoming JWT claims, we convert them to the standard claim type ClaimTypes.Role
-                    RoleClaimType = "roles",
                     IssuerSigningKey = new RsaSecurityKey(key)
                 };
 
