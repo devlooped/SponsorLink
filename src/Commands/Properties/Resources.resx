@@ -280,10 +280,10 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
     <value>:cross_mark: [lime]{sponsorable}[/]: missing 'pub' public key claim from issuer manifest</value>
   </data>
   <data name="Validate_ValidExpires" xml:space="preserve">
-    <value>:check_mark_button: [lime]{sponsorable}[/]: manifest is valid, expires on [yellow]{date}[/] [dim](roles: {roles})[/]</value>
+    <value>:check_mark_button: [lime]{sponsorable}[/]: manifest is valid, expires [yellow]{date}[/] [dim](roles: {roles})[/]</value>
   </data>
   <data name="Validate_InvalidExpired" xml:space="preserve">
-    <value>:cross_mark: [lime]{sponsorable}[/]: manifest expired on {date}. Run [yellow]gh sponsors sync[/] to generate a new one.</value>
+    <value>:cross_mark: [lime]{sponsorable}[/]: manifest expired {date}. Run [yellow]gh sponsors sync[/] to generate a new one.</value>
   </data>
   <data name="Validate_InvalidSignature" xml:space="preserve">
     <value>:cross_mark: [lime]{sponsorable}[/]: manifest signature is invalid. Run [yellow]gh sponsors sync[/] to generate a new one</value>

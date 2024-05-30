@@ -3,6 +3,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Humanizer;
+using Humanizer.Localisation;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -80,11 +82,11 @@ public partial class ValidateCommand(IHttpClientFactory clientFactory) : AsyncCo
                     }.ValidateToken(jwt, validation, out var token);
                     var roles = principal.Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
 
-                    MarkupLine(Validate.ValidExpires(account, token.ValidTo.ToString("yyyy-MM-dd"), string.Join(", ", roles)));
+                    MarkupLine(Validate.ValidExpires(account, token.ValidTo.Humanize(), string.Join(", ", roles)));
                 }
                 catch (SecurityTokenExpiredException e)
                 {
-                    MarkupLine(Validate.InvalidExpired(account, e.Expires.ToString("yyyy-MM-dd")));
+                    MarkupLine(Validate.InvalidExpired(account, e.Expires.Humanize()));
                 }
                 catch (SecurityTokenInvalidSignatureException)
                 {
