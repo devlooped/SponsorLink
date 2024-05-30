@@ -21,7 +21,7 @@ class Version(IConfiguration configuration, SponsorsManager sponsors, RSA rsa, I
     public async Task<IActionResult> GetStatus([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         var manifest = await sponsors.GetManifestAsync();
-        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(await sponsors.GetRawManifestAsync());
+        var jwt = new JwtSecurityTokenHandler { MapInboundClaims = false }.ReadJwtToken(await sponsors.GetRawManifestAsync());
 
         var json = jwt.Payload.SerializeToJson();
         var doc = JsonDocument.Parse(json);

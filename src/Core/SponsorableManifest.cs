@@ -80,7 +80,7 @@ public class SponsorableManifest
     /// <returns>A validated manifest.</returns>
     public static bool TryRead(string jwt, [NotNullWhen(true)] out SponsorableManifest? manifest, out string? missingClaim)
     {
-        var handler = new JwtSecurityTokenHandler();
+        var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
         missingClaim = null;
         manifest = default;
 
@@ -151,12 +151,12 @@ public class SponsorableManifest
 
         var token = new JwtSecurityToken(
             claims:
-                new[] { new Claim("iss", Issuer) }
-                .Concat(Audience.Select(x => new Claim("aud", x)))
+                new[] { new Claim(JwtRegisteredClaimNames.Iss, Issuer) }
+                .Concat(Audience.Select(x => new Claim(JwtRegisteredClaimNames.Aud, x)))
                 .Concat(
                 [
                     // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
-                    new("iat", Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()),
+                    new(JwtRegisteredClaimNames.Iat, Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()),
                     new("client_id", ClientId),
                     // non-standard claim containing the base64-encoded public key
                     new("pub", PublicKey),

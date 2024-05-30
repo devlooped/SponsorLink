@@ -67,13 +67,18 @@ public partial class ValidateCommand(IHttpClientFactory clientFactory) : AsyncCo
                     RequireExpirationTime = true,
                     AudienceValidator = (audiences, token, parameters) => audiences.All(audience => aud.Any(uri => uri == audience.TrimEnd('/'))),
                     ValidIssuer = sponsorable.Issuer,
-                    IssuerSigningKey = new RsaSecurityKey(key)
+                    IssuerSigningKey = new RsaSecurityKey(key),
+                    RoleClaimType = "roles",
+                    NameClaimType = "sub",
                 };
 
                 try
                 {
-                    var principal = new JwtSecurityTokenHandler().ValidateToken(jwt, validation, out var token);
-                    var roles = principal.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet();
+                    var principal = new JwtSecurityTokenHandler()
+                    {
+                        MapInboundClaims = false,
+                    }.ValidateToken(jwt, validation, out var token);
+                    var roles = principal.Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
 
                     MarkupLine(Validate.ValidExpires(account, token.ValidTo.ToString("yyyy-MM-dd"), string.Join(", ", roles)));
                 }
