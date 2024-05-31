@@ -1,0 +1,71 @@
+<Project>
+  <!-- For inclusion in analyzer projects that want to integrate SponsorLink -->
+  <!-- Import using the following property: -->
+  <!--<CustomAfterMicrosoftCSharpTargets>$(MSBuildThisFileDirectory)..\SponsorLink\SponsorLink.targets</CustomAfterMicrosoftCSharpTargets>-->
+
+  <PropertyGroup>
+    <ShowSponsorLinkInProject Condition="$(ShowSponsorLinkInProject) == '' and '$(TargetFramework)' == 'netstandard2.0'">true</ShowSponsorLinkInProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)**/*.cs" 
+             Exclude="$(MSBuildThisFileDirectory)bin/**;$(MSBuildThisFileDirectory)obj/**" 
+             Source="SponsorLink"/>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)**/*.resx" 
+                      Exclude="$(MSBuildThisFileDirectory)bin/**;$(MSBuildThisFileDirectory)obj/**"
+                      Source="SponsorLink" 
+                      ManifestResourceName="Devlooped.%(Filename)"/>
+    <None Include="$(MSBuildThisFileDirectory)buildTransitive/*.*" 
+          Source="SponsorLink" 
+          PackagePath="buildTransitive/%(Filename)%(Extension)"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="$(ShowSponsorLinkInProject) == 'true'">
+    <Compile Update="@(Compile -> WithMetadataValue('Source', 'SponsorLink'))">
+      <Link>SponsorLink\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+    <EmbeddedResource Update="@(EmbeddedResource -> WithMetadataValue('Source', 'SponsorLink'))">
+      <Link>SponsorLink\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+    <Content Update="@(Content -> WithMetadataValue('Source', 'SponsorLink'))">
+      <Link>SponsorLink\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+    <None Update="@(None -> WithMetadataValue('Source', 'SponsorLink'))">
+      <Link>SponsorLink\%(PackagePath)</Link>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup Condition="$(ShowSponsorLinkInProject) != 'true'">
+    <Compile Update="@(Compile -> WithMetadataValue('Source', 'SponsorLink'))">
+      <Visible>false</Visible>
+    </Compile>
+    <EmbeddedResource Update="@(EmbeddedResource -> WithMetadataValue('Source', 'SponsorLink'))">
+      <Visible>false</Visible>
+    </EmbeddedResource>
+    <Content Update="@(Content -> WithMetadataValue('Source', 'SponsorLink'))">
+      <Visible>false</Visible>
+    </Content>
+    <None Update="@(None -> WithMetadataValue('Source', 'SponsorLink'))">
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <SLRequiredDependencies>;System.IdentityModel.Tokens.Jwt;BouncyCastle.Cryptography;Humanizer.Core;Humanizer.Core.es;</SLRequiredDependencies>
+  </PropertyGroup>
+  <ItemGroup>
+    <SLRequiredDependency Include="$(SLRequiredDependencies)" />
+    <PackageReference Update="@(SLRequiredDependency)" PrivateAssets="all" />
+  </ItemGroup>
+
+  <Target Name="SL_EnsureDependencies" Inputs="@(SLRequiredDependency)" Outputs="|%(SLRequiredDependency.Identity)|" BeforeTargets="GenerateMSBuildEditorConfigFileShouldRun">
+    <PropertyGroup>
+      <SLRequiredDependency>%(SLRequiredDependency.Identity)</SLRequiredDependency>
+    </PropertyGroup>
+    <ItemGroup>
+      <_SLRequiredDependency Include="@(PackageReference -> WithMetadataValue('Identity', '$(SLRequiredDependency)'))" />
+    </ItemGroup>
+    <Error Condition="'@(_SLRequiredDependency)' == ''" Text="Missing required direct package reference '$(SLRequiredDependency)'." />
+  </Target>
+
+</Project>
