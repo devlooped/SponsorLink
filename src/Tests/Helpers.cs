@@ -25,6 +25,7 @@ class Helpers
     {
         var collection = new ServiceCollection()
             .AddHttpClient()
+            .AddLogging()
             .AddSingleton<IConfiguration>(Configuration)
             .AddSingleton(_ => AsyncLazy.Create(async () =>
             {
