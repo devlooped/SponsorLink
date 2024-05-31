@@ -19,10 +19,9 @@ public class TestSponsorLink : DiagnosticAnalyzer
         context.EnableConcurrentExecution();
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
 
+        // Only warns in editor builds.
         if (IsEditor)
-        {
             context.RegisterCompilationAction(c => c.ReportDiagnostic(Diagnostic.Create(descriptor, Location.None)));
-        }
     }
 
     public static bool IsEditor => IsVisualStudio || IsRider;

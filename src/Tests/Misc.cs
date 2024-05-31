@@ -4,12 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Spectre.Console;
 
 namespace Devlooped.Sponsors;
 
 public class Misc
 {
+    public record TypedConfig
+    {
+        public required string Bar { get; init; }
+        public required bool Auto { get; init; }
+    }
+
     [Fact]
     public void WriteIni()
     {
@@ -24,7 +32,19 @@ public class Misc
         config["foo:bar"] = "baz";
         config["foo:auto"] = "true";
 
-        Assert.Equal("baz", new ConfigurationBuilder().AddDotNetConfig(".netconfig").Build()["foo:bar"]);
+        var saved = new ConfigurationBuilder().AddDotNetConfig(".netconfig").Build();
+
+        Assert.Equal("baz", saved["foo:bar"]);
+
+        var services = new ServiceCollection()
+            .Configure<TypedConfig>(saved.GetSection("foo"))
+            .BuildServiceProvider();
+
+        var typed = services.GetRequiredService<IOptions<TypedConfig>>().Value;
+
+        Assert.NotNull(typed);
+        Assert.Equal("baz", typed.Bar);
+        Assert.True(typed.Auto);
     }
 
     public static void SponsorsAscii()
