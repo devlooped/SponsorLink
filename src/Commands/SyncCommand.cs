@@ -169,7 +169,7 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
                 continue;
             }
 
-            var (status, jwt) = await SponsorManifest.FetchAsync(manifest, token);
+            var (status, jwt) = await Status().StartAsync(Sync.Synchronizing(manifest.Sponsorable), async ctx => await SponsorManifest.FetchAsync(manifest, token));
             if (status == SponsorManifest.Status.NotSponsoring)
             {
                 var links = string.Join(", ", manifest.Audience.Select(x => $"[link]{x}[/]"));
