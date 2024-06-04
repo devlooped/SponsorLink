@@ -84,7 +84,7 @@ public class ManifestTests
         // Org + personal sponsor
         var barSponsor = barSponsorable.Sign([new("sub", "kzu"), new("email", "me@bar.com"), new("roles", "org"), new("roles", "user")], expiration: TimeSpan.FromDays(30));
 
-        Assert.True(Manifest.TryRead(out var principal, (fooSponsor, fooSponsorable.PublicKey), (barSponsor, barSponsorable.PublicKey)));
+        Assert.True(Manifest.TryRead(out var principal, (fooSponsor, fooSponsorable.SecurityKey), (barSponsor, barSponsorable.SecurityKey)));
 
         // Can check role across both JWTs
         Assert.True(principal.IsInRole("org"));
@@ -105,7 +105,15 @@ public class ManifestTests
 
         var jwt = File.ReadAllText(path);
 
-        var status = Manifest.Validate(jwt, "MIIBigKCAYEA5inhv8QymaDBOihNi1eY+6+hcIB5qSONFZxbxxXAyOtxAdjFCPM+94gIZqM9CDrX3pyg1lTJfml/a/FZSU9dB1ii5mSX/mNHBFXn1/l/gi1ErdbkIF5YbW6oxWFxf3G5mwVXwnPfxHTyQdmWQ3YJR+A3EB4kaFwLqA6Ha5lb2ObGpMTQJNakD4oTAGDhqHMGhu6PupGq5ie4qZcQ7N8ANw8xH7nicTkbqEhQABHWOTmLBWq5f5F6RYGF8P7cl0IWl/w4YcIZkGm2vX2fi26F9F60cU1v13GZEVDTXpJ9kzvYeM9sYk6fWaoyY2jhE51qbv0B0u6hScZiLREtm3n7ClJbIGXhkUppFS2JlNaX3rgQ6t+4LK8gUTyLt3zDs2H8OZyCwlCpfmGmdsUMkm1xX6t2r+95U3zywynxoWZfjBCJf41leM9OMKYwNWZ6LQMyo83HWw1PBIrX4ZLClFwqBcSYsXDyT8/ZLd1cdYmPfmtllIXxZhLClwT5qbCWv73VAgMBAAE=", out var token, out var principal, false);
+        var status = Manifest.Validate(jwt,
+            """
+            {
+              "e": "AQAB",
+              "kty": "RSA",
+              "n": "5inhv8QymaDBOihNi1eY-6-hcIB5qSONFZxbxxXAyOtxAdjFCPM-94gIZqM9CDrX3pyg1lTJfml_a_FZSU9dB1ii5mSX_mNHBFXn1_l_gi1ErdbkIF5YbW6oxWFxf3G5mwVXwnPfxHTyQdmWQ3YJR-A3EB4kaFwLqA6Ha5lb2ObGpMTQJNakD4oTAGDhqHMGhu6PupGq5ie4qZcQ7N8ANw8xH7nicTkbqEhQABHWOTmLBWq5f5F6RYGF8P7cl0IWl_w4YcIZkGm2vX2fi26F9F60cU1v13GZEVDTXpJ9kzvYeM9sYk6fWaoyY2jhE51qbv0B0u6hScZiLREtm3n7ClJbIGXhkUppFS2JlNaX3rgQ6t-4LK8gUTyLt3zDs2H8OZyCwlCpfmGmdsUMkm1xX6t2r-95U3zywynxoWZfjBCJf41leM9OMKYwNWZ6LQMyo83HWw1PBIrX4ZLClFwqBcSYsXDyT8_ZLd1cdYmPfmtllIXxZhLClwT5qbCWv73V"
+            }
+            """
+            , out var token, out var principal, false);
 
         Assert.Equal(Manifest.Status.Valid, status);
     }
