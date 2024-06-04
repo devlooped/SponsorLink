@@ -30,6 +30,13 @@ public class Signing(ITestOutputHelper Output)
         File.WriteAllBytes(@"../../../signing.key", rsa.ExportRSAPrivateKey());
 
         File.WriteAllBytes(@"../../../signing.pub2", RSA.Create(2048).ExportRSAPublicKey());
+
+        // write in jwk format
+        var jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.ExportParameters(false)));
+        File.WriteAllText(@"../../../signing.jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), Encoding.UTF8);
+
+        // ensure we can read back from jwt > JsonWebKey
+        var key = JsonWebKey.Create(File.ReadAllText(@"../../../signing.jwk", Encoding.UTF8));
     }
 
     [LocalFact]
