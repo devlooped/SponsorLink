@@ -40,9 +40,11 @@ consuming sponsorable libraries.
 Whenever run, the tool performs the following steps:
 
 1. Use the the GitHub CLI API to determine sponsorable candidates for the current user, which are:
-    a. All directly sponsored accounts
-    b. Publicly sponsored accounts by organizations the user is a member of
-    c. Owners of all repositories the user has contributed to, considered indirect sponsporships
+
+   - [x] All directly sponsored accounts
+   - [x] Publicly sponsored accounts by organizations the user is a member of
+   - [x] Sponsorables of repositories the user has contributed to, considered indirect sponsporships
+
 1. Each candidate is checked for a SponsorLink manifest at `https://github.com/[account]/.github/raw/main/sponsorlink.jwt`.
    This location is the same as the GitHub [default community health files](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file)
 1. If found, the [sponsorable manifest](spec.html#sponsorable-manifest) `client_id` and `iss` claims are 
@@ -129,13 +131,8 @@ Tools and libraries can check for this user preference setting by reading the
 
 ```
 [sponsorlink]
-  autosync            # enabled
-  autosync = false    # disabled
+  autosync = [true|false]
 ```
-
-{: .note }
-> An `autosync` key with no value assigned is shorthand for a `true` value.
-> See [dotnetconfig](https://dotnetconfig.org/#format).
 
 ## Sponsorable Setup
 
