@@ -86,7 +86,7 @@ any involved intermediary):
    signed [sponsor manifest](spec.html#sponsor-manifest) which is then stored locally at `~/.sponsorlink/github/[sponsorable].jwt`.
 
 {: .highlight }
-The `gh-sponsors` extension uses a different OAuth access token for each sponsorable 
+The `gh-sponsors` extension uses a separate OAuth access token for each sponsorable 
 to guarantee isolation and ensure explicit permissions are granted individually.
 
 After a successful sync of the [sponsor manifest](spec.html#sponsor-manifest), the 
@@ -97,9 +97,3 @@ libraries and tools can now check for its presence, authenticity and expiration
 these checks, it only provides the [standard manifest format](spec.md) 
 that a sponsorable account backend needs to provide for local persistence 
 and subsequent (purely offline) checks.
-
-{: .note }
-> A SponsorLink-enabled library *may* use your locally configured git email 
-> to ensure the located sponsor manifest belongs 
-> to the same account by matching the manifest email claim(s). 
-> Read the [privacy statement](privacy.md) for more details.
