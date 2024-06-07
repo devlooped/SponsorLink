@@ -47,7 +47,7 @@ public static class App
             config.AddCommand<InitCommand>();
             config.AddCommand<ListCommand>();
             config.AddCommand<SyncCommand>();
-            config.AddCommand<ValidateCommand>();
+            config.AddCommand<ViewCommand>();
             config.AddCommand<WelcomeCommand>();
         });
 

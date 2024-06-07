@@ -11,12 +11,10 @@
 
   <ItemGroup>
     <Compile Remove="RemoveCommand.cs" />
-    <Compile Remove="ViewCommand.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="RemoveCommand.cs" />
-    <None Include="ViewCommand.cs" />
   </ItemGroup>
 
   <ItemGroup>
