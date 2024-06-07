@@ -1,7 +1,10 @@
 ﻿using System.ComponentModel;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Spectre.Console.Json;
+using Spectre.Console.Rendering;
 
 namespace Devlooped.Sponsors;
 
@@ -18,6 +21,25 @@ public static class Extensions
     {
         var name = typeof(TCommand).Name.Replace("Command", "").ToLowerInvariant();
         return configurator.AddCommand<TCommand>(name);
+    }
+
+    public static IRenderable ToDetails(this JwtSecurityToken jwt, string path)
+    {
+        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink");
+        var header = $"|:magnifying_glass_tilted_left:[link={path}]~{Path.DirectorySeparatorChar}.sponsorlink{path[root.Length..]}[/] |";
+
+        var content = new List<IRenderable>
+        { 
+            new JsonText(jwt.Payload.SerializeToJson()) 
+        };
+
+        if (jwt.Claims.Where(c => c.Type == "client_id").Select(c => c.Value).FirstOrDefault() is string client_id)
+            content.Add(new Markup($":backhand_index_pointing_right: [link=https://github.com/settings/connections/applications/{client_id}]Review permissions :globe_showing_americas: github.com[/]"));
+
+        return new Panel(new Rows(content))
+        {
+            Header = new PanelHeader(header),
+        };
     }
 
     public static Table AsTable<T>(this IEnumerable<T> items)
