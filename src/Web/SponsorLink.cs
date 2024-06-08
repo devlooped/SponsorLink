@@ -12,17 +12,21 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Devlooped.Sponsors;
 
 /// <summary>
 /// Returns a JWT or JSON manifest of the authenticated user's claims.
 /// </summary>
-class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, IOptions<SponsorLinkOptions> options, IWebHostEnvironment host, ILogger<SponsorLink> logger)
+partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, IOptions<SponsorLinkOptions> options, IWebHostEnvironment host, ILogger<SponsorLink> logger)
 {
     SponsorLinkOptions options = options.Value;
 
-    [Function("me")]
+    /// <summary>
+    /// Helper to visualize the user's claims and the request/response headers as available to the backend.
+    /// </summary>
+    [Function("user")]
     public async Task<IActionResult> UserAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         if (!configuration.TryGetClientId(logger, out var clientId))
@@ -98,8 +102,8 @@ class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, 
     /// <summary>
     /// Depending on the Accept header, returns a JWT or JSON manifest of the authenticated user's claims.
     /// </summary>
-    [Function("sync")]
-    public async Task<IActionResult> SyncAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "sync")] HttpRequest req)
+    [Function("me-get")]
+    public async Task<IActionResult> SyncAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "me")] HttpRequest req)
     {
         if (!configuration.TryGetClientId(logger, out var clientId))
             return new StatusCodeResult(500);
@@ -110,7 +114,7 @@ class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, 
             // or the token-based principal population won't work.
             // Never redirect requests for JWT, as they are likely from a CLI or other non-browser client.
             if (!req.Headers.Accept.Contains("application/jwt") && !string.IsNullOrEmpty(clientId))
-                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/sync");
+                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{req.Headers["Host"]}/.auth/login/github/callback&state=redir=/me");
 
             logger.LogError("Ensure GitHub identity provider is configured for the functions app.");
 
@@ -171,13 +175,13 @@ class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, 
         };
     }
 
-    [Function("delete")]
-    public IActionResult Delete([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "sync")] HttpRequest req)
+    [Function("me-delete")]
+    public IActionResult Delete([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "me")] HttpRequest req)
     {
-        if (!configuration.TryGetClientId(logger, out var clientId))
+        if (!configuration.TryGetClientId(logger, out _))
             return new StatusCodeResult(500);
 
-        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
+        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true })
             return new UnauthorizedResult();
 
         logger.LogInformation("We don't persist anything, so there's nothing to delete :)");
