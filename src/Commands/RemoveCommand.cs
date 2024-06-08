@@ -1,47 +1,131 @@
 ﻿using System.ComponentModel;
-using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Principal;
+using System.Text;
+using Microsoft.VisualBasic;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using static Devlooped.SponsorLink;
+using static Spectre.Console.AnsiConsole;
+using static ThisAssembly.Strings;
 
 namespace Devlooped.Sponsors;
 
-[Description("Removes all user data from the backend and local machine.")]
-public class RemoveCommand : AsyncCommand
+[Description("Removes all manifests and notifies issuers to remove backend data too.")]
+public class RemoveCommand(IHttpClientFactory httpFactory, IGitHubAppAuthenticator authenticator) : AsyncCommand<RemoveCommand.RemoveSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context)
+    public class RemoveSettings : CommandSettings
     {
-        if (await Session.AuthenticateAsync() is not { } principal ||
-            principal.FindFirst(ClaimTypes.NameIdentifier)?.Value is not string id)
+        [Description("Sponsored account(s) to synchronize.")]
+        [CommandArgument(0, "[sponsorable]")]
+        public string[]? Sponsorable { get; set; }
+
+        [Description("All manifests found locally should be removed.")]
+        [CommandOption("-a|--all")]
+        public bool? All { get; set; }
+
+        /// <summary>
+        /// Property used to modify the namespace from tests for scoping stored passwords.
+        /// </summary>
+        [CommandOption("--namespace", IsHidden = true)]
+        public string Namespace { get; set; } = GitHubAppAuthenticator.DefaultNamespace;
+
+        public override ValidationResult Validate()
         {
-            AnsiConsole.MarkupLine(ThisAssembly.Strings.Remove.AuthenticationRequired);
+            if (All != true && !(Sponsorable?.Length > 0))
+                return ValidationResult.Error(Remove.AllOrSponsorable);
+
+            if (All == true && Sponsorable?.Length > 0)
+                return ValidationResult.Error(Remove.AllOrSponsorable);
+
+            return ValidationResult.Success();
+        }
+    }
+
+
+    public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings)
+    {
+        var sponsorables = new HashSet<string>();
+        if (settings.Sponsorable != null)
+            sponsorables.AddRange(settings.Sponsorable);
+
+        var ghDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink", "github");
+        if (!Directory.Exists(ghDir))
+        {
+            MarkupLine(Remove.NoSponsorables);
             return -1;
         }
 
-        // NOTE: to test the local flow end to end, run the SponsorLink functions App project locally. You will 
-        var url = Debugger.IsAttached ? "http://localhost:7288/remove" : "https://sponsorlink.devlooped.com/remove";
-
-        using var http = new HttpClient();
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Variables.AccessToken);
-
-        var response = await AnsiConsole.Status().StartAsync(ThisAssembly.Strings.Remove.Deleting, async _
-            => await http.PostAsync(url, null));
-
-        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        if (settings.All == true)
         {
-            AnsiConsole.MarkupLine(ThisAssembly.Strings.Remove.AuthenticationRequired);
-            return -1;
+            sponsorables.AddRange(Directory.EnumerateFiles(ghDir, "*.jwt")
+                .Select(x => Path.GetFileNameWithoutExtension(x)!));
         }
-        else if (!response.IsSuccessStatusCode)
+
+        if (sponsorables.Count == 0)
         {
-            AnsiConsole.MarkupLine(ThisAssembly.Strings.Remove.ReportIssue);
+            MarkupLine(Remove.NoSponsorables);
             return -1;
         }
 
-        AnsiConsole.MarkupLine(ThisAssembly.Strings.Remove.Deleted);
-        Variables.Clear();
+        await Status().StartAsync(Remove.Removing(sponsorables.First()), async ctx =>
+        {
+            using var http = httpFactory.CreateClient();
+
+            foreach (var sponsorable in sponsorables)
+            {
+                var file = Path.Combine(ghDir, $"{sponsorable}.jwt");
+                if (!File.Exists(file))
+                {
+                    MarkupLine(Remove.NotFound(sponsorable));
+                    continue;
+                }
+
+                // Simple reading first to get issuer to retrieve the manifest
+                var jwt = await File.ReadAllTextAsync(file, Encoding.UTF8);
+                var handler = new JwtSecurityTokenHandler();
+                if (string.IsNullOrEmpty(jwt) || !handler.CanReadToken(jwt))
+                {
+                    MarkupLine(Remove.Invalid(sponsorable));
+                    File.Delete(file);
+                    continue;
+                }
+
+                File.Delete(file);
+
+                // Attempt to invoke DELETE /me from issuer.
+                var token = handler.ReadJwtToken(jwt);
+                var issuer = new Uri(new Uri(token.Issuer), "me");
+                if (token.Claims.FirstOrDefault(x => x.Type == "client_id")?.Value is not string clientId)
+                {
+                    MarkupLine(Remove.Invalid(sponsorable));
+                    File.Delete(file);
+                    continue;
+                }
+
+                if (await authenticator.AuthenticateAsync(clientId, new Progress<string>(), false, settings.Namespace) is not string accessToken)
+                {
+                    MarkupLine(Remove.AuthMissing(sponsorable));
+                    continue;
+                }
+
+                var request = new HttpRequestMessage(HttpMethod.Delete, issuer);
+                request.Headers.Authorization = new("Bearer", accessToken);
+                var response = await http.SendAsync(request);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    MarkupLine(Remove.Unauthorized(sponsorable));
+                }
+                else if (!response.IsSuccessStatusCode)
+                {
+                    MarkupLine(Remove.ServerError(sponsorable));
+                }
+                else
+                {
+                    MarkupLine(Remove.Deleted(sponsorable));
+                }
+            }
+        });
 
         return 0;
     }

@@ -46,6 +46,7 @@ public static class App
             config.AddCommand<ConfigCommand>();
             config.AddCommand<InitCommand>();
             config.AddCommand<ListCommand>();
+            config.AddCommand<RemoveCommand>();
             config.AddCommand<SyncCommand>();
             config.AddCommand<ViewCommand>();
             config.AddCommand<WelcomeCommand>();

@@ -50,7 +50,7 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
         /// Property used to modify the namespace from tests for scoping stored passwords.
         /// </summary>
         [CommandOption("--namespace", IsHidden = true)]
-        public string Namespace { get; set; } = "com.devlooped";
+        public string Namespace { get; set; } = GitHubAppAuthenticator.DefaultNamespace;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, SyncSettings settings)

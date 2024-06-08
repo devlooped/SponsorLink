@@ -7,11 +7,16 @@ namespace Devlooped.Sponsors;
 
 public interface IGitHubAppAuthenticator
 {
-    Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive, string @namespace = "sponsorlink");
+    Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive, string @namespace = GitHubAppAuthenticator.DefaultNamespace);
 }
 
 public class GitHubAppAuthenticator(IHttpClientFactory httpFactory) : IGitHubAppAuthenticator
 {
+    /// <summary>
+    /// Default namespace used to scope credentials stored by this authenticator.
+    /// </summary>
+    public const string DefaultNamespace = "com.devlooped";
+
     static readonly JsonSerializerOptions options = new(JsonSerializerDefaults.Web)
     {
         Converters = { new JsonStringEnumConverter<AuthError>() },
@@ -22,7 +27,7 @@ public class GitHubAppAuthenticator(IHttpClientFactory httpFactory) : IGitHubApp
     // confusing experience for the user, with multiple browser tabs opening.
     readonly SemaphoreSlim semaphore = new(1, 1);
 
-    public async Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive, string @namespace = "sponsorlink")
+    public async Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive, string @namespace = DefaultNamespace)
     {
         using var http = httpFactory.CreateClient("GitHub");
 
