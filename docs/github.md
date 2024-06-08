@@ -79,7 +79,6 @@ Example:
   "iss": "https://sponsorlink.devlooped.com/",
   "aud": "https://github.com/sponsors/devlooped",
   "client_id": "asdf1234",
-  "pub": "MII...=",
   "sub_jwk": {
     "e": "AQAB",
     "kty": "RSA",
