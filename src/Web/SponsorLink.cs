@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Devlooped.Sponsors;
@@ -159,35 +161,24 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
         if (await sponsors.GetSponsorClaimsAsync() is not { } claims)
             return new NotFoundObjectResult("You are not a sponsor");
 
+        var jwt = manifest.Sign(claims, rsa);
+
         // We always respond authenticated requests either with a JWT or JSON, depending on the Accept header.
         if (req.Headers.Accept.Contains("application/jwt"))
         {
             return new ContentResult
             {
-                Content = manifest.Sign(claims, rsa),
+                Content = jwt,
                 ContentType = "application/jwt",
                 StatusCode = 200
             };
         }
 
-        // We try to make the json look as much as possible as the JWT
-        return new JsonResult(new
+        var token = new JwtSecurityTokenHandler().ReadJwtToken(jwt);
+        return new ContentResult
         {
-            issuer = manifest.Issuer,
-            audience = manifest.Audience,
-            claims = principal.Claims
-                // The "email" claim is already added by the GetSponsorClaimsAsync.
-                .Where(x => x.Type != ClaimTypes.Email)
-                .Concat(claims)
-                .GroupBy(x => x.Type)
-                // Claims can have duplicates, so we group them and turn them into arrays, which is what JWT does too.
-                .Select(g => new { g.Key, Value = (object)(g.Count() == 1 ? g.First().Value : g.Select(x => x.Value).ToArray()) })
-                .ToDictionary(x => x.Key, x => x.Value),
-#if DEBUG
-            headers = req.Headers.ToDictionary(x => x.Key, x => x.Value.ToString().Trim('"'))
-#endif
-        })
-        {
+            Content = token.Payload.SerializeToJson(),
+            ContentType = "application/json",
             StatusCode = 200
         };
     }
