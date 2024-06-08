@@ -183,12 +183,6 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
   <data name="No" xml:space="preserve">
     <value>No</value>
   </data>
-  <data name="Remove_Deleting" xml:space="preserve">
-    <value>Notifying removal of backend data...</value>
-  </data>
-  <data name="Remove_ReportIssue" xml:space="preserve">
-    <value>:cross_mark: Failed to remove user data. Please report the issue at [link]https://github.com/devlooped/SponsorLink/issues/new[/]</value>
-  </data>
   <data name="Session_OpenBrowser" xml:space="preserve">
     <value>[lime]?[/] Operation requires authentication on github.com. Open your browser now?</value>
   </data>
@@ -297,22 +291,37 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
   <data name="Remove_NoSponsorables" xml:space="preserve">
     <value>:cross_mark: No manifests found to remove.</value>
   </data>
-  <data name="Remove_AuthMissing" xml:space="preserve">
-    <value>:check_mark_button: [yellow]{sponsorable}[/]: deleted manifest, no auth found to invoke issuer backend</value>
-  </data>
-  <data name="Remove_Deleted" xml:space="preserve">
-    <value>:check_mark_button: [lime]{sponsorable}[/]: deleted manifest and invoked issuer delete endpoint successfully</value>
-  </data>
-  <data name="Remove_Invalid" xml:space="preserve">
-    <value>:cross_mark: Manifest for [yellow]{sponsorable}[/] was invalid and deleted</value>
+  <data name="Remove_InvalidManifest" xml:space="preserve">
+    <value>:yellow_square: Invalid manifest, no credentials or issuer to process</value>
   </data>
   <data name="Remove_NotFound" xml:space="preserve">
-    <value>:cross_mark: Manifest for [yellow]{sponsorable}[/] not found</value>
+    <value>:cross_mark: [yellow]{sponsorable}[/]: manifest not found</value>
   </data>
-  <data name="Remove_ServerError" xml:space="preserve">
-    <value>:check_mark_button: [yellow]{sponsorable}[/]: deleted manifest, issuer backend failed with unknown error</value>
+  <data name="Config_ClearClientId" xml:space="preserve">
+    <value>:backhand_index_pointing_right: [link]https://github.com/settings/connections/applications/{client_id}[/]</value>
+  </data>
+  <data name="Remove_DeletedCreds" xml:space="preserve">
+    <value>:backhand_index_pointing_right: Deleted local credentials. [link=https://github.com/settings/connections/applications/{client_id}]Review app at access :globe_showing_americas:github.com[/]</value>
+  </data>
+  <data name="Remove_DeletedManifest" xml:space="preserve">
+    <value>:backhand_index_pointing_right: Deleted manifest from [link][grey]{path}[/][/]</value>
+  </data>
+  <data name="Remove_DeleteEndpoint" xml:space="preserve">
+    <value>:backhand_index_pointing_right: Sent delete to {uri}</value>
+  </data>
+  <data name="Remove_Done" xml:space="preserve">
+    <value>:check_mark_button: [lime]{sponsorable}[/]</value>
+  </data>
+  <data name="Remove_IssuerFailure" xml:space="preserve">
+    <value>:raised_hand: Sent delete to {uri} failed with unknown issuer backend error</value>
+  </data>
+  <data name="Remove_NoCredsFound" xml:space="preserve">
+    <value>:raised_hand: No local credentials found to delete from {uri}. [link=https://github.com/settings/connections/applications/{client_id}]Review app access at :globe_showing_americas:github.com[/]</value>
   </data>
   <data name="Remove_Unauthorized" xml:space="preserve">
-    <value>:check_mark_button: [yellow]{sponsorable}[/]: deleted manifest, issuer backend could not authenticate user (access revoked already?)</value>
+    <value>:raised_hand: Sent delete to {uri} failed to authorize (access revoked already?)</value>
+  </data>
+  <data name="Config_Clear" xml:space="preserve">
+    <value>:check_mark_button: Cleared {count} cached credentials. Review app access for the following client ids:</value>
   </data>
 </root>
