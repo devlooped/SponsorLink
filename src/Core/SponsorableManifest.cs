@@ -42,9 +42,7 @@ public class SponsorableManifest
     public static SponsorableManifest Create(Uri issuer, Uri[] audience, string clientId)
     {
         var rsa = RSA.Create(3072);
-        var pub = Convert.ToBase64String(rsa.ExportRSAPublicKey());
-
-        return new SponsorableManifest(issuer, audience, clientId, new RsaSecurityKey(rsa), pub);
+        return new SponsorableManifest(issuer, audience, clientId, new RsaSecurityKey(rsa));
     }
 
     public static async Task<(Status, SponsorableManifest?)> FetchAsync(string sponsorable, string? branch, HttpClient? http = default)
@@ -102,12 +100,6 @@ public class SponsorableManifest
             return false;
         }
 
-        if (token.Claims.FirstOrDefault(c => c.Type == "pub")?.Value is not string pub)
-        {
-            missingClaim = "pub";
-            return false;
-        }
-
         if (token.Claims.FirstOrDefault(c => c.Type == "sub_jwk")?.Value is not string jwk)
         {
             missingClaim = "sub_jwk";
@@ -115,20 +107,25 @@ public class SponsorableManifest
         }
 
         var key = new JsonWebKeySet { Keys = { JsonWebKey.Create(jwk) } }.GetSigningKeys().First();
-        manifest = new SponsorableManifest(new Uri(issuer), token.Audiences.Select(x => new Uri(x)).ToArray(), clientId, key, pub);
+        manifest = new SponsorableManifest(new Uri(issuer), token.Audiences.Select(x => new Uri(x)).ToArray(), clientId, key);
 
         return true;
     }
 
-    public SponsorableManifest(Uri issuer, Uri[] audience, string clientId, SecurityKey publicKey, string publicRsaKey)
+    int hashcode;
+    string clientId;
+
+    public SponsorableManifest(Uri issuer, Uri[] audience, string clientId, SecurityKey publicKey)
     {
+        this.clientId = clientId;
         Issuer = issuer.AbsoluteUri;
         Audience = audience.Select(a => a.AbsoluteUri.TrimEnd('/')).ToArray();
-        ClientId = clientId;
         SecurityKey = publicKey;
-        PublicKey = publicRsaKey;
         Sponsorable = audience.Where(x => x.Host == "github.com").Select(x => x.Segments.LastOrDefault()?.TrimEnd('/')).FirstOrDefault() ??
             throw new ArgumentException("At least one of the intended audience must be a GitHub sponsors URL.");
+
+        // Force hash code to be computed
+        ClientId = clientId;
     }
 
     /// <summary>
@@ -158,8 +155,6 @@ public class SponsorableManifest
                     // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
                     new(JwtRegisteredClaimNames.Iat, Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()),
                     new("client_id", ClientId),
-                    // non-standard claim containing the base64-encoded public key
-                    new("pub", PublicKey),
                     // standard claim, serialized as a JSON string, not an encoded JSON object
                     new("sub_jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
                 ]),
@@ -178,7 +173,7 @@ public class SponsorableManifest
     {
         var rsa = key ?? SecurityKey as RsaSecurityKey;
         if (rsa?.PrivateKeyStatus != PrivateKeyStatus.Exists)
-            throw new NotSupportedException("No private key found to sign the manifest.");
+            throw new NotSupportedException("No private key found or specified to sign the manifest.");
 
         var signing = new SigningCredentials(rsa, SecurityAlgorithms.RsaSha256);
 
@@ -228,13 +223,9 @@ public class SponsorableManifest
                 tokenClaims.Insert(1, new(JwtRegisteredClaimNames.Aud, audience));
         }
 
-        // The other claims (client_id, pub, sub_jwk) claims are mostly for the SL manifest itself,
-        // not for the user, so for now we don't add them. 
-
         // Don't allow mismatches of public manifest key and the one used to sign, to avoid 
         // weird run-time errors verifiying manifests that were signed with a different key.
-        var pubKey = Convert.ToBase64String(rsa.Rsa.ExportRSAPublicKey());
-        if (pubKey != PublicKey)
+        if (!rsa.ThumbprintEquals(SecurityKey))
             throw new ArgumentException($"Cannot sign with a private key that does not match the manifest public key.");
 
         var jwt = new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
@@ -289,12 +280,16 @@ public class SponsorableManifest
     /// <remarks>
     /// See https://www.rfc-editor.org/rfc/rfc8693.html#name-client_id-client-identifier
     /// </remarks>
-    public string ClientId { get; internal set; }
-
-    /// <summary>
-    /// Public key that can be used to verify JWT signatures.
-    /// </summary>
-    public string PublicKey { get; }
+    public string ClientId 
+    { 
+        get => clientId;
+        internal set
+        {
+            clientId = value;
+            var thumb = JsonWebKeyConverter.ConvertFromSecurityKey(SecurityKey).ComputeJwkThumbprint();
+            hashcode = new HashCode().Add(Issuer, ClientId, Convert.ToBase64String(thumb)).AddRange(Audience).ToHashCode();
+        }
+    }
 
     /// <summary>
     /// Public key in a format that can be used to verify JWT signatures.
@@ -302,7 +297,7 @@ public class SponsorableManifest
     public SecurityKey SecurityKey { get; }
 
     /// <inheritdoc/>
-    public override int GetHashCode() => new HashCode().Add(Issuer, ClientId, PublicKey).AddRange(Audience).ToHashCode();
+    public override int GetHashCode() => hashcode;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is SponsorableManifest other && GetHashCode() == other.GetHashCode();

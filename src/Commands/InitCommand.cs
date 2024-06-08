@@ -115,7 +115,7 @@ public partial class InitCommand : AsyncCommand<InitCommand.Settings>
 
         var manifest = new SponsorableManifest(new Uri(settings.Issuer),
             settings.Audience,
-            settings.ClientId, new RsaSecurityKey(rsa), pub64);
+            settings.ClientId, new RsaSecurityKey(rsa));
 
         // Serialize the token and return as a string
         var jwt = manifest.ToJwt();

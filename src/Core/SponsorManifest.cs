@@ -38,7 +38,7 @@ public class SponsorManifest
     {
         using var http = new HttpClient();
 
-        var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(manifest.Issuer), "sync"));
+        var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(manifest.Issuer), "me"));
         request.Headers.Authorization = new("Bearer", accessToken);
         request.Headers.Accept.Add(new("application/jwt"));
         var response = await http.SendAsync(request);
