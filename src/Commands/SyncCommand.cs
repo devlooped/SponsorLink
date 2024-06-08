@@ -82,13 +82,13 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
                 if (await client.QueryAsync(GraphQueries.ViewerSponsored) is not { } sponsored)
                 {
                     MarkupLine(Sync.QueryingUserSponsorshipsFailed);
-                    return -2;
+                    return ErrorCodes.GraphDiscoveryFailure;
                 }
                 sponsorables.AddRange(sponsored);
                 return 0;
-            }) == -2)
+            }) == ErrorCodes.GraphDiscoveryFailure)
             {
-                return -2;
+                return ErrorCodes.GraphDiscoveryFailure;
             }
 
             sponsorables.AddRange((await client.GetUserContributionsAsync()).Keys);
@@ -100,13 +100,13 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
                 if (await client.QueryAsync(GraphQueries.ViewerOrganizations) is not { } viewerorgs)
                 {
                     MarkupLine(Sync.QueryingUserOrgsFailed);
-                    return -2;
+                    return ErrorCodes.GraphDiscoveryFailure;
                 }
                 orgs = viewerorgs;
                 return 0;
-            }) == -2)
+            }) == ErrorCodes.GraphDiscoveryFailure)
             {
-                return -2;
+                return ErrorCodes.GraphDiscoveryFailure;
             }
 
             // Collect org-sponsored accounts. NOTE: we'll typically only get public sponsorships 
@@ -141,11 +141,11 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
                         manifests.Add(manifest);
                         break;
                     case SponsorableManifest.Status.NotFound:
-                        result = -3;
+                        result = ErrorCodes.SponsorableManifestNotFound;
                         break;
                     default:
                         MarkupLine(Sync.InvalidManifest(sponsorable, status));
-                        result = -4;
+                        result = ErrorCodes.SponsorableManifestInvalid;
                         break;
                 }
             }
@@ -164,7 +164,7 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
                 if (settings.Unattended)
                 {
                     MarkupLine(Sync.UnattendedWithInteractiveAuth(manifest.Sponsorable.PadRight(maxlength)));
-                    result = -5;
+                    result = ErrorCodes.InteractiveAuthRequired;
                 }
                 continue;
             }
@@ -174,7 +174,7 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
             {
                 var links = string.Join(", ", manifest.Audience.Select(x => $"[link]{x}[/]"));
                 MarkupLine(Sync.ConsiderSponsoring(manifest.Sponsorable.PadRight(maxlength), links));
-                result = -6;
+                result = ErrorCodes.NotSponsoring;
                 continue;
             }
 
@@ -186,7 +186,7 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
             else
             {
                 MarkupLine(Sync.Failed(manifest.Sponsorable.PadRight(maxlength)));
-                result = -7;
+                result = ErrorCodes.SyncFailure;
                 continue;
             }
         }
@@ -210,7 +210,7 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
                     {
                         var links = string.Join(", ", manifest.Audience.Select(x => $"[link]{x}[/]"));
                         MarkupLine(Sync.ConsiderSponsoring(manifest.Sponsorable.PadRight(maxlength), links));
-                        result = -6;
+                        result = ErrorCodes.NotSponsoring;
                     }
                     else if (status == SponsorManifest.Status.Success)
                     {
@@ -220,7 +220,7 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
                     else
                     {
                         MarkupLine(Sync.Failed(manifest.Sponsorable.PadRight(maxlength)));
-                        result = -7;
+                        result = ErrorCodes.SyncFailure;
                     }
                 });
             }

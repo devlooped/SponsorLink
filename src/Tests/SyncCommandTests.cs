@@ -76,7 +76,7 @@ public class SyncCommandTests
 
         var result = await command.ExecuteAsync(new CommandContext(["sync"], Mock.Of<IRemainingArguments>(), "sync", null), settings);
 
-        Assert.Equal(-2, result);
+        Assert.Equal(SyncCommand.ErrorCodes.GraphDiscoveryFailure, result);
     }
 
     [LocalFact("GitHub:Token")]
@@ -103,7 +103,7 @@ public class SyncCommandTests
 
         var result = await command.ExecuteAsync(new CommandContext(["sync"], Mock.Of<IRemainingArguments>(), "sync", null), settings);
 
-        Assert.Equal(-2, result);
+        Assert.Equal(SyncCommand.ErrorCodes.GraphDiscoveryFailure, result);
     }
 
     [LocalFact("GitHub:Token")]
@@ -130,7 +130,7 @@ public class SyncCommandTests
 
         var result = await command.ExecuteAsync(new CommandContext(["sync"], Mock.Of<IRemainingArguments>(), "sync", null), settings);
 
-        Assert.Equal(-3, result);
+        Assert.Equal(SyncCommand.ErrorCodes.SponsorableManifestNotFound, result);
     }
 
     [LocalFact("GitHub:Token")]
@@ -157,7 +157,7 @@ public class SyncCommandTests
 
         var result = await command.ExecuteAsync(new CommandContext(["sync"], Mock.Of<IRemainingArguments>(), "sync", null), settings);
 
-        Assert.Equal(-4, result);
+        Assert.Equal(SyncCommand.ErrorCodes.SponsorableManifestInvalid, result);
     }
 
     [SecretsFact("GitHub:NonSponsoring")]
@@ -186,7 +186,7 @@ public class SyncCommandTests
 
         var result = await command.ExecuteAsync(new CommandContext(["sync"], Mock.Of<IRemainingArguments>(), "sync", null), settings);
 
-        Assert.Equal(-6, result);
+        Assert.Equal(SyncCommand.ErrorCodes.NotSponsoring, result);
     }
 
     void EnsureAuthenticated(string secret = "GitHub:Token")
