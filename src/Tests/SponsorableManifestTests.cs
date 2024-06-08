@@ -30,7 +30,6 @@ public class SponsorableManifestTests
         Assert.Contains(principal.Claims, x => x.Type == "iss" && x.Issuer == "https://foo.com/");
         Assert.Contains(principal.Claims, x => x.Type == "aud" && x.Value == "https://github.com/sponsors/bar");
         Assert.Contains(principal.Claims, x => x.Type == "client_id" && x.Value == "ASDF1234");
-        Assert.Contains(principal.Claims, x => x.Type == "pub" && x.Value == manifest.PublicKey);
         Assert.Contains(principal.Claims, x => x.Type == "sub_jwk");
 
         var jwk = JsonWebKey.Create(principal.Claims.First(x => x.Type == "sub_jwk").Value);
@@ -42,9 +41,7 @@ public class SponsorableManifestTests
     {
         var rsa = RSA.Create(3072);
         var key = new RsaSecurityKey(rsa);
-        var pub = Convert.ToBase64String(rsa.ExportRSAPublicKey());
-
-        var manifest = new SponsorableManifest(new Uri("https://foo.com"), [new Uri("https://github.com/sponsors/bar")], "ASDF1234", key, pub);
+        var manifest = new SponsorableManifest(new Uri("https://foo.com"), [new Uri("https://github.com/sponsors/bar")], "ASDF1234", key);
 
         var jwt = manifest.ToJwt(new SigningCredentials(key, SecurityAlgorithms.RsaSha256));
 

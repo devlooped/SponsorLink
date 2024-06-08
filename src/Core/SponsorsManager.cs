@@ -14,8 +14,8 @@ public partial class SponsorsManager(
     IGraphQueryClientFactory graphFactory,
     IMemoryCache cache, ILogger<SponsorsManager> logger)
 {
-    const string JwtCacheKey = nameof(SponsorsManager) + ".JWT";
-    const string ManifestCacheKey = nameof(SponsorsManager) + ".Manifest";
+    internal const string JwtCacheKey = nameof(SponsorsManager) + ".JWT";
+    internal const string ManifestCacheKey = nameof(SponsorsManager) + ".Manifest";
 
     static readonly Serializer serializer = new();
     SponsorLinkOptions options = options.Value;
@@ -52,10 +52,6 @@ public partial class SponsorsManager(
             // Manifest audience should match the sponsorable account to avoid weird issues?
             if (account.Login != manifest.Sponsorable)
                 throw new InvalidOperationException("Manifest sponsorable account does not match configured sponsorable account.");
-
-            logger.Assert(options.PublicKey == manifest.PublicKey,
-                "Configured public key '{option}' does not match the manifest public key.",
-                $"SponsorLink:{nameof(SponsorLinkOptions.PublicKey)}");
 
             jwt = cache.Set(JwtCacheKey, jwt, new MemoryCacheEntryOptions
             {
