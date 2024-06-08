@@ -2,7 +2,7 @@
   "profiles": {
     "Cli": {
       "commandName": "Project",
-      "commandLineArgs": "sync -i http://localhost:4242"
+      "commandLineArgs": "remove devlooped"
     }
   }
 }

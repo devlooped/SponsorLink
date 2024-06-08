@@ -183,17 +183,11 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
   <data name="No" xml:space="preserve">
     <value>No</value>
   </data>
-  <data name="Remove_AuthenticationRequired" xml:space="preserve">
-    <value>[red]x[/] Removal of user data requires an authenticated user.</value>
-  </data>
-  <data name="Remove_Deleted" xml:space="preserve">
-    <value>[green]✓[/] Deleted authenticated user from backend</value>
-  </data>
   <data name="Remove_Deleting" xml:space="preserve">
-    <value>Requesting removal of all user data ...</value>
+    <value>Notifying removal of backend data...</value>
   </data>
   <data name="Remove_ReportIssue" xml:space="preserve">
-    <value>[red]x[/] Failed to remove user data. Please report the issue at [link]https://github.com/devlooped/SponsorLink/issues/new[/]</value>
+    <value>:cross_mark: Failed to remove user data. Please report the issue at [link]https://github.com/devlooped/SponsorLink/issues/new[/]</value>
   </data>
   <data name="Session_OpenBrowser" xml:space="preserve">
     <value>[lime]?[/] Operation requires authentication on github.com. Open your browser now?</value>
@@ -293,5 +287,32 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
   </data>
   <data name="Sync_UnattendedWithInteractiveAuth" xml:space="preserve">
     <value>[lime]?[/] Sponsors account [yellow]{account}[/] requires [link=https://www.devlooped.com/SponsorLink/github.html#authentication][blue]interactive authentication[/][/] for synchronization. Please run [yellow]gh sponsors sync {account}[/] interactively.</value>
+  </data>
+  <data name="Remove_AllOrSponsorable" xml:space="preserve">
+    <value>Either specify a sponsorable or use --all to remove all manifests.</value>
+  </data>
+  <data name="Remove_Removing" xml:space="preserve">
+    <value>Processing [lime]{sponsorable}[/]</value>
+  </data>
+  <data name="Remove_NoSponsorables" xml:space="preserve">
+    <value>:cross_mark: No manifests found to remove.</value>
+  </data>
+  <data name="Remove_AuthMissing" xml:space="preserve">
+    <value>:check_mark_button: [yellow]{sponsorable}[/]: deleted manifest, no auth found to invoke issuer backend</value>
+  </data>
+  <data name="Remove_Deleted" xml:space="preserve">
+    <value>:check_mark_button: [lime]{sponsorable}[/]: deleted manifest and invoked issuer delete endpoint successfully</value>
+  </data>
+  <data name="Remove_Invalid" xml:space="preserve">
+    <value>:cross_mark: Manifest for [yellow]{sponsorable}[/] was invalid and deleted</value>
+  </data>
+  <data name="Remove_NotFound" xml:space="preserve">
+    <value>:cross_mark: Manifest for [yellow]{sponsorable}[/] not found</value>
+  </data>
+  <data name="Remove_ServerError" xml:space="preserve">
+    <value>:check_mark_button: [yellow]{sponsorable}[/]: deleted manifest, issuer backend failed with unknown error</value>
+  </data>
+  <data name="Remove_Unauthorized" xml:space="preserve">
+    <value>:check_mark_button: [yellow]{sponsorable}[/]: deleted manifest, issuer backend could not authenticate user (access revoked already?)</value>
   </data>
 </root>
