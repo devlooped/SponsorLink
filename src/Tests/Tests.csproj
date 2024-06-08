@@ -55,11 +55,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Devlooped.SponsorLink" Aliases="Analyzer" HintPath="..\Package\bin\$(Configuration)\netstandard2.0\Devlooped.SponsorLink.dll" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\Tasks\Devlooped.Sponsors.*" />
     <None Update="@(None)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
