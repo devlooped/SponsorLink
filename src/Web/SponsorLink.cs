@@ -1,5 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -80,12 +79,14 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
         };
     }
 
+    /// <summary>
+    /// Returns the sponsorable manifest from <see cref="SponsorsManager.GetRawManifestAsync"/>.
+    /// </summary>
     [Function("jwt")]
-    public async Task<IActionResult> GetStatus([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    public async Task<IActionResult> GetManifest([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         var manifest = await sponsors.GetManifestAsync();
-        var pubKey = Convert.ToBase64String(rsa.ExportRSAPublicKey());
-        if (pubKey != manifest.PublicKey)
+        if (!rsa.ThumbprintEquals(manifest.SecurityKey))
         {
             logger.LogError("Configured private key '{option}' does not match the manifest public key.", $"SponsorLink:{nameof(SponsorLinkOptions.PrivateKey)}");
             return new StatusCodeResult(500);
@@ -95,6 +96,22 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
         {
             Content = await sponsors.GetRawManifestAsync(),
             ContentType = "text/plain",
+            StatusCode = 200,
+        };
+    }
+
+    /// <summary>
+    /// Returns the sponsorable public key in JWK format.
+    /// </summary>
+    [Function("jwk")]
+    public async Task<IActionResult> GetPublicKey([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    {
+        var manifest = await sponsors.GetManifestAsync();
+
+        return new ContentResult()
+        {
+            Content = JsonSerializer.Serialize(JsonWebKeyConverter.ConvertFromSecurityKey(manifest.SecurityKey), JsonOptions.JsonWebKey),
+            ContentType = "application/json",
             StatusCode = 200,
         };
     }
