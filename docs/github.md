@@ -203,21 +203,21 @@ The reference implementation of the GitHub-based issuer backend service is an Az
 provides a REST API to issue sponsor manifests. The sync tool makes no additional assumptions about the 
 backend other than:
 
-1. It provides a `/sync` endpoint that accepts a `Authorization: Bearer [token]` header with an access token 
+1. It provides a `/me` endpoint that accepts a `Authorization: Bearer [token]` header with an access token 
    obtained by authenticating with the sponsorable's GitHub OAuth app.
 1. It returns a signed sponsor manifest in the [standard format](spec.md) with the required claims that can 
    be verified against the public key provided in the `sponsorlink.jwt` sponsorable manifest.
 1. The returned manifest contains `roles` for the user, determined based on the token provided.
 
-Optional endpoints the backend can provide: 
-1. `/me` endpoint that returns the user's profile and claims, useful for testing the authentication and configuration.
-1. `/pub` endpoint that returns the Base64-encoded public key
-1. `/jwk` endpoint that returns the sponsorable manifest in the [standard format](spec.md)
-1. `/version` endpoint that returns the backend version
-1. `/delete` endpoint that removes all traces of the authenticated user from the backend
-
 {: .highlight }
-The backend reference implementation provides all the optional endpoints.
+The `/me` is implemented to allow interactive browsing to the backend URL to test the authentication and configuration.
+Tools must specify an `Accept: application/jwt` header to get the sponsor manifest in JWT format, otherwise the 
+response will be in JSON format with mostly the same information plus the GitHub authentication user claims.
+
+For manifest validation, a tool or client can append the `/jwt` endpoint to the issuer's base URL to get the
+the full sponsorable manifest in the [standard format](spec.md), from which the public key can be extracted and used 
+to verify the signature of a cached sponsor manifest. Alternatively, the `/jwk` endpoint can be used to get the 
+public key in JWK format (basically to get just the `sub_jwk` claim from the full sponsorable manifest).
 
 To deploy and configure the backend: 
 
@@ -227,7 +227,6 @@ To deploy and configure the backend:
 1. Configure the following application settings:
     * `GitHub__Token`: a GitHub token with permissions to read the sponsorable profile, emails, sponsorships and repositories
     * `SponsorLink__Account`: the sponsorable GitHub account name, unless it's the same as the GitHub token owner
-    * `SponsorLink__PublicKey`: the Base64-encoded public key from the sponsorable manifest (the contents of `curl.pub.txt` in the example above)
     * `SponsorLink__PrivateKey`: the Base64-encoded private key (the contents of `curl.key.txt` in the example above)
 
 Finally, enable the GitHub identity provider under Settings > Authentication, providing the OAuth app's 
