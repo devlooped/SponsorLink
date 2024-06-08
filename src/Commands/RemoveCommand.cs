@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Principal;
 using System.Text;
-using Microsoft.VisualBasic;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Spectre.Console.AnsiConsole;
@@ -70,6 +68,7 @@ public class RemoveCommand(IHttpClientFactory httpFactory, IGitHubAppAuthenticat
         await Status().StartAsync(Remove.Removing(sponsorables.First()), async ctx =>
         {
             using var http = httpFactory.CreateClient();
+            var creds = GitCredentialManager.CredentialManager.Create(settings.Namespace);
 
             foreach (var sponsorable in sponsorables)
             {
@@ -83,28 +82,28 @@ public class RemoveCommand(IHttpClientFactory httpFactory, IGitHubAppAuthenticat
                 // Simple reading first to get issuer to retrieve the manifest
                 var jwt = await File.ReadAllTextAsync(file, Encoding.UTF8);
                 var handler = new JwtSecurityTokenHandler();
-                if (string.IsNullOrEmpty(jwt) || !handler.CanReadToken(jwt))
-                {
-                    MarkupLine(Remove.Invalid(sponsorable));
-                    File.Delete(file);
-                    continue;
-                }
 
                 File.Delete(file);
+                MarkupLine(Remove.Done(sponsorable));
+                
+                var padding = new Padding(3, 0, 0, 0);
+                Write(new Padder(new Markup(Remove.DeletedManifest(Path.Combine("~", ".sponsorlink", "github", sponsorable + ".jwt"))), padding));
+
+                if (string.IsNullOrEmpty(jwt) || !handler.CanReadToken(jwt))
+                {
+                    MarkupLine(Remove.InvalidManifest);
+                    continue;
+                }
 
                 // Attempt to invoke DELETE /me from issuer.
                 var token = handler.ReadJwtToken(jwt);
                 var issuer = new Uri(new Uri(token.Issuer), "me");
                 if (token.Claims.FirstOrDefault(x => x.Type == "client_id")?.Value is not string clientId)
-                {
-                    MarkupLine(Remove.Invalid(sponsorable));
-                    File.Delete(file);
                     continue;
-                }
 
                 if (await authenticator.AuthenticateAsync(clientId, new Progress<string>(), false, settings.Namespace) is not string accessToken)
                 {
-                    MarkupLine(Remove.AuthMissing(sponsorable));
+                    Write(new Padder(new Markup(Remove.NoCredsFound(issuer, clientId)), padding));
                     continue;
                 }
 
@@ -114,16 +113,19 @@ public class RemoveCommand(IHttpClientFactory httpFactory, IGitHubAppAuthenticat
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
-                    MarkupLine(Remove.Unauthorized(sponsorable));
+                    Write(new Padder(new Markup(Remove.Unauthorized(issuer)), padding));
                 }
                 else if (!response.IsSuccessStatusCode)
                 {
-                    MarkupLine(Remove.ServerError(sponsorable));
+                    Write(new Padder(new Markup(Remove.IssuerFailure(issuer)), padding));
                 }
                 else
                 {
-                    MarkupLine(Remove.Deleted(sponsorable));
+                    Write(new Padder(new Markup(Remove.DeleteEndpoint(issuer)), padding));
                 }
+
+                creds.Remove("https://github.com", clientId);
+                Write(new Padder(new Markup(Remove.DeletedCreds(clientId)), padding));
             }
         });
 

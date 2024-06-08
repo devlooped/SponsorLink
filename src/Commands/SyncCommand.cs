@@ -10,7 +10,7 @@ using static ThisAssembly.Strings;
 namespace Devlooped.Sponsors;
 
 [Description("Synchronizes the sponsorships manifest")]
-public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory) : GitHubAsyncCommand<SyncCommand.SyncSettings>(app, config)
+public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory) : GitHubAsyncCommand<SyncCommand.SyncSettings>(app, config)
 {
     public static class ErrorCodes
     {
@@ -226,7 +226,7 @@ public partial class SyncCommand(ICommandApp app, Config config, IGraphQueryClie
             }
         }
 
-        var config = Config.Build(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink"));
+        var config = DotNetConfig.Config.Build(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink"));
         var autosync = settings.AutoSync;
 
         if (!settings.Unattended &&
