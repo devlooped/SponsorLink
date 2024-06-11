@@ -24,7 +24,12 @@ class Helpers
     static Helpers()
     {
         var collection = new ServiceCollection()
-            .AddHttpClient()
+            .AddHttpClient().ConfigureHttpClientDefaults(defaults => defaults.ConfigureHttpClient(http =>
+            {
+                http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
+                if (Debugger.IsAttached)
+                    http.Timeout = TimeSpan.FromMinutes(10);
+            }))
             .AddLogging()
             .AddSingleton<IConfiguration>(Configuration)
             .AddSingleton(_ => AsyncLazy.Create(async () =>
@@ -49,14 +54,12 @@ class Helpers
             collection.AddHttpClient("GitHub", http =>
             {
                 http.BaseAddress = new Uri("https://api.github.com");
-                http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
                 http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghtoken);
             });
 
             collection.AddHttpClient("GitHub:Token", http =>
             {
                 http.BaseAddress = new Uri("https://api.github.com");
-                http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
                 http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghtoken);
             });
         }
@@ -66,7 +69,6 @@ class Helpers
             collection.AddHttpClient("GitHub:Sponsorable", http =>
             {
                 http.BaseAddress = new Uri("https://api.github.com");
-                http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
                 http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghsponsorable);
             });
         }
