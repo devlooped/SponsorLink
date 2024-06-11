@@ -134,24 +134,20 @@ public class SyncCommandTests
     }
 
     [LocalFact("GitHub:Token")]
-    public async Task ExplicitSponsorableSync_InvalidSponsorableManifest()
+    public async Task ExplicitSponsorableSync_InvalidSponsorableManifestNonMainBranch()
     {
         EnsureAuthenticated();
-
-        var graph = new Mock<IGraphQueryClient>();
-        // Return default 'main' branch from GraphQueries.DefaultBranch
-        graph.Setup(x => x.QueryAsync(GraphQueries.DefaultBranch("kzu", ".github"))).ReturnsAsync("sponsorlink");
 
         var command = new SyncCommand(
             Mock.Of<ICommandApp>(MockBehavior.Strict),
             config,
-            graph.Object,
+            Mock.Of<IGraphQueryClient>(MockBehavior.Strict),
             Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
             Services.GetRequiredService<IHttpClientFactory>());
 
         var settings = new SyncCommand.SyncSettings
         {
-            Sponsorable = ["kzu"],
+            Sponsorable = ["devlooped-bot"],
             Unattended = true,
         };
 

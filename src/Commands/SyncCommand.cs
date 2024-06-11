@@ -55,14 +55,18 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
 
     public override async Task<int> ExecuteAsync(CommandContext context, SyncSettings settings)
     {
-        var result = await base.ExecuteAsync(context, settings);
-        if (result != 0)
-            return result;
+        var firstRunCompleted = config.TryGetBoolean("sponsorlink", "firstrun", out var completed) && completed;
 
+        if (!firstRunCompleted &&
+            app.Run(["welcome"]) is var welcome &&
+            welcome < 0)
+        {
+            return welcome;
+        }
+
+        var result = 0;
         var ghDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink", "github");
         Directory.CreateDirectory(ghDir);
-
-        Debug.Assert(Account != null, "After authentication, Account should never be null.");
 
         var sponsorables = new HashSet<string>();
         if (settings.Sponsorable?.Length > 0)
@@ -76,6 +80,11 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
         }
         else
         {
+            // In order to run discovery, we need an authenticated user
+            result = await base.ExecuteAsync(context, settings);
+            if (result != 0)
+                return result;
+
             // Discover all candidate sponsorables for the current user
             if (await Status().StartAsync(Sync.QueryingUserSponsorships, async _ =>
             {
@@ -133,8 +142,21 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
             {
                 ctx.Status = Sync.DetectingManifest(sponsorable);
                 using var http = httpFactory.CreateClient();
-                var branch = await client.QueryAsync(GraphQueries.DefaultBranch(sponsorable, ".github"));
+
+                // First try default branch
+                var branch = "main";
                 var (status, manifest) = await SponsorableManifest.FetchAsync(sponsorable, branch, http);
+                if (status == SponsorableManifest.Status.NotFound)
+                {
+                    // We can directly query via the default HTTP client since the .github repository must be public.
+                    branch = await httpFactory.GetQueryClient().QueryAsync(new GraphQuery(
+                        $"/repos/{sponsorable}/.github", ".default_branch") { IsLegacy = true });
+
+                    if (branch != null && branch != "main")
+                        // Retry discovery with non-'main' branch
+                        (status, manifest) = await SponsorableManifest.FetchAsync(sponsorable, branch, http);
+                }
+
                 switch (status)
                 {
                     case SponsorableManifest.Status.OK when manifest != null:
@@ -226,7 +248,6 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
             }
         }
 
-        var config = DotNetConfig.Config.Build(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink"));
         var autosync = settings.AutoSync;
 
         if (!settings.Unattended &&

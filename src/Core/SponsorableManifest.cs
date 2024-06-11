@@ -49,11 +49,12 @@ public class SponsorableManifest
     {
         // Try to detect sponsorlink manifest in the sponsorable .github repo
         var url = $"https://github.com/{sponsorable}/.github/raw/{branch ?? "main"}/sponsorlink.jwt";
-
+        var disposeHttp = http == null;
+        
         // Manifest should be public, so no need for any special HTTP client.
-        using (http ??= new HttpClient())
+        try
         {
-            var response = await http.GetAsync(url);
+            var response = await (http ?? new HttpClient()).GetAsync(url);
             if (!response.IsSuccessStatusCode)
                 return (Status.NotFound, default);
 
@@ -66,6 +67,11 @@ public class SponsorableManifest
                 return (Status.AccountMismatch, default);
 
             return (Status.OK, manifest);
+        }
+        finally
+        {
+            if (disposeHttp)
+                http?.Dispose();
         }
     }
 

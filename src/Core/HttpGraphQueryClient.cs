@@ -18,6 +18,9 @@ public static class GraphQueryClientExtensions
     public static IServiceCollection AddGraphQueryClient(this IServiceCollection services)
         => services.AddSingleton<IGraphQueryClientFactory, GraphQueryClientFactory>();
 
+    public static IGraphQueryClient GetQueryClient(this IHttpClientFactory factory, string name = "")
+        => new HttpGraphQueryClient(factory, name);
+
     class GraphQueryClientFactory(IHttpClientFactory http) : IGraphQueryClientFactory
     {
         public IGraphQueryClient CreateClient(string name) => new HttpGraphQueryClient(http, name);
