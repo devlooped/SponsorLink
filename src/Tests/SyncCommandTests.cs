@@ -13,45 +13,6 @@ public class SyncCommandTests
 {
     Config config = Config.Build();
 
-    [LocalFact]
-    public async Task FirstRunWelcome()
-    {
-        config = config.Unset("sponsorlink", "firstrun");
-
-        var command = new SyncCommand(
-            Mock.Of<ICommandApp>(x => x.Run(It.Is<IEnumerable<string>>(args => args.Contains("welcome"))) == -42),
-            config,
-            Mock.Of<IGraphQueryClient>(MockBehavior.Strict),
-            Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
-            Mock.Of<IHttpClientFactory>(MockBehavior.Strict));
-
-        var result = await command.ExecuteAsync(new CommandContext(["sync"], Mock.Of<IRemainingArguments>(), "sync", null), new SyncCommand.SyncSettings());
-
-        Assert.Equal(-42, result);
-    }
-
-    [LocalFact]
-    public async Task FirstRunWelcomeCompleted()
-    {
-        config = config.SetBoolean("sponsorlink", "firstrun", true);
-
-        // By forcing an unauthenticated CLI, we can shortcircuit the execution at the login
-        if (TryExecute("gh", "auth status", out var status))
-            Assert.True(TryExecute("gh", "auth logout --hostname github.com", out var output));
-
-        var command = new SyncCommand(
-            Mock.Of<ICommandApp>(MockBehavior.Strict),
-            config,
-            Mock.Of<IGraphQueryClient>(MockBehavior.Strict),
-            Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
-            Mock.Of<IHttpClientFactory>(MockBehavior.Strict));
-
-        var result = await command.ExecuteAsync(new CommandContext(["sync"], Mock.Of<IRemainingArguments>(), "sync", null), new SyncCommand.SyncSettings());
-
-        // unauthenticated GH CLI
-        Assert.Equal(-1, result);
-    }
-
     [LocalFact("GitHub:Token")]
     public async Task NoSponsorableOrLocalDiscoveryRunsGraphDiscoveryViewerSponsored()
     {

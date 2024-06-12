@@ -13,7 +13,7 @@ namespace Devlooped.Sponsors;
 [Description("Initializes a sponsorable manifest and token")]
 public partial class InitCommand : AsyncCommand<InitCommand.Settings>
 {
-    public class Settings : CommandSettings
+    public class Settings : ToSSettings
     {
         [Description("The base URL of the manifest issuer web app.")]
         [CommandOption("-i|--issuer")]

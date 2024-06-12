@@ -10,7 +10,7 @@ namespace Devlooped.Sponsors;
 [Description("Manages sponsorlink configuration")]
 public class ConfigCommand(Config config) : Command<ConfigCommand.ConfigSettings>
 {
-    public class ConfigSettings : CommandSettings
+    public class ConfigSettings : ToSSettings
     {
         [Description("Enable or disable automatic synchronization of expired manifests.")]
         [CommandOption("--autosync")]
@@ -29,14 +29,17 @@ public class ConfigCommand(Config config) : Command<ConfigCommand.ConfigSettings
 
     public override int Execute(CommandContext context, ConfigSettings settings)
     {
-        if (settings.AutoSync != null)
+        if (settings.AutoSync == true)
         {
             // We persist as a string since that makes it easier to parse from MSBuild.
-            config.SetString("sponsorlink", "autosync", settings.AutoSync.Value.ToString().ToLowerInvariant());
-            if (settings.AutoSync == true)
-                MarkupLine(Strings.Sync.AutoSyncEnabled);
-            else
-                MarkupLine(Strings.Sync.AutoSyncDisabled);
+            config.SetString("sponsorlink", "autosync", "true");
+            MarkupLine(Strings.Sync.AutoSyncEnabled);
+        }
+        else if (settings.AutoSync == false)
+        {
+            // NOTE: should we just unset instead?
+            config.SetString("sponsorlink", "autosync", "false");
+            MarkupLine(Strings.Sync.AutoSyncDisabled);
         }
 
         if (settings.Clear == true)
@@ -50,6 +53,17 @@ public class ConfigCommand(Config config) : Command<ConfigCommand.ConfigSettings
             MarkupLine(Strings.Config.Clear(accounts.Count));
             foreach (var clientId in accounts)
                 Write(new Padder(new Markup(Strings.Config.ClearClientId(clientId)), new Padding(3, 0, 0, 0)));
+        }
+
+        if (settings.ToS == false)
+        {
+            config.Unset("sponsorlink", "tos");
+            MarkupLine(Strings.Config.ToSCleared);
+        }
+        else if (settings.ToS == true)
+        {
+            config.SetString("sponsorlink", "tos", "true");
+            MarkupLine(Strings.Config.ToSAccepted);
         }
 
         return 0;

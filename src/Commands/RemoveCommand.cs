@@ -11,9 +11,9 @@ namespace Devlooped.Sponsors;
 [Description("Removes all manifests and notifies issuers to remove backend data too.")]
 public class RemoveCommand(IHttpClientFactory httpFactory, IGitHubAppAuthenticator authenticator) : AsyncCommand<RemoveCommand.RemoveSettings>
 {
-    public class RemoveSettings : CommandSettings
+    public class RemoveSettings : ToSSettings
     {
-        [Description("Sponsored account(s) to synchronize.")]
+        [Description("Sponsored account(s) to remove.")]
         [CommandArgument(0, "[sponsorable]")]
         public string[]? Sponsorable { get; set; }
 
