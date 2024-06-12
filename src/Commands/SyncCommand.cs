@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using DotNetConfig;
 using Spectre.Console;
@@ -195,7 +196,12 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
             if (status == SponsorManifest.Status.Success)
             {
                 File.WriteAllText(Path.Combine(ghDir, manifest.Sponsorable + ".jwt"), jwt, Encoding.UTF8);
-                MarkupLine(Sync.Thanks(manifest.Sponsorable.PadRight(maxlength)));
+                var roles = new JwtSecurityTokenHandler()
+                {
+                    MapInboundClaims = false
+                }.ReadJwtToken(jwt).Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
+
+                MarkupLine(Sync.Thanks(manifest.Sponsorable.PadRight(maxlength), string.Join(", ", roles)));
             }
             else
             {
@@ -229,7 +235,12 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
                     else if (status == SponsorManifest.Status.Success)
                     {
                         File.WriteAllText(Path.Combine(ghDir, manifest.Sponsorable + ".jwt"), jwt);
-                        MarkupLine(Sync.Thanks(manifest.Sponsorable.PadRight(maxlength)));
+                        var roles = new JwtSecurityTokenHandler()
+                        {
+                            MapInboundClaims = false
+                        }.ReadJwtToken(jwt).Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
+
+                        MarkupLine(Sync.Thanks(manifest.Sponsorable.PadRight(maxlength), string.Join(", ", roles)));
                     }
                     else
                     {

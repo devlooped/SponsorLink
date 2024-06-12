@@ -128,7 +128,6 @@ public class Signing(ITestOutputHelper Output)
             new("iss", "https://sponsorlink.devlooped.com/"),
             new("aud", "https://github.com/devlooped"),
             new("client_id", "a82350fb2bae407b3021"),
-            new("pub", File.ReadAllText(@"../../../signing.txt", Encoding.UTF8)),
             new("sub_jwk", JsonSerializer.Serialize(pubJwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
         };
 

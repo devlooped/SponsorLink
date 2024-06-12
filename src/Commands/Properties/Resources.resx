@@ -225,7 +225,7 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
     <value>Requesting manifest signing ...</value>
   </data>
   <data name="Sync_Thanks" xml:space="preserve">
-    <value>:check_mark_button: [lime]{sponsorable}[/]: thanks for sponsoring 💟</value>
+    <value>:check_mark_button: [lime]{sponsorable}[/]: thanks for sponsoring 💟 [dim](roles: {roles})[/]</value>
   </data>
   <data name="Sync_AutoSync" xml:space="preserve">
     <value>[lime]?[/] Do you want to enable [link=https://www.devlooped.com/SponsorLink/github.html#auto-sync][blue]auto sync[/][/] of expired manifests?</value>
@@ -262,6 +262,9 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
   </data>
   <data name="Validate_InvalidExpired" xml:space="preserve">
     <value>:cross_mark: [lime]{sponsorable}[/]: manifest expired {date}. Run [yellow]gh sponsors sync[/] to generate a new one.</value>
+  </data>
+  <data name="Validate_InvalidPublicKey" xml:space="preserve">
+    <value>:cross_mark: [lime]{sponsorable}[/]: invalid public key (JWK) provided by issuer</value>
   </data>
   <data name="Validate_InvalidSignature" xml:space="preserve">
     <value>:cross_mark: [lime]{sponsorable}[/]: manifest signature is invalid. Run [yellow]gh sponsors sync[/] to generate a new one</value>
