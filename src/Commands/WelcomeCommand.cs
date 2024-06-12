@@ -6,7 +6,7 @@ using Spectre.Console.Cli;
 namespace Devlooped.Sponsors;
 
 [Description("Executes the first-run experience")]
-public class WelcomeCommand(ICommandApp app, Config config) : Command<WelcomeCommand.WelcomeSettings>
+public class WelcomeCommand(Config config) : Command<WelcomeCommand.WelcomeSettings>
 {
     public class WelcomeSettings : ToSSettings
     {

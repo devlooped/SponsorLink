@@ -57,7 +57,7 @@ public partial class ViewCommand(IHttpClientFactory clientFactory) : AsyncComman
                 }
 
                 var sponsorable = new JwtSecurityTokenHandler().ReadJwtToken(await response.Content.ReadAsStringAsync());
-                var pub = sponsorable.Claims.FirstOrDefault(x => x.Type == "pub")?.Value;
+                var pub = sponsorable.Claims.FirstOrDefault(x => x.Type == "sub_jwk")?.Value;
 
                 if (pub is null)
                 {
@@ -66,16 +66,24 @@ public partial class ViewCommand(IHttpClientFactory clientFactory) : AsyncComman
                 }
 
                 var aud = sponsorable.Claims.Where(x => x.Type == "aud").Select(x => x.Value.TrimEnd('/')).ToArray();
+                SecurityKey key;
 
-                var key = RSA.Create();
-                key.ImportRSAPublicKey(Convert.FromBase64String(pub), out _);
+                try
+                {
+                    key = JsonWebKey.Create(pub);
+                }
+                catch (ArgumentException)
+                {
+                    MarkupLine(Strings.Validate.InvalidPublicKey(account));
+                    continue;
+                }
 
                 var validation = new TokenValidationParameters
                 {
                     RequireExpirationTime = true,
                     AudienceValidator = (audiences, token, parameters) => audiences.All(audience => aud.Any(uri => uri == audience.TrimEnd('/'))),
                     ValidIssuer = sponsorable.Issuer,
-                    IssuerSigningKey = new RsaSecurityKey(key),
+                    IssuerSigningKey = key,
                     RoleClaimType = "roles",
                     NameClaimType = "sub",
                 };
