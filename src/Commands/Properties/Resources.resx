@@ -130,28 +130,27 @@
     <value>Welcome to SponsorLink</value>
   </data>
   <data name="FirstRun_What" xml:space="preserve">
-    <value>SponsorLink is a manifest-based (JWTs) mechanism for synchronizing your sponsorships to your local machine. This allows package authors that leverage SponsorLink to provide selective functionality to sponsors, whether individual or organization-wide.</value>
+    <value>SponsorLink syncs your sponsorship(s) to your local machine, enabling package authors to provide selective functionality to sponsors.</value>
     <comment>What</comment>
   </data>
   <data name="FirstRun_How" xml:space="preserve">
-    <value>As a GitHub CLI extension, [italic]gh-sponsors[/] leverages your authenticated user to locate your personal sponsorships, as well as your organizations' and your OSS community contributions. It does this entirely locally with no intermediaries, communicating exclusively with the GitHub API itself.
-
-This information is then used to discover GitHub sponsors accounts that have opted-in to use SponsorLink, by looking up their sponsorable JWT manifest, such as [link=https://github.com/devlooped/.github/blob/main/sponsorlink.jwt][blue]https://github.com/[/][dim][[user/org]][/][blue]/.github/sponsorlink.jwt[/][/]. If the manifest is present, the extension will:
-
-:backhand_index_pointing_right: read from the manifest the issuer URI, public key and GitHub OAuth client (app) ID
+    <value>GitHub users and organizations using [link=https://github.com/sponsors/]GitHub Sponsors[/] (a.k.a. [italic]sponsorables[/]) can opt-in to SponsorLink by providing [link=https://www.devlooped.com/SponsorLink/spec.html#sponsorable-manifest]a standard JWT manifest[/] at [link=https://github.com/devlooped/.github/blob/main/sponsorlink.jwt][blue]https://github.com/[/][dim][[user/org]][/][blue]/.github/sponsorlink.jwt[/][/]. This is the same location used for other [link=https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file]community health files[/]. 
+    
+When you synchronize your sponsorship with a given account, the following steps take place:
+    
+:backhand_index_pointing_right: read sponsorable JWT manifest from [blue]https://github.com/[/][dim][[user/org]][/][blue]/.github/sponsorlink.jwt[/] ([link=https://github.com/devlooped/.github/blob/main/sponsorlink.jwt][blue]example[/][/])
+:backhand_index_pointing_right: read from the manifest the issuer URI, public key and the sponsorable's GitHub OAuth client (app) ID
 :backhand_index_pointing_right: request GitHub OAuth app authorization via the default browser to get a limited acccess token
-   :eyes: you should read the permissions requested by the sponsor account's GitHub app carefully
+   :eyes: you should read the permissions requested by the sponsorable's GitHub app carefully
    :check_mark_button: you can revoke these permissions at any time at [link]https://github.com/settings/applications[/]
-:backhand_index_pointing_right: issue a GET request with that limited token to [blue][[issuer URI]]/sync[/] and get a sponsor JWT manifest 
+:backhand_index_pointing_right: issue a GET request with that limited token to [blue][[issuer URI]]/me[/] and get a sponsor JWT manifest 
    :eyes: the backend will only have access to the information you authorized
 :backhand_index_pointing_right: verify and save sponsor JWT manifest locally for later offline access and validation by libraries and tools
+  :eyes: Sponsor manifests are cached under [blue]~/.sponsorlink[/] ([blue]%userprofile%\.sponsorlink[/] on Windows).
 
-You can also inspect the JWT of both the sponsorable account and your sponsor manifest using [link]https://jwt.io/[/], for example. 
-Both are persisted under [blue]~/.sponsorlink[/] ([blue]%userprofile%\.sponsorlink[/] on Windows).
+You can easily inspect the JWT of both the sponsorable account and your sponsor manifest using [link]https://jwt.io/[/], for example. 
 
-This manifest needs to be sync'ed and downloaded once a month, which is the only point at which each SponsorLink backend computes, signs your sponsorship token and sets a new expiration date.
-
-Learn more about SponsorLink at [link]https://www.devlooped.com/SponsorLink/[/].</value>
+This manifest needs to be sync'ed once a month, which is the only point at which each SponsorLink backend computes, signs your sponsorship manifest and sets a new expiration date. You can also enable [link=https://www.devlooped.com/SponsorLink/github.html#auto-sync]automatic synchronization[/]. Learn more yat [link]https://www.devlooped.com/SponsorLink/[/].</value>
     <comment>How</comment>
   </data>
   <data name="FirstRun_HowTitle" xml:space="preserve">
@@ -163,28 +162,19 @@ Learn more about SponsorLink at [link]https://www.devlooped.com/SponsorLink/[/].
 The short story is: 
 :backhand_index_pointing_right: sponsorship manifests are purely local and offline :check_mark_button: no info persisted in the cloud
 :backhand_index_pointing_right: the backend uses a limited GitHub OAuth app token  :check_mark_button: only email(s) and organization membership determine sponsorships
-:backhand_index_pointing_right: you can be a direct or indirect supporter/sponsor  :purple_heart: direct sponsorship, via an organization or project contributions 
+:backhand_index_pointing_right: you can be a direct or indirect supporter/sponsor  :purple_heart: indirect sponsorship via an organization or project contributions 
 
-Code for the backend as well as this CLI extension are [link=https://www.devlooped.com/SponsorLink/]open source[/]. Please read the [link=https://github.com/devlooped/SponsorLink/blob/main/privacy.md]full privacy policy[/] to learn more.</value>
+Code for the backend and this app are [link=https://www.devlooped.com/SponsorLink/]open source[/]. Please read the [link=https://github.com/devlooped/SponsorLink/blob/main/privacy.md]full privacy policy[/] to learn more.</value>
     <comment>Privacy</comment>
   </data>
   <data name="FirstRun_PrivacyTitle" xml:space="preserve">
     <value>Privacy policy</value>
   </data>
-  <data name="FirstRun_SyncNow" xml:space="preserve">
-    <value>[lime]?[/] [white]Do you want to sync your sponsor manifests now?[/]</value>
-  </data>
   <data name="GitHub_Login" xml:space="preserve">
     <value>[lime]?[/] [white]Do you want to log into the GitHub CLI?[/]</value>
   </data>
-  <data name="GitHub_UserScope" xml:space="preserve">
-    <value>[lime]?[/] [white]Allow read-access to your GitHub account email address(es)?[/] (Required for manifest generation)</value>
-  </data>
   <data name="No" xml:space="preserve">
     <value>No</value>
-  </data>
-  <data name="Session_OpenBrowser" xml:space="preserve">
-    <value>[lime]?[/] Operation requires authentication on github.com. Open your browser now?</value>
   </data>
   <data name="Sync_ConsiderSponsoring" xml:space="preserve">
     <value>:folded_hands: [yellow]{sponsorable}[/]: consider sponsoring at {links}</value>
@@ -323,5 +313,11 @@ Code for the backend as well as this CLI extension are [link=https://www.devloop
   </data>
   <data name="Config_Clear" xml:space="preserve">
     <value>:check_mark_button: Cleared {count} cached credentials. Review app access for the following client ids:</value>
+  </data>
+  <data name="Config_ToSCleared" xml:space="preserve">
+    <value>:check_mark_button: Cleared usage terms acceptance</value>
+  </data>
+  <data name="Config_ToSAccepted" xml:space="preserve">
+    <value>:check_mark_button: Saved usage terms acceptance</value>
   </data>
 </root>

@@ -14,7 +14,7 @@ namespace Devlooped.Sponsors;
 [Description("Validates and displays the active sponsor manifests, if any")]
 public partial class ViewCommand(IHttpClientFactory clientFactory) : AsyncCommand<ViewCommand.ViewSettings>
 {
-    public class ViewSettings : CommandSettings
+    public class ViewSettings : ToSSettings
     {
         [Description("Show detailed information about each manifest")]
         [CommandOption("-d|--details")]

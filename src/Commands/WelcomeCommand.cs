@@ -8,7 +8,7 @@ namespace Devlooped.Sponsors;
 [Description("Executes the first-run experience")]
 public class WelcomeCommand(ICommandApp app, Config config) : Command<WelcomeCommand.WelcomeSettings>
 {
-    public class WelcomeSettings : CommandSettings
+    public class WelcomeSettings : ToSSettings
     {
         [CommandOption("--welcome", IsHidden = true)]
         public bool Force { get; set; }
@@ -16,6 +16,13 @@ public class WelcomeCommand(ICommandApp app, Config config) : Command<WelcomeCom
 
     public override int Execute(CommandContext context, WelcomeSettings settings)
     {
+        if (settings.ToS == true)
+        {
+            // Accept unattended.
+            config.SetString("sponsorlink", "tos", "true");
+            return 0;
+        }
+
         AnsiConsole.Write(new Panel(new Rows(
             new Markup(ThisAssembly.Strings.FirstRun.What)))
         {
@@ -44,13 +51,7 @@ public class WelcomeCommand(ICommandApp app, Config config) : Command<WelcomeCom
             return -1;
         }
 
-        config.SetString("sponsorlink", "firstrun", "true");
-
-        if (AnsiConsole.Confirm(ThisAssembly.Strings.FirstRun.SyncNow))
-        {
-            return app.Run(["sync"]);
-        }
-
+        config.SetString("sponsorlink", "tos", "true");
         return 0;
     }
 }

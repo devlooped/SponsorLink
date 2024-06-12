@@ -13,7 +13,8 @@ public static class App
     {
         var collection = new ServiceCollection();
 
-        collection.AddSingleton(sp =>
+        // Made transient so each command gets a new copy with potentially updated values.
+        collection.AddTransient(sp =>
         {
             var sldir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink");
             Directory.CreateDirectory(sldir);
@@ -49,7 +50,7 @@ public static class App
             config.AddCommand<RemoveCommand>();
             config.AddCommand<SyncCommand>();
             config.AddCommand<ViewCommand>();
-            config.AddCommand<WelcomeCommand>();
+            config.AddCommand<WelcomeCommand>().IsHidden();
         });
 
         services = registrar.Services.BuildServiceProvider();

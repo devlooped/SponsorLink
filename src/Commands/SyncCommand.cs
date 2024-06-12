@@ -23,7 +23,7 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
         public const int SyncFailure = -7;
     }
 
-    public class SyncSettings : CommandSettings
+    public class SyncSettings : ToSSettings
     {
         [Description("Optional sponsored account(s) to synchronize.")]
         [CommandArgument(0, "[sponsorable]")]
@@ -55,15 +55,7 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
 
     public override async Task<int> ExecuteAsync(CommandContext context, SyncSettings settings)
     {
-        var firstRunCompleted = config.TryGetBoolean("sponsorlink", "firstrun", out var completed) && completed;
-
-        if (!firstRunCompleted &&
-            app.Run(["welcome"]) is var welcome &&
-            welcome < 0)
-        {
-            return welcome;
-        }
-
+        // NOTE: ToS acceptance ALWAYS runs from Program.cs
         var result = 0;
         var ghDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink", "github");
         Directory.CreateDirectory(ghDir);

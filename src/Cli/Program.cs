@@ -29,11 +29,18 @@ app.Configure(config =>
 });
 #endif
 
-var firstRunCompleted = services.GetRequiredService<Config>().TryGetBoolean("sponsorlink", "firstrun", out var completed) && completed;
-if (!firstRunCompleted || args.Contains("--welcome"))
+// If we don't have ToS acceptance, we don't run any command other than welcome.
+var tos = services.GetRequiredService<Config>().TryGetBoolean("sponsorlink", "tos", out var completed) && completed;
+if (!tos || args.Contains("--welcome"))
 {
-    app.SetDefaultCommand<WelcomeCommand>();
-    return await app.RunAsync([]);
+    // Force run welcome if --welcome is passed or no tos was accepted yet
+    // preserve all other args just in case the welcome command adds more in the future.
+    var result = await app.RunAsync(args.SkipWhile((s, i) => i == 0 && !s.StartsWith('-')).Prepend("welcome").ToArray());
+    
+    if (result != 0)
+        return result;
+
+    args = args.SkipWhile((s, i) => i == 0 && s == "welcome").Where(x => x != "--welcome").ToArray();
 }
 
 #if DEBUG
