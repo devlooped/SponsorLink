@@ -35,7 +35,7 @@ if (!tos || args.Contains("--welcome"))
 {
     // Force run welcome if --welcome is passed or no tos was accepted yet
     // preserve all other args just in case the welcome command adds more in the future.
-    var result = await app.RunAsync(args.SkipWhile((s, i) => i == 0 && !s.StartsWith('-')).Prepend("welcome").ToArray());
+    var result = await app.RunAsync(args.TakeWhile(x => x == ToSSettings.ToSOption).Prepend("welcome").ToArray());
     
     if (result != 0)
         return result;
