@@ -261,19 +261,19 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
     <value>:check_mark_button: [lime]{sponsorable}[/]: manifest is valid, expires [yellow]{date}[/] [dim](roles: {roles})[/]</value>
   </data>
   <data name="Validate_InvalidExpired" xml:space="preserve">
-    <value>:cross_mark: [lime]{sponsorable}[/]: manifest expired {date}. Run [yellow]gh sponsors sync[/] to generate a new one.</value>
+    <value>:cross_mark: [lime]{sponsorable}[/]: manifest expired {date}. Run [yellow]sponsors sync[/] to generate a new one.</value>
   </data>
   <data name="Validate_InvalidPublicKey" xml:space="preserve">
     <value>:cross_mark: [lime]{sponsorable}[/]: invalid public key (JWK) provided by issuer</value>
   </data>
   <data name="Validate_InvalidSignature" xml:space="preserve">
-    <value>:cross_mark: [lime]{sponsorable}[/]: manifest signature is invalid. Run [yellow]gh sponsors sync[/] to generate a new one</value>
+    <value>:cross_mark: [lime]{sponsorable}[/]: manifest signature is invalid. Run [yellow]sponsors sync[/] to generate a new one</value>
   </data>
   <data name="Validate_Invalid" xml:space="preserve">
-    <value>:cross_mark: [lime]{sponsorable}[/]: manifest is invalid. Run [yellow]gh sponsors sync[/] to generate a new one</value>
+    <value>:cross_mark: [lime]{sponsorable}[/]: manifest is invalid. Run [yellow]sponsors sync[/] to generate a new one</value>
   </data>
   <data name="Sync_UnattendedWithInteractiveAuth" xml:space="preserve">
-    <value>[lime]?[/] Sponsors account [yellow]{account}[/] requires [link=https://www.devlooped.com/SponsorLink/github.html#authentication][blue]interactive authentication[/][/] for synchronization. Please run [yellow]gh sponsors sync {account}[/] interactively.</value>
+    <value>[lime]?[/] Sponsors account [yellow]{account}[/] requires [link=https://www.devlooped.com/SponsorLink/github.html#authentication][blue]interactive authentication[/][/] for synchronization. Please run [yellow]sponsors sync {account}[/] interactively.</value>
   </data>
   <data name="Remove_AllOrSponsorable" xml:space="preserve">
     <value>Either specify accounts to remove or use --all to remove all manifests.</value>

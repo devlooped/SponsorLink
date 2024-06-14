@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>sponsor</AssemblyName>
+    <AssemblyName>sponsors</AssemblyName>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <PackageId>dotnet-sponsor</PackageId>
-    <ToolCommandName>sponsor</ToolCommandName>
+    <PackageId>dotnet-sponsors</PackageId>
+    <ToolCommandName>sponsors</ToolCommandName>
     <RollForward>Major</RollForward>
     <PackAsTool>true</PackAsTool>
     <PackContent>false</PackContent>

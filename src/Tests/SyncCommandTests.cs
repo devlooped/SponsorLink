@@ -136,7 +136,7 @@ public class SyncCommandTests
         var settings = new SyncCommand.SyncSettings
         {
             Sponsorable = ["devlooped"],
-            // NOTE: requires prior running of the `gh sponsors sync --namespace nonsponsoring` command for interactive auth.
+            // NOTE: requires prior running of the `sponsors sync --namespace nonsponsoring` command for interactive auth.
             Namespace = "nonsponsoring",
             Unattended = true,
         };

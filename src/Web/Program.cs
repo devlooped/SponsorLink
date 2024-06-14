@@ -77,7 +77,7 @@ class Program
                     if (string.IsNullOrEmpty(options.Value.PrivateKey))
                         throw new InvalidOperationException($"Missing required configuration 'SponsorLink:{nameof(SponsorLinkOptions.PrivateKey)}'");
 
-                    // The key (as well as the yaml manifest) can be generated using gh sponsors init
+                    // The key (as well as the yaml manifest) can be generated using sponsors init
                     // Install with: gh extension install devlooped/gh-sponsors
                     // See: https://github.com/devlooped/gh-sponsors
                     var rsa = RSA.Create();
