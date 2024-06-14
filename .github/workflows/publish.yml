@@ -11,6 +11,7 @@ on:
 env:
   DOTNET_NOLOGO: true
   Configuration: Release
+  PackOnBuild: true
   
 defaults:
   run:
@@ -44,3 +45,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         working-directory: src\Web
         run: func azure functionapp publish sponsorlink --dotnet-isolated
+
+      - name: 🚀 nuget
+        working-directory: bin
+        run: dotnet nuget push *.nupkg -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
