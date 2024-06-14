@@ -1,8 +1,8 @@
 # Changelog
 
-## [v2.0.0-alpha](https://github.com/devlooped/SponsorLink/tree/v2.0.0-alpha) (2024-06-14)
+## [v1.2.0-beta](https://github.com/devlooped/SponsorLink/tree/v1.2.0-beta) (2024-06-14)
 
-[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v1.1.0...v2.0.0-alpha)
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v1.1.0...v1.2.0-beta)
 
 :sparkles: Implemented enhancements:
 
