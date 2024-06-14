@@ -12,6 +12,7 @@ env:
   DOTNET_NOLOGO: true
   Configuration: Release
   PackOnBuild: true
+  VersionLabel: ${{ github.ref }}
   
 defaults:
   run:
@@ -27,8 +28,7 @@ jobs:
           fetch-depth: 0
 
       - name: 🙏 build
-        shell: bash
-        run: dotnet build -m:1 -p:version=${GITHUB_REF#refs/*/v}
+        run: dotnet build -m:1
 
       - name: 🧪 test
         run: dotnet test 
@@ -43,9 +43,8 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: 🚀 deploy
-        shell: bash
         working-directory: src\Web
-        run: func azure functionapp publish sponsorlink --dotnet-isolated --dotnet-cli-params -p:version=${GITHUB_REF#refs/*/v}
+        run: func azure functionapp publish sponsorlink --dotnet-isolated
 
       - name: 🚀 nuget
         working-directory: bin

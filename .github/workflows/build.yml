@@ -11,9 +11,10 @@ on:
 
 env:
   DOTNET_NOLOGO: true
-  VersionLabel: ${{ github.ref }}
   Configuration: Release
   PackOnBuild: true
+  VersionPrefix: 42.42.${{ github.run_number }}
+  VersionLabel: ${{ github.ref }}
 
 jobs:
   build:
