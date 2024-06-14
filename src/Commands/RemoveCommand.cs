@@ -8,16 +8,16 @@ using static ThisAssembly.Strings;
 
 namespace Devlooped.Sponsors;
 
-[Description("Removes all manifests and notifies issuers to remove backend data too.")]
+[Description("Removes manifests and notifies issuers to remove backend data too.")]
 public class RemoveCommand(IHttpClientFactory httpFactory, IGitHubAppAuthenticator authenticator) : AsyncCommand<RemoveCommand.RemoveSettings>
 {
     public class RemoveSettings : ToSSettings
     {
         [Description("Sponsored account(s) to remove.")]
-        [CommandArgument(0, "[sponsorable]")]
+        [CommandArgument(0, "[account]")]
         public string[]? Sponsorable { get; set; }
 
-        [Description("All manifests found locally should be removed.")]
+        [Description("Remove all accounts with cached local manifests.")]
         [CommandOption("-a|--all")]
         public bool? All { get; set; }
 

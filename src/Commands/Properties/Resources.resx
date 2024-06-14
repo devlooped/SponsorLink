@@ -276,7 +276,7 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
     <value>[lime]?[/] Sponsors account [yellow]{account}[/] requires [link=https://www.devlooped.com/SponsorLink/github.html#authentication][blue]interactive authentication[/][/] for synchronization. Please run [yellow]gh sponsors sync {account}[/] interactively.</value>
   </data>
   <data name="Remove_AllOrSponsorable" xml:space="preserve">
-    <value>Either specify a sponsorable or use --all to remove all manifests.</value>
+    <value>Either specify accounts to remove or use --all to remove all manifests.</value>
   </data>
   <data name="Remove_Removing" xml:space="preserve">
     <value>Processing [lime]{sponsorable}[/]</value>
