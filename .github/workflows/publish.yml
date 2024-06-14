@@ -27,7 +27,8 @@ jobs:
           fetch-depth: 0
 
       - name: 🙏 build
-        run: dotnet build -m:1
+        shell: bash
+        run: dotnet build -m:1 -p:version=${GITHUB_REF#refs/*/v}
 
       - name: 🧪 test
         run: dotnet test 
@@ -42,9 +43,9 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: 🚀 deploy
-        if: github.ref == 'refs/heads/main'
+        shell: bash
         working-directory: src\Web
-        run: func azure functionapp publish sponsorlink --dotnet-isolated
+        run: func azure functionapp publish sponsorlink --dotnet-isolated --dotnet-cli-params -p:version=${GITHUB_REF#refs/*/v}
 
       - name: 🚀 nuget
         working-directory: bin
