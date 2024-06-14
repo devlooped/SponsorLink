@@ -121,7 +121,7 @@
     <value>Accept</value>
   </data>
   <data name="FirstRun_Acceptance" xml:space="preserve">
-    <value>[lime]?[/] [white]Do you accept the above conditions?[/]</value>
+    <value>[lime]?[/] [white]Do you accept the above usage terms?[/]</value>
   </data>
   <data name="FirstRun_Cancel" xml:space="preserve">
     <value>Cancel</value>
