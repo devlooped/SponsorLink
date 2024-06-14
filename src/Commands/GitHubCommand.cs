@@ -29,7 +29,6 @@ public abstract class GitHubCommand(ICommandApp app, Config config) : Command
             return -1;
 
         var tos = config.TryGetBoolean("sponsorlink", "tos", out var completed) && completed;
-        
         if (!tos &&
             app.Run(["welcome"]) is var result &&
             result < 0)

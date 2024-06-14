@@ -21,6 +21,12 @@ public class ConfigCommand(Config config) : Command<ConfigCommand.ConfigSettings
         public bool? Clear { get; set; }
 
         /// <summary>
+        /// Can be used to avoid rendering confirmation messages.
+        /// </summary>
+        [CommandOption("--quiet", IsHidden = true)]
+        public bool? Quiet { get; set; }
+
+        /// <summary>
         /// Property used to modify the namespace from tests for scoping stored passwords.
         /// </summary>
         [CommandOption("--namespace", IsHidden = true)]
@@ -33,13 +39,15 @@ public class ConfigCommand(Config config) : Command<ConfigCommand.ConfigSettings
         {
             // We persist as a string since that makes it easier to parse from MSBuild.
             config.SetString("sponsorlink", "autosync", "true");
-            MarkupLine(Strings.Sync.AutoSyncEnabled);
+            if (settings.Quiet != true)
+                MarkupLine(Strings.Sync.AutoSyncEnabled);
         }
         else if (settings.AutoSync == false)
         {
             // NOTE: should we just unset instead?
             config.SetString("sponsorlink", "autosync", "false");
-            MarkupLine(Strings.Sync.AutoSyncDisabled);
+            if (settings.Quiet != true)
+                MarkupLine(Strings.Sync.AutoSyncDisabled);
         }
 
         if (settings.Clear == true)
@@ -50,20 +58,26 @@ public class ConfigCommand(Config config) : Command<ConfigCommand.ConfigSettings
             foreach (var clientId in accounts)
                 store.Remove("https://github.com", clientId);
 
-            MarkupLine(Strings.Config.Clear(accounts.Count));
-            foreach (var clientId in accounts)
-                Write(new Padder(new Markup(Strings.Config.ClearClientId(clientId)), new Padding(3, 0, 0, 0)));
+            if (settings.Quiet != true)
+            {
+                MarkupLine(Strings.Config.Clear(accounts.Count));
+
+                foreach (var clientId in accounts)
+                    Write(new Padder(new Markup(Strings.Config.ClearClientId(clientId)), new Padding(3, 0, 0, 0)));
+            }
         }
 
         if (settings.ToS == false)
         {
             config.Unset("sponsorlink", "tos");
-            MarkupLine(Strings.Config.ToSCleared);
+            if (settings.Quiet != true)
+                MarkupLine(Strings.Config.ToSCleared);
         }
         else if (settings.ToS == true)
         {
             config.SetString("sponsorlink", "tos", "true");
-            MarkupLine(Strings.Config.ToSAccepted);
+            if (settings.Quiet != true)
+                MarkupLine(Strings.Config.ToSAccepted);
         }
 
         return 0;

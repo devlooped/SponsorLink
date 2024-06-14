@@ -31,7 +31,12 @@ app.Configure(config =>
 
 // If we don't have ToS acceptance, we don't run any command other than welcome.
 var tos = services.GetRequiredService<Config>().TryGetBoolean("sponsorlink", "tos", out var completed) && completed;
-if (!tos || args.Contains("--welcome"))
+if (!tos && args.Contains(ToSSettings.ToSOption))
+{
+    // Implicit acceptance on first run of another tool, like `sync --tos`
+    app.Run(["config", ToSSettings.ToSOption, "--quiet"]);
+}
+else if (!tos || args.Contains("--welcome"))
 {
     // Force run welcome if --welcome is passed or no tos was accepted yet
     // preserve all other args just in case the welcome command adds more in the future.
