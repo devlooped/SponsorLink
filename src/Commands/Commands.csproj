@@ -4,8 +4,6 @@
     <AssemblyName>Devlooped.Sponsors.Commands</AssemblyName>
     <RootNamespace>Devlooped.Sponsors</RootNamespace>
     <TargetFramework>net8.0</TargetFramework>
-    <PackageId>Devlooped.Sponsors.Commands</PackageId>
-    <Description>$(PackageId)</Description>
     <Product>SponsorLink</Product>
   </PropertyGroup>
 
