@@ -20,8 +20,8 @@
 	weak
 [file ".github/workflows/dotnet-file.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/dotnet-file.yml
-	sha = f08c3f28e46e28eb31e70846d65e57aa9553ce56
-	etag = 567444486383d032c1c5fbc538f07e860f92b1d08c66ac6ffb1db64ca539251c
+	sha = 7afe350f7e80a230e922db026d4e1198ba15cae1
+	etag = 65e9794df6caff779eb989c8f71ddf4d4109b24a75af79e4f8d0fe6ba7bd9702
 	weak
 [file ".github/workflows/includes.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/includes.yml
@@ -35,8 +35,8 @@
 	weak
 [file "src/Directory.Build.props"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
-	sha = 57653a2032249e7b200e7d968ea3ad365f943eb6
-	etag = 981b945dd9e20082bd1e2031d41d32786a914e59ff858e71a80c31fb9cddc9de
+	sha = 14deaea5cecc64df51781d29891a2f67caf8be16
+	etag = f177eb767aaa6a347da43ff7ff419c9a0736c562cb171e17ded8007a1945a8b0
 	weak
 [file "src/Directory.Build.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
