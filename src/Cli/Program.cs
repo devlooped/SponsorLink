@@ -19,7 +19,7 @@ var app = App.Create(out var services);
 if (args.Contains("-?"))
     args = args.Select(x => x == "-?" ? "-h" : x).ToArray();
 
-app.Configure(config => config.SetApplicationName("sponsorlink"));
+app.Configure(config => config.SetApplicationName("sponsor"));
 
 #if GH
 app.Configure(config =>

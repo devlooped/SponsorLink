@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>sponsorlink</AssemblyName>
+    <AssemblyName>sponsor</AssemblyName>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <PackageId>dotnet-sponsorlink</PackageId>
-    <ToolCommandName>sponsorlink</ToolCommandName>
+    <PackageId>dotnet-sponsor</PackageId>
+    <ToolCommandName>sponsor</ToolCommandName>
     <RollForward>Major</RollForward>
     <PackAsTool>true</PackAsTool>
     <PackContent>false</PackContent>
-    <Description>SponsorLink CLI</Description>
+    <Description>SponsorLink CLI for synchronizing your GitHub Sponsors status to your dev machine</Description>
     <PackageTags>dotnet dotnet-tool tools</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NuGetizer" Version="1.2.2" PrivateAssets="all"/>
+    <PackageReference Include="NuGetizer" Version="1.2.2" PrivateAssets="all" />
     <PackageReference Include="Spectre.Console.Cli" Version="0.49.1" />
     <PackageReference Include="Devlooped.JQ" Version="1.7.1.1" />
   </ItemGroup>
