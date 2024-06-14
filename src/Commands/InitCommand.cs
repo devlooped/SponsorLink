@@ -10,7 +10,7 @@ using Spectre.Console.Json;
 
 namespace Devlooped.Sponsors;
 
-[Description("Initializes a sponsorable manifest and token")]
+[Description("Initializes a sponsorable JWT manifest and signing keys")]
 public partial class InitCommand : AsyncCommand<InitCommand.Settings>
 {
     public class Settings : ToSSettings

@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using DotNetConfig;
@@ -10,7 +9,7 @@ using static ThisAssembly.Strings;
 
 namespace Devlooped.Sponsors;
 
-[Description("Synchronizes the sponsorships manifest")]
+[Description("Synchronizes sponsorship manifests")]
 public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory) : GitHubAsyncCommand<SyncCommand.SyncSettings>(app, config)
 {
     public static class ErrorCodes
@@ -27,7 +26,7 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
     public class SyncSettings : ToSSettings
     {
         [Description("Optional sponsored account(s) to synchronize.")]
-        [CommandArgument(0, "[sponsorable]")]
+        [CommandArgument(0, "[account]")]
         public string[]? Sponsorable { get; set; }
 
         [CommandOption("-i|--issuer", IsHidden = true)]
@@ -42,7 +41,7 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
         [CommandOption("-u|--unattended")]
         public bool Unattended { get; set; }
 
-        [Description("Perform local-only discovery of accounts to sync from previously cached manifests, if no sponsorables are provided.")]
+        [Description("Sync only existing local manifests.")]
         [DefaultValue(false)]
         [CommandOption("-l|--local")]
         public bool LocalDiscovery { get; set; }
@@ -52,6 +51,14 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
         /// </summary>
         [CommandOption("--namespace", IsHidden = true)]
         public string Namespace { get; set; } = GitHubAppAuthenticator.DefaultNamespace;
+
+        public override ValidationResult Validate()
+        {
+            if (Sponsorable?.Length > 0 && LocalDiscovery)
+                return ValidationResult.Error(Sync.LocalOrSponsorables);
+
+            return base.Validate();
+        }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, SyncSettings settings)
@@ -77,58 +84,59 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
             var runDiscovery = nonInteractive || Confirm(Sync.AutomaticDiscovery);
             if (runDiscovery)
             {
-            // In order to run discovery, we need an authenticated user
-            result = await base.ExecuteAsync(context, settings);
-            if (result != 0)
-                return result;
+                // In order to run discovery, we need an authenticated user
+                result = await base.ExecuteAsync(context, settings);
+                if (result != 0)
+                    return result;
 
-            // Discover all candidate sponsorables for the current user
-            if (await Status().StartAsync(Sync.QueryingUserSponsorships, async _ =>
-            {
-                if (await client.QueryAsync(GraphQueries.ViewerSponsored) is not { } sponsored)
+                // Discover all candidate sponsorables for the current user
+                if (await Status().StartAsync(Sync.QueryingUserSponsorships, async _ =>
                 {
-                    MarkupLine(Sync.QueryingUserSponsorshipsFailed);
-                    return ErrorCodes.GraphDiscoveryFailure;
-                }
-                sponsorables.AddRange(sponsored);
-                return 0;
-            }) == ErrorCodes.GraphDiscoveryFailure)
-            {
-                return ErrorCodes.GraphDiscoveryFailure;
-            }
-
-            sponsorables.AddRange((await client.GetUserContributionsAsync()).Keys);
-
-            var orgs = Array.Empty<Organization>();
-
-            if (await Status().StartAsync(Sync.QueryingUserOrgs, async _ =>
-            {
-                if (await client.QueryAsync(GraphQueries.ViewerOrganizations) is not { } viewerorgs)
-                {
-                    MarkupLine(Sync.QueryingUserOrgsFailed);
-                    return ErrorCodes.GraphDiscoveryFailure;
-                }
-                orgs = viewerorgs;
-                return 0;
-            }) == ErrorCodes.GraphDiscoveryFailure)
-            {
-                return ErrorCodes.GraphDiscoveryFailure;
-            }
-
-            // Collect org-sponsored accounts. NOTE: we'll typically only get public sponsorships 
-            // since the current user would typically NOT be an admin of these orgs. 
-            // But they can always specify the orgs they are interested in via the command line.
-            await Status().StartAsync(Sync.QueryingUserOrgSponsorships, async ctx =>
-            {
-                foreach (var org in orgs)
-                {
-                    ctx.Status(Sync.QueryingOrgPublicSponsorships(org.Login));
-                    if (await client.QueryAsync(GraphQueries.OrganizationSponsorships(org.Login)) is { Length: > 0 } sponsored)
+                    if (await client.QueryAsync(GraphQueries.ViewerSponsored) is not { } sponsored)
                     {
-                        sponsorables.AddRange(sponsored);
+                        MarkupLine(Sync.QueryingUserSponsorshipsFailed);
+                        return ErrorCodes.GraphDiscoveryFailure;
                     }
+                    sponsorables.AddRange(sponsored);
+                    return 0;
+                }) == ErrorCodes.GraphDiscoveryFailure)
+                {
+                    return ErrorCodes.GraphDiscoveryFailure;
                 }
-            });
+
+                sponsorables.AddRange((await client.GetUserContributionsAsync()).Keys);
+
+                var orgs = Array.Empty<Organization>();
+
+                if (await Status().StartAsync(Sync.QueryingUserOrgs, async _ =>
+                {
+                    if (await client.QueryAsync(GraphQueries.ViewerOrganizations) is not { } viewerorgs)
+                    {
+                        MarkupLine(Sync.QueryingUserOrgsFailed);
+                        return ErrorCodes.GraphDiscoveryFailure;
+                    }
+                    orgs = viewerorgs;
+                    return 0;
+                }) == ErrorCodes.GraphDiscoveryFailure)
+                {
+                    return ErrorCodes.GraphDiscoveryFailure;
+                }
+
+                // Collect org-sponsored accounts. NOTE: we'll typically only get public sponsorships 
+                // since the current user would typically NOT be an admin of these orgs. 
+                // But they can always specify the orgs they are interested in via the command line.
+                await Status().StartAsync(Sync.QueryingUserOrgSponsorships, async ctx =>
+                {
+                    foreach (var org in orgs)
+                    {
+                        ctx.Status(Sync.QueryingOrgPublicSponsorships(org.Login));
+                        if (await client.QueryAsync(GraphQueries.OrganizationSponsorships(org.Login)) is { Length: > 0 } sponsored)
+                        {
+                            sponsorables.AddRange(sponsored);
+                        }
+                    }
+                });
+            }
         }
 
         var manifests = new List<SponsorableManifest>();

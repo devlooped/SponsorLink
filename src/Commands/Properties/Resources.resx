@@ -326,4 +326,7 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
   <data name="Sync_AutomaticDiscovery" xml:space="preserve">
     <value>[lime]?[/] No sponsor accounts were specified for sync. Perform automatic discovery using the GitHub CLI? </value>
   </data>
+  <data name="Sync_LocalOrSponsorables" xml:space="preserve">
+    <value>Cannot specify both --local and specific accounts.</value>
+  </data>
 </root>

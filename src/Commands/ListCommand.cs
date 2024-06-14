@@ -6,7 +6,7 @@ using Spectre.Console.Cli;
 
 namespace Devlooped.Sponsors;
 
-[Description("Lists user and organization sponsorships")]
+[Description("Lists current user and organization sponsorships leveraging the GitHub CLI")]
 public class ListCommand(ICommandApp app, Config config, IGraphQueryClient client) : GitHubAsyncCommand(app, config)
 {
     record Organization(string Login, string[] Sponsorables);
