@@ -73,6 +73,10 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
         }
         else
         {
+            var nonInteractive = !Environment.UserInteractive || System.Console.IsInputRedirected || System.Console.IsOutputRedirected;
+            var runDiscovery = nonInteractive || Confirm(Sync.AutomaticDiscovery);
+            if (runDiscovery)
+            {
             // In order to run discovery, we need an authenticated user
             result = await base.ExecuteAsync(context, settings);
             if (result != 0)

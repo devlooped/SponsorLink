@@ -323,4 +323,7 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
   <data name="Config_ToSAccepted" xml:space="preserve">
     <value>:check_mark_button: Saved usage terms acceptance</value>
   </data>
+  <data name="Sync_AutomaticDiscovery" xml:space="preserve">
+    <value>[lime]?[/] No sponsor accounts were specified for sync. Perform automatic discovery using the GitHub CLI? </value>
+  </data>
 </root>
