@@ -34,7 +34,6 @@ jobs:
         run: dotnet test 
         
       - name: ⚙ func 4.x
-        if: github.ref == 'refs/heads/main'
         run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
 
       - name: 🔓 login
