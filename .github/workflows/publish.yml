@@ -5,8 +5,8 @@
 name: publish
 on:
   workflow_dispatch:
-  release:
-    types: [released]
+  release: 
+    types: [prereleased, released]  # pre-release
 
 env:
   DOTNET_NOLOGO: true
