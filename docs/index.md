@@ -42,51 +42,7 @@ The synchronization is performed by a separate tool, which runs interactively so
 as to properly inform the user of the actions being taken and to ensure proper consent 
 is given before any data is exchanged.
 
-### Sponsor Manifest Sync
-
-The reference implementation of SponsorLink leverages the [GitHub CLI](https://cli.github.com/) 
-to lookup a user's sponsorships and sync them locally for offline use.
-
-The tool is implemented as a [GitHub CLI extension](https://docs.github.com/en/github-cli/github-cli/using-github-cli-extensions) 
-which can be installed by running the following command:
-
-```shell
-gh extension install devlooped/gh-sponsors
-```
-
-On first run, the tool provides the usage terms, private policy and asks for
-consent to proceed.
-
-Subsequently (periodically or on-demand), the user runs `gh sponsors` to 
-sync their sponsorships for offline use while consuming sponsorable libraries. 
-
-{: .highlight }
-> Running `gh sponsor sync [sponsorable]` will sync the manifest for the specified account.
-> and typically be much quicker than the entire discovery + sync for all candidate 
-> accounts.
-
-Whenever run, the tool performs the following steps (entirely locally without 
-any involved intermediary):
-
-1. Determine sponsorable account candidates for the current user, using the
-   GitHub API to list all directly sponsored accounts, organizations the user is a 
-   member of and their (public) sponsorships, and all repositories the user has contributed
-   to, which can be considered as indirect sponsorships.
-1. Each candidate is checked for a SponsorLink manifest at `https://github.com/[account]/.github/raw/main/sponsorlink.jwt`.
-   This location is the same as the.github/ [default community health files](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file)
-1. If found, the manifest consist of a signed [JWT](https://jwt.io) containing some 
-   [standard claims](spec.html#sponsorable-manifest) plus a [client_id](https://www.rfc-editor.org/rfc/rfc8693.html#name-client_id-client-identifier)
-   claim. This is the Client ID of a [GitHub OAuth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app) 
-   app belonging to the sponsorable with Device Flow authorization enabled.
-1. At this point the user is directed to authenticate on github.com with an OAuth app provided 
-   by the sponsorable account which requests the necessary permissions to read the user's profile 
-   and email(s) for sponsorship linking. 
-1. A request is made to the issuer's backend using the obtained OAuth access token, to get a 
-   signed [sponsor manifest](spec.html#sponsor-manifest) which is then stored locally at `~/.sponsorlink/github/[sponsorable].jwt`.
-
-{: .highlight }
-The `gh-sponsors` extension uses a separate OAuth access token for each sponsorable 
-to guarantee isolation and ensure explicit permissions are granted individually.
+<!-- include github.md#sync -->
 
 After a successful sync of the [sponsor manifest](spec.html#sponsor-manifest), the 
 libraries and tools can now check for its presence, authenticity and expiration 

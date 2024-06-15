@@ -50,7 +50,7 @@ Roughly, the reference implementation works as follows:
    that they are seeking funding, how to fund the project and how to sync their status, 
    which is unknown at this point.
 2. User decides to sponsor the project, does so on github.com
-3. User installs the suggested [dotnet sponsors global tool](https://www.nuget.org/packages/dotnet-sponsors) and runs `sponsors sync [account]` to sync their sponsorships.
+3. User installs the suggested [dotnet sponsor global tool](https://www.nuget.org/packages/dotnet-sponsor) and runs `sponsor sync [account]` to sync their sponsorships.
    * On first run, user accepts usage terms and conditions.
 4. The tool fetches the author's [sponsorable manifest](https://www.devlooped.com/SponsorLink/spec.html#sponsorable-manifest) from their community files repo 
    at `https://github.com/[account]/.github/blob/[default_branch]/sponsorlink.jwt` and 

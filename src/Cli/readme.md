@@ -3,14 +3,14 @@ SponsorLink manifest synchronization dotnet global tool.
 Example:
 
 ```bash
-sponsors sync devlooped
+sponsor sync devlooped
 ```
 
 Sync options:
 
 ```bash
 USAGE:
-    sponsors sync [account] [OPTIONS]
+    sponsor sync [account] [OPTIONS]
 
 ARGUMENTS:
     [account]    Optional sponsored account(s) to synchronize
@@ -26,7 +26,7 @@ Other commands:
 
 ```bash
 USAGE:
-    sponsors [OPTIONS] <COMMAND>
+    sponsor [OPTIONS] <COMMAND>
 
 OPTIONS:
     -h, --help    Prints help information

@@ -15,49 +15,54 @@ on their dev machine, to enable sponsorable libraries and tools to provide spons
 The reference implementation comprises two parts:
 
 * Issuer backend service for self-hosting by sponsorable accounts.
-* [GitHub CLI extension](https://docs.github.com/en/github-cli/github-cli/using-github-cli-extensions) for users to sync their sponsor manifest(s) with the backend service(s).
+* CLI tool for users to sync their sponsor manifest(s) with the backend service(s).
 
 The primary goal of the reference implementation is to provide a simple way for sponsorables to 
 issue sponsor manifests and for sponsors to sync them locally. The backend service is self-hosted by 
 the sponsorable account, ensuring that no private data is shared with the SponsorLink developer.
 
+<!-- #sync -->
 ## Sponsor Manifest Sync
 
-The user-facing tool is implemented as a [GitHub CLI extension](https://docs.github.com/en/github-cli/github-cli/using-github-cli-extensions) 
+The user-facing tool is implemented as a [dotnet global tool](https://nuget.org/packages/dotnet-sponsor) 
 which can be installed by running the following command:
 
 ```shell
-gh extension install devlooped/gh-sponsors
+dotnet tool install -g dotnet-sponsor
 ```
 
-{: .highlight }
-On first run, the tool provides the usage terms, private policy and asks for
-consent to proceed.
+(or `dotnet tool update -g dotnet-sponsor` to update to the latest version).
 
-The user subsequently runs `gh sponsors` to sync their sponsorships for offline use while 
-consuming sponsorable libraries. 
+{: .highlight }
+On first run, the tool provides the usage terms, private policy and asks for consent to proceed.
+
+The user subsequently runs `sponsors sync [account]*` to sync the manifest for the given account(s) 
+for offline use while consuming sponsorable libraries. 
 
 Whenever run, the tool performs the following steps:
 
-1. Use the the GitHub CLI API to determine sponsorable candidates for the current user, which are:
+1. If no accounts were provided, automatic discovery is offered, which involves using the the GitHub CLI API 
+   to determine sponsorable candidate accounts for the current user, which are:
 
    - [x] All directly sponsored accounts
    - [x] Publicly sponsored accounts by organizations the user is a member of
    - [x] Sponsorables of repositories the user has contributed to, considered indirect sponsporships
 
-1. Each candidate is checked for a SponsorLink manifest at `https://github.com/[account]/.github/raw/main/sponsorlink.jwt`.
+1. Each account is checked for a SponsorLink manifest at `https://github.com/[account]/.github/raw/main/sponsorlink.jwt`.
    This location is the same as the GitHub [default community health files](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file)
 1. If found, the [sponsorable manifest](spec.html#sponsorable-manifest) `client_id` and `iss` claims are 
    used to authenticate with the sponsorable account's backend service and request the updated sponsor manifest. 
 
 {: .important }
-> Running `gh sponsor sync [account]*` will sync the manifest for specific account(s),
+> Running `sponsor sync [account]*` will sync the manifest for specific account(s),
 > and typically be much faster than the entire discovery + sync for all candidate 
 > accounts.
 
 This implementation honors the recommended convention for manifest location and places them 
 at `~/.sponsorlink/github/[sponsorable].jwt`.
+<!-- #sync -->
 
+<!-- #auth -->
 ### Authentication
 
 In order to avoid sharing any data (either by the sponsorable as well as the sponsor) with the 
@@ -111,14 +116,14 @@ the libraries and tools themselves would typically embed this public key for pur
 
 ### Auto Sync
 
-When running the `gh sponsors sync` command, the tool will ask whether to enable auto-sync. If enabled, 
+When running the `sponsor sync` command, the tool will ask whether to enable auto-sync. If enabled, 
 tools and libraries checking the manifest can attempt to refresh an expired manifest in an exclusively 
 non-interactive way, by using the cached access token to request a new manifest from the sponsorable backend 
 service. 
 
 This unattended refresh is subject to the same consent and permissions as the initial sync, and it may 
 not succeed (i.e. an interactive authentication to get new consent is needed). The user can disable 
-auto-sync at any time by running `gh sponsors sync --autosync=false`.
+auto-sync at any time by running `sponsor sync --autosync=false`.
 
 {: .important }
 > By enabling *autosync*, you agree to allow other tools and libraries to automatically check for 
@@ -156,15 +161,15 @@ where you'll deploy the issuer backend service.
 Next you will need to create a valid sponsorable manifest and upload it to your GitHub account's community 
 health files repo (`.github` repo root).
 
-The `gh sponsors` tool provides a command to generate it, `init`:
+The `sponsor` tool provides a command to generate it, `init`:
 
 ```shell
-> gh sponsors init --help
+> sponsor init --help
 DESCRIPTION:
 Initializes a sponsorable manifest and token
 
 USAGE:
-    gh sponsors init [OPTIONS]
+    sponsor init [OPTIONS]
 
 OPTIONS:
     -h, --help                 Prints help information
@@ -177,7 +182,7 @@ OPTIONS:
 If you were initializing the sponsorable manifest for the `curl` GitHub account, you would run:
 
 ```shell
-gh sponsors init -i https://curl.azurewebsites.net -a https://github.com/sponsors/curl -c [client_id]
+sponsor init -i https://curl.azurewebsites.net -a https://github.com/sponsors/curl -c [client_id]
 ```
 
 This will generate a few files in the current directory: 
