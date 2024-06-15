@@ -255,7 +255,7 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
     <value>:cross_mark: [lime]{sponsorable}[/]: failed to retrieve issuer manifest JWT from {url}</value>
   </data>
   <data name="Validate_NoPublicKey" xml:space="preserve">
-    <value>:cross_mark: [lime]{sponsorable}[/]: missing 'pub' public key claim from issuer manifest</value>
+    <value>:cross_mark: [lime]{sponsorable}[/]: missing 'sub_jwk' public key claim from issuer manifest</value>
   </data>
   <data name="Validate_ValidExpires" xml:space="preserve">
     <value>:check_mark_button: [lime]{sponsorable}[/]: manifest is valid, expires [yellow]{date}[/] [dim](roles: {roles})[/]</value>

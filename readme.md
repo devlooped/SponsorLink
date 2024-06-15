@@ -1,5 +1,11 @@
 # ![](https://github.com/devlooped/SponsorLink/raw/main/assets/img/sponsorlink-32.png) SponsorLink 
 
+Core specification and reference implementation for integrating GitHub Sponsors into 
+libraries and tools.
+
+[![Spec](https://img.shields.io/github/v/release/devlooped/SponsorLink?include_prereleases&sort=semver&display_name=tag&label=spec&labelColor=EA4AAA&color=black)](https://www.devlooped.com/SponsorLink/spec.html)
+[![Downloads](https://img.shields.io/nuget/dt/dotnet-sponsors.svg?color=blue)](https://www.nuget.org/packages/dotnet-sponsors)
+
 Integrate [GitHub Sponsors](https://github.com/sponsors) into your libraries so that 
 users can be properly linked to their sponsorship to unlock features or simply get 
 the recognition they deserve for supporting your project. 
@@ -26,9 +32,8 @@ That is not to say that there aren't other mechanisms that can provide similar
 functionality and support. At this point, however, the tooling, API access and 
 very low barrier to entry make it a great initial choice for SponsorLink.
 
-That said, the technical implementation is not deeply tied to GitHub Sponsors, 
-and might evolve to include other platforms in the future, provided they offer 
-similar levels of integration and support.
+That said, the reference implementation is not deeply tied to GitHub Sponsors, 
+and the specification is entirely agnostic to the sponsorship platform. 
 
 The value SponsorLink brings is in providing the "missing" link between a user's 
 sponsorship and the libraries they use, in an easy to check, secure and offline 
@@ -37,106 +42,52 @@ way.
 <!-- #package -->
 ## How it works
 
-1. A library author adds a check for an environment variable named `SPONSORLINK_MANIFEST` 
-   which contains a signed JWT with a bunch of hashes that represents a user's sponsorships.
-2. If it's not found (or expired or its signature is invalid), the library issues a 
-   notice (i.e. a diagnostic message) to the user, explaining they are seeking funding, 
-   how to fund the project and how to sync their sponsorlink manifest.
-3. The user decides to sponsor the project, does so on github.com, and then downloads 
-   the [GitHub CLI](https://cli.github.com/) and installs the 
-   [gh-sponsors](https://github.com/devlooped/gh-sponsors) extension by running 
-   `gh extension install devlooped/gh-sponsors`.
-4. The user runs `gh sponsors` to accept the usage terms and syncs their sponsorships 
-   manifest.
-5. Now the library can check for the `SPONSORLINK_MANIFEST` environment variable, 
-   which will contain a signed JWT. The library can verify the signature and expiration, 
-   and create (locally) a hash with `base62(sha256([salt]+[user/org]+[sponsored]))` 
-   where:
-   a. `salt` is the value of the `SPONSORLINK_INSTALLATION` environment variable, 
-      initialized to a new GUID when the `gh sponsors` tool ran.
-   b. `user/org` should be the user's email or his organization's domain name (for 
-      org-wide sponsorships).
-   c. `sponsored` is the GH sponsors account to check for sponsorships from the 
-      user/org.
-   d. If the JWT token contains a `hash` claim with the given hash, then the user 
-      is a sponsor.
-5. Now the user can either get additional features from the library, or simply have 
-   the initial notice to go away. The actual behavior is up to the library author.
+Roughly, the reference implementation works as follows:
 
-> NOTE: The manifest also contains sponsorships from organizations a user belongs to. 
-> This relies on organizations' [verified domain](https://docs.github.com/en/organizations/managing-organization-settings/verifying-or-approving-a-domain-for-your-organization).
+1. A library/tool author adds a check (i.e. on usage, build, etc.) for a 
+   [sponsor manifest](https://www.devlooped.com/SponsorLink/spec.html#sponsor-manifest) 
+   at a well-known location in the local machine (i.e. `~/.sponsorlink/github/devlooped.jwt.`). If not found, the library/tool issues a notice to the user, typically stating 
+   that they are seeking funding, how to fund the project and how to sync their status, 
+   which is unknown at this point.
+2. User decides to sponsor the project, does so on github.com
+3. User installs the suggested [dotnet sponsors global tool](https://www.nuget.org/packages/dotnet-sponsors) and runs `sponsors sync [account]` to sync their sponsorships.
+   * On first run, user accepts usage terms and conditions.
+4. The tool fetches the author's [sponsorable manifest](https://www.devlooped.com/SponsorLink/spec.html#sponsorable-manifest) from their community files repo 
+   at `https://github.com/[account]/.github/blob/[default_branch]/sponsorlink.jwt` and 
+   uses its information to authenticate the user on github.com with an OAuth app belonging 
+   to the author, using device flow.
+5. The resulting authentication token is used to invoke the author's backend ("issuer") 
+   API to retrieve the user's sponsor manifest (if any) and persist it at the well-known location 
+   mentioned in step 1. This manifest is signed, has an expiration date and can be 
+   verified by the library/tool without any network access.
 
-> NOTE: contributors to a project are also considered sponsors of the account(s) in 
-> the project's `FUNDING.yml` file.
+Notes:
+1. Sponsor manifest expires monthly (like GitHub sponsorships themselves) and is signed 
+   with a private key only the author has access to but is public and accessible on the 
+   sponsorable manifest.
+2. Users can optionally turn on/off auto-sync, so that after the first sync, the author can 
+   automatically refresh the manifest on the user's behalf by re-running the sync command 
+   unattended.
+3. Users can have the following role claims:
+   * `user`: the user is direct sponsor of the account.
+   * `org`: the user is a member of an organization that sponsors the account.
+   * `contrib`: the user is a contributor to the account's project(s).
+   * `team`: the user is team a member of the author's organization.
+4. Typically, an autor would consider any of the above roles to qualify as an active 
+   sponsor, but the actual behavior is up to the library/tool author.
 
-> NOTE: the email/domain never leaves the user's machine when checking for sponsorships 
-> and it happens entirely offline against the JWT token persisted in the environment 
-> variable.
-
-## Privacy Considerations
-
-SponsorLink is build by developers for developers. As such, we don't have an attorney 
-or a big corporation backing this. If you're evaluating SponsorLink, it's likely because 
-you are currently sponsoring or considering sponsoring the developer of a package you 
-enjoy which has integrated SponsorLink, or you are considering integrating it in your 
-library.
-
-The short story is: we never persist or access *any* personally identifying information, 
-with the sole exception being your GitHub user identifier (an integer like `169707`) 
-which you authorize as part of authenticating with your GitHub account to our backend 
-API (we use [Auth0](https://auth0.com) for this). This identifier is already public for
-everyone on GitHub (i.e. open [Linus](https://api.github.com/users/torvalds)
-or [microsoft](https://api.github.com/orgs/microsoft)).
-
-Everything else is hashed and salted locally with a random GUID so the resulting hashes 
-cannot be used to uncover any of the original information. All checks are performed 
-fully offline with no connnection back to any external servers. Nothing about the user 
-can be inferred from the hashes (other than their count).
-
-Finally, a user can remove *all* traces (both locally and on the backend) of their 
-interaction with SponsorLink by simply running `gh sponsorlink remove` and then delete 
-the extension entirely with `gh extension remove sponsors`.
-
-Please read the [full privacy policy](/privacy.md) to learn more.
-
-<!-- #package -->
+[Explore the documentation site](https://www.devlooped.com/SponsorLink) to learn more, 
+and make sure to check the [privacy statement](https://www.devlooped.com/SponsorLink/privacy.html).
 
 ## Integrating via NuGet for .NET
 
-[![Version](https://img.shields.io/nuget/vpre/Devlooped.SponsorLink.svg?color=royalblue)](https://www.nuget.org/packages/Devlooped.SponsorLink)
-[![Downloads](https://img.shields.io/nuget/dt/Devlooped.SponsorLink.svg?color=green)](https://www.nuget.org/packages/Devlooped.SponsorLink)
+The reference implementation .NET global tool, `dotnet-sponsors`, provides generic 
+manifest discovery and sync capabilities, but the actual check from within a library 
+or tool is left to the author.
 
-Library authors can manually integrate SponsorLink whichever way they want (e.g. as 
-a build task, custom analyzer, etc.), and just using any JWT library to check for 
-the presence of a `hash` claim in the `SPONSORLINK_MANIFEST` environment variable.
+Since the sponsor manifest is a standard JWT token, it can be verified by any JWT
+library in any language and at any point in the library/tool usage (at installation 
+time, run-time, build-time, etc.).
 
-To simplify this (already fairly simple) process, we provide a 
-[NuGet package](https://www.nuget.org/packages/Devlooped.SponsorLink) that includes 
-a few helper classes to make this easier, as development-dependency only and source-only.
-
-For the most part, you just need to add a reference to the package, and then run this 
-line of code in your library's code:
-
-```csharp
-SponsorLink.Initialize(
-    [git repo root or project directory],
-    [sponsorable account(s) to check for]);
-```
-
-After that, the `SponsorLink.Status` property provides the current status of the 
-manifest: 
-
-```csharp
-public enum ManifestStatus { Expired, Invalid, NotFound, Verified }
-```
-
-There's an `SponsorLink.IsSponsor` property that returns `true` if the user is a 
-sponsor of any of the accounts specified in the `Initialize` call, as well as 
-`SponsorLink.IsEditor` property to avoid running outside the context of an actual 
-editor (e.g. Visual Studio, Rider).
-
-The [analyzer sample](/samples/dotnet/Analyzer) provides a complete example.
-
-> NOTE: the SponsorLink package is *NEVER* a dependency of your library packages.
-> All code is provided as source-only as helpers to make the standard JWT check easier.
-
+If you are looking for inspiration on how to do this for .NET with NuGet and C#, 
+check the code we use ourselves in [the devlooped OSS template repo](https://github.com/devlooped/oss/tree/main/src/SponsorLink).

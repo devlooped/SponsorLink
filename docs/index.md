@@ -5,9 +5,8 @@ page_toc: false
 ---
 # ![](https://github.com/devlooped/SponsorLink/raw/main/assets/img/sponsorlink-32.png) SponsorLink 
 
-SponsorLink's goal is to raise awareness of your project's funding needs, 
-help users sponsor your project and thus improve the sustainability of OSS 
-projects.
+SponsorLink's goal is to raise awareness of your OSS projects' funding needs, 
+help users sponsor them and thus improve their longer-term sustainability.
 
 At its core it is a [standard manifest format](spec.md), but reference implementations 
 and tools are provided to make it easy to integrate into your project.
