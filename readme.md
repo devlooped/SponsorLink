@@ -62,18 +62,18 @@ Roughly, the reference implementation works as follows:
    verified by the library/tool without any network access.
 
 Notes:
-1. Sponsor manifest expires monthly (like GitHub sponsorships themselves) and is signed 
+* Sponsor manifest expires monthly (like GitHub sponsorships themselves) and is signed 
    with a private key only the author has access to but is public and accessible on the 
    sponsorable manifest.
-2. Users can optionally turn on/off auto-sync, so that after the first sync, the author can 
+* Users can optionally turn on/off auto-sync, so that after the first sync, the author can 
    automatically refresh the manifest on the user's behalf by re-running the sync command 
    unattended.
-3. Users can have the following role claims:
+* Users can have the following role claims:
    * `user`: the user is direct sponsor of the account.
    * `org`: the user is a member of an organization that sponsors the account.
    * `contrib`: the user is a contributor to the account's project(s).
    * `team`: the user is team a member of the author's organization.
-4. Typically, an autor would consider any of the above roles to qualify as an active 
+* Typically, an autor would consider any of the above roles to qualify as an active 
    sponsor, but the actual behavior is up to the library/tool author.
 
 [Explore the documentation site](https://www.devlooped.com/SponsorLink) to learn more, 
