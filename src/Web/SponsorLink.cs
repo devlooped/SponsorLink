@@ -12,7 +12,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Devlooped.Sponsors;
@@ -92,6 +91,20 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
         {
             logger.LogError("Configured private key '{option}' does not match the manifest public key.", $"SponsorLink:{nameof(SponsorLinkOptions.PrivateKey)}");
             return new StatusCodeResult(500);
+        }
+
+        if (req.Query.ContainsKey("json"))
+        {
+            var jwt = new JwtSecurityTokenHandler { MapInboundClaims = false }.ReadJwtToken(await sponsors.GetRawManifestAsync());
+            var json = jwt.Payload.SerializeToJson();
+            var doc = JsonDocument.Parse(json);
+
+            return new ContentResult()
+            {
+                Content = JsonSerializer.Serialize(doc, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }),
+                ContentType = "application/json",
+                StatusCode = 200,
+            };
         }
 
         return new ContentResult()
