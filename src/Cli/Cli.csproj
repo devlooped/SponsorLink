@@ -11,17 +11,30 @@
     <PackContent>false</PackContent>
     <Description>SponsorLink CLI for synchronizing your GitHub Sponsors status to your dev machine</Description>
     <PackageTags>dotnet dotnet-tool tools</PackageTags>
+    <BuildDate>$([System.DateTime]::Now.ToString("yyyy-MM-dd"))</BuildDate>
+    <BuildRef>$(GITHUB_REF_TYPE)</BuildRef>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NuGetizer" Version="1.2.2" PrivateAssets="all" />
     <PackageReference Include="Spectre.Console.Cli" Version="0.49.1" />
     <PackageReference Include="Devlooped.JQ" Version="1.7.1.1" />
+    <PackageReference Include="ThisAssembly.Git" Version="1.4.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="ThisAssembly.Project" Version="1.4.3" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Commands\Commands.csproj" Pack="false" />
     <ProjectReference Include="..\Core\Core.csproj" Pack="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectProperty Include="ToolCommandName" />
+    <ProjectProperty Include="BuildDate" />
+    <ProjectProperty Include="BuildRef" />
   </ItemGroup>
 
 </Project>

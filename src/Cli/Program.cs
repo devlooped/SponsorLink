@@ -19,15 +19,14 @@ var app = App.Create(out var services);
 if (args.Contains("-?"))
     args = args.Select(x => x == "-?" ? "-h" : x).ToArray();
 
-app.Configure(config => config.SetApplicationName("sponsor"));
+app.Configure(config => config.SetApplicationName(ThisAssembly.Project.ToolCommandName));
 
-#if GH
-app.Configure(config =>
+if (args.Contains("--version"))
 {
-    // Change so it matches the actual user experience as a GH CLI extension
-    config.SetApplicationName("gh sponsors");
-});
-#endif
+    AnsiConsole.MarkupLine($"{ThisAssembly.Project.ToolCommandName} version [lime]{ThisAssembly.Project.Version}[/] ({ThisAssembly.Project.BuildDate})");
+    AnsiConsole.MarkupLine($"[link]{ThisAssembly.Git.Url}/releases/tag/{ThisAssembly.Project.BuildRef}[/]");
+    return 0;
+}
 
 // If we don't have ToS acceptance, we don't run any command other than welcome.
 var tos = services.GetRequiredService<Config>().TryGetBoolean("sponsorlink", "tos", out var completed) && completed;
