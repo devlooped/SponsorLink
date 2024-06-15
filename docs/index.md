@@ -43,6 +43,47 @@ as to properly inform the user of the actions being taken and to ensure proper c
 is given before any data is exchanged.
 
 <!-- include github.md#sync -->
+<!-- #sync -->
+## Sponsor Manifest Sync
+
+The user-facing tool is implemented as a [dotnet global tool](https://nuget.org/packages/dotnet-sponsor) 
+which can be installed by running the following command:
+
+```shell
+dotnet tool install -g dotnet-sponsor
+```
+
+(or `dotnet tool update -g dotnet-sponsor` to update to the latest version).
+
+{: .highlight }
+On first run, the tool provides the usage terms, private policy and asks for consent to proceed.
+
+The user subsequently runs `sponsors sync [account]*` to sync the manifest for the given account(s) 
+for offline use while consuming sponsorable libraries. 
+
+Whenever run, the tool performs the following steps:
+
+1. If no accounts were provided, automatic discovery is offered, which involves using the the GitHub CLI API 
+   to determine sponsorable candidate accounts for the current user, which are:
+
+   - [x] All directly sponsored accounts
+   - [x] Publicly sponsored accounts by organizations the user is a member of
+   - [x] Sponsorables of repositories the user has contributed to, considered indirect sponsporships
+
+1. Each account is checked for a SponsorLink manifest at `https://github.com/[account]/.github/raw/main/sponsorlink.jwt`.
+   This location is the same as the GitHub [default community health files](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file)
+1. If found, the [sponsorable manifest](spec.html#sponsorable-manifest) `client_id` and `iss` claims are 
+   used to authenticate with the sponsorable account's backend service and request the updated sponsor manifest. 
+
+{: .important }
+> Running `sponsor sync [account]*` will sync the manifest for specific account(s),
+> and typically be much faster than the entire discovery + sync for all candidate 
+> accounts.
+
+This implementation honors the recommended convention for manifest location and places them 
+at `~/.sponsorlink/github/[sponsorable].jwt`.
+<!-- #sync -->
+<!-- github.md#sync -->
 
 After a successful sync of the [sponsor manifest](spec.html#sponsor-manifest), the 
 libraries and tools can now check for its presence, authenticity and expiration 
