@@ -15,8 +15,8 @@
 	weak
 [file ".editorconfig"]
 	url = https://github.com/devlooped/oss/blob/main/.editorconfig
-	sha = f571a42eac3cad554810dad15139ff390db5e1db
-	etag = ba2655b8b3ce5491b1c0eea5e0af201a085c48e07542bb9ec2c928084944ea86
+	sha = e81ab754b366d52d92bd69b24bef1d5b1c610634
+	etag = 7298c6450967975a8782b5c74f3071e1910fc59686e48f9c9d5cd7c68213cf59
 	weak
 [file ".github/workflows/dotnet-file.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/dotnet-file.yml
