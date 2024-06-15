@@ -12,7 +12,7 @@
     <Description>SponsorLink CLI for synchronizing your GitHub Sponsors status to your dev machine</Description>
     <PackageTags>dotnet dotnet-tool tools</PackageTags>
     <BuildDate>$([System.DateTime]::Now.ToString("yyyy-MM-dd"))</BuildDate>
-    <BuildRef>$(GITHUB_REF_TYPE)</BuildRef>
+    <BuildRef>$(GITHUB_REF_NAME)</BuildRef>
   </PropertyGroup>
 
   <ItemGroup>
