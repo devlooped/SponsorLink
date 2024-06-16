@@ -71,8 +71,6 @@ jobs:
     strategy:
       matrix:
         os: [ 'macOS-latest', 'ubuntu-latest', 'windows-latest' ]
-    env:
-      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
     steps:
       - name: ⬇️ artifacts
         uses: actions/download-artifact@v3
@@ -84,11 +82,11 @@ jobs:
         working-directory: bin
         run: |
           dotnet tool update -g dotnet-gcm
-          dotnet gcm set -n com.devlooped https://github.com -u $(curl https://sponsorlink.devlooped.com/jwt?json --silent | jq '.client_id' -r) -p $GH_TOKEN
+          dotnet gcm set -n com.devlooped https://github.com -u $(curl https://sponsorlink.devlooped.com/jwt?json --silent | jq '.client_id' -r) -p ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
           dotnet tool install -g dotnet-sponsor --prerelease --configfile nuget.config
 
       - name: 🧪 run
         run: |
-          sponsor sync devlooped
+          sponsor sync devlooped --tos
           $team = cat ~\.sponsorlink\github\devlooped.jwt | jq -R 'split(".") | .[1] | @base64d | fromjson' | jq '.roles[] | select(. == "team")' -r
           if ($team -ne "team") { exit -1 }
