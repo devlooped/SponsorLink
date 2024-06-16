@@ -53,3 +53,42 @@ jobs:
         run: |
           dotnet tool install -g --version 4.0.18 sleet 
           sleet push bin --config none -f --verbose -p "SLEET_FEED_CONTAINER=nuget" -p "SLEET_FEED_CONNECTIONSTRING=${{ secrets.SLEET_CONNECTION }}" -p "SLEET_FEED_TYPE=azure" || echo "No packages found"
+
+      - name: ⬆️ upload
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: pkg
+          path: bin/*
+
+  test:
+    name: test-${{ matrix.os }}
+    needs: build
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: pwsh
+    strategy:
+      matrix:
+        os: [ 'macOS-latest', 'ubuntu-latest', 'windows-latest' ]
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+    steps:
+      - name: ⬇️ artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: pkg
+          path: bin
+
+      - name: ⚙ install
+        working-directory: bin
+        run: |
+          dotnet tool update -g dotnet-gcm
+          dotnet gcm set -n com.devlooped https://github.com -u $(curl https://sponsorlink.devlooped.com/jwt?json --silent | jq '.client_id' -r) -p $GH_TOKEN
+          dotnet tool install -g dotnet-sponsor --prerelease --configfile nuget.config
+
+      - name: 🧪 run
+        run: |
+          sponsor sync devlooped
+          $team = cat ~\.sponsorlink\github\devlooped.jwt | jq -R 'split(".") | .[1] | @base64d | fromjson' | jq '.roles[] | select(. == "team")' -r
+          if ($team -ne "team") { exit -1 }
