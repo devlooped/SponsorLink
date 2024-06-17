@@ -2,12 +2,13 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using GitCredentialManager;
 
 namespace Devlooped.Sponsors;
 
 public interface IGitHubAppAuthenticator
 {
-    Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive, string @namespace = GitHubAppAuthenticator.DefaultNamespace);
+    Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive, string @namespace = GitHubAppAuthenticator.DefaultNamespace, ICredentialStore? credentials = default);
 }
 
 public class GitHubAppAuthenticator(IHttpClientFactory httpFactory) : IGitHubAppAuthenticator
@@ -27,12 +28,12 @@ public class GitHubAppAuthenticator(IHttpClientFactory httpFactory) : IGitHubApp
     // confusing experience for the user, with multiple browser tabs opening.
     readonly SemaphoreSlim semaphore = new(1, 1);
 
-    public async Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive, string @namespace = DefaultNamespace)
+    public async Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive, string @namespace = DefaultNamespace, ICredentialStore? credentials = default)
     {
         using var http = httpFactory.CreateClient("GitHub");
 
         // Check existing creds, if any
-        var store = GitCredentialManager.CredentialManager.Create(@namespace);
+        var store = credentials ?? CredentialManager.Create(@namespace);
         // We use the client ID to persist the token, so it can be used across different apps.
         var creds = store.Get("https://github.com", clientId);
 

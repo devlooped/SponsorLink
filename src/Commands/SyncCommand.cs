@@ -1,7 +1,10 @@
 ﻿using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using CliWrap;
 using DotNetConfig;
+using GitCredentialManager;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Spectre.Console.AnsiConsole;
@@ -25,23 +28,23 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
 
     public class SyncSettings : ToSSettings
     {
-        [Description("Optional sponsored account(s) to synchronize.")]
+        [Description("Optional sponsored account(s) to synchronize")]
         [CommandArgument(0, "[account]")]
         public string[]? Sponsorable { get; set; }
 
         [CommandOption("-i|--issuer", IsHidden = true)]
         public string? Issuer { get; set; }
 
-        [Description("Enable or disable automatic synchronization of expired manifests.")]
+        [Description("Enable or disable automatic synchronization of expired manifests")]
         [CommandOption("--autosync")]
         public bool? AutoSync { get; set; }
 
-        [Description("Whether to prevent interactive credentials refresh.")]
+        [Description("Whether to prevent interactive credentials refresh")]
         [DefaultValue(false)]
         [CommandOption("-u|--unattended")]
         public bool Unattended { get; set; }
 
-        [Description("Sync only existing local manifests.")]
+        [Description("Sync only existing local manifests")]
         [DefaultValue(false)]
         [CommandOption("-l|--local")]
         public bool LocalDiscovery { get; set; }
@@ -52,10 +55,18 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
         [CommandOption("--namespace", IsHidden = true)]
         public string Namespace { get; set; } = GitHubAppAuthenticator.DefaultNamespace;
 
+        [Description(@"Read GitHub authentication token from standard input for sync")]
+        [DefaultValue(false)]
+        [CommandOption("--with-token")]
+        public bool WithToken { get; set; }
+
         public override ValidationResult Validate()
         {
             if (Sponsorable?.Length > 0 && LocalDiscovery)
                 return ValidationResult.Error(Sync.LocalOrSponsorables);
+
+            if (WithToken)
+                Unattended = true;
 
             return base.Validate();
         }
@@ -180,11 +191,17 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
 
         var maxlength = manifests.MaxBy(x => x.Sponsorable.Length)?.Sponsorable.Length ?? 10;
         var interactive = new List<SponsorableManifest>();
+        ICredentialStore? credentials = null;
+        if (settings.WithToken)
+        {
+            var withToken = new StreamReader(System.Console.OpenStandardInput()).ReadToEnd().Trim();
+            credentials = new TokenCredentialStore(withToken);
+        }
 
         // Sync non-interactive (pre-authenticated) manifests first.
         foreach (var manifest in manifests)
         {
-            if (await authenticator.AuthenticateAsync(manifest.ClientId, new Progress<string>(), false, settings.Namespace) is not { Length: > 0 } token)
+            if (await authenticator.AuthenticateAsync(manifest.ClientId, new Progress<string>(), false, settings.Namespace, credentials) is not { Length: > 0 } token)
             {
                 interactive.Add(manifest);
                 // If running unattended, we won't be able to proceed with interactive auth, so set fail return code.
@@ -279,5 +296,18 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
             new ConfigCommand(config).Execute(context, new ConfigCommand.ConfigSettings { AutoSync = autosync });
 
         return result;
+    }
+
+    class TokenCredentialStore(string token) : ICredentialStore
+    {
+        public void AddOrUpdate(string service, string account, string secret) { }
+        public ICredential Get(string service, string account) => new TokenCredential(account, token);
+        public IList<string> GetAccounts(string service) => [];
+        public bool Remove(string service, string account) => false;
+        class TokenCredential(string account, string token) : ICredential
+        {
+            public string Account => account;
+            public string Password => token;
+        }
     }
 }

@@ -20,6 +20,7 @@ OPTIONS:
         --autosync      Enable or disable automatic synchronization of expired manifests
     -u, --unattended    Whether to prevent interactive credentials refresh
     -l, --local         Sync only existing local manifests
+        --with-token    Read GitHub authentication token from standard input for sync
 ```
 
 Other commands:
