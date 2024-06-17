@@ -1,4 +1,4 @@
----
+﻿---
 title: GitHub Sponsors
 nav_order: 3
 ---
@@ -102,6 +102,14 @@ is then used to request the sponsor manifest from the sponsorable backend servic
 
 To avoid having to authenticate every time for each sponsorable account, the tool caches the access token 
 by `client_id` using the cross-platform credential store API provided by the [Git Credential Manager](https://github.com/git-ecosystem/git-credential-manager).
+
+For unattended use (i.e. in CI/CD), the tool can be provided with a `--with-token` option to read the 
+token from the standard input, which can be piped from a secure store or environment variable, such as:
+
+```yml
+- name: 🔁 sync
+  run: '${{ secrets.GH_TOKEN }}' | sponsor sync devlooped --tos --with-token
+```
 
 ### Sponsoring Checks
 
