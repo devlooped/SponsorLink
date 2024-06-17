@@ -134,7 +134,7 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
     /// <summary>
     /// Depending on the Accept header, returns a JWT or JSON manifest of the authenticated user's claims.
     /// </summary>
-    [Function("me-get")]
+    [Function("me")]
     public async Task<IActionResult> SyncAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "me")] HttpRequest req)
     {
         if (!configuration.TryGetClientId(logger, out var clientId))
@@ -196,7 +196,7 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
         };
     }
 
-    [Function("me-delete")]
+    [Function("delete")]
     public IActionResult Delete([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "me")] HttpRequest req)
     {
         if (!configuration.TryGetClientId(logger, out _))
