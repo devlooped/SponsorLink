@@ -18,7 +18,7 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: 🤘 checkout
         uses: actions/checkout@v2
@@ -30,21 +30,6 @@ jobs:
         env: 
           GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
         run: dotnet test
-
-      - name: 🔓 login
-        if: github.ref == 'refs/heads/main'
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: ⚙ func 4.x
-        if: github.ref == 'refs/heads/main'
-        run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
-
-      - name: 🚀 deploy
-        if: github.ref == 'refs/heads/main'
-        working-directory: src\Web
-        run: func azure functionapp publish sl-beta --dotnet-isolated
 
       - name: 🚀 sleet
         env:
@@ -60,6 +45,25 @@ jobs:
         with:
           name: pkg
           path: bin/*
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    steps:
+      - name: 🤘 checkout
+        uses: actions/checkout@v2
+
+      - name: 🔓 login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: ⚙ func 4.x
+        run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
+
+      - name: 🚀 deploy
+        working-directory: src\Web
+        run: func azure functionapp publish sl-beta --dotnet-isolated
 
   test:
     name: test-${{ matrix.os }}
@@ -86,6 +90,6 @@ jobs:
 
       - name: 🧪 run
         run: |
-          '${{ secrets.BOT_TOKEN }}' | sponsor sync devlooped --tos --autosync --with-token
+          echo '${{ secrets.BOT_TOKEN }}' | sponsor sync devlooped --tos --autosync --with-token
           $team = cat ~\.sponsorlink\github\devlooped.jwt | jq -R 'split(".") | .[1] | @base64d | fromjson' | jq '.roles[] | select(. == "team")' -r
           if ($team -ne "team") { exit -1 }
