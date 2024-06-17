@@ -106,10 +106,12 @@ by `client_id` using the cross-platform credential store API provided by the [Gi
 For unattended use (i.e. in CI/CD), the tool can be provided with a `--with-token` option to read the 
 token from the standard input, which can be piped from a secure store or environment variable, such as:
 
-```yml
+<!-- {% raw %} -->
+```bash
 - name: 🔁 sync
   run: '${{ secrets.GH_TOKEN }}' | sponsor sync devlooped --tos --with-token
 ```
+<!-- {% endraw %} -->
 
 ### Sponsoring Checks
 
