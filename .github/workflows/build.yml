@@ -68,6 +68,8 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      GCM_CREDENTIAL_STORE: cache
     strategy:
       matrix:
         os: [ 'windows-latest', 'ubuntu-latest', 'macOS-latest' ]
@@ -78,19 +80,12 @@ jobs:
           name: pkg
           path: bin
 
-      - name: linux
-        if: matrix.os == 'ubuntu-latest'
-        run: echo "GCM_CREDENTIAL_STORE=cache" >> $GITHUB_ENV
-
       - name: ⚙ install
         working-directory: bin
-        run: |
-          dotnet tool update -g dotnet-gcm
-          dotnet tool update -g dotnet-sponsor --prerelease --configfile nuget.config
+        run: dotnet tool update -g dotnet-sponsor --prerelease --configfile nuget.config
 
       - name: 🧪 run
         run: |
-          dotnet gcm set https://github.com -n com.devlooped -u $(curl https://sponsorlink.devlooped.com/jwt?json --silent | jq '.client_id' -r) -p ${{ secrets.DEVLOOPED_TOKEN }}
-          sponsor sync devlooped --tos --autosync
+          '${{ secrets.BOT_TOKEN }}' | sponsor sync devlooped --tos --autosync --with-token
           $team = cat ~\.sponsorlink\github\devlooped.jwt | jq -R 'split(".") | .[1] | @base64d | fromjson' | jq '.roles[] | select(. == "team")' -r
           if ($team -ne "team") { exit -1 }
