@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
-using CliWrap;
 using DotNetConfig;
 using GitCredentialManager;
+using Humanizer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualBasic;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Spectre.Console.AnsiConsole;
@@ -32,33 +34,44 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
         [CommandArgument(0, "[account]")]
         public string[]? Sponsorable { get; set; }
 
-        [CommandOption("-i|--issuer", IsHidden = true)]
-        public string? Issuer { get; set; }
-
         [Description("Enable or disable automatic synchronization of expired manifests")]
         [CommandOption("--autosync")]
         public bool? AutoSync { get; set; }
-
-        [Description("Whether to prevent interactive credentials refresh")]
-        [DefaultValue(false)]
-        [CommandOption("-u|--unattended")]
-        public bool Unattended { get; set; }
 
         [Description("Sync only existing local manifests")]
         [DefaultValue(false)]
         [CommandOption("-l|--local")]
         public bool LocalDiscovery { get; set; }
 
-        /// <summary>
-        /// Property used to modify the namespace from tests for scoping stored passwords.
-        /// </summary>
-        [CommandOption("--namespace", IsHidden = true)]
-        public string Namespace { get; set; } = GitHubAppAuthenticator.DefaultNamespace;
+        [Description("Force sync, regardless of expiration of manifests found locally")]
+        [CommandOption("-f|--force")]
+        public bool? Force { get; set; }
+
+        [Description("Whether to always validate local manifests using the issuer public key")]
+        [CommandOption("-v|--validate")]
+        public bool? ValidateLocal { get; set; }
+
+        [Description("Whether to prevent interactive credentials refresh")]
+        [DefaultValue(false)]
+        [CommandOption("-u|--unattended")]
+        public bool Unattended { get; set; }
 
         [Description(@"Read GitHub authentication token from standard input for sync")]
         [DefaultValue(false)]
         [CommandOption("--with-token")]
         public bool WithToken { get; set; }
+
+        /// <summary>
+        /// Override issuer for testing.
+        /// </summary>
+        [CommandOption("-i|--issuer", IsHidden = true)]
+        public string? Issuer { get; set; }
+
+        /// <summary>
+        /// Property used to modify the namespace from tests for scoping stored passwords.
+        /// </summary>
+        [CommandOption("--namespace", IsHidden = true)]
+        public string Namespace { get; set; } = GitHubAppAuthenticator.DefaultNamespace;
 
         public override ValidationResult Validate()
         {
@@ -151,6 +164,82 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
         }
 
         var manifests = new List<SponsorableManifest>();
+
+        // Unless we're force-syncing, non-expired manifests are not re-synced.
+        if (settings.Force != true)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            // Do a quick lookup of existing manifests and remove those accounts 
+            // where it's not expired yet.
+            foreach (var account in sponsorables.ToArray())
+            {
+                var path = Path.Combine(ghDir, account + ".jwt");
+                if (!File.Exists(path))
+                    continue;
+
+                var jwt = await File.ReadAllTextAsync(path);
+                if (!handler.CanReadToken(jwt))
+                {
+                    File.Delete(path);
+                    continue;
+                }
+
+                var token = handler.ReadJwtToken(jwt);
+                var roles = token.Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
+
+                if (token.ValidTo == DateTime.MinValue || token.ValidTo < DateTimeOffset.UtcNow)
+                {
+                    File.Delete(path);
+                }
+                else if (settings.ValidateLocal == true)
+                {
+                    var branch = "main";
+                    using var http = httpFactory.CreateClient();
+                    var relative = string.Join(Path.DirectorySeparatorChar, path.Split(Path.DirectorySeparatorChar)[^2..]);
+                    var (status, manifest) = await Status().StartAsync(ThisAssembly.Strings.Validate.ValidatingManifest(relative), async ctx =>
+                    {
+                        var (status, manifest) = await SponsorableManifest.FetchAsync(account, branch, http);
+                        if (status == SponsorableManifest.Status.NotFound)
+                        {
+                            // We can directly query via the default HTTP client since the .github repository must be public.
+                            branch = await httpFactory.GetQueryClient().QueryAsync(new GraphQuery(
+                                $"/repos/{account}/.github", ".default_branch")
+                            { IsLegacy = true });
+
+                            if (branch != null && branch != "main")
+                                // Retry discovery with non-'main' branch
+                                return await SponsorableManifest.FetchAsync(account, branch, http);
+                        }
+                        return (status, manifest);
+                    });
+
+                    if (status == SponsorableManifest.Status.OK && manifest != null)
+                    {
+                        try
+                        {
+                            // verify no tampering with the manifest
+                            manifest.Validate(jwt, out var _);
+                            sponsorables.Remove(account);
+                            MarkupLine(ThisAssembly.Strings.Validate.ValidExpires(account, token.ValidTo.Humanize(), string.Join(", ", roles)));
+                        }
+                        catch (SecurityTokenException)
+                        {
+                            // If tampering, remove the manifest.
+                            File.Delete(path);
+                        }
+                    }
+                }
+                else
+                {
+                    // Directly remove without validation.
+                    sponsorables.Remove(account);
+                    MarkupLine(Sync.ManifestNotExpired(account, token.ValidTo.Humanize(), string.Join(", ", roles)));
+                }
+            }
+
+            if (sponsorables.Count == 0)
+                return 0;
+        }
 
         await Status().StartAsync(Sync.FetchingManifests(sponsorables.Count), async ctx =>
         {

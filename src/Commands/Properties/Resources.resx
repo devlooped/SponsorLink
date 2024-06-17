@@ -329,4 +329,7 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
   <data name="Sync_LocalOrSponsorables" xml:space="preserve">
     <value>Cannot specify both --local and specific accounts.</value>
   </data>
+  <data name="Sync_ManifestNotExpired" xml:space="preserve">
+    <value>:check_mark_button: [lime]{sponsorable}[/]: manifest expires [yellow]{date}[/] [dim](roles: {roles})[/]</value>
+  </data>
 </root>

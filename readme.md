@@ -81,7 +81,7 @@ and make sure to check the [privacy statement](https://www.devlooped.com/Sponsor
 
 ## Integrating via NuGet for .NET
 
-The reference implementation .NET global tool, `dotnet-sponsors`, provides generic 
+The reference implementation .NET global tool, `dotnet-sponsor`, provides generic 
 manifest discovery and sync capabilities, but the actual check from within a library 
 or tool is left to the author.
 
