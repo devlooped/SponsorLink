@@ -47,11 +47,11 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
         [CommandOption("-f|--force")]
         public bool? Force { get; set; }
 
-        [Description("Whether to always validate local manifests using the issuer public key")]
+        [Description("Validate local manifests using the issuer public key")]
         [CommandOption("-v|--validate")]
         public bool? ValidateLocal { get; set; }
 
-        [Description("Whether to prevent interactive credentials refresh")]
+        [Description("Prevent interactive credentials refresh")]
         [DefaultValue(false)]
         [CommandOption("-u|--unattended")]
         public bool Unattended { get; set; }
