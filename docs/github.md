@@ -124,6 +124,12 @@ the libraries and tools themselves would typically embed this public key for pur
 > This *SponsorLink* implementation does not dictate how a specific sponsorable library or tool integrates 
 > these checks, it only provides the [manifest format](spec.md) and predictable location for the manifest.
 
+Typical ways in which this might be integrated are:
+* An editor-only build warning that never causes a build failure or shows up in CLI builds
+* A message whenever a CLI (i.e. dotnet global tool) is run as a reminder
+* Additional functionality unlocked when sponsoring (i.e. improved intellisense), but without affecting
+  CI/CLI builds (same code should compile with/without sponsoring).
+
 ### Auto Sync
 
 When running the `sponsor sync` command, the tool will ask whether to enable auto-sync. If enabled, 
