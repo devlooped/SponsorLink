@@ -92,4 +92,5 @@ libraries and tools can now check for its presence, authenticity and expiration
 *SponsorLink* itself does not dictate how a specific library or tool integrates 
 these checks, it only provides the [standard manifest format](spec.md) 
 that a sponsorable account backend needs to provide for local persistence 
-and subsequent (purely offline) checks.
+and subsequent (purely offline) checks. See [sponsoring checks](github.md#sponsoring-checks) 
+for some examples of how this might be done.
