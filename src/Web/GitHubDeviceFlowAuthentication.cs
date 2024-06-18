@@ -1,10 +1,12 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Core;
+using GitCredentialManager;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -66,6 +68,27 @@ public static class GitHubDeviceFlowAuthenticationExtensions
 
             using var http = httpFactory.CreateClient();
             http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            // Try retrieving a cached token, like we would from the CLI
+            var store = CredentialManager.Create("com.devlooped");
+            var creds = store.Get("https://github.com", clientId);
+            if (creds != null)
+            {
+                var request = new HttpRequestMessage(HttpMethod.Head, "https://api.github.com/user");
+                request.Headers.Authorization = new("Bearer", creds.Password);
+                if (await http.SendAsync(request) is HttpResponseMessage { IsSuccessStatusCode: true } response)
+                {
+                    req.Headers.Add("Authorization", $"Bearer {creds.Password}");
+                    await next(context);
+                    return;
+                }
+                else
+                {
+                    // If the token is invalid, remove it from the store.
+                    store.Remove("https://github.com", clientId);
+                }
+            }
+
             var codeUrl = $"https://github.com/login/device/code?client_id={clientId}&scope=read:user,user:email,read:org";
             var resp = await http.PostAsync(codeUrl, null);
 
@@ -113,12 +136,19 @@ public static class GitHubDeviceFlowAuthenticationExtensions
                     // We need an entirely new code, start over.
                     auth = await (await http.PostAsync(codeUrl, null)).Content.ReadFromJsonAsync<Auth>();
                 }
+                else if (code.error == AuthError.authorization_pending)
+                {
+                    logger.LogWarning("Navigate to {uri}", auth.verification_uri);
+                    logger.LogWarning("Then enter code: {code}", auth.user_code);
+                }
 
                 // Continue while we have an error, meaning the code has not been authorized yet.
             } while (code.error != null);
 
             if (code.access_token is not null)
             {
+                // Persist the token for use across restarts, just like the CLI
+                store.AddOrUpdate("https://github.com", clientId, code.access_token);
                 req.Headers.Add("Authorization", $"Bearer {code.access_token}");
                 // Should now perform authentication using the access token as if accessed by the CLI.
                 await next(context);

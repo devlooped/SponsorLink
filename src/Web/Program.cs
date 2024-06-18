@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -48,6 +49,11 @@ class Program
                         configuration.GetSection("SponsorLink").Bind(options);
                     });
 
+                services.AddHttpClient().ConfigureHttpClientDefaults(defaults => defaults.ConfigureHttpClient(http =>
+                {
+                    http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
+                }));
+
                 // Add sponsorable client using the GH_TOKEN for GitHub API access
                 services.AddHttpClient("sponsorable", (sp, http) =>
                 {
@@ -56,7 +62,6 @@ class Program
                         throw new InvalidOperationException("Missing required configuration 'GitHub:Token'");
 
                     http.BaseAddress = new Uri("https://api.github.com");
-                    http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
                     http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghtoken);
                 });
 
@@ -65,7 +70,6 @@ class Program
                 services.AddHttpClient("sponsor", http =>
                 {
                     http.BaseAddress = new Uri("https://api.github.com");
-                    http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion));
                 }).AddHttpMessageHandler<AccessTokenMessageHandler>();
 
                 services.AddGraphQueryClient();
