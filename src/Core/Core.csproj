@@ -12,7 +12,7 @@
     <PackageReference Include="NuGetizer" Version="1.2.2" PrivateAssets="all" />
     <PackageReference Include="Scriban" Version="5.10.0" />
     <PackageReference Include="Std.UriTemplate" Version="1.0.1" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="SharpYaml" Version="2.1.1" />
     <PackageReference Include="Devlooped.JQ" Version="1.7.1.1" />
