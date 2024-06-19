@@ -59,7 +59,7 @@ public class SponsorableManifest
                 return (Status.NotFound, default);
 
             var jwt = await response.Content.ReadAsStringAsync();
-            if (!TryRead(jwt, out var manifest, out var missingClaim))
+            if (!TryRead(jwt, out var manifest, out _))
                 return (Status.Invalid, default);
 
             // Manifest audience should match the sponsorable account to avoid weird issues?

@@ -56,7 +56,7 @@ public class RemoveCommandTests
             new RemoveCommand.RemoveSettings { Sponsorable = ["devlooped"] }));
     }
 
-    IHttpClientFactory CreateMockedHttp(IHttpMessageHandler mock) => new ServiceCollection()
+    static IHttpClientFactory CreateMockedHttp(IHttpMessageHandler mock) => new ServiceCollection()
             .AddHttpClient()
             .ConfigureHttpClientDefaults(c => c.ConfigurePrimaryHttpMessageHandler(() => new MockHttpHandler(mock)))
             .BuildServiceProvider()

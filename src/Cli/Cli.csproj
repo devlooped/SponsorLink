@@ -13,6 +13,7 @@
     <PackageTags>dotnet dotnet-tool tools</PackageTags>
     <BuildDate>$([System.DateTime]::Now.ToString("yyyy-MM-dd"))</BuildDate>
     <BuildRef>$(GITHUB_REF_NAME)</BuildRef>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

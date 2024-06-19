@@ -11,7 +11,7 @@ using Moq;
 
 namespace Devlooped.Sponsors.Tests;
 
-public class SponsorManagerTests : IDisposable
+public sealed class SponsorManagerTests : IDisposable
 {
     IServiceProvider services;
     IHttpClientFactory httpFactory;
@@ -208,7 +208,7 @@ public class SponsorManagerTests : IDisposable
             .Returns(() => sponsor.QueryAsync(GraphQueries.UserContributions("testclarius")));
 
         graph.Setup(x => x.QueryAsync(GraphQueries.ViewerEmails, It.IsAny<(string, object)[]>()))
-            .ReturnsAsync(() => new string[] { "test@clarius.org" });
+            .ReturnsAsync(() => ["test@clarius.org"]);
 
         var manager = new SponsorsManager(
             services.GetRequiredService<IOptions<SponsorLinkOptions>>(),

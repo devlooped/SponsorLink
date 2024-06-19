@@ -47,7 +47,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
     {
         var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub");
 
-        var sponsorables = await client.QueryAsync(GraphQueries.Funding(new[] { "PrismLibrary/Prism", "curl/curl", "devlooped/moq" }));
+        var sponsorables = await client.QueryAsync(GraphQueries.Funding(["PrismLibrary/Prism", "curl/curl", "devlooped/moq"]));
 
         Assert.NotNull(sponsorables);
         Assert.NotEmpty(sponsorables);
@@ -60,7 +60,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
     {
         var client = new CliGraphQueryClient();
 
-        var sponsorables = await client.QueryAsync(GraphQueries.Funding(new[] { "PrismLibrary/Prism", "curl/curl", "devlooped/moq" }));
+        var sponsorables = await client.QueryAsync(GraphQueries.Funding(["PrismLibrary/Prism", "curl/curl", "devlooped/moq"]));
 
         Assert.NotNull(sponsorables);
         Assert.NotEmpty(sponsorables);
@@ -230,7 +230,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.NotNull(orgs);
 
         Assert.Contains(viewer.Login, candidates);
-        Assert.All(orgs, org => candidates.Contains(org.Login));
+        Assert.All(orgs, org => Assert.Contains(org.Login, candidates));
     }
 
     [SecretsFact("GitHub:Token")]
@@ -276,7 +276,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.NotEmpty(sponsorships);
 
         // NOTE: this would only pass if you have at least 2 sponsoring (verified) orgs. 
-        Assert.True(sponsorships.Count() > 2);
+        Assert.True(sponsorships.Length > 2);
     }
 
     [LocalFact("SponsorLink:Account")]
@@ -300,7 +300,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.NotEmpty(sponsorships);
 
         // NOTE: this would only pass if you have at least 2 sponsoring (verified) orgs. 
-        Assert.True(sponsorships.Count() > 2);
+        Assert.True(sponsorships.Length > 2);
     }
 
     [LocalFact("SponsorLink:Account", "GitHub:Token")]
@@ -327,10 +327,10 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.Equal(clidata, httpdata);
 
         // NOTE: this would only pass if you have at least 2 sponsoring (verified) orgs. 
-        Assert.True(httpdata.Count() > 2);
+        Assert.True(httpdata.Length > 2);
     }
 
-    async Task<Organization[]?> GetSponsoringOrganizations(IGraphQueryClient client, Account account, string sponsorable, int pageSize = 100)
+    static async Task<Organization[]?> GetSponsoringOrganizations(IGraphQueryClient client, Account account, string sponsorable, int pageSize = 100)
     {
         var sponsorships = account.Type == Sponsors.AccountType.User ?
             await client.QueryAsync(GraphQueries.SponsoringOrganizationsForUser(sponsorable, pageSize)) :
@@ -356,7 +356,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.Equal(clidata, httpdata);
 
         // NOTE: this would only pass if you have at least 2 sponsorships
-        Assert.True(httpdata.Count() > 2);
+        Assert.True(httpdata.Length > 2);
     }
 
     [LocalFact("GitHub:Token")]
@@ -373,7 +373,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.Equal(clidata, httpdata);
 
         // NOTE: this would only pass if you have at least 2 sponsorships
-        Assert.True(httpdata.Count() > 2);
+        Assert.True(httpdata.Length > 2);
     }
 
     [SecretsFact("SponsorLink:Account", "GitHub:Token")]
@@ -455,7 +455,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
         var httpcontribs = await http.QueryAsync(GraphQueries.OrganizationSponsorships("github", 4));
         var clicontribs = await cli.QueryAsync(GraphQueries.OrganizationSponsorships("github", 4));
 
-        Assert.True(httpcontribs?.Count() > 4);
+        Assert.True(httpcontribs?.Length > 4);
         Assert.Equal(httpcontribs, clicontribs);
     }
 
@@ -468,7 +468,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
         var httpcontribs = await http.QueryAsync(GraphQueries.CoreViewerContributedRepoOwners(2));
         var clicontribs = await cli.QueryAsync(GraphQueries.CoreViewerContributedRepoOwners(2));
 
-        Assert.True(httpcontribs?.Count() > 2);
+        Assert.True(httpcontribs?.Length > 2);
         Assert.Equal(httpcontribs, clicontribs);
     }
 
@@ -481,7 +481,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
         var httpdata = await http.QueryAsync(GraphQueries.UserSponsorships("sindresorhus", 2));
         var clidata = await cli.QueryAsync(GraphQueries.UserSponsorships("sindresorhus", 2));
 
-        Assert.True(httpdata?.Count() > 2);
+        Assert.True(httpdata?.Length > 2);
         Assert.Equal(httpdata, clidata);
     }
 
@@ -494,7 +494,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
         var clidata = await cli.QueryAsync<Organization[]>(GraphQueries.UserOrganizations("davidfowl", 2));
         var httpdata = await cli.QueryAsync<Organization[]>(GraphQueries.UserOrganizations("davidfowl", 2));
 
-        Assert.True(httpdata?.Count() > 2);
+        Assert.True(httpdata?.Length > 2);
         Assert.Equal(httpdata, clidata);
     }
 }

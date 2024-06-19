@@ -26,7 +26,7 @@ public class GraphQuery<T>(string query, string? jq = null)
     /// <summary>
     /// Optional variables used in the query.
     /// </summary>
-    public Dictionary<string, object> Variables { get; private set; } = new();
+    public Dictionary<string, object> Variables { get; private set; } = [];
 
     /// <summary>
     /// Legacy queries use the older REST endpoints rather than the GraphQL API.

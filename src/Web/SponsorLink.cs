@@ -19,9 +19,9 @@ namespace Devlooped.Sponsors;
 /// <summary>
 /// Returns a JWT or JSON manifest of the authenticated user's claims.
 /// </summary>
-partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, IOptions<SponsorLinkOptions> options, IWebHostEnvironment host, ILogger<SponsorLink> logger)
+partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, IWebHostEnvironment host, ILogger<SponsorLink> logger)
 {
-    SponsorLinkOptions options = options.Value;
+    static readonly JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     /// <summary>
     /// Helper to visualize the user's claims and the request/response headers as available to the backend.
@@ -101,7 +101,7 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
 
             return new ContentResult()
             {
-                Content = JsonSerializer.Serialize(doc, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }),
+                Content = JsonSerializer.Serialize(doc, jsonOptions),
                 ContentType = "application/json",
                 StatusCode = 200,
             };
@@ -140,7 +140,7 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
         if (!configuration.TryGetClientId(logger, out var clientId))
             return new StatusCodeResult(500);
 
-        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
+        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true })
         {
             // Implement manual auto-redirect to GitHub, since we cannot turn it on in the portal
             // or the token-based principal population won't work.

@@ -8,10 +8,8 @@ using Microsoft.Extensions.Options;
 
 namespace Devlooped.Sponsors;
 
-class Version(IConfiguration configuration, ILogger<Version> logger, IOptions<SponsorLinkOptions> options, IWebHostEnvironment hosting)
+class Version(IConfiguration configuration, ILogger<Version> logger, IWebHostEnvironment hosting)
 {
-    SponsorLinkOptions options = options.Value;
-
     [Function("version")]
     public IActionResult GetVersion([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {

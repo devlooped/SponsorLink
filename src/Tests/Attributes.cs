@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
+#pragma warning disable CA1050 // Declare types in namespaces
 public class SecretsFactAttribute : FactAttribute
 {
     public SecretsFactAttribute(params string[] secrets)

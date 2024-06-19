@@ -8,6 +8,6 @@ partial class SponsorLink
     /// Backwards compatibility for pre-beta endpoint.
     /// </summary>
     [Function("legacy-sync")]
-    public IActionResult LegacySyncAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "sync")] HttpRequest req)
+    public static IActionResult LegacySyncAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "sync")] HttpRequest req)
         => new RedirectResult("me", true, true);
 }

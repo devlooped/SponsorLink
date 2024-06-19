@@ -18,7 +18,7 @@ public partial class SponsorsManager(
     internal const string ManifestCacheKey = nameof(SponsorsManager) + ".Manifest";
 
     static readonly Serializer serializer = new();
-    SponsorLinkOptions options = options.Value;
+    readonly SponsorLinkOptions options = options.Value;
 
     public async Task<string> GetRawManifestAsync()
     {

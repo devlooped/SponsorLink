@@ -12,7 +12,7 @@ namespace Devlooped.Tests;
 /// Allows serializing tests that require GitHub CLI to be installed and authenticated.
 /// </summary>
 [CollectionDefinition("GitHub")]
-public class GitHubCollection : ICollectionFixture<GitHubCollection.GitHubFixture>
+public sealed class GitHubCollection : ICollectionFixture<GitHubCollection.GitHubFixture>
 {
     public class GitHubFixture : IDisposable
     {
