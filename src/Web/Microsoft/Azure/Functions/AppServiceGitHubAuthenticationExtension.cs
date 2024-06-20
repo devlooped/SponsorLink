@@ -146,7 +146,8 @@ public static partial class AppServiceAuthenticationExtensions
                             if (options.Value.VerifiedOnly)
                                 emails = emails.Where(x => x.verified).ToArray();
 
-                            foreach (var email in emails)
+                            // Never add the default noreply email to the claims.
+                            foreach (var email in emails.Where(x => !x.email.EndsWith("noreply.github.com")))
                             {
                                 // Don't duplicate the primary email.
                                 if (primary?.Value != email.email)
