@@ -46,6 +46,6 @@ jobs:
         run: func azure functionapp publish sponsorlink --dotnet-isolated
 
       - name: 🚀 nuget
-        if: github.event_name != 'workflow_dispatch'
+        if: github.ref_type == 'tag'
         working-directory: bin
         run: dotnet nuget push *.nupkg -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
