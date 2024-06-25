@@ -88,6 +88,12 @@ jobs:
         working-directory: bin
         run: dotnet tool update -g dotnet-sponsor --prerelease --configfile nuget.config
 
+      - name: 💻 setup
+        run: |
+          sponsor --version
+          pushd ~
+          git config -f .sponsorlink/.netconfig sponsorlink.id devlooped.sponsors.ci
+
       - name: 🧪 run
         run: |
           '${{ secrets.DEVLOOPED_TOKEN }}' | sponsor sync devlooped --tos --with-token
