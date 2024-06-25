@@ -1,0 +1,4 @@
+# From dotnet run init
+*.key*
+*.pub*
+*.jwt

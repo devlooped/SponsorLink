@@ -1,20 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using CliWrap;
-using CliWrap.Buffered;
-using Devlooped.Sponsors;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Playwright;
-using Octokit;
-using Octokit.Internal;
 using static Devlooped.Sponsors.Process;
 
 namespace Devlooped;

@@ -14,6 +14,8 @@
     <BuildDate>$([System.DateTime]::Now.ToString("yyyy-MM-dd"))</BuildDate>
     <BuildRef>$(GITHUB_REF_NAME)</BuildRef>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <!-- From dotnet run init -->
+    <DefaultExcludesInProjectFolder>*.key*;*.pub*;*.jwt</DefaultExcludesInProjectFolder>
   </PropertyGroup>
 
   <ItemGroup>

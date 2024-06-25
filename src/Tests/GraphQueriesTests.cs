@@ -1,6 +1,5 @@
 ﻿using Devlooped.Sponsors;
 using Microsoft.Extensions.DependencyInjection;
-using Scriban;
 using static Devlooped.Helpers;
 
 namespace Devlooped.Tests;

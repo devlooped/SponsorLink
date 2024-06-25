@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-
-namespace Devlooped.Sponsors;
+﻿namespace Devlooped.Sponsors;
 
 /// <summary>
 /// Usability overloads for executing GraphQL queries.

@@ -1,31 +1,35 @@
-﻿using System.Collections;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Sockets;
+﻿using System.Security.Claims;
 using System.Security.Cryptography;
 using Devlooped.Sponsors;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using SharpYaml.Tokens;
 
 namespace Devlooped.Tests;
 
 public class SponsorableManifestTests
 {
     [Fact]
-    public void CanCreateManifest()
+    public async Task CanCreateManifest()
     {
         var manifest = SponsorableManifest.Create(new Uri("https://foo.com"), [new Uri("https://github.com/sponsors/bar")], "ASDF1234");
 
         var jwt = manifest.ToJwt();
 
         // Ensures token is signed
-        var principal = new JwtSecurityTokenHandler { MapInboundClaims = false }.ValidateToken(jwt, new TokenValidationParameters
+        var result = await new JsonWebTokenHandler
+        {
+            MapInboundClaims = false,
+            SetDefaultTimesOnTokenCreation = false
+        }.ValidateTokenAsync(jwt, new TokenValidationParameters
         {
             RequireExpirationTime = false,
             ValidateAudience = true,
             AudienceValidator = (audiences, token, parameters) => audiences.Any(x => x == "https://github.com/sponsors/bar"),
             ValidIssuer = manifest.Issuer,
             IssuerSigningKey = new RsaSecurityKey(((RsaSecurityKey)manifest.SecurityKey).Rsa.ExportParameters(false)),
-        }, out var secToken);
+        });
+
+        var principal = new ClaimsPrincipal(result.ClaimsIdentity);
 
         Assert.Contains(principal.Claims, x => x.Type == "iss" && x.Issuer == "https://foo.com/");
         Assert.Contains(principal.Claims, x => x.Type == "aud" && x.Value == "https://github.com/sponsors/bar");

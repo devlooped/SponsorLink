@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
-using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Spectre.Console.AnsiConsole;
@@ -81,7 +81,7 @@ public class RemoveCommand(IHttpClientFactory httpFactory, IGitHubAppAuthenticat
 
                 // Simple reading first to get issuer to retrieve the manifest
                 var jwt = await File.ReadAllTextAsync(file, Encoding.UTF8);
-                var handler = new JwtSecurityTokenHandler();
+                var handler = new JsonWebTokenHandler { SetDefaultTimesOnTokenCreation = false };
 
                 File.Delete(file);
                 MarkupLine(Remove.Done(sponsorable));
@@ -96,7 +96,7 @@ public class RemoveCommand(IHttpClientFactory httpFactory, IGitHubAppAuthenticat
                 }
 
                 // Attempt to invoke DELETE /me from issuer.
-                var token = handler.ReadJwtToken(jwt);
+                var token = handler.ReadJsonWebToken(jwt);
                 var issuer = new Uri(new Uri(token.Issuer), "me");
                 if (token.Claims.FirstOrDefault(x => x.Type == "client_id")?.Value is not string clientId)
                     continue;

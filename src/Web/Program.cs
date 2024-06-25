@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using Azure.Identity;
@@ -10,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 class Program
 {
@@ -48,7 +48,7 @@ class Program
                 services.AddOptions();
                 services.AddSingleton<Lazy<TelemetryClient>, Lazy<TelemetryClient>>(sp => new(() => sp.GetRequiredService<TelemetryClient>()));
 
-                JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+                JsonWebTokenHandler.DefaultMapInboundClaims = false;
 
                 services
                     .AddOptions<SponsorLinkOptions>()

@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Devlooped.Sponsors;
@@ -84,14 +84,18 @@ public class SponsorableManifest
     /// <returns>A validated manifest.</returns>
     public static bool TryRead(string jwt, [NotNullWhen(true)] out SponsorableManifest? manifest, out string? missingClaim)
     {
-        var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
+        var handler = new JsonWebTokenHandler
+        {
+            MapInboundClaims = false,
+            SetDefaultTimesOnTokenCreation = false,
+        };
         missingClaim = null;
         manifest = default;
 
         if (!handler.CanReadToken(jwt))
             return false;
 
-        var token = handler.ReadJwtToken(jwt);
+        var token = handler.ReadJsonWebToken(jwt);
         var issuer = token.Issuer;
 
         if (token.Audiences.FirstOrDefault(x => x.StartsWith("https://github.com/")) is null)
@@ -153,21 +157,59 @@ public class SponsorableManifest
             jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(new RsaSecurityKey(rsa.Rsa.ExportParameters(false)));
         }
 
-        var token = new JwtSecurityToken(
-            claims:
-                new[] { new Claim(JwtRegisteredClaimNames.Iss, Issuer) }
-                .Concat(Audience.Select(x => new Claim(JwtRegisteredClaimNames.Aud, x)))
-                .Concat(
-                [
-                    // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
-                    new(JwtRegisteredClaimNames.Iat, Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()),
-                    new("client_id", ClientId),
-                    // standard claim, serialized as a JSON string, not an encoded JSON object
-                    new("sub_jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
-                ]),
-            signingCredentials: signing);
+        var claims =
+            new[] { new Claim(JwtRegisteredClaimNames.Iss, Issuer) }
+            .Concat(Audience.Select(x => new Claim(JwtRegisteredClaimNames.Aud, x)))
+            .Concat(
+            [
+                // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
+                new(JwtRegisteredClaimNames.Iat, Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()),
+                new("client_id", ClientId),
+                // standard claim, serialized as a JSON string, not an encoded JSON object
+                new("sub_jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
+            ]);
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        //var token = new JsonWebToken(
+        //    claims:
+        //        new[] { new Claim(JwtRegisteredClaimNames.Iss, Issuer) }
+        //        .Concat(Audience.Select(x => new Claim(JwtRegisteredClaimNames.Aud, x)))
+        //        .Concat(
+        //        [
+        //            // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
+        //            new(JwtRegisteredClaimNames.Iat, Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()),
+        //            new("client_id", ClientId),
+        //            // standard claim, serialized as a JSON string, not an encoded JSON object
+        //            new("sub_jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
+        //        ]),
+        //    signingCredentials: signing);
+
+        //var claims = new Dictionary<string, object>
+        //{
+        //    [JwtRegisteredClaimNames.Iss] = issuer,
+        //};
+
+        //foreach (var audience in Audience)
+        //{
+        //    claims.Add(JwtRegisteredClaimNames.Aud, audience);
+        //}
+
+        //// See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
+        //claims.Add(JwtRegisteredClaimNames.Iat, Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString());
+        //claims.Add("client_id", ClientId);
+        //// standard claim, serialized as a JSON string, not an encoded JSON object
+        //claims.Add("sub_jwk", jwk);
+
+        var handler = new JsonWebTokenHandler
+        {
+            MapInboundClaims = false,
+            SetDefaultTimesOnTokenCreation = false,
+        };
+
+        return handler.CreateToken(new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(claims),
+            SigningCredentials = signing,
+        });
     }
 
     /// <summary>
@@ -235,34 +277,52 @@ public class SponsorableManifest
         if (!rsa.ThumbprintEquals(SecurityKey))
             throw new ArgumentException($"Cannot sign with a private key that does not match the manifest public key.");
 
-        var jwt = new JwtSecurityTokenHandler().WriteToken(new JwtSecurityToken(
-            claims: tokenClaims,
-            expires: expirationDate,
-            signingCredentials: signing
-        ));
-
-        return jwt;
+        return new JsonWebTokenHandler
+        {
+            MapInboundClaims = false,
+            SetDefaultTimesOnTokenCreation = false,
+        }.CreateToken(new SecurityTokenDescriptor
+        {
+            Claims = tokenClaims.GroupBy(x => x.Type).ToDictionary(
+                x => x.Key,
+                x => x.Count() == 1 ? (object)x.First().Value : x.Select(x => x.Value).ToArray()),
+            IssuedAt = DateTime.UtcNow,
+            Expires = expirationDate,
+            SigningCredentials = signing,
+        });
     }
 
-    public ClaimsPrincipal Validate(string jwt, out SecurityToken? token) => new JwtSecurityTokenHandler().ValidateToken(jwt, new TokenValidationParameters
+    public ClaimsPrincipal Validate(string jwt, out SecurityToken? token)
     {
-        RequireExpirationTime = true,
-        // NOTE: setting this to false allows checking sponsorships even when the manifest is expired. 
-        // This might be useful if package authors want to extend the manifest lifetime beyond the default 
-        // 30 days and issue a warning on expiration, rather than an error and a forced sync.
-        // If this is not set (or true), a SecurityTokenExpiredException exception will be thrown.
-        ValidateLifetime = false,
-        RequireAudience = true,
-        // At least one of the audiences must match the manifest audiences
-        AudienceValidator = (audiences, _, _) => Audience.Intersect(audiences.Select(x => x.TrimEnd('/'))).Any(),
-        // We don't validate the issuer in debug builds, to allow testing with localhost-run backend.
+        var validation = new TokenValidationParameters
+        {
+            RequireExpirationTime = true,
+            // NOTE: setting this to false allows checking sponsorships even when the manifest is expired. 
+            // This might be useful if package authors want to extend the manifest lifetime beyond the default 
+            // 30 days and issue a warning on expiration, rather than an error and a forced sync.
+            // If this is not set (or true), a SecurityTokenExpiredException exception will be thrown.
+            ValidateLifetime = false,
+            RequireAudience = true,
+            // At least one of the audiences must match the manifest audiences
+            AudienceValidator = (audiences, _, _) => Audience.Intersect(audiences.Select(x => x.TrimEnd('/'))).Any(),
+            // We don't validate the issuer in debug builds, to allow testing with localhost-run backend.
 #if DEBUG
-        ValidateIssuer = false,
-#else 
-        ValidIssuer = Issuer,
+            ValidateIssuer = false,
+#else
+            ValidIssuer = Issuer,
 #endif
-        IssuerSigningKey = SecurityKey,
-    }, out token);
+            IssuerSigningKey = SecurityKey,
+        };
+
+        var result = new JsonWebTokenHandler
+        {
+            MapInboundClaims = false,
+            SetDefaultTimesOnTokenCreation = false,
+        }.ValidateTokenAsync(jwt, validation).Result;
+
+        token = result.SecurityToken;
+        return new ClaimsPrincipal(result.ClaimsIdentity);
+    }
 
     /// <summary>
     /// Gets the GitHub sponsorable account.
