@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -134,22 +134,22 @@ public partial class InitCommand : AsyncCommand<InitCommand.Settings>
         var secKey = new JsonWebKeySet { Keys = { jwk } }.GetSigningKeys().First();
 
         // If signature is valid, this will return a principal with the claims, otherwise, it would throw.
-        var jwtPrincipal = new JwtSecurityTokenHandler().ValidateToken(jwt, new TokenValidationParameters
+        var result = await new JsonWebTokenHandler { SetDefaultTimesOnTokenCreation = false }.ValidateTokenAsync(jwt, new TokenValidationParameters
         {
             RequireExpirationTime = false,
             // The audiences must match each of the intended audiences
             AudienceValidator = (audiences, token, parameters) => audiences.All(audience => settings.Audience.Any(uri => uri.AbsoluteUri == audience)),
             ValidIssuer = manifest.Issuer,
             IssuerSigningKey = secKey,
-        }, out var secToken);
+        });
 
-        if (secToken is JwtSecurityToken jwtToken)
+        if (result.SecurityToken is JsonWebToken jwtToken)
         {
-            AnsiConsole.Write(new Panel(new JsonText(jwtToken.Header.SerializeToJson()))
+            AnsiConsole.Write(new Panel(new JsonText(Base64UrlEncoder.Decode(jwtToken.EncodedHeader)))
             {
                 Header = new PanelHeader("| JWT Header |"),
             });
-            AnsiConsole.Write(new Panel(new JsonText(jwtToken.Payload.SerializeToJson()))
+            AnsiConsole.Write(new Panel(new JsonText(Base64UrlEncoder.Decode(jwtToken.EncodedPayload)))
             {
                 Header = new PanelHeader("| JWT Payload |"),
             });

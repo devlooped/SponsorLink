@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
-using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Humanizer;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -46,7 +46,12 @@ public partial class ViewCommand(IHttpClientFactory clientFactory) : AsyncComman
                     continue;
                 }
 
-                var sponsor = new JwtSecurityTokenHandler().ReadJwtToken(jwt);
+                var sponsor = new JsonWebTokenHandler
+                {
+                    MapInboundClaims = false,
+                    SetDefaultTimesOnTokenCreation = false,
+                }.ReadJsonWebToken(jwt);
+
                 var issuer = new Uri(new Uri(sponsor.Issuer), "jwt");
                 var response = await http.GetAsync(issuer);
                 if (!response.IsSuccessStatusCode)
@@ -55,7 +60,12 @@ public partial class ViewCommand(IHttpClientFactory clientFactory) : AsyncComman
                     continue;
                 }
 
-                var sponsorable = new JwtSecurityTokenHandler().ReadJwtToken(await response.Content.ReadAsStringAsync());
+                var sponsorable = new JsonWebTokenHandler
+                {
+                    MapInboundClaims = false,
+                    SetDefaultTimesOnTokenCreation = false,
+                }.ReadJsonWebToken(await response.Content.ReadAsStringAsync());
+
                 var pub = sponsorable.Claims.FirstOrDefault(x => x.Type == "sub_jwk")?.Value;
 
                 if (pub is null)
@@ -87,34 +97,32 @@ public partial class ViewCommand(IHttpClientFactory clientFactory) : AsyncComman
                     NameClaimType = "sub",
                 };
 
-                try
+                var result = await new JsonWebTokenHandler
                 {
-                    var principal = new JwtSecurityTokenHandler()
-                    {
-                        MapInboundClaims = false,
-                    }.ValidateToken(jwt, validation, out var token);
+                    MapInboundClaims = false,
+                    SetDefaultTimesOnTokenCreation = false,
+                }.ValidateTokenAsync(jwt, validation);
 
-                    var roles = principal.Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
+                // create a switch statement for the different exceptions types we want to handle
+                switch (result.Exception)
+                {
+                    case SecurityTokenExpiredException e:
+                        MarkupLine(Strings.Validate.InvalidExpired(account, e.Expires.Humanize()));
+                        break;
+                    case SecurityTokenInvalidSignatureException:
+                        MarkupLine(Strings.Validate.InvalidSignature(account));
+                        break;
+                    case SecurityTokenException:
+                        MarkupLine(Strings.Validate.Invalid(account));
+                        break;
+                    case null:
+                        var roles = result.ClaimsIdentity.Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
+                        MarkupLine(Strings.Validate.ValidExpires(account, result.SecurityToken.ValidTo.Humanize(), string.Join(", ", roles)));
+                        break;
+                }
 
-                    MarkupLine(Strings.Validate.ValidExpires(account, token.ValidTo.Humanize(), string.Join(", ", roles)));
-                }
-                catch (SecurityTokenExpiredException e)
-                {
-                    MarkupLine(Strings.Validate.InvalidExpired(account, e.Expires.Humanize()));
-                }
-                catch (SecurityTokenInvalidSignatureException)
-                {
-                    MarkupLine(Strings.Validate.InvalidSignature(account));
-                }
-                catch (SecurityTokenException)
-                {
-                    MarkupLine(Strings.Validate.Invalid(account));
-                }
-                finally
-                {
-                    if (settings.Details)
-                        Write(new Padder(sponsor.ToDetails(file), new Padding(3, 1, 0, 1)));
-                }
+                if (settings.Details)
+                    Write(new Padder(sponsor.ToDetails(file), new Padding(3, 1, 0, 1)));
             }
         });
 

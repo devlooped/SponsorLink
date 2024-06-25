@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
-using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using Spectre.Console.Json;
@@ -23,14 +24,14 @@ public static class Extensions
         return configurator.AddCommand<TCommand>(name);
     }
 
-    public static IRenderable ToDetails(this JwtSecurityToken jwt, string path)
+    public static IRenderable ToDetails(this JsonWebToken jwt, string path)
     {
         var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink");
         var header = $"|:magnifying_glass_tilted_left:[link={path}]~{Path.DirectorySeparatorChar}.sponsorlink{path[root.Length..]}[/] |";
 
         var content = new List<IRenderable>
         {
-            new JsonText(jwt.Payload.SerializeToJson())
+            new JsonText(Base64UrlEncoder.Decode(jwt.EncodedPayload))
         };
 
         if (jwt.Claims.Where(c => c.Type == "client_id").Select(c => c.Value).FirstOrDefault() is string client_id)

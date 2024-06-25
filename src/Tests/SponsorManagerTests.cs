@@ -1,12 +1,11 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Security.Claims;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Moq;
 
 namespace Devlooped.Sponsors.Tests;
@@ -56,7 +55,8 @@ public sealed class SponsorManagerTests : IDisposable
         services.AddGraphQueryClient();
         services.AddSingleton<IConfiguration>(configuration);
         services.AddOptions();
-        JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+        JsonWebTokenHandler.DefaultMapInboundClaims = false;
+
         services
             .AddOptions<SponsorLinkOptions>()
             .Configure<IConfiguration>((options, configuration) =>

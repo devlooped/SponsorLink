@@ -11,7 +11,7 @@ namespace Devlooped.Tests;
 [Collection("GitHub")]
 public class SyncCommandTests
 {
-    Config config = Config.Build();
+    Config config = Config.Build().SetBoolean("sponsorlink", "tos", true);
 
     [LocalFact("GitHub:Token")]
     public async Task NoSponsorableOrLocalDiscoveryRunsGraphDiscoveryViewerSponsored()

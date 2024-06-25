@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel;
 using System.Data;
-using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using DotNetConfig;
 using GitCredentialManager;
 using Humanizer;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.VisualBasic;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Spectre.Console.AnsiConsole;
@@ -168,7 +167,12 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
         // Unless we're force-syncing, non-expired manifests are not re-synced.
         if (settings.Force != true)
         {
-            var handler = new JwtSecurityTokenHandler();
+            var handler = new JsonWebTokenHandler
+            {
+                MapInboundClaims = false,
+                SetDefaultTimesOnTokenCreation = false
+            };
+
             // Do a quick lookup of existing manifests and remove those accounts 
             // where it's not expired yet.
             foreach (var account in sponsorables.ToArray())
@@ -184,7 +188,7 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
                     continue;
                 }
 
-                var token = handler.ReadJwtToken(jwt);
+                var token = handler.ReadJsonWebToken(jwt);
                 var roles = token.Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
 
                 if (token.ValidTo == DateTime.MinValue || token.ValidTo < DateTimeOffset.UtcNow)
@@ -320,10 +324,11 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
             if (status == SponsorManifest.Status.Success)
             {
                 File.WriteAllText(Path.Combine(ghDir, manifest.Sponsorable + ".jwt"), jwt, Encoding.UTF8);
-                var roles = new JwtSecurityTokenHandler()
+                var roles = new JsonWebTokenHandler
                 {
-                    MapInboundClaims = false
-                }.ReadJwtToken(jwt).Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
+                    MapInboundClaims = false,
+                    SetDefaultTimesOnTokenCreation = false,
+                }.ReadJsonWebToken(jwt).Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
 
                 MarkupLine(Sync.Thanks(manifest.Sponsorable.PadRight(maxlength), string.Join(", ", roles)));
             }
@@ -360,10 +365,11 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
                     else if (status == SponsorManifest.Status.Success)
                     {
                         File.WriteAllText(Path.Combine(ghDir, manifest.Sponsorable + ".jwt"), jwt);
-                        var roles = new JwtSecurityTokenHandler()
+                        var roles = new JsonWebTokenHandler()
                         {
-                            MapInboundClaims = false
-                        }.ReadJwtToken(jwt).Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
+                            MapInboundClaims = false,
+                            SetDefaultTimesOnTokenCreation = false,
+                        }.ReadJsonWebToken(jwt).Claims.Where(c => c.Type == "roles").Select(c => c.Value).ToHashSet();
 
                         MarkupLine(Sync.Thanks(manifest.Sponsorable.PadRight(maxlength), string.Join(", ", roles)));
                     }

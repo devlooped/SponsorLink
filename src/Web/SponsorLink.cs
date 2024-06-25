@@ -1,23 +1,17 @@
 ﻿using System.Diagnostics;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Azure.Core;
-using Azure.Identity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Devlooped.Sponsors;
@@ -106,8 +100,13 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
 
         if (req.Query.ContainsKey("json"))
         {
-            var jwt = new JwtSecurityTokenHandler { MapInboundClaims = false }.ReadJwtToken(await sponsors.GetRawManifestAsync());
-            var json = jwt.Payload.SerializeToJson();
+            var jwt = new JsonWebTokenHandler
+            {
+                MapInboundClaims = false,
+                SetDefaultTimesOnTokenCreation = false,
+            }.ReadJsonWebToken(await sponsors.GetRawManifestAsync());
+
+            var json = Base64UrlEncoder.Decode(jwt.EncodedPayload);
             var doc = JsonDocument.Parse(json);
 
             return new ContentResult()
@@ -202,12 +201,17 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
             };
         }
 
-        var token = new JwtSecurityTokenHandler().ReadJwtToken(jwt);
+        var token = new JsonWebTokenHandler
+        {
+            MapInboundClaims = false,
+            SetDefaultTimesOnTokenCreation = false,
+        }.ReadJsonWebToken(jwt);
+
         Activity.Current?.SetTag("ContentType", "json");
 
         return new ContentResult
         {
-            Content = token.Payload.SerializeToJson(),
+            Content = Base64UrlEncoder.Decode(token.EncodedPayload),
             ContentType = "application/json",
             StatusCode = 200
         };

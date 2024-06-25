@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Devlooped.Sponsors;
@@ -54,7 +54,7 @@ public class SponsorManifest
             if (string.IsNullOrEmpty(jwt))
                 return (Status.SyncFailure, default);
 
-            if (new JwtSecurityTokenHandler().CanReadToken(jwt) == false)
+            if (new JsonWebTokenHandler().CanReadToken(jwt) == false)
                 return (Status.SyncFailure, default);
 
             try
