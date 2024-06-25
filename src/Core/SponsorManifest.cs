@@ -34,38 +34,45 @@ public class SponsorManifest
     /// <param name="manifest">The SponsorLink manifest provided by the sponsorable account.</param>
     /// <param name="jwt">The sponsor manifest token, if sponsoring.</param>
     /// <returns>The status of the manifest synchronization.</returns>
-    public static async Task<(Status, string?)> FetchAsync(SponsorableManifest manifest, string accessToken)
+    public static async Task<(Status, string?)> FetchAsync(SponsorableManifest manifest, string accessToken, HttpClient? http = default)
     {
-        using var http = new HttpClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(manifest.Issuer), "me"));
-        request.Headers.Authorization = new("Bearer", accessToken);
-        request.Headers.Accept.Add(new("application/jwt"));
-        var response = await http.SendAsync(request);
-
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            return (Status.NotSponsoring, default);
-
-        if (!response.IsSuccessStatusCode)
-            return (Status.SyncFailure, default);
-
-        var jwt = await response.Content.ReadAsStringAsync();
-        if (string.IsNullOrEmpty(jwt))
-            return (Status.SyncFailure, default);
-
-        if (new JwtSecurityTokenHandler().CanReadToken(jwt) == false)
-            return (Status.SyncFailure, default);
-
+        var disposeHttp = http == null;
         try
         {
-            // verify no tampering with the manifest
-            var claims = manifest.Validate(jwt, out var sectoken);
+            var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(manifest.Issuer), "me"));
+            request.Headers.Authorization = new("Bearer", accessToken);
+            request.Headers.Accept.Add(new("application/jwt"));
+            var response = await (http ??= new HttpClient()).SendAsync(request);
 
-            return (Status.Success, jwt);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return (Status.NotSponsoring, default);
+
+            if (!response.IsSuccessStatusCode)
+                return (Status.SyncFailure, default);
+
+            var jwt = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(jwt))
+                return (Status.SyncFailure, default);
+
+            if (new JwtSecurityTokenHandler().CanReadToken(jwt) == false)
+                return (Status.SyncFailure, default);
+
+            try
+            {
+                // verify no tampering with the manifest
+                var claims = manifest.Validate(jwt, out var sectoken);
+
+                return (Status.Success, jwt);
+            }
+            catch (SecurityTokenException)
+            {
+                return (Status.SyncFailure, default);
+            }
         }
-        catch (SecurityTokenException)
+        finally
         {
-            return (Status.SyncFailure, default);
+            if (disposeHttp)
+                http?.Dispose();
         }
     }
 }

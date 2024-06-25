@@ -2,7 +2,7 @@
   "profiles": {
     "Cli": {
       "commandName": "Project",
-      "commandLineArgs": "remove devlooped"
+      "commandLineArgs": "sync devlooped --issuer https://donkey-emerging-civet.ngrok-free.app/ --force"
     }
   }
 }

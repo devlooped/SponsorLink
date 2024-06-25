@@ -29,8 +29,8 @@ public static class Extensions
         var header = $"|:magnifying_glass_tilted_left:[link={path}]~{Path.DirectorySeparatorChar}.sponsorlink{path[root.Length..]}[/] |";
 
         var content = new List<IRenderable>
-        { 
-            new JsonText(jwt.Payload.SerializeToJson()) 
+        {
+            new JsonText(jwt.Payload.SerializeToJson())
         };
 
         if (jwt.Claims.Where(c => c.Type == "client_id").Select(c => c.Value).FirstOrDefault() is string client_id)

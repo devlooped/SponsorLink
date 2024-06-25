@@ -85,7 +85,7 @@ public class RemoveCommand(IHttpClientFactory httpFactory, IGitHubAppAuthenticat
 
                 File.Delete(file);
                 MarkupLine(Remove.Done(sponsorable));
-                
+
                 var padding = new Padding(3, 0, 0, 0);
                 Write(new Padder(new Markup(Remove.DeletedManifest(Path.Combine("~", ".sponsorlink", "github", sponsorable + ".jwt"))), padding));
 

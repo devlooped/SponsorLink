@@ -10,6 +10,7 @@
     <EnablePackCleanup>false</EnablePackCleanup>
     <LangVersion>Preview</LangVersion>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+    <NoWarn>CS0436;$(NoWarn)</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -46,6 +46,14 @@ public class WelcomeCommand(Config config) : Command<WelcomeCommand.WelcomeSetti
             Padding = new Padding(2, 1, 2, 0),
         });
 
+        AnsiConsole.Write(new Panel(new Rows(
+            new Rule(ThisAssembly.Strings.FirstRun.TelemetryTitle).RuleStyle(Color.MediumPurple2).LeftJustified(),
+            new Markup(ThisAssembly.Strings.FirstRun.Telemetry)))
+        {
+            Border = BoxBorder.None,
+            Padding = new Padding(2, 1, 2, 0),
+        });
+
         if (!AnsiConsole.Confirm(ThisAssembly.Strings.FirstRun.Acceptance))
         {
             return -1;

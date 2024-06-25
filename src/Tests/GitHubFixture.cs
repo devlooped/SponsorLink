@@ -28,7 +28,7 @@ public sealed class GitHubCollection : ICollectionFixture<GitHubCollection.GitHu
         public void Dispose()
         {
             if (existingToken != null &&
-                TryExecute("gh", "auth token", out var currentToken) && 
+                TryExecute("gh", "auth token", out var currentToken) &&
                 existingToken != currentToken)
             {
                 Assert.True(TryExecute("gh", $"auth login --with-token", existingToken, out _));

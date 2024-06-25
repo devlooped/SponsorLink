@@ -255,7 +255,8 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
                 {
                     // We can directly query via the default HTTP client since the .github repository must be public.
                     branch = await httpFactory.GetQueryClient().QueryAsync(new GraphQuery(
-                        $"/repos/{sponsorable}/.github", ".default_branch") { IsLegacy = true });
+                        $"/repos/{sponsorable}/.github", ".default_branch")
+                    { IsLegacy = true });
 
                     if (branch != null && branch != "main")
                         // Retry discovery with non-'main' branch
@@ -265,6 +266,10 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
                 switch (status)
                 {
                     case SponsorableManifest.Status.OK when manifest != null:
+                        // Mostly for testing purposes, we can override the issuer.
+                        if (settings.Issuer != null)
+                            manifest.Issuer = settings.Issuer;
+
                         manifests.Add(manifest);
                         break;
                     case SponsorableManifest.Status.NotFound:
@@ -302,7 +307,8 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
                 continue;
             }
 
-            var (status, jwt) = await Status().StartAsync(Sync.Synchronizing(manifest.Sponsorable), async ctx => await SponsorManifest.FetchAsync(manifest, token));
+            using var http = httpFactory.CreateClient();
+            var (status, jwt) = await Status().StartAsync(Sync.Synchronizing(manifest.Sponsorable), async ctx => await SponsorManifest.FetchAsync(manifest, token, http));
             if (status == SponsorManifest.Status.NotSponsoring)
             {
                 var links = string.Join(", ", manifest.Audience.Select(x => $"[link]{x}[/]"));
@@ -343,7 +349,8 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
                     if (string.IsNullOrEmpty(token))
                         return;
 
-                    var (status, jwt) = await SponsorManifest.FetchAsync(manifest, token);
+                    using var http = httpFactory.CreateClient();
+                    var (status, jwt) = await SponsorManifest.FetchAsync(manifest, token, http);
                     if (status == SponsorManifest.Status.NotSponsoring)
                     {
                         var links = string.Join(", ", manifest.Audience.Select(x => $"[link]{x}[/]"));
