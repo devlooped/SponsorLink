@@ -1,9 +1,10 @@
-using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using Azure.Identity;
 using Devlooped.Sponsors;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,14 +33,21 @@ class Program
                 builder.UseAppServiceAuthentication();
                 builder.UseGitHubAuthentication(populateEmails: true, verifiedOnly: true);
                 builder.UseClaimsPrincipal();
+                builder.UseActivityTelemetry();
             })
             .ConfigureServices(services =>
             {
+                // Register first so it initializes always before every other initializer.
+                services.AddSingleton<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
+
                 services.AddApplicationInsightsTelemetryWorkerService();
                 services.ConfigureFunctionsApplicationInsights();
-                services.AddMemoryCache();
+                services.AddActivityTelemetry();
 
+                services.AddMemoryCache();
                 services.AddOptions();
+                services.AddSingleton<Lazy<TelemetryClient>, Lazy<TelemetryClient>>(sp => new(() => sp.GetRequiredService<TelemetryClient>()));
+
                 JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 
                 services

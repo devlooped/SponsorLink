@@ -154,7 +154,7 @@ public class Signing(ITestOutputHelper Output)
         // NOTE: we cannot recreate the RSAPublicKey from the JWK, so we can never 
         // compare the raw string, but we can still validate with either one.
 
-        var principal1 = new JwtSecurityTokenHandler {  MapInboundClaims = false }.ValidateToken(jwt,
+        var principal1 = new JwtSecurityTokenHandler { MapInboundClaims = false }.ValidateToken(jwt,
             new TokenValidationParameters
             {
                 RequireExpirationTime = false,
@@ -166,7 +166,7 @@ public class Signing(ITestOutputHelper Output)
         var pubRsa = RSA.Create();
         pubRsa.ImportRSAPublicKey(rsa.ExportRSAPublicKey(), out _);
 
-        var principal2 = new JwtSecurityTokenHandler {  MapInboundClaims = false }.ValidateToken(jwt,
+        var principal2 = new JwtSecurityTokenHandler { MapInboundClaims = false }.ValidateToken(jwt,
             new TokenValidationParameters
             {
                 RequireExpirationTime = false,

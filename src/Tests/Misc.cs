@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Spectre.Console;
+using static Devlooped.Helpers;
 
 namespace Devlooped.Sponsors;
 
-public class Misc
+public class Misc(ITestOutputHelper output)
 {
     public record TypedConfig
     {
@@ -46,6 +46,48 @@ public class Misc
         Assert.Equal("baz", typed.Bar);
         Assert.True(typed.Auto);
     }
+
+    [SecretsFact("Azure:SubscriptionId", "Azure:ResourceGroup", "Azure:LogAnalytics")]
+    public async Task GetPurgeStatus()
+    {
+        // Purge endpoint is https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.OperationalInsights/workspaces/{workspace}/purge?api-version=2020-08-01
+        // See https://learn.microsoft.com/en-us/rest/api/loganalytics/workspace-purge/purge?view=rest-loganalytics-2023-09-01&tabs=HTTP
+        var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+        {
+            ExcludeManagedIdentityCredential = true,
+            ExcludeSharedTokenCacheCredential = true,
+            ExcludeVisualStudioCodeCredential = true,
+            ExcludeVisualStudioCredential = true,
+            ExcludeEnvironmentCredential = true,
+            ExcludeInteractiveBrowserCredential = true,
+            TenantId = Configuration["Azure:SubscriptionId"]
+        });
+
+        var token = await credential.GetTokenAsync(new TokenRequestContext(["https://management.azure.com/.default"]));
+
+        var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
+
+        // Sample ID
+        var purgeId = "purge-6a89f2a1-baeb-4722-845f-51f33dcc4c2c";
+
+        // Get status, see https://learn.microsoft.com/en-us/rest/api/loganalytics/workspace-purge/get-purge-status?view=rest-loganalytics-2023-09-01&tabs=HTTP
+        var url = $"https://management.azure.com/subscriptions/{Configuration["Azure:SubscriptionId"]}/resourceGroups/{Configuration["Azure:ResourceGroup"]}/providers/Microsoft.OperationalInsights/workspaces/{Configuration["Azure:LogAnalytics"]}/operations/{purgeId}?api-version=2020-08-01";
+
+        var response = await httpClient.GetAsync(url);
+        var content = await response.Content.ReadAsStringAsync();
+        if (response.IsSuccessStatusCode)
+        {
+            var responseBody = await response.Content.ReadFromJsonAsync<PurgeStatus>();
+            output.WriteLine(responseBody?.status);
+        }
+        else
+        {
+            output.WriteLine($"Request failed with status code {response.StatusCode}");
+        }
+    }
+
+    record PurgeStatus(string status);
 
     public static void SponsorsAscii()
     {

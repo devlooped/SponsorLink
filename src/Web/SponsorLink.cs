@@ -1,14 +1,20 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,6 +27,8 @@ namespace Devlooped.Sponsors;
 /// </summary>
 partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, IWebHostEnvironment host, ILogger<SponsorLink> logger)
 {
+    static ActivitySource tracer = new("Devlooped.Sponsors");
+
     static readonly JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     /// <summary>
@@ -29,6 +37,8 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
     [Function("user")]
     public async Task<IActionResult> UserAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
+        using var activity = tracer.StartActivity();
+
         if (!configuration.TryGetClientId(logger, out var clientId))
             return new StatusCodeResult(500);
 
@@ -86,6 +96,7 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
     [Function("jwt")]
     public async Task<IActionResult> GetManifest([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
+        using var activity = tracer.StartActivity();
         var manifest = await sponsors.GetManifestAsync();
         if (!rsa.ThumbprintEquals(manifest.SecurityKey))
         {
@@ -121,6 +132,7 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
     [Function("jwk")]
     public async Task<IActionResult> GetPublicKey([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
+        using var activity = tracer.StartActivity();
         var manifest = await sponsors.GetManifestAsync();
 
         return new ContentResult()
@@ -137,6 +149,8 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
     [Function("me")]
     public async Task<IActionResult> SyncAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "me")] HttpRequest req)
     {
+        using var activity = tracer.StartActivity();
+
         if (!configuration.TryGetClientId(logger, out var clientId))
             return new StatusCodeResult(500);
 
@@ -179,6 +193,7 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
         // We always respond authenticated requests either with a JWT or JSON, depending on the Accept header.
         if (req.Headers.Accept.Contains("application/jwt"))
         {
+            Activity.Current?.SetTag("ContentType", "jwt");
             return new ContentResult
             {
                 Content = jwt,
@@ -188,6 +203,8 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
         }
 
         var token = new JwtSecurityTokenHandler().ReadJwtToken(jwt);
+        Activity.Current?.SetTag("ContentType", "json");
+
         return new ContentResult
         {
             Content = token.Payload.SerializeToJson(),
@@ -199,14 +216,15 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
     [Function("delete")]
     public IActionResult Delete([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "me")] HttpRequest req)
     {
+        using var activity = tracer.StartActivity();
+
         if (!configuration.TryGetClientId(logger, out _))
             return new StatusCodeResult(500);
 
-        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true })
+        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } ||
+            ClaimsPrincipal.Current.FindFirstValue(ClaimTypes.NameIdentifier) is not { } id)
             return new UnauthorizedResult();
 
-        logger.LogInformation("We don't persist anything, so there's nothing to delete :)");
-
-        return new OkResult();
+        return new ObjectResult("No personal data is persisted by this backend implementation 👍");
     }
 }

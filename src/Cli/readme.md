@@ -42,3 +42,6 @@ COMMANDS:
     sync      Synchronizes sponsorship manifests
     view      Validates and displays the active sponsor manifests, if any
 ```
+
+Learn more [about the tool](https://github.com/devlooped/SponsorLink/blob/main/docs/github.md#sponsor-manifest-sync) 
+and related [telemetry](https://github.com/devlooped/SponsorLink/blob/main/docs/github.md#telemetry).

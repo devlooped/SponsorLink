@@ -1,5 +1,4 @@
-﻿#pragma warning disable CS0436 // Type conflicts with imported type
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Devlooped.Sponsors;
 using DotNetConfig;
 using Microsoft.Extensions.DependencyInjection;

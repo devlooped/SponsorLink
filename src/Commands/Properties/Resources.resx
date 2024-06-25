@@ -332,4 +332,10 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
   <data name="Sync_ManifestNotExpired" xml:space="preserve">
     <value>:check_mark_button: [lime]{sponsorable}[/]: manifest expires [yellow]{date}[/] [dim](roles: {roles})[/]</value>
   </data>
+  <data name="FirstRun_Telemetry" xml:space="preserve">
+    <value>Each sponsor issuer backend may collect anonymous usage data telemetry to improve your experience. To send your preference to not get such telemetry collected, you can set a SPONSOR_CLI_TELEMETRY_OPTOUT environment variable to '1' or 'true' using your favorite shell. You can read more about telemetry [link=https://www.devlooped.com/SponsorLink/github.html#telemetry]in the docs[/].</value>
+  </data>
+  <data name="FirstRun_TelemetryTitle" xml:space="preserve">
+    <value>Telemetry</value>
+  </data>
 </root>

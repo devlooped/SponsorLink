@@ -113,6 +113,16 @@ token from the standard input, which can be piped from a secure store or environ
 ```
 <!-- {% endraw %} -->
 
+### Telemetry
+
+The `dotnet-sponsor` tool does not collect any telemetry by itself. Sponsor backend services may collect 
+anonymous usage telemetry to improve your experience, however. Such telemetry is associated by default 
+with an opaque and random identifier of the tool installation that is not linked to any personal information. 
+
+Telemetry data helps the backend team understand how its APIs are used by the tool so they can be improved. 
+To opt out of associating the backend API invocations with your tool installation, set the 
+`SPONSOR_CLI_TELEMETRY_OPTOUT` environment variable to `1` or `true`.
+
 ### Sponsoring Checks
 
 SponsorLink-enabled libraries and tools can use the previously synchronized sponsor manifest to check the 
@@ -245,9 +255,9 @@ To deploy and configure the backend:
 1. [Create an Azure Functions app](https://portal.azure.com/#create/Microsoft.FunctionApp)
 1. Setup deployment to the Azure Functions app from your forked repository
 1. Configure the following application settings:
-    * `GitHub__Token`: a GitHub token with permissions to read the sponsorable profile, emails, sponsorships and repositories
-    * `SponsorLink__Account`: the sponsorable GitHub account name, unless it's the same as the GitHub token owner
-    * `SponsorLink__PrivateKey`: the Base64-encoded private key (the contents of `curl.key.txt` in the example above)
+    * `GitHub:Token`: a GitHub token with permissions to read the sponsorable profile, emails, sponsorships and repositories
+    * `SponsorLink:Account`: the sponsorable GitHub account name, unless it's the same as the GitHub token owner
+    * `SponsorLink:PrivateKey`: the Base64-encoded private key (the contents of `curl.key.txt` in the example above)
 
 Finally, enable the GitHub identity provider under Settings > Authentication, providing the OAuth app's 
 Client ID and Client Secret. Make sure you set `Allow unauthenticated requests` and have `Token store` enabled.

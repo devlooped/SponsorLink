@@ -50,7 +50,7 @@ public class SponsorableManifest
         // Try to detect sponsorlink manifest in the sponsorable .github repo
         var url = $"https://github.com/{sponsorable}/.github/raw/{branch ?? "main"}/sponsorlink.jwt";
         var disposeHttp = http == null;
-        
+
         // Manifest should be public, so no need for any special HTTP client.
         try
         {
@@ -120,11 +120,12 @@ public class SponsorableManifest
 
     int hashcode;
     string clientId;
+    string issuer;
 
     public SponsorableManifest(Uri issuer, Uri[] audience, string clientId, SecurityKey publicKey)
     {
         this.clientId = clientId;
-        Issuer = issuer.AbsoluteUri;
+        this.issuer = issuer.AbsoluteUri;
         Audience = audience.Select(a => a.AbsoluteUri.TrimEnd('/')).ToArray();
         SecurityKey = publicKey;
         Sponsorable = audience.Where(x => x.Host == "github.com").Select(x => x.Segments.LastOrDefault()?.TrimEnd('/')).FirstOrDefault() ??
@@ -254,7 +255,12 @@ public class SponsorableManifest
         RequireAudience = true,
         // At least one of the audiences must match the manifest audiences
         AudienceValidator = (audiences, _, _) => Audience.Intersect(audiences.Select(x => x.TrimEnd('/'))).Any(),
+        // We don't validate the issuer in debug builds, to allow testing with localhost-run backend.
+#if DEBUG
+        ValidateIssuer = false,
+#else 
         ValidIssuer = Issuer,
+#endif
         IssuerSigningKey = SecurityKey,
     }, out token);
 
@@ -269,7 +275,16 @@ public class SponsorableManifest
     /// <remarks>
     /// See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.1
     /// </remarks>
-    public string Issuer { get; }
+    public string Issuer
+    {
+        get => issuer;
+        internal set
+        {
+            issuer = value;
+            var thumb = JsonWebKeyConverter.ConvertFromSecurityKey(SecurityKey).ComputeJwkThumbprint();
+            hashcode = new HashCode().Add(Issuer, ClientId, Convert.ToBase64String(thumb)).AddRange(Audience).ToHashCode();
+        }
+    }
 
     /// <summary>
     /// The audience for the JWT, which includes the sponsorable account and potentially other sponsoring platforms.
@@ -286,8 +301,8 @@ public class SponsorableManifest
     /// <remarks>
     /// See https://www.rfc-editor.org/rfc/rfc8693.html#name-client_id-client-identifier
     /// </remarks>
-    public string ClientId 
-    { 
+    public string ClientId
+    {
         get => clientId;
         internal set
         {

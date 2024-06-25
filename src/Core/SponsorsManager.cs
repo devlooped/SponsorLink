@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -62,6 +63,9 @@ public partial class SponsorsManager(
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
             });
+
+            Activity.Current?.AddEvent(new ActivityEvent("Sponsorable.GotManifest",
+                tags: new ActivityTagsCollection([KeyValuePair.Create<string, object?>("sponsorable", manifest.Sponsorable)])));
         }
 
         return jwt;
@@ -200,11 +204,19 @@ public partial class SponsorsManager(
     public async Task<List<Claim>?> GetSponsorClaimsAsync(ClaimsPrincipal? principal = default)
     {
         principal ??= ClaimsPrincipal.Current;
-        var manifest = await GetManifestAsync();
+        if (principal is not { Identity.IsAuthenticated: true })
+            return null;
 
+        var manifest = await GetManifestAsync();
         var sponsor = await GetSponsorTypeAsync(principal);
-        if (sponsor == SponsorTypes.None ||
-            principal?.FindFirst("urn:github:login")?.Value is not string login)
+
+        if (sponsor == SponsorTypes.None)
+        {
+            Activity.Current?.AddEvent(new ActivityEvent("Sponsor.NotSponsoring"));
+            return null;
+        }
+
+        if (principal?.FindFirst("urn:github:login")?.Value is not string login)
             return null;
 
         var claims = new List<Claim>
@@ -230,6 +242,13 @@ public partial class SponsorsManager(
 
         // Use shorthand JWT claim for emails. See https://www.iana.org/assignments/jwt/jwt.xhtml
         claims.AddRange(principal.Claims.Where(x => x.Type == ClaimTypes.Email).Select(x => new Claim(JwtRegisteredClaimNames.Email, x.Value)));
+
+        Activity.Current?.AddEvent(new ActivityEvent("Sponsor.GotClaims",
+            tags: new ActivityTagsCollection(
+                [
+                    // NOTE: this is NOT PII since they are generic role kinds
+                    KeyValuePair.Create<string, object?>("roles", string.Join(',', claims.Where(x => x.Type == "roles").Select(x => x.Value)))
+                ])));
 
         return claims;
     }

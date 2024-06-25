@@ -18,7 +18,7 @@ public class SponsorableManifestTests
         var jwt = manifest.ToJwt();
 
         // Ensures token is signed
-        var principal = new JwtSecurityTokenHandler {  MapInboundClaims = false }.ValidateToken(jwt, new TokenValidationParameters
+        var principal = new JwtSecurityTokenHandler { MapInboundClaims = false }.ValidateToken(jwt, new TokenValidationParameters
         {
             RequireExpirationTime = false,
             ValidateAudience = true,
