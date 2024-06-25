@@ -11,6 +11,7 @@ on:
 
 env:
   DOTNET_NOLOGO: true
+  SPONSOR_CLI_TELEMETRY_OPTOUT: true
   Configuration: Release
   PackOnBuild: true
   VersionPrefix: 42.42.${{ github.run_number }}
