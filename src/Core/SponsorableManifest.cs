@@ -163,41 +163,10 @@ public class SponsorableManifest
             .Concat(
             [
                 // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
-                new(JwtRegisteredClaimNames.Iat, Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()),
                 new("client_id", ClientId),
                 // standard claim, serialized as a JSON string, not an encoded JSON object
                 new("sub_jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
             ]);
-
-        //var token = new JsonWebToken(
-        //    claims:
-        //        new[] { new Claim(JwtRegisteredClaimNames.Iss, Issuer) }
-        //        .Concat(Audience.Select(x => new Claim(JwtRegisteredClaimNames.Aud, x)))
-        //        .Concat(
-        //        [
-        //            // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
-        //            new(JwtRegisteredClaimNames.Iat, Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()),
-        //            new("client_id", ClientId),
-        //            // standard claim, serialized as a JSON string, not an encoded JSON object
-        //            new("sub_jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
-        //        ]),
-        //    signingCredentials: signing);
-
-        //var claims = new Dictionary<string, object>
-        //{
-        //    [JwtRegisteredClaimNames.Iss] = issuer,
-        //};
-
-        //foreach (var audience in Audience)
-        //{
-        //    claims.Add(JwtRegisteredClaimNames.Aud, audience);
-        //}
-
-        //// See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
-        //claims.Add(JwtRegisteredClaimNames.Iat, Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString());
-        //claims.Add("client_id", ClientId);
-        //// standard claim, serialized as a JSON string, not an encoded JSON object
-        //claims.Add("sub_jwk", jwk);
 
         var handler = new JsonWebTokenHandler
         {
@@ -207,6 +176,7 @@ public class SponsorableManifest
 
         return handler.CreateToken(new SecurityTokenDescriptor
         {
+            IssuedAt = DateTime.UtcNow,
             Subject = new ClaimsIdentity(claims),
             SigningCredentials = signing,
         });
@@ -239,10 +209,8 @@ public class SponsorableManifest
                 DateTime.UtcNow.Millisecond,
                 DateTimeKind.Utc);
 
+        // Removed as we set IssuedAt = DateTime.UtcNow
         var tokenClaims = claims.Where(x => x.Type != JwtRegisteredClaimNames.Iat && x.Type != JwtRegisteredClaimNames.Exp).ToList();
-
-        // See https://www.rfc-editor.org/rfc/rfc7519.html#section-4.1.6
-        tokenClaims.Add(new(JwtRegisteredClaimNames.Iat, Math.Truncate((DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds).ToString()));
 
         if (tokenClaims.Find(c => c.Type == JwtRegisteredClaimNames.Iss) is { } issuer)
         {
