@@ -251,16 +251,14 @@ public class SponsorableManifest
             SetDefaultTimesOnTokenCreation = false,
         }.CreateToken(new SecurityTokenDescriptor
         {
-            Claims = tokenClaims.GroupBy(x => x.Type).ToDictionary(
-                x => x.Key,
-                x => x.Count() == 1 ? (object)x.First().Value : x.Select(x => x.Value).ToArray()),
+            Subject = new ClaimsIdentity(tokenClaims),
             IssuedAt = DateTime.UtcNow,
             Expires = expirationDate,
             SigningCredentials = signing,
         });
     }
 
-    public ClaimsPrincipal Validate(string jwt, out SecurityToken? token)
+    public ClaimsIdentity Validate(string jwt, out SecurityToken? token)
     {
         var validation = new TokenValidationParameters
         {
@@ -287,9 +285,9 @@ public class SponsorableManifest
             MapInboundClaims = false,
             SetDefaultTimesOnTokenCreation = false,
         }.ValidateTokenAsync(jwt, validation).Result;
-
+        
         token = result.SecurityToken;
-        return new ClaimsPrincipal(result.ClaimsIdentity);
+        return result.ClaimsIdentity;
     }
 
     /// <summary>

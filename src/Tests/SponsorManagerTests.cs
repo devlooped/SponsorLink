@@ -249,11 +249,11 @@ public sealed class SponsorManagerTests : IDisposable
 
         Assert.NotNull(jwt);
 
-        var principal = manifest.Validate(jwt, out var token);
-        Assert.NotNull(principal);
+        var identity = manifest.Validate(jwt, out var token);
+        Assert.NotNull(identity);
         Assert.NotNull(token);
         Assert.Equal(token.Issuer, manifest.Issuer);
-
+        
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         // Expiration will be the first day of next month.
         var expiry = new DateOnly(today.AddMonths(1).Year, today.AddMonths(1).Month, 1);

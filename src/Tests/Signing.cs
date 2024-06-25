@@ -93,9 +93,7 @@ public class Signing(ITestOutputHelper Output)
         {
             Issuer = "https://sponsorlink.devlooped.com/",
             Audience = "devlooped",
-            Claims = claims.GroupBy(x => x.Type).ToDictionary(
-                x => x.Key,
-                x => x.Count() == 1 ? (object)x.First().Value : x.Select(x => x.Value).ToArray()),
+            Subject = new ClaimsIdentity(claims),
             SigningCredentials = signingCredentials,
         });
 
