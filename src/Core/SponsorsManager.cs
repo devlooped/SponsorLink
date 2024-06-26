@@ -64,7 +64,7 @@ public partial class SponsorsManager(
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
             });
 
-            Activity.Current?.AddEvent(new ActivityEvent("Sponsorable.GotManifest",
+            Activity.Current?.AddEvent(new ActivityEvent("Sponsorable.ManifestRead",
                 tags: new ActivityTagsCollection([KeyValuePair.Create<string, object?>("sponsorable", manifest.Sponsorable)])));
         }
 
@@ -208,13 +208,17 @@ public partial class SponsorsManager(
             return null;
 
         var manifest = await GetManifestAsync();
-        var sponsor = await GetSponsorTypeAsync(principal);
+        SponsorTypes sponsor;
+
+        using (var activity = ActivityTracer.Source.StartActivity("Sponsor.Lookup"))
+        {
+            sponsor = await GetSponsorTypeAsync(principal);
+            // coma-separated list of types can be parsed easily with parse_csv
+            activity?.SetTag("Type", sponsor.ToString().Replace(" ", ""));
+        }
 
         if (sponsor == SponsorTypes.None)
-        {
-            Activity.Current?.AddEvent(new ActivityEvent("Sponsor.NotSponsoring"));
             return null;
-        }
 
         if (principal?.FindFirst("urn:github:login")?.Value is not string login)
             return null;
@@ -242,13 +246,6 @@ public partial class SponsorsManager(
 
         // Use shorthand JWT claim for emails. See https://www.iana.org/assignments/jwt/jwt.xhtml
         claims.AddRange(principal.Claims.Where(x => x.Type == ClaimTypes.Email).Select(x => new Claim(JwtRegisteredClaimNames.Email, x.Value)));
-
-        Activity.Current?.AddEvent(new ActivityEvent("Sponsor.GotClaims",
-            tags: new ActivityTagsCollection(
-                [
-                    // NOTE: this is NOT PII since they are generic role kinds
-                    KeyValuePair.Create<string, object?>("roles", string.Join(',', claims.Where(x => x.Type == "roles").Select(x => x.Value)))
-                ])));
 
         return claims;
     }
