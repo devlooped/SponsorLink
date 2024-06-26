@@ -5,7 +5,7 @@ libraries and tools.
 
 [![Spec](https://img.shields.io/github/v/release/devlooped/SponsorLink?include_prereleases&sort=semver&display_name=tag&label=spec&labelColor=EA4AAA&color=black)](https://www.devlooped.com/SponsorLink/spec.html)
 [![Version](https://img.shields.io/nuget/v/dotnet-sponsor.svg?color=royalblue)](https://www.nuget.org/packages/dotnet-sponsor) 
-[![Downloads](https://img.shields.io/nuget/dt/dotnet-sponsor.svg?color=blue)](https://www.nuget.org/packages/dotnet-sponsor)
+[![Downloads](https://img.shields.io/nuget/dt/dotnet-sponsor.svg?color=green)](https://www.nuget.org/packages/dotnet-sponsor) 
 
 Integrate [GitHub Sponsors](https://github.com/sponsors) into your libraries so that 
 users can be properly linked to their sponsorship to unlock features or simply get 
