@@ -1,6 +1,8 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Spectre.Console;
+using static Devlooped.Sponsors.Process;
 
 namespace Devlooped.Sponsors;
 
@@ -14,7 +16,7 @@ public static class GitHub
     public static bool IsInstalled { get; } = TryIsInstalled(out var _);
 
     public static bool TryIsInstalled(out string? output)
-        => Process.TryExecute("gh", "--version", out output) && output?.StartsWith("gh version") == true;
+        => TryExecute("gh", "--version", out output) && output?.StartsWith("gh version") == true;
 
     public static bool TryApi(string endpoint, string jq, out string? json)
     {
@@ -22,7 +24,7 @@ public static class GitHub
         if (jq?.Length > 0)
             args += $" --jq \"{jq}\"";
 
-        return Process.TryExecute("gh", args, out json);
+        return TryExecute("gh", args, out json);
     }
 
     public static bool TryAuthenticate([NotNullWhen(true)] out AccountInfo? account)
@@ -65,15 +67,29 @@ public static class GitHub
         return false;
     }
 
+    public static IDisposable? WithToken(string? token)
+    {
+        if (token == null)
+            return null;
+
+        if (!IsInstalled)
+        {
+            AnsiConsole.MarkupLine("[yellow]Please install GitHub CLI from [/][link]https://cli.github.com/[/]");
+            return null;
+        }
+
+        return new TransientToken(token);
+    }
+
     public static AccountInfo? Authenticate()
     {
-        if (!Process.TryExecute("gh", "auth status -h github.com", out var output) || output is null)
+        if (!TryExecute("gh", "auth status -h github.com", out var output) || output is null)
             return default;
 
         if (output.Contains("gh auth login"))
             return default;
 
-        if (!Process.TryExecute("gh", "api user", out output) || output is null)
+        if (!TryExecute("gh", "api user", out output) || output is null)
             return default;
 
         if (JsonSerializer.Deserialize<AccountInfo>(output, JsonOptions.Default) is not { } account)
@@ -87,5 +103,33 @@ public static class GitHub
         {
             Emails = JsonSerializer.Deserialize<string[]>(output, JsonOptions.Default) ?? []
         };
+    }
+
+    class TransientToken : IDisposable
+    {
+        readonly string? existingToken;
+
+        public TransientToken(string token)
+        {
+            if (TryExecute("gh", "auth status", out var _))
+                TryExecute("gh", "auth token", out existingToken);
+
+            if (!TryExecute("gh", $"auth login --with-token", token, out var output))
+                Debug.Fail(output);
+        }
+
+        public void Dispose()
+        {
+            if (existingToken != null &&
+                TryExecute("gh", "auth token", out var currentToken) &&
+                existingToken != currentToken)
+            {
+                string? output = default;
+                Debug.Assert(TryExecute("gh", $"auth login --with-token", existingToken, out output), output);
+                Debug.Assert(TryExecute("gh", "auth status", out output), output);
+                Debug.Assert(TryExecute("gh", "auth token", out var newToken), newToken);
+                Debug.Assert(newToken == existingToken, "Could not restore previous auth token.");
+            }
+        }
     }
 }

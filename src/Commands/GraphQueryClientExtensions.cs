@@ -15,10 +15,7 @@ public static class GraphQueryClientExtensions
         var contributed = new Dictionary<string, HashSet<string>>();
 
         if (await client.QueryAsync(GraphQueries.ViewerContributedRepositories) is not { Length: > 0 } viewerContribs)
-        {
-            MarkupLine("[yellow]x[/] User has no repository contributions.");
             return contributed;
-        }
 
         // Keeps the orgs we have already checked for org-wide funding options
         var checkedorgs = new HashSet<string>();
