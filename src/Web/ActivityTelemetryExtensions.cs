@@ -6,6 +6,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Middleware;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -19,7 +20,7 @@ namespace Devlooped.Sponsors;
 /// </summary>
 public static partial class ActivityTelemetryExtensions
 {
-    static readonly HashSet<string> skipProps = ["faas.execution", "az.schema_url"];
+    static readonly HashSet<string> skipProps = ["faas.execution", "az.schema_url", "session_Id"];
 
     /// <summary>
     /// Ensures that <see cref="ClaimsPrincipal.Current"/> accesses the principal 
@@ -48,12 +49,29 @@ public static partial class ActivityTelemetryExtensions
             {
                 ShouldListenTo = _ => true,
                 Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+                ActivityStarted = activity =>
+                {
+                    // For activity > operation, start only those from our sources, for now?
+                    if (activity.Source.Name == ActivityTracer.Source.Name)
+                        activity.SetCustomProperty(ActivityTracer.Source.Name, telemetry.Value.StartOperation<RequestTelemetry>(activity));
+                },
                 ActivityStopped = activity =>
                 {
-                    // Basically detects if we have an authenticated user, which are the 
-                    // only type of events we track for now.
-                    if (!telemetry.IsValueCreated)
-                        return;
+                    if (activity.GetCustomProperty(ActivityTracer.Source.Name) is IOperationHolder<RequestTelemetry> holder)
+                    {
+                        var operation = holder.Telemetry;
+                        if (activity.GetBaggageItem("session_Id") is { } baggageId)
+                            operation.Context.Session.Id = baggageId;
+                        
+                        // Populate operation details from activity.
+                        foreach (var item in activity.Baggage.Where(x => !skipProps.Contains(x.Key)))
+                            operation.Properties[item.Key] = item.Value ?? "";
+
+                        foreach (var item in activity.Tags.Where(x => !skipProps.Contains(x.Key)))
+                            operation.Properties[item.Key] = item.Value ?? "";
+
+                        telemetry.Value.StopOperation(holder);
+                    }
 
                     foreach (var ev in activity.Events)
                     {
@@ -65,8 +83,8 @@ public static partial class ActivityTelemetryExtensions
                         foreach (var item in activity.Baggage.Where(x => !skipProps.Contains(x.Key)))
                             et.Properties[item.Key] = item.Value;
 
-                        foreach (var item in activity.Tags.Where(x => !skipProps.Contains(x.Key)))
-                            et.Properties[item.Key] = item.Value?.ToString() ?? "";
+                        foreach (var item in activity.Tags.Where(x => !skipProps.Contains(x.Key) && x.Value != null))
+                            et.Properties[item.Key] = item.Value ?? "";
 
                         foreach (var item in ev.Tags.Where(x => !skipProps.Contains(x.Key)))
                             et.Properties[item.Key] = item.Value?.ToString() ?? "";
@@ -86,6 +104,7 @@ public static partial class ActivityTelemetryExtensions
         public void Dispose()
         {
             listener?.Dispose();
+            if (telemetry.IsValueCreated)
             telemetry.Value.Flush();
         }
     }
