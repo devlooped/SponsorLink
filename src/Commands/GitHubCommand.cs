@@ -28,14 +28,7 @@ public abstract class GitHubCommand(ICommandApp app, Config config) : Command
         if (!GitHub.TryAuthenticate(out var account))
             return -1;
 
-        var tos = config.TryGetBoolean("sponsorlink", "tos", out var completed) && completed;
-        if (!tos &&
-            app.Run(["welcome"]) is var result &&
-            result < 0)
-        {
-            return result;
-        }
-
+        // ToS acceptance is already checked and run from the main program.
         callback(account);
         return 0;
     }
