@@ -148,8 +148,8 @@ public class SyncCommandTests
 
     void EnsureAuthenticated(string secret = "GitHub:Token")
     {
-        if (!config.TryGetBoolean("sponsorlink", "firstrun", out var firstRunCompleted) || !firstRunCompleted)
-            config = config.SetBoolean("sponsorlink", "firstrun", true);
+        if (!config.TryGetBoolean("sponsorlink", "tos", out var tosAccepted) || !tosAccepted)
+            config = config.SetBoolean("sponsorlink", "tos", true);
 
         if (!TryExecute("gh", "auth status", out var status))
         {

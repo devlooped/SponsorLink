@@ -1,19 +1,35 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using DotNetConfig;
+using GitCredentialManager;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using static Devlooped.Sponsors.ListCommand;
 
 namespace Devlooped.Sponsors;
 
 [Description("Lists current user and organization sponsorships leveraging the GitHub CLI")]
-public class ListCommand(ICommandApp app, Config config, IGraphQueryClient client) : GitHubAsyncCommand(app, config)
+public class ListCommand(ICommandApp app, Config config, IGraphQueryClient client) : GitHubAsyncCommand<ListSettings>(app, config)
 {
+    public class ListSettings : ToSSettings
+    {
+        [Description(@"Read GitHub authentication token from standard input for sync")]
+        [DefaultValue(false)]
+        [CommandOption("--with-token")]
+        public bool WithToken { get; set; }
+    }
+
     record Organization(string Login, string[] Sponsorables);
 
-    public override async Task<int> ExecuteAsync(CommandContext context)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListSettings settings)
     {
-        var result = await base.ExecuteAsync(context);
+        string? token = default;
+        if (settings.WithToken)
+            token = new StreamReader(Console.OpenStandardInput()).ReadToEnd().Trim();
+
+        using var withToken = GitHub.WithToken(token);
+
+        var result = await base.ExecuteAsync(context, settings);
         if (result != 0)
             return result;
 
@@ -21,17 +37,17 @@ public class ListCommand(ICommandApp app, Config config, IGraphQueryClient clien
 
         var status = AnsiConsole.Status();
 
-        var usersponsored = await status.StartAsync("Querying user sponsorships", _ => client.QueryAsync(GraphQueries.ViewerSponsorships));
+        var usersponsored = await status.StartAsync($"Querying [dim]{Account.Login}[/] sponsorships", _ => client.QueryAsync(GraphQueries.ViewerSponsorships));
         if (usersponsored == null)
         {
-            AnsiConsole.MarkupLine("[red]Could not query GitHub for user sponsorships.[/]");
+            AnsiConsole.MarkupLine(":cross_mark: Could not query GitHub for user sponsorships.");
             return -1;
         }
 
-        var userorgs = await status.StartAsync("Querying user organizations", _ => client.QueryAsync(GraphQueries.ViewerOrganizations));
+        var userorgs = await status.StartAsync($"Querying [dim]{Account.Login}[/] organizations", _ => client.QueryAsync(GraphQueries.ViewerOrganizations));
         if (userorgs == null)
         {
-            AnsiConsole.MarkupLine("[red]Could not query GitHub for user organizations.[/]");
+            AnsiConsole.MarkupLine(":cross_mark: Could not query GitHub for user organizations.");
             return -1;
         }
 
@@ -42,7 +58,7 @@ public class ListCommand(ICommandApp app, Config config, IGraphQueryClient clien
             // since the current user would typically NOT be an admin of these orgs.
             foreach (var org in userorgs)
             {
-                ctx.Status($"Querying {org.Login} sponsorships");
+                ctx.Status($"Querying [lime]{org.Login}[/] sponsorships");
                 // TODO: we'll need to account for pagination after 100 sponsorships is commonplace :)
                 if (await client.QueryAsync(GraphQueries.OrganizationSponsorships(org.Login)) is { Length: > 0 } sponsored)
                 {
@@ -51,9 +67,9 @@ public class ListCommand(ICommandApp app, Config config, IGraphQueryClient clien
             }
         });
 
-        var tree = new Tree(new Text("Sponsoring:"));
+        var tree = new Tree(new Markup(":backhand_index_pointing_right:  Sponsoring:"));
 
-        if (usersponsored != null)
+        if (usersponsored.Length > 0)
         {
             var user = tree.AddNode(new TreeNode(new Markup($"directly by [yellow]{Account.Login}[/]")));
             var maxlengh = usersponsored.Max(x => x.Sponsorable.Length);
