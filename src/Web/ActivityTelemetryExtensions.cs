@@ -62,7 +62,7 @@ public static partial class ActivityTelemetryExtensions
                         var operation = holder.Telemetry;
                         if (activity.GetBaggageItem("session_Id") is { } baggageId)
                             operation.Context.Session.Id = baggageId;
-                        
+
                         // Populate operation details from activity.
                         foreach (var item in activity.Baggage.Where(x => !skipProps.Contains(x.Key)))
                             operation.Properties[item.Key] = item.Value ?? "";
@@ -105,11 +105,11 @@ public static partial class ActivityTelemetryExtensions
         {
             listener?.Dispose();
             if (telemetry.IsValueCreated)
-            telemetry.Value.Flush();
+                telemetry.Value.Flush();
         }
     }
 
-    class Middleware(Lazy<TelemetryClient> telemetry) : IFunctionsWorkerMiddleware
+    class Middleware(Lazy<TelemetryClient> telemetry, IConfiguration config) : IFunctionsWorkerMiddleware
     {
         public async Task Invoke(FunctionContext context, FunctionExecutionDelegate next)
         {
@@ -121,6 +121,15 @@ public static partial class ActivityTelemetryExtensions
                 Activity.Current?.AddBaggage("session_Id", id);
                 telemetry.Value.Context.Session.Id = id;
             }
+#if DEBUG
+            // In local debug, we fetch the id from the local config for easier testing
+            else if (config["sponsorlink:id"] is { Length: > 0 } localId)
+            {
+                // Associate with opaque installation id
+                Activity.Current?.AddBaggage("session_Id", localId);
+                telemetry.Value.Context.Session.Id = localId;
+            }
+#endif
 
             if (request?.Headers.TryGetValues("x-telemetry-operation", out var ops) == true &&
                 ops.FirstOrDefault() is { Length: > 0 } op)
