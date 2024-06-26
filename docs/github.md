@@ -116,8 +116,9 @@ token from the standard input, which can be piped from a secure store or environ
 ### Telemetry
 
 The `dotnet-sponsor` tool does not collect any telemetry by itself. Sponsor backend services may collect 
-anonymous usage telemetry to improve your experience, however. Such telemetry is associated by default 
-with an opaque and random identifier of the tool installation that is not linked to any personal information. 
+anonymous usage telemetry to improve your experience, however. Such telemetry may be associated by default 
+with an opaque and random identifier of the tool installation that is not linked to any personal information 
+and is sent as a custom header `x-telemetry-id` when invoking the backend service.
 
 Telemetry data helps the backend team understand how its APIs are used by the tool so they can be improved. 
 To opt out of associating the backend API invocations with your tool installation, set the 
