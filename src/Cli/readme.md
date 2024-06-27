@@ -43,5 +43,15 @@ COMMANDS:
     view      Validates and displays the active sponsor manifests, if any
 ```
 
+
+### Stats
+
+Active SponsorLink sync usage by sponsorship kind:
+
+![User](https://img.shields.io/endpoint?color=ea4aaa&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Fuser)
+![Organization](https://img.shields.io/endpoint?color=green&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Forg)
+![Team](https://img.shields.io/endpoint?color=8A2BE2&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Fteam)
+![Contributor](https://img.shields.io/endpoint?color=blue&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Fcontrib)
+
 Learn more [about the tool](https://github.com/devlooped/SponsorLink/blob/main/docs/github.md#sponsor-manifest-sync) 
 and related [telemetry](https://github.com/devlooped/SponsorLink/blob/main/docs/github.md#telemetry).
