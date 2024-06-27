@@ -30,7 +30,7 @@ public class Badge(IConfiguration config, IHttpClientFactory httpFactory, IMemor
             return req.CreateResponse(HttpStatusCode.InternalServerError);
         }
 
-        var type = req.Query.AllKeys.FirstOrDefault() ?? nameof(SponsorTypes.User);
+        var type = req.Query.Count == 1 ? req.Query.ToString() : nameof(SponsorTypes.User);
         // Account for abbreviations
         type = type switch
         {
