@@ -15,4 +15,14 @@ public class SponsorLinkOptions
     /// Optional private key to sign SponsorLink manifests.
     /// </summary>
     public string? PrivateKey { get; init; }
+
+    /// <summary>
+    /// Timespan for the expiration of the sponsorable manifest, in a format compatible with <see cref="TimeSpan.Parse(string)"/>.
+    /// </summary>
+    public string? ManifestExpiration { get; init; }
+
+    /// <summary>
+    /// Timespan for the expiration of the badge cache, in a format compatible with <see cref="TimeSpan.Parse(string)"/>.
+    /// </summary>
+    public string? BadgeExpiration { get; init; }
 }

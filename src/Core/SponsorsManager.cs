@@ -54,15 +54,10 @@ public partial class SponsorsManager(
             if (account.Login != manifest.Sponsorable)
                 throw new InvalidOperationException("Manifest sponsorable account does not match configured sponsorable account.");
 
-            jwt = cache.Set(JwtCacheKey, jwt, new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
-            });
+            var cacheExpiration = TimeSpan.TryParse(options.BadgeExpiration, out var expiration) ? expiration : TimeSpan.FromHours(1);
 
-            manifest = cache.Set(ManifestCacheKey, manifest, new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
-            });
+            jwt = cache.Set(JwtCacheKey, jwt, cacheExpiration);
+            manifest = cache.Set(ManifestCacheKey, manifest, cacheExpiration);
 
             Activity.Current?.AddEvent(new ActivityEvent("Sponsorable.ManifestRead",
                 tags: new ActivityTagsCollection([KeyValuePair.Create<string, object?>("sponsorable", manifest.Sponsorable)])));
