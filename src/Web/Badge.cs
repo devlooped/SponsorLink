@@ -57,7 +57,7 @@ public class Badge(IConfiguration config, IHttpClientFactory httpFactory, IMemor
                 $"""
                 AppEvents
                 | union AppRequests
-                | where isnotempty(SessionId) // and SessionId != 'devlooped.sponsors.ci'
+                | where isnotempty(SessionId) and SessionId != 'devlooped.sponsors.ci'
                 | where Name == "Sponsor.Lookup"
                 | extend Sponsor = tostring(Properties['Type'])
                 | summarize arg_max(Sponsor, *) by SessionId
