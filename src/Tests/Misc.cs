@@ -52,17 +52,7 @@ public class Misc(ITestOutputHelper output)
     {
         // Purge endpoint is https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.OperationalInsights/workspaces/{workspace}/purge?api-version=2020-08-01
         // See https://learn.microsoft.com/en-us/rest/api/loganalytics/workspace-purge/purge?view=rest-loganalytics-2023-09-01&tabs=HTTP
-        var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
-        {
-            ExcludeManagedIdentityCredential = true,
-            ExcludeSharedTokenCacheCredential = true,
-            ExcludeVisualStudioCodeCredential = true,
-            ExcludeVisualStudioCredential = true,
-            ExcludeEnvironmentCredential = true,
-            ExcludeInteractiveBrowserCredential = true,
-            TenantId = Configuration["Azure:SubscriptionId"]
-        });
-
+        var credential = new DefaultAzureCredential();
         var token = await credential.GetTokenAsync(new TokenRequestContext(["https://management.azure.com/.default"]));
 
         var httpClient = new HttpClient();
