@@ -231,4 +231,33 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
 
         return new ObjectResult("No personal data is persisted by this backend implementation 👍");
     }
+
+    [Function("health")]
+    public async Task<IActionResult> Health([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    {
+        using var activity = tracer.StartActivity();
+
+        // Issue a sync command with our own GH token, which should exercise the entire flow.
+        using var http = httpFactory.CreateClient("sponsorable");
+
+        // create uri from request, change just the path to /me
+        var uri = new UriBuilder(req.Scheme, req.Host.Host)
+        {
+            Path = "/me"
+        };
+
+        if (req.Host.Port.HasValue)
+            uri.Port = req.Host.Port.Value;
+
+        var response = await http.GetAsync(uri.Uri);
+        if (!response.IsSuccessStatusCode)
+            logger.LogError("Health check failed with status {status}", response.StatusCode);
+
+        return new ContentResult
+        {
+            Content = response.StatusCode.ToString(),
+            ContentType = "text/plain",
+            StatusCode = (int)response.StatusCode
+        };
+    }
 }
