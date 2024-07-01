@@ -1,6 +1,8 @@
 ﻿using Devlooped.Sponsors;
+using DotNetConfig;
 using Microsoft.Extensions.DependencyInjection;
 using static Devlooped.Helpers;
+using static Devlooped.Sponsors.Process;
 
 namespace Devlooped.Tests;
 
@@ -278,9 +280,10 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.True(sponsorships.Length > 2);
     }
 
-    [LocalFact("SponsorLink:Account")]
+    [LocalFact("SponsorLink:Account", "GitHub:Token")]
     public async Task GetCliSponsorships()
     {
+        EnsureAuthenticated();
         var client = new CliGraphQueryClient();
         var sponsorable = Helpers.Configuration["SponsorLink:Account"];
 
@@ -305,6 +308,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
     [LocalFact("SponsorLink:Account", "GitHub:Token")]
     public async Task GetPagedSponsorships()
     {
+        EnsureAuthenticated();
         var cli = new CliGraphQueryClient();
         var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
         var sponsorable = Helpers.Configuration["SponsorLink:Account"];
@@ -344,6 +348,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
     [LocalFact("GitHub:Token")]
     public async Task GetPagedViewerSponsored()
     {
+        EnsureAuthenticated();
         var cli = new CliGraphQueryClient();
         var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
@@ -361,6 +366,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
     [LocalFact("GitHub:Token")]
     public async Task GetPagedViewerSponsorships()
     {
+        EnsureAuthenticated();
         var cli = new CliGraphQueryClient();
         var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
@@ -415,14 +421,18 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.NotNull(tiers);
     }
 
-    [LocalFact]
+    [LocalFact("GitHub:Token")]
     public async Task GetPagedContributions()
     {
+        EnsureAuthenticated();
         var cli = new CliGraphQueryClient();
         var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
-        var httpdata = await http.QueryAsync(GraphQueries.UserContributions("kzu", 5));
-        var clidata = await cli.QueryAsync(GraphQueries.UserContributions("kzu", 10));
+        var user = await cli.QueryAsync(GraphQueries.ViewerAccount);
+        Assert.NotNull(user);
+
+        var httpdata = await http.QueryAsync(GraphQueries.UserContributions(user.Login, 5));
+        var clidata = await cli.QueryAsync(GraphQueries.UserContributions(user.Login, 10));
 
         Assert.NotNull(httpdata);
         Assert.NotNull(clidata);
@@ -433,9 +443,10 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.Equal(sortedhttp, sortedcli);
     }
 
-    [LocalFact]
+    [LocalFact("GitHub:Token")]
     public async Task GetPagedRepositoryContributions()
     {
+        EnsureAuthenticated();
         var cli = new CliGraphQueryClient();
         var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
@@ -445,9 +456,10 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.Equal(httpcontribs, clicontribs);
     }
 
-    [LocalFact]
+    [LocalFact("GitHub:Token")]
     public async Task GetPagedOrganizationSponsorships()
     {
+        EnsureAuthenticated();
         var cli = new CliGraphQueryClient();
         var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
@@ -458,9 +470,10 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.Equal(httpcontribs, clicontribs);
     }
 
-    [LocalFact]
+    [LocalFact("GitHub:Token")]
     public async Task GetPagedViewerOwnerContributions()
     {
+        EnsureAuthenticated();
         var cli = new CliGraphQueryClient();
         var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
@@ -471,9 +484,10 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.Equal(httpcontribs, clicontribs);
     }
 
-    [LocalFact]
+    [LocalFact("GitHub:Token")]
     public async Task GetPagedUserSponsorships()
     {
+        EnsureAuthenticated();
         var cli = new CliGraphQueryClient();
         var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
@@ -487,6 +501,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
     [SecretsFact("GitHub:Token")]
     public async Task GetPagedUserOrganizations()
     {
+        EnsureAuthenticated();
         var cli = new CliGraphQueryClient();
         var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
@@ -495,5 +510,12 @@ public class GraphQueriesTests(ITestOutputHelper output)
 
         Assert.True(httpdata?.Length > 2);
         Assert.Equal(httpdata, clidata);
+    }
+
+    void EnsureAuthenticated(string secret = "GitHub:Token")
+    {
+        Assert.True(TryExecute("gh", "auth login --with-token", Configuration[secret]!, out var output));
+        Assert.True(TryExecute("gh", "auth token", out var token));
+        Assert.Equal(Configuration[secret], token);
     }
 }
