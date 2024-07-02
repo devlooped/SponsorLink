@@ -249,7 +249,10 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
         if (req.Host.Port.HasValue)
             uri.Port = req.Host.Port.Value;
 
-        var response = await http.GetAsync(uri.Uri);
+        var request = new HttpRequestMessage(HttpMethod.Get, uri.Uri);
+        request.Headers.Accept.Add(new("application/jwt"));
+
+        var response = await http.SendAsync(request);
         if (!response.IsSuccessStatusCode)
             logger.LogError("Health check failed with status {status}", response.StatusCode);
 
