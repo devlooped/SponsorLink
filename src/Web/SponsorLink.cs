@@ -243,16 +243,30 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
         // create uri from request, change just the path to /me
         var uri = new UriBuilder(req.Scheme, req.Host.Host)
         {
-            Path = "/me"
+            Path = "/jwt"
         };
 
         if (req.Host.Port.HasValue)
             uri.Port = req.Host.Port.Value;
 
+        var response = await http.GetAsync(uri.Uri);
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogError("Health check failed to retrieve sposorable manifest with status {status}", response.StatusCode);
+
+            return new ContentResult
+            {
+                Content = response.StatusCode.ToString(),
+                ContentType = "text/plain",
+                StatusCode = (int)response.StatusCode
+            };
+        }
+
+        uri.Path = "/me";
         var request = new HttpRequestMessage(HttpMethod.Get, uri.Uri);
         request.Headers.Accept.Add(new("application/jwt"));
 
-        var response = await http.SendAsync(request);
+        response = await http.SendAsync(request);
         if (!response.IsSuccessStatusCode)
             logger.LogError("Health check failed with status {status}", response.StatusCode);
 
