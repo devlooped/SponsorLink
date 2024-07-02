@@ -27,6 +27,10 @@ if (args.Contains("--version"))
 {
     AnsiConsole.MarkupLine($"{ThisAssembly.Project.ToolCommandName} version [lime]{ThisAssembly.Project.Version}[/] ({ThisAssembly.Project.BuildDate})");
     AnsiConsole.MarkupLine($"[link]{ThisAssembly.Git.Url}/releases/tag/{ThisAssembly.Project.BuildRef}[/]");
+
+    foreach (var message in await CheckUpdates(args))
+        AnsiConsole.MarkupLine(message);
+
     return 0;
 }
 
