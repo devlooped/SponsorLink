@@ -97,5 +97,5 @@ jobs:
       - name: 🧪 run
         run: |
           '${{ secrets.DEVLOOPED_TOKEN }}' | sponsor sync devlooped --tos --with-token
-          $team = cat ~/.sponsorlink/github/devlooped.jwt | jq -R 'split(".") | .[1] | @base64d | fromjson' | jq '.roles[] | select(. == "team")' -r
+          $team = cat ~/.sponsorlink/github/devlooped.jwt | jq -R 'split(".") | .[1] | @base64d | fromjson | .roles[] | select(. == "team")' -r
           if ($team -ne "team") { exit -1 }
