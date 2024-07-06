@@ -86,7 +86,7 @@ jobs:
 
       - name: ⚙ install
         working-directory: bin
-        run: dotnet tool update -g dotnet-sponsor --prerelease --configfile nuget.config
+        run: dotnet tool update -g dotnet-sponsor --prerelease --add-source .
 
       - name: 💻 setup
         run: |
