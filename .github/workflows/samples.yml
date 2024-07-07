@@ -1,7 +1,4 @@
-﻿# Builds and runs tests in all three supported OSes
-# Pushes CI feed if secrets.SLEET_CONNECTION is provided
-
-name: build
+﻿name: samples
 on: 
   workflow_dispatch:
   push:
@@ -25,8 +22,7 @@ defaults:
 
 jobs:
 
-  build:
-    needs: os-matrix
+  analyzer:
     name: build-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
