@@ -6,7 +6,7 @@
   <PropertyGroup>
     <ShowSponsorLinkInProject Condition="$(ShowSponsorLinkInProject) == '' and '$(TargetFramework)' == 'netstandard2.0'">true</ShowSponsorLinkInProject>
     <!-- This ensures we expose only the main assembly in the Dependencies > Analyzers node -->
-    <MergeAnalyzerAssemblies Condition="'$(MergeAnalyzerAssemblies)' == '' and '$(Configuration)' == 'Release' and '$(OS)' == 'Windows_NT'">true</MergeAnalyzerAssemblies>
+    <MergeAnalyzerAssemblies Condition="'$(MergeAnalyzerAssemblies)' == '' and '$(Configuration)' == 'Release'">true</MergeAnalyzerAssemblies>
     <MergeAnalyzerAssemblies Condition="'$(MergeAnalyzerAssemblies)' == ''">false</MergeAnalyzerAssemblies>
     <!-- Whether we merge files or not, dependencies will need to be copy-local -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
