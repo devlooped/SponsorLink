@@ -158,7 +158,7 @@ partial class SponsorLink
       <LibDir Include="@(ReferenceCopyLocalDirs -&gt; Distinct())" />
     </ItemGroup>
     <PropertyGroup>
-      <AbsoluteAssemblyOriginatorKeyFile Condition="'$(AssemblyOriginatorKeyFile)' != ''">$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)','$(AssemblyOriginatorKeyFile)'))))</AbsoluteAssemblyOriginatorKeyFile>
+      <AbsoluteAssemblyOriginatorKeyFile Condition="'$(SignAssembly)' == 'true' and '$(AssemblyOriginatorKeyFile)' != ''">$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)','$(AssemblyOriginatorKeyFile)'))))</AbsoluteAssemblyOriginatorKeyFile>
       <ILRepackArgs Condition="'$(AbsoluteAssemblyOriginatorKeyFile)' != ''">/keyfile:"$(AbsoluteAssemblyOriginatorKeyFile)" /delaysign</ILRepackArgs>
       <ILRepackArgs>$(ILRepackArgs) /internalize</ILRepackArgs>
       <ILRepackArgs>$(ILRepackArgs) /union</ILRepackArgs>
