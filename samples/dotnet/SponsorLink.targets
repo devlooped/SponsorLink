@@ -205,7 +205,10 @@ partial class SponsorLink
   <Target Name="PackCopyLocalLockFileAssemblies" Condition="'$(MergeAnalyzerAssemblies)' != 'true'" 
           BeforeTargets="GetPackageContents" DependsOnTargets="ReferenceCopyLocalPathsOutputGroup">
     <ItemGroup>
-      <PackageFile Include="@(ReferenceCopyLocalPathsOutputGroupOutput)" PackFolder="$(PackFolder)" />
+      <PackageFile Include="@(ReferenceCopyLocalPathsOutputGroupOutput)" Condition="
+        !$([MSBuild]::ValueOrDefault('%(FileName)', '').StartsWith('Microsoft.CodeAnalysis', StringComparison.OrdinalIgnoreCase)) And
+        !$([MSBuild]::ValueOrDefault('%(FileName)', '').StartsWith('Microsoft.CSharp', StringComparison.OrdinalIgnoreCase))"
+                   PackFolder="$(PackFolder)" />
     </ItemGroup>
   </Target>
 
