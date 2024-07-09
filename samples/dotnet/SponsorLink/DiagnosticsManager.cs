@@ -56,10 +56,10 @@ class DiagnosticsManager
         {
             // Ensure only one such diagnostic is reported per product for the entire process, 
             // so that we can avoid polluting the error list with duplicates across multiple projects.
-            var id = string.Concat(Process.GetCurrentProcess().Id, product, diagnostic.Id);
+            var id = string.Concat(SessionId, product, diagnostic.Id);
             using var mutex = new Mutex(false, "mutex" + id);
             mutex.WaitOne();
-            using var mmf = CreateOrOpenMemoryMappedFile(id, 1);
+            using var mmf = CreateOrOpenMemoryMappedFile(product, 1);
             using var accessor = mmf.CreateViewAccessor();
             if (accessor.ReadByte(0) == 0)
             {
@@ -177,7 +177,7 @@ class DiagnosticsManager
         if (Diagnostics.TryAdd(product, diagnostic))
         {
             // Reset the process-wide flag for this diagnostic.
-            var id = string.Concat(Process.GetCurrentProcess().Id, product, diagnostic.Id);
+            var id = string.Concat(SessionId, product, diagnostic.Id);
             using var mutex = new Mutex(false, "mutex" + id);
             mutex.WaitOne();
             using var mmf = CreateOrOpenMemoryMappedFile(id, 1);
@@ -204,18 +204,14 @@ class DiagnosticsManager
     static MemoryMappedFile CreateOrOpenMemoryMappedFile(string mapName, int capacity)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
             return MemoryMappedFile.CreateOrOpen(mapName, capacity);
-        }
-        else
-        {
-            // On Linux, use a file-based memory-mapped file
-            string filePath = $"/tmp/{mapName}";
-            using (var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite))
-                fs.Write(new byte[capacity], 0, capacity);
 
-            return MemoryMappedFile.CreateFromFile(filePath, FileMode.OpenOrCreate);
-        }
+        // On *nix, use a file-based memory-mapped file
+        var filePath = $"/tmp/{mapName}";
+        using (var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite))
+            fs.Write(new byte[capacity], 0, capacity);
+
+        return MemoryMappedFile.CreateFromFile(filePath, FileMode.OpenOrCreate);
     }
 
     internal static DiagnosticDescriptor CreateSponsor(string[] sponsorable, string prefix) => new(
