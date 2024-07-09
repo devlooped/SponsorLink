@@ -20,7 +20,10 @@
     <FundingPrefix Condition="'$(FundingPrefix)' == ''">$([System.Text.RegularExpressions.Regex]::Replace("$(FundingProduct)", "[^A-Z]", ""))</FundingPrefix>
     <!-- Default grace days for an expired sponsor manifest or unknown status -->
     <FundingGrace Condition="'$(FundingGrace)' == ''">15</FundingGrace>
-  </PropertyGroup>
+
+    <!-- Strong-naming analyzers is both unnecessary and additionally unsupported by ILRepack when run as a dotnet tool -->
+    <SignAssembly Condition="'$(MergeAnalyzerAssemblies)' == 'true'">false</SignAssembly>
+</PropertyGroup>
 
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)SponsorLink/*.cs"
