@@ -36,13 +36,6 @@ jobs:
         run: dotnet build -m:1 -bl:build.binlog
         working-directory: samples/dotnet
 
-      - name: ⚙ GNU grep
-        if: matrix.os == 'macOS-latest'
-        working-directory: samples/dotnet
-        run: |
-          brew install grep
-          echo 'export PATH="/usr/local/opt/grep/libexec/gnubin:$PATH"' >> .bash_profile
-
       - name: 🧪 test
         uses: ./.github/workflows/test
         with:

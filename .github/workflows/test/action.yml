@@ -9,14 +9,26 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: ⚙ GNU grep
+      shell: bash
+      if: runner.os == 'macOS'
+      working-directory: samples/dotnet
+      run: brew install grep
+
+    - name: ⚙ GNU alias
+      shell: bash
+      if: runner.os != 'macOS'
+      working-directory: samples/dotnet
+      run: echo "alias ggrep='grep'" >> ~/.bashrc
+  
     - name: 🧪 test
-      shell: bash --noprofile --norc {0}
+      shell: bash
       env:
         LC_ALL: en_US.utf8
       working-directory: ${{ inputs.working-directory }}
       run: |
-        [ -f .bash_profile ] && source .bash_profile
-        grep -V
+        [ -f ~/.bashrc ] && source ~/.bashrc
+        ggrep -V
         counter=0
         exitcode=0
         reset="\e[0m"
@@ -38,7 +50,7 @@ runs:
                 exit 0
             fi
             # cat output, get failed test names, remove trailing whitespace, sort+dedupe, join as FQN~TEST with |, remove trailing |.
-            filter=$(cat ./output.log | grep -o -P '(?<=\sFailed\s)[\w\._]*' | sed 's/ *$//g' | sort -u | awk 'BEGIN { ORS="|" } { print("FullyQualifiedName~" $0) }' | grep -o -P '.*(?=\|$)')
+            filter=$(cat ./output.log | ggrep -o -P '(?<=\sFailed\s)[\w\._]*' | sed 's/ *$//g' | sort -u | awk 'BEGIN { ORS="|" } { print("FullyQualifiedName~" $0) }' | ggrep -o -P '.*(?=\|$)')
             ((counter++))
         done
         exit $exitcode
