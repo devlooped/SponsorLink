@@ -40,7 +40,7 @@ jobs:
         if: matrix.os == 'macOS-latest'
         run: |
           brew install grep
-          echo 'export PATH="/usr/local/opt/grep/libexec/gnubin:$PATH"' >> .bash_profile
+          echo "/usr/local/opt/grep/libexec/gnubin:$(echo $PATH)" > $GITHUB_PATH
 
       - name: 🧪 test
         uses: ./.github/workflows/test
