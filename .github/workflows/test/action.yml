@@ -15,6 +15,7 @@ runs:
         LC_ALL: en_US.utf8
       working-directory: ${{ inputs.working-directory }}
       run: |
+        [ -f .bash_profile ] && source .bash_profile
         grep -V
         counter=0
         exitcode=0
