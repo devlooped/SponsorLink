@@ -108,3 +108,8 @@
 	sha = 2f8a7d3dffc4409dbda61afb43326ab9d871c1ec
 	etag = c8f63b95f4631df1e1bdc1e3fa592260f40c86e36032a979b572b880cf5a4fff
 	weak
+[file ".github/workflows/test/action.yml"]
+	url = https://github.com/devlooped/oss/blob/main/.github/workflows/test/action.yml
+	sha = 9a1b07589b9bde93bc12528e9325712a32dec418
+	etag = b54216ac431a83ce5477828d391f02046527e7f6fffd21da1d03324d352c3efb
+	weak
