@@ -48,6 +48,7 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/main'
+    needs: build
     runs-on: windows-latest
     steps:
       - name: 🤘 checkout
