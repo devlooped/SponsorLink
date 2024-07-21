@@ -43,7 +43,7 @@ jobs:
 
       - name: 🚀 deploy
         working-directory: src\Web
-        run: func azure functionapp publish sponsorlink --dotnet-isolated --no-build
+        run: func azure functionapp publish sponsorlink --dotnet-isolated
 
       - name: 🚀 nuget
         if: github.ref_type == 'tag'
