@@ -33,13 +33,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🙏 build
-        run: dotnet build -m:1 -bl:build.binlog
         working-directory: samples/dotnet
+        run: dotnet build -m:1 -bl:build.binlog
 
       - name: 🧪 test
-        uses: ./.github/workflows/test
-        with:
-          working-directory: samples/dotnet
+        working-directory: samples/dotnet
+        run: |
+          dotnet tool update -g dotnet-retest
+          dotnet retest -- --no-build
 
       - name: 🐛 logs
         uses: actions/upload-artifact@v3
