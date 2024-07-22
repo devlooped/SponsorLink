@@ -21,9 +21,8 @@ defaults:
     shell: bash
 
 jobs:
-
   analyzer:
-    name: build-${{ matrix.os }}
+    name: sample-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
