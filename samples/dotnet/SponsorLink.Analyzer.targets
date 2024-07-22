@@ -187,44 +187,7 @@ partial class SponsorLink
   </Target>
 
   <Target Name="DownloadDevloopedJwk" BeforeTargets="GetAssemblyAttributes" Inputs="$(MSBuildProjectFullPath)" Outputs="$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)devlooped.jwk">
-    <Exec Command="pwsh --version" ContinueOnError="true" IgnoreExitCode="true">
-      <Output TaskParameter="ExitCode" PropertyName="PwshExitCode" />
-    </Exec>
-    <Exec Command="jq --version" ContinueOnError="true" IgnoreExitCode="true">
-      <Output TaskParameter="ExitCode" PropertyName="JqExitCode" />
-    </Exec>
-    <Exec Command="curl --version" ContinueOnError="true" IgnoreExitCode="true">
-      <Output TaskParameter="ExitCode" PropertyName="CurlExitCode" />
-    </Exec>
-
-    <PropertyGroup>
-      <JwkDownload Condition="'$(PwshExitCode)' != '0' or  '$(JqExitCode)' != '0'">true</JwkDownload>
-      <CurlDownload Condition="'$(CurlExitCode)' == '0'">true</CurlDownload>
-    </PropertyGroup>
-
-    <!-- Special case for Windows with no curl (and no pwsh/jq), super legacy -->
-    <Exec Command="powershell -nop -C &quot;invoke-restmethod https://sponsorlink.devlooped.com/jwk -outfile $(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)devlooped.jwk&quot;"
-          EchoOff="true"
-          Condition="'$(JwkDownload)' == 'true' and '$(CurlDownload)' != '0'" />
-
-    <!-- General JWK download case for all OSes, when no pwsh/jq is available -->
-    <Exec Command="curl --output $(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)devlooped.jwk https://sponsorlink.devlooped.com/jwk"
-          EchoOff="true"
-          Condition="'$(JwkDownload)' == 'true' and '$(CurlDownload)' == '0'" />
-
-    <!-- Base case when pwsh+jq are available, download from github -->
-    <Exec Command="pwsh -NonInteractive -NoProfile -File '$(MSBuildThisFileDirectory)jwk.ps1'"
-          Condition="'$(JwkDownload)' != 'true'"
-          ConsoleToMSBuild="true"
-          EchoOff="true">
-      <Output TaskParameter="ConsoleOutput" PropertyName="RawJwk" />
-      <Output TaskParameter="ExitCode" PropertyName="MSBuildLastExitCode" />
-    </Exec>
-    <Error Text="$(RawJwk)" Condition="'$(JwkDownload)' != 'true' and '$(MSBuildLastExitCode)' != '0'" />
-    <WriteLinesToFile File="$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)devlooped.jwk"
-                      Lines="$(RawJwk)"
-                      Overwrite="true"
-                      Condition="'$(JwkDownload)' != 'true'" />
+    <Exec Command="curl --silent --output $(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)devlooped.jwk https://sponsorlink.devlooped.com/jwk" />
   </Target>
 
   <Target Name="ReadDevloopedJwk" DependsOnTargets="DownloadDevloopedJwk" BeforeTargets="GetAssemblyAttributes">
