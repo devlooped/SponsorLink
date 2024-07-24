@@ -1,8 +1,77 @@
 # Changelog
 
-## [v1.2.0-beta](https://github.com/devlooped/SponsorLink/tree/v1.2.0-beta) (2024-06-14)
+## [v2.0.0](https://github.com/devlooped/SponsorLink/tree/v2.0.0) (2024-07-24)
 
-[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v1.1.0...v1.2.0-beta)
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.0-rc.6...v2.0.0)
+
+:sparkles: Implemented enhancements:
+
+- Allow disabling Info diagnostics globally [\#285](https://github.com/devlooped/SponsorLink/pull/285) (@kzu)
+- Add support for detecting indirect metapackage reference [\#283](https://github.com/devlooped/SponsorLink/pull/283) (@kzu)
+- Simplify JWK download by using curl directly from backend [\#281](https://github.com/devlooped/SponsorLink/pull/281) (@kzu)
+
+## [v2.0.0-rc.6](https://github.com/devlooped/SponsorLink/tree/v2.0.0-rc.6) (2024-07-21)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.0-rc.5...v2.0.0-rc.6)
+
+:twisted_rightwards_arrows: Merged:
+
+- Ensure we retry failing tests for samples too [\#275](https://github.com/devlooped/SponsorLink/pull/275) (@kzu)
+- Bring analyzer sample from devlooped/oss into this repo [\#268](https://github.com/devlooped/SponsorLink/pull/268) (@kzu)
+- Install by directly adding source w/o nuget.config [\#266](https://github.com/devlooped/SponsorLink/pull/266) (@kzu)
+
+## [v2.0.0-rc.5](https://github.com/devlooped/SponsorLink/tree/v2.0.0-rc.5) (2024-06-27)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.0-rc.4...v2.0.0-rc.5)
+
+## [v2.0.0-rc.4](https://github.com/devlooped/SponsorLink/tree/v2.0.0-rc.4) (2024-06-27)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.0-rc.3...v2.0.0-rc.4)
+
+:sparkles: Implemented enhancements:
+
+- Add optional endpoint that can emit shields.io endpoint badge data [\#258](https://github.com/devlooped/SponsorLink/pull/258) (@kzu)
+- Add --with-token option to list command [\#257](https://github.com/devlooped/SponsorLink/pull/257) (@kzu)
+- Switch to using ClaimsIdentity/Subject in token [\#253](https://github.com/devlooped/SponsorLink/pull/253) (@kzu)
+- Upgrade to newer IdentityModel [\#251](https://github.com/devlooped/SponsorLink/pull/251) (@kzu)
+
+:bug: Fixed bugs:
+
+- Fix issued-at being a string rather than a date [\#252](https://github.com/devlooped/SponsorLink/pull/252) (@kzu)
+
+:twisted_rightwards_arrows: Merged:
+
+- Use a fixed session id from CI to avoid contamination [\#256](https://github.com/devlooped/SponsorLink/pull/256) (@kzu)
+- Switch to the devlooped \(bot\) token [\#249](https://github.com/devlooped/SponsorLink/pull/249) (@kzu)
+
+## [v2.0.0-rc.3](https://github.com/devlooped/SponsorLink/tree/v2.0.0-rc.3) (2024-06-25)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.0-rc.2...v2.0.0-rc.3)
+
+:sparkles: Implemented enhancements:
+
+- Add basic anonymous usage telemetry [\#246](https://github.com/devlooped/SponsorLink/pull/246) (@kzu)
+- Notify users when there is a new version of the CLI [\#242](https://github.com/devlooped/SponsorLink/pull/242) (@kzu)
+
+## [v2.0.0-rc.2](https://github.com/devlooped/SponsorLink/tree/v2.0.0-rc.2) (2024-06-17)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.0-rc.1...v2.0.0-rc.2)
+
+:sparkles: Implemented enhancements:
+
+- Add --force option to sync all accounts [\#239](https://github.com/devlooped/SponsorLink/pull/239) (@kzu)
+
+:bug: Fixed bugs:
+
+- Never fail on MacOS/Linux [\#38](https://github.com/devlooped/SponsorLink/issues/38)
+
+:twisted_rightwards_arrows: Merged:
+
+- Run acceptance tests cross-platform on manifest sync [\#238](https://github.com/devlooped/SponsorLink/pull/238) (@kzu)
+
+## [v2.0.0-rc.1](https://github.com/devlooped/SponsorLink/tree/v2.0.0-rc.1) (2024-06-15)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v1.1.0...v2.0.0-rc.1)
 
 :sparkles: Implemented enhancements:
 
