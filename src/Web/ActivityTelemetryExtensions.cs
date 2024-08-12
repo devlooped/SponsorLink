@@ -13,10 +13,7 @@ using Microsoft.Extensions.Hosting;
 namespace Devlooped.Sponsors;
 
 /// <summary>
-/// Sets the <see cref="ClaimsPrincipal.ClaimsPrincipalSelector"/> to a function 
-/// that accesses the current <see cref="FunctionContext"/> by leveraging the 
-/// <see cref="IFunctionContextAccessor"/> to retrieve the principal from 
-/// the <see cref="FunctionContext.Features"/>, if present.
+/// Translates activity events into telemetry operation events.
 /// </summary>
 public static partial class ActivityTelemetryExtensions
 {
