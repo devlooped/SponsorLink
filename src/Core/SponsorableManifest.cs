@@ -166,6 +166,7 @@ public class SponsorableManifest
                 new("client_id", ClientId),
                 // standard claim, serialized as a JSON string, not an encoded JSON object
                 new("sub_jwk", JsonSerializer.Serialize(jwk, JsonOptions.JsonWebKey), JsonClaimValueTypes.Json),
+                new("schema", ThisAssembly.Constants.SchemaVersion),
             ]);
 
         var handler = new JsonWebTokenHandler
@@ -249,6 +250,10 @@ public class SponsorableManifest
             if (tokenClaims.Find(c => c.Type == JwtRegisteredClaimNames.Aud && c.Value.TrimEnd('/') == audience.TrimEnd('/')) == null)
                 tokenClaims.Insert(1, new(JwtRegisteredClaimNames.Aud, audience));
         }
+
+        // Enforce out schema version.
+        tokenClaims.RemoveAll(x => x.Type == "schema");
+        tokenClaims.Add(new("schema", ThisAssembly.Constants.SchemaVersion));
 
         return new JsonWebTokenHandler
         {
