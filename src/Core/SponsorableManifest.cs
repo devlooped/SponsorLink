@@ -290,7 +290,7 @@ public class SponsorableManifest
             MapInboundClaims = false,
             SetDefaultTimesOnTokenCreation = false,
         }.ValidateTokenAsync(jwt, validation).Result;
-        
+
         token = result.SecurityToken;
         return result.ClaimsIdentity;
     }

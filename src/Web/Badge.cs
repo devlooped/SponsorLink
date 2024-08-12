@@ -1,15 +1,15 @@
-﻿using Azure.Core;
+﻿using System.Net;
 using System.Net.Http.Headers;
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
-using Azure.Identity;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
 using Microsoft.Azure.Functions.Worker.Http;
-using System.Net;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 
 namespace Devlooped.Sponsors;
 

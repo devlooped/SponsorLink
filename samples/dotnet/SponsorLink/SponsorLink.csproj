@@ -30,10 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Update="Resources.es-AR.resx">
-      <SubType>Designer</SubType>
-      <ManifestResourceName>Devlooped.Sponsors.%(Filename)</ManifestResourceName>
-    </EmbeddedResource>
+    <EmbeddedResource Update="Resources.es-AR.resx" ManifestResourceName="Devlooped.Sponsors.%(Filename)" />
     <EmbeddedResource Update="Resources.es.resx" ManifestResourceName="Devlooped.Sponsors.%(Filename)" />
     <EmbeddedResource Update="Resources.resx" ManifestResourceName="Devlooped.Sponsors.%(Filename)" StronglyTypedManifestPrefix="Devlooped.Sponsors" StronglyTypedClassName="%(Filename)" StronglyTypedNamespace="Devlooped.Sponsors" StronglyTypedLanguage="$(Language)" />
   </ItemGroup>
