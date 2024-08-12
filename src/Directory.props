@@ -13,8 +13,15 @@
     <NoWarn>CS0436;$(NoWarn)</NoWarn>
   </PropertyGroup>
 
+  <PropertyGroup Label="SponsorLink">
+    <SchemaVersion>2.0.0</SchemaVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectProperty Include="UserSecretsId" />
+    <!-- Expose both as project property or constant, opt-in by specific projects that need it -->
+    <ProjectProperty Include="SchemaVersion" Comment="The current version of the manifest schema." />
+    <Constant Include="SchemaVersion" Value="$(SchemaVersion)" Comment="The current version of the manifest schema." />
   </ItemGroup>
   
 </Project>
