@@ -10,7 +10,7 @@ namespace Devlooped.Tests;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class TestSponsorLink : DiagnosticAnalyzer
 {
-    static DiagnosticDescriptor descriptor = new("IDE001", "IDE", "IDE", "Design", DiagnosticSeverity.Warning, true);
+    static DiagnosticDescriptor descriptor = new("IDE001", "IDE", "IDE", "Design", DiagnosticSeverity.Warning, true, customTags: ["CompilationEnd"]);
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(descriptor);
 
