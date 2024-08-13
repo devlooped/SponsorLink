@@ -255,7 +255,7 @@ To deploy and configure the backend:
 1. Fork the [SponsorLink](https://github.com/devlooped/SponsorLink) repository
 1. [Create an Azure Functions app](https://portal.azure.com/#create/Microsoft.FunctionApp)
 1. Setup deployment to the Azure Functions app from your forked repository
-1. Configure the following application settings:
+1. Configure the following required application settings:
     * `GitHub:Token`: a GitHub token with permissions to read the sponsorable profile, emails, sponsorships and repositories
     * `SponsorLink:Account`: the sponsorable GitHub account name, unless it's the same as the GitHub token owner
     * `SponsorLink:PrivateKey`: the Base64-encoded private key (the contents of `curl.key.txt` in the example above)
