@@ -13,7 +13,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Devlooped.Sponsors;
 
-public class Badge(IConfiguration config, IHttpClientFactory httpFactory, IMemoryCache cache, IOptions<SponsorLinkOptions> options, ILogger<Badge> logger)
+public class Badge(IHttpClientFactory httpFactory, IMemoryCache cache, IOptions<SponsorLinkOptions> options, ILogger<Badge> logger)
 {
     SponsorLinkOptions options = options.Value;
     TimeSpan expiration = TimeSpan.TryParse(options.Value.BadgeExpiration, out var expiration) ? expiration : TimeSpan.FromMinutes(5);
@@ -23,7 +23,7 @@ public class Badge(IConfiguration config, IHttpClientFactory httpFactory, IMemor
     [Function("badge")]
     public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
     {
-        var workspace = config["SponsorLink:LogsAnalytics"];
+        var workspace = options.LogAnalytics;
         if (string.IsNullOrEmpty(workspace))
         {
             logger.LogError("Missing SponsorLink:LogsAnalytics configuration");

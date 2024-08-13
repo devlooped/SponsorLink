@@ -25,4 +25,12 @@ public class SponsorLinkOptions
     /// Timespan for the expiration of the badge cache, in a format compatible with <see cref="TimeSpan.Parse(string)"/>.
     /// </summary>
     public string? BadgeExpiration { get; init; }
+
+    /// <summary>
+    /// Optional Azure Log Analytics workspace ID to produce usage badges from the /badge endpoint.
+    /// </summary>
+    /// <remarks>
+    /// Example badge usage: https://img.shields.io/endpoint?color=blue&url=https://sponsorlink.devlooped.com/badge?user
+    /// </remarks>
+    public string? LogAnalytics { get; init; }
 }
