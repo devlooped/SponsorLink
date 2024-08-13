@@ -5,7 +5,7 @@ namespace Devlooped.Sponsors;
 /// <summary>
 /// Queries used to retrieve data from the GitHub GraphQL API.
 /// </summary>
-public static class GraphQueries
+public static partial class GraphQueries
 {
     /// <summary>
     /// Viewer emails are not available in GraphQL (yet?). So we must use a 
