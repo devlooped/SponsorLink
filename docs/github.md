@@ -36,7 +36,7 @@ dotnet tool install -g dotnet-sponsor
 {: .highlight }
 On first run, the tool provides the usage terms, private policy and asks for consent to proceed.
 
-The user subsequently runs `sponsors sync [account]*` to sync the manifest for the given account(s) 
+The user subsequently runs `sponsor sync [account]*` to sync the manifest for the given account(s) 
 for offline use while consuming sponsorable libraries. 
 
 Whenever run, the tool performs the following steps:
