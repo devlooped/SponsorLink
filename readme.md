@@ -64,15 +64,15 @@ Roughly, the reference implementation works as follows:
 
 Notes:
 * Sponsor manifest expires monthly (like GitHub sponsorships themselves) and is signed 
-   with a private key only the author has access to but is public and accessible on the 
-   sponsorable manifest.
+   with a private key only the author has access to. Its corresponding public key is 
+   public and accessible on the sponsorable manifest.
 * Users can optionally turn on/off auto-sync, so that after the first sync, the author can 
    automatically refresh the manifest on the user's behalf by re-running the sync command 
    unattended.
 * Users can have the following role claims:
-   * `user`: the user is direct sponsor of the account.
-   * `org`: the user is a member of an organization that sponsors the account.
-   * `contrib`: the user is a contributor to the account's project(s).
+   * `user`: the user is direct sponsor of the author.
+   * `org`: the user is a member of an organization that sponsors the author.
+   * `contrib`: the user is a contributor to the author's project(s).
    * `team`: the user is team a member of the author's organization.
 * Typically, an autor would consider any of the above roles to qualify as an active 
    sponsor, but the actual behavior is up to the library/tool author.
@@ -85,6 +85,9 @@ and make sure to check the [privacy statement](https://www.devlooped.com/Sponsor
 The reference implementation .NET global tool, `dotnet-sponsor`, provides generic 
 manifest discovery and sync capabilities, but the actual check from within a library 
 or tool is left to the author.
+
+> [!NOTE]
+> For now, the tool works only with GitHub sponsors as a funding platform.
 
 Since the sponsor manifest is a standard JWT token, it can be verified by any JWT
 library in any language and at any point in the library/tool usage (at installation 
