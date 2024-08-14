@@ -512,6 +512,19 @@ public class GraphQueriesTests(ITestOutputHelper output)
         Assert.Equal(httpdata, clidata);
     }
 
+    [SecretsFact("SponsorLink:Account", "GitHub:Token")]
+    public async Task GetAllSponsors()
+    {
+        var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+
+        var sponsors = await client.QueryAsync(GraphQueries.Sponsors(Helpers.Configuration["SponsorLink:Account"]!));
+
+        Assert.NotNull(sponsors);
+        Assert.NotEmpty(sponsors);
+        Assert.All(sponsors, x => Assert.NotNull(x.Login));
+        Assert.All(sponsors, x => Assert.NotNull(x.Tier));
+    }
+
     void EnsureAuthenticated(string secret = "GitHub:Token")
     {
         Assert.True(TryExecute("gh", "auth login --with-token", Configuration[secret]!, out var output));
