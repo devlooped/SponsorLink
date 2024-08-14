@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🤘 checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: 🙏 build
         run: dotnet build -m:1
@@ -41,7 +41,7 @@ jobs:
 
       - name: ⬆️ upload
         if: success()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pkg
           path: bin/*
@@ -52,7 +52,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: 🤘 checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: 🔓 login
         uses: azure/login@v1
@@ -80,7 +80,7 @@ jobs:
         os: [ 'windows-latest', 'ubuntu-latest', 'macOS-latest' ]
     steps:
       - name: ⬇️ artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: pkg
           path: bin
