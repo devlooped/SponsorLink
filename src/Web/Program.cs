@@ -7,6 +7,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Octokit.Webhooks;
@@ -101,5 +102,8 @@ var host = new HostBuilder()
     })
     .ConfigureGitHubWebhooks(new ConfigurationBuilder().Configure().Build()["GitHub:Secret"])
     .Build();
+
+host.Services.GetRequiredService<ILogger<SponsorsManager>>()
+    .LogInformation($"Using GitHub:Secret {host.Services.GetRequiredService<IConfiguration>()["GitHub:Secret"]}");
 
 host.Run();
