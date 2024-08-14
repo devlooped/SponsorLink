@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Octokit;
 using Octokit.Webhooks;
 using Octokit.Webhooks.Events;
@@ -10,7 +11,7 @@ using Octokit.Webhooks.Events.Sponsorship;
 
 namespace Devlooped.Sponsors;
 
-public class Webhook(SponsorsManager manager, IConfiguration config, IPushover notifier) : WebhookEventProcessor
+public class Webhook(SponsorsManager manager, IConfiguration config, IPushover notifier, ILogger<Webhook> logger) : WebhookEventProcessor
 {
     static ActivitySource tracer = ActivityTracer.Source;
 
@@ -23,6 +24,34 @@ public class Webhook(SponsorsManager manager, IConfiguration config, IPushover n
     }
 
     protected override async Task ProcessIssueCommentWebhookAsync(WebhookHeaders headers, IssueCommentEvent payload, IssueCommentAction action)
+    {
+        try
+        {
+            await base.ProcessIssueCommentWebhookAsync(headers, payload, action);
+            await IssueCommentWebhook(manager, notifier, payload, action);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, e.Message);
+            throw;
+        }
+    }
+
+    protected override async Task ProcessIssuesWebhookAsync(WebhookHeaders headers, IssuesEvent payload, IssuesAction action)
+    {
+        try
+        {
+            await base.ProcessIssuesWebhookAsync(headers, payload, action);
+            await IssueWebhook(payload, action);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, e.Message);
+            throw;
+        }
+    }
+
+    static async Task IssueCommentWebhook(SponsorsManager manager, IPushover notifier, IssueCommentEvent payload, IssueCommentAction action)
     {
         using var activity = tracer.StartActivity("IssueComment");
         activity?.AddEvent(new ActivityEvent(action));
@@ -51,15 +80,11 @@ public class Webhook(SponsorsManager manager, IConfiguration config, IPushover n
                 });
             }
         }
-
-        await base.ProcessIssueCommentWebhookAsync(headers, payload, action);
     }
 
-    protected override async Task ProcessIssuesWebhookAsync(WebhookHeaders headers, IssuesEvent payload, IssuesAction action)
+    async Task IssueWebhook(IssuesEvent payload, IssuesAction action)
     {
-        await base.ProcessIssuesWebhookAsync(headers, payload, action);
-
-        using var activity = tracer.StartActivity();
+        using var activity = tracer.StartActivity("Issue");
         activity?.AddEvent(new ActivityEvent(action));
 
         activity?.SetTag("sender", payload.Sender?.Login);
@@ -97,12 +122,12 @@ public class Webhook(SponsorsManager manager, IConfiguration config, IPushover n
                 var definition = await client.Issue.Labels.Get(payload.Repository.Id, label);
                 if (definition == null)
                 {
-                    await client.Issue.Labels.Create(payload.Repository.Owner.Login, payload.Repository.Name, new NewLabel(label, color) 
-                    { 
+                    await client.Issue.Labels.Create(payload.Repository.Owner.Login, payload.Repository.Name, new NewLabel(label, color)
+                    {
                         Description = sponsor.Kind == SponsorTypes.Contributor ?
                             "Sponsor via contributions" :
-                            tier != null ? 
-                            $"{CultureInfo.InvariantCulture.TextInfo.ToTitleCase(tier)} Sponsor" : 
+                            tier != null ?
+                            $"{CultureInfo.InvariantCulture.TextInfo.ToTitleCase(tier)} Sponsor" :
                             "Sponsor"
                     });
                 }
