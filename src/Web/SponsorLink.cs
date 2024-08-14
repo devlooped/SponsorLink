@@ -21,68 +21,9 @@ namespace Devlooped.Sponsors;
 /// </summary>
 partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, IWebHostEnvironment host, ILogger<SponsorLink> logger)
 {
-    static ActivitySource tracer = new("Devlooped.Sponsors");
+    static ActivitySource tracer = ActivityTracer.Source;
 
     static readonly JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
-
-    /// <summary>
-    /// Helper to visualize the user's claims and the request/response headers as available to the backend.
-    /// </summary>
-    [Function("user")]
-    public async Task<IActionResult> UserAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
-    {
-        using var activity = tracer.StartActivity();
-
-        if (!configuration.TryGetClientId(logger, out var clientId))
-            return new StatusCodeResult(500);
-
-        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
-        {
-            // Implement manual auto-redirect to GitHub, since we cannot turn it on in the portal
-            // or the token-based principal population won't work.
-            // Never redirect requests for JWT, as they are likely from a CLI or other non-browser client.
-            if (!req.Headers.Accept.Contains("application/jwt") && !string.IsNullOrEmpty(clientId))
-            {
-                var redirectHost = host.IsDevelopment() ?
-                    "donkey-emerging-civet.ngrok-free.app" : req.Headers["Host"].ToString();
-
-                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{redirectHost}/.auth/login/github/callback&state=redir=/me");
-            }
-
-            logger.LogError("Ensure GitHub identity provider is configured for the functions app.");
-
-            // Otherwise, just 401
-            return new UnauthorizedResult();
-        }
-
-        using var http = httpFactory.CreateClient("sponsor");
-        var response = await http.GetAsync("https://api.github.com/user");
-
-        var emails = await http.GetFromJsonAsync<JsonArray>("https://api.github.com/user/emails");
-        var body = await response.Content.ReadFromJsonAsync<JsonObject>();
-        body?.Add("emails", emails);
-
-        // Claims can have duplicates, so we group them and turn them into arrays, which is what JWT does too.
-        var claims = principal.Claims.GroupBy(x => x.Type)
-            .Select(g => new { g.Key, Value = (object)(g.Count() == 1 ? g.First().Value : g.Select(x => x.Value).ToArray()) })
-            .ToDictionary(x => x.Key, x => x.Value);
-
-        // Allows the client to authenticate directly with the OAuth app if needed too.
-        if (!string.IsNullOrEmpty(clientId))
-            claims["client_id"] = clientId;
-
-        return new JsonResult(new
-        {
-            body,
-            claims,
-            request = host.IsDevelopment() ? req.Headers.ToDictionary(x => x.Key, x => x.Value.ToString().Trim('"')) : null,
-            response = host.IsDevelopment() ? response.Headers.ToDictionary(x => x.Key, x => string.Join(',', x.Value)) : null
-        })
-        {
-            StatusCode = (int)response.StatusCode,
-            SerializerSettings = JsonOptions.Default
-        };
-    }
 
     /// <summary>
     /// Returns the sponsorable manifest from <see cref="SponsorsManager.GetRawManifestAsync"/>.
@@ -129,7 +70,7 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
     /// Returns the sponsorable public key in JWK format.
     /// </summary>
     [Function("jwk")]
-    public async Task<IActionResult> GetPublicKey([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    public async Task<IActionResult> PublicKey([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         using var activity = tracer.StartActivity();
         var manifest = await sponsors.GetManifestAsync();
@@ -146,7 +87,7 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
     /// Depending on the Accept header, returns a JWT or JSON manifest of the authenticated user's claims.
     /// </summary>
     [Function("me")]
-    public async Task<IActionResult> SyncAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "me")] HttpRequest req)
+    public async Task<IActionResult> Sync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "me")] HttpRequest req)
     {
         using var activity = tracer.StartActivity();
 
@@ -275,6 +216,65 @@ partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpF
             Content = response.StatusCode.ToString(),
             ContentType = "text/plain",
             StatusCode = (int)response.StatusCode
+        };
+    }
+
+    /// <summary>
+    /// Helper to visualize the user's claims and the request/response headers as available to the backend.
+    /// </summary>
+    [Function("view")]
+    public async Task<IActionResult> View([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    {
+        using var activity = tracer.StartActivity();
+
+        if (!configuration.TryGetClientId(logger, out var clientId))
+            return new StatusCodeResult(500);
+
+        if (ClaimsPrincipal.Current is not { Identity.IsAuthenticated: true } principal)
+        {
+            // Implement manual auto-redirect to GitHub, since we cannot turn it on in the portal
+            // or the token-based principal population won't work.
+            // Never redirect requests for JWT, as they are likely from a CLI or other non-browser client.
+            if (!req.Headers.Accept.Contains("application/jwt") && !string.IsNullOrEmpty(clientId))
+            {
+                var redirectHost = host.IsDevelopment() ?
+                    "donkey-emerging-civet.ngrok-free.app" : req.Headers["Host"].ToString();
+
+                return new RedirectResult($"https://github.com/login/oauth/authorize?client_id={clientId}&scope=read:user%20read:org%20user:email&redirect_uri=https://{redirectHost}/.auth/login/github/callback&state=redir=/me");
+            }
+
+            logger.LogError("Ensure GitHub identity provider is configured for the functions app.");
+
+            // Otherwise, just 401
+            return new UnauthorizedResult();
+        }
+
+        using var http = httpFactory.CreateClient("sponsor");
+        var response = await http.GetAsync("https://api.github.com/user");
+
+        var emails = await http.GetFromJsonAsync<JsonArray>("https://api.github.com/user/emails");
+        var body = await response.Content.ReadFromJsonAsync<JsonObject>();
+        body?.Add("emails", emails);
+
+        // Claims can have duplicates, so we group them and turn them into arrays, which is what JWT does too.
+        var claims = principal.Claims.GroupBy(x => x.Type)
+            .Select(g => new { g.Key, Value = (object)(g.Count() == 1 ? g.First().Value : g.Select(x => x.Value).ToArray()) })
+            .ToDictionary(x => x.Key, x => x.Value);
+
+        // Allows the client to authenticate directly with the OAuth app if needed too.
+        if (!string.IsNullOrEmpty(clientId))
+            claims["client_id"] = clientId;
+
+        return new JsonResult(new
+        {
+            body,
+            claims,
+            request = host.IsDevelopment() ? req.Headers.ToDictionary(x => x.Key, x => x.Value.ToString().Trim('"')) : null,
+            response = host.IsDevelopment() ? response.Headers.ToDictionary(x => x.Key, x => string.Join(',', x.Value)) : null
+        })
+        {
+            StatusCode = (int)response.StatusCode,
+            SerializerSettings = JsonOptions.Default
         };
     }
 }

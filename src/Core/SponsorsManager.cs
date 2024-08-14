@@ -21,19 +21,107 @@ public partial class SponsorsManager(
     static readonly Serializer serializer = new();
     readonly SponsorLinkOptions options = options.Value;
 
+    Dictionary<string, Sponsor>? sponsors;
+    Dictionary<string, Tier>? tiers;
+
+    public void RefreshSponsors() => sponsors = null;
+
+    internal async Task<Dictionary<string, Sponsor>> GetSponsorsAsync()
+    {
+        if (sponsors is not null)
+            return sponsors;
+     
+        var client = graphFactory.CreateClient("sponsorable");
+        var account = await GetSponsorable(cache, client, options);
+        var tiers = await GetTiersAsync();
+        var raw = await client.QueryAsync(GraphQueries.Sponsors(account.Login));
+        logger.Assert(raw != null, "Failed to retrieve sponsors for {0}.", account.Login);
+
+        var result = new Dictionary<string, Sponsor>();
+
+        foreach (var sponsor in raw)
+        {
+            if (!tiers.TryGetValue(sponsor.Tier.Id, out var tier))
+                result.Add(sponsor.Login, sponsor with { Tier = AddTier(sponsor.Tier, tiers) });
+            else
+                result.Add(sponsor.Login, sponsor with { Tier = tier });
+        }
+
+        sponsors = result;
+        return sponsors;
+    }
+
+    internal async Task<Dictionary<string, Tier>> GetTiersAsync()
+    {
+        if (tiers is not null)
+            return tiers;
+
+        var client = graphFactory.CreateClient("sponsorable");
+        var result = new Dictionary<string, Tier>();
+
+        var account = await GetSponsorable(cache, client, options);
+        var json = await client.QueryAsync(GraphQueries.Tiers(account.Login));
+
+        // TODO: should be an error?
+        if (string.IsNullOrEmpty(json) ||
+            JsonSerializer.Deserialize<RawTier[]>(json, JsonOptions.Default) is not { Length: > 0 } raw)
+        {
+            logger.LogWarning("No tiers were found for account {Login}.", account.Login);
+            return result;
+        }
+
+        foreach (var item in raw)
+        {
+            var tier = new Tier(item.Id, item.Name, item.Description, item.Amount, item.OneTime, item.Previous);
+            AddTier(tier, result);
+        }
+
+        tiers = result;
+        return result;
+    }
+
+    /// <summary>
+    /// Adds a tier, prior to populating its metadata from all ancestor tiers.
+    /// </summary>
+    static Tier AddTier(Tier tier, Dictionary<string, Tier> tiers)
+    {
+        var yaml = YamlRegex().Match(tier.Description)?.Groups["yaml"]?.Value;
+        if (!string.IsNullOrEmpty(yaml) &&
+            serializer.Deserialize<Dictionary<string, string>>(yaml) is { } meta)
+        {
+            foreach (var entry in meta)
+            {
+                tier.Meta.TryAdd(entry.Key, entry.Value);
+            }
+        }
+
+        // Walk the tiers to aggregate metadata provided by lower tiers.
+        // This avoids having to repeat metadata in each tier.
+        var current = tier;
+        while (true)
+        {
+            if (string.IsNullOrEmpty(current.Previous) ||
+                !tiers.TryGetValue(current.Previous, out var previous))
+                break;
+
+            current = previous;
+            // Don't overwrite existing metadata.
+            foreach (var entry in current.Meta)
+            {
+                tier.Meta.TryAdd(entry.Key, entry.Value);
+            }
+        }
+
+        tiers.Add(tier.Id, tier);
+        return tier;
+    }
+
     public async Task<string> GetRawManifestAsync()
     {
         if (!cache.TryGetValue<string>(JwtCacheKey, out var jwt) || string.IsNullOrEmpty(jwt))
         {
             var client = graphFactory.CreateClient("sponsorable");
-
-            var account = string.IsNullOrEmpty(options.Account) ?
-                // default to the authenticated user login
-                await client.QueryAsync(GraphQueries.ViewerAccount)
-                    ?? throw new ArgumentException("Failed to determine sponsorable user from configured GitHub token.") :
-                await client.QueryAsync(GraphQueries.FindOrganization(options.Account))
-                    ?? await client.QueryAsync(GraphQueries.FindUser(options.Account))
-                    ?? throw new ArgumentException("Failed to determine sponsorable user from configured GitHub token.");
+            var account = await GetSponsorable(cache, client, options);
 
             var url = $"https://github.com/{account.Login}/.github/raw/main/sponsorlink.jwt";
 
@@ -54,7 +142,7 @@ public partial class SponsorsManager(
             if (account.Login != manifest.Sponsorable)
                 throw new InvalidOperationException("Manifest sponsorable account does not match configured sponsorable account.");
 
-            var cacheExpiration = TimeSpan.TryParse(options.BadgeExpiration, out var expiration) ? expiration : TimeSpan.FromHours(1);
+            var cacheExpiration = TimeSpan.TryParse(options.ManifestExpiration, out var expiration) ? expiration : TimeSpan.FromHours(1);
 
             jwt = cache.Set(JwtCacheKey, jwt, cacheExpiration);
             manifest = cache.Set(ManifestCacheKey, manifest, cacheExpiration);
@@ -245,60 +333,90 @@ public partial class SponsorsManager(
         return claims;
     }
 
-    public async Task<List<Tier>> GetTiers()
+    public async Task<Sponsor?> FindSponsorAsync(string? login)
     {
-        if (!cache.TryGetValue<List<Tier>>(typeof(List<Tier>), out var tiers) || tiers is null)
+        if (login is null)
+            return null;
+
+        var graph = graphFactory.CreateClient("sponsorable");
+        var account = await graph.QueryAsync(GraphQueries.FindAccount(login));
+        var sponsorable = await GetSponsorable(cache, graph, options);
+        var sponsors = await GetSponsorsAsync();
+
+        // This returns direct sponsors.
+        if (sponsors.TryGetValue(login, out var sponsor))
+            return sponsor;
+
+        var orgs = await graph.QueryAsync(GraphQueries.UserOrganizations(login));
+        if (orgs is not null && orgs.Any(x => x.Login == sponsorable.Login))
         {
-            var manifest = await GetManifestAsync();
-            var client = graphFactory.CreateClient("sponsorable");
-            tiers = [];
-
-            var json = await client.QueryAsync(GraphQueries.Tiers(manifest.Sponsorable));
-
-            // TODO: should be an error?
-            if (string.IsNullOrEmpty(json) ||
-                JsonSerializer.Deserialize<RawTier[]>(json, JsonOptions.Default) is not { Length: > 0 } raw)
-                return tiers;
-
-            foreach (var item in raw)
+            // This avoids having to check contributions for team members.
+            return new Sponsor(login, account?.Type ?? AccountType.User, new Tier("team", "Team", "Team", 0, false)
             {
-                var tier = new Tier(item.Name, YamlRegex().Replace(item.Description, ""), item.Amount, item.OneTime);
-                var current = item;
-                while (true)
-                {
-                    var yaml = YamlRegex().Match(current.Description)?.Groups["yaml"]?.Value;
-                    if (!string.IsNullOrEmpty(yaml) &&
-                        serializer.Deserialize<Dictionary<string, string>>(yaml) is { } meta)
-                    {
-                        foreach (var entry in meta)
-                        {
-                            // An existing value should not be overwritten
-                            tier.Meta.TryAdd(entry.Key, entry.Value);
-                        }
-                    }
-
-                    // Walk the tiers to aggregate metadata provided by lower tiers.
-                    // This avoids having to repeat metadata in each tier.
-                    if (string.IsNullOrEmpty(current.Previous) ||
-                        raw.FirstOrDefault(x => x.Name == current.Previous) is not { } previous)
-                        break;
-
-                    current = previous;
-                }
-                tiers.Add(tier);
-            }
-
-            tiers = cache.Set(typeof(List<Tier>), tiers, new MemoryCacheEntryOptions
+                Meta = { ["tier"] = "team" }
+            })
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
-            });
+                Kind = SponsorTypes.Team,
+            };
         }
 
-        return tiers;
+        // Lookup for indirect sponsors, first via repo contributions. 
+        var contribs = await graph.QueryAsync(GraphQueries.UserContributions(login));
+        if (contribs is not null && contribs.Contains(sponsorable.Login))
+        {
+            return new Sponsor(login, account?.Type ?? AccountType.User, new Tier("contrib", "Contributor", "Contributor", 0, false)
+            {
+                Meta =
+                {
+                    ["tier"] = "contrib",
+                    ["label"] = "sponsor 💚",
+                    ["color"] = "#BFFFD3"
+                }
+            })
+            {
+                Kind = SponsorTypes.Contributor,
+            };
+        }
+
+        if (orgs is null || orgs.Length == 0)
+            return null;
+
+        Sponsor? orgSponsor = default;
+
+        // Pick highest tier org.
+        foreach (var org in orgs)
+        {
+            if (await FindSponsorAsync(org.Login) is { } found && 
+                (orgSponsor is null || found.Tier.Amount > orgSponsor.Tier.Amount))
+            {
+                orgSponsor = found;
+            }
+        }
+
+        return orgSponsor;
     }
 
-    record RawTier(string Name, string Description, int Amount, bool OneTime, string? Previous);
+    static async Task<Account> GetSponsorable(IMemoryCache cache, IGraphQueryClient client, SponsorLinkOptions options)
+    {
+        var key = nameof(SponsorsManager) + ".Sponsorable";
+        if (cache.TryGetValue<Account>(key, out var value) && value != null)
+            return value;
 
-    [GeneratedRegex("<!--(?<yaml>.*)-->")]
+        var account = string.IsNullOrEmpty(options.Account) ?
+            // default to the authenticated user login
+            await client.QueryAsync(GraphQueries.ViewerAccount)
+                ?? throw new ArgumentException("Failed to determine sponsorable user from configured GitHub token.") :
+            await client.QueryAsync(GraphQueries.FindOrganization(options.Account))
+                ?? await client.QueryAsync(GraphQueries.FindUser(options.Account))
+                ?? throw new ArgumentException("Failed to determine sponsorable account from configured SponsorLink account.");
+
+        cache.Set(key, account);
+
+        return account;
+    }
+
+    record RawTier(string Id, string Name, string Description, int Amount, bool OneTime, string? Previous);
+
+    [GeneratedRegex("<!--(?<yaml>.*)-->", RegexOptions.Singleline)]
     private static partial Regex YamlRegex();
 }

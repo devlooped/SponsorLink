@@ -20,7 +20,12 @@ public record Sponsorship(string Sponsorable, [property: Browsable(false)] strin
 #endif
     [property: DisplayName("One-time")] bool OneTime);
 
-public record Tier(string Name, string Description, int Amount, bool OneTime)
+public record Sponsor(string Login, AccountType Type, Tier Tier)
+{
+    public SponsorTypes Kind { get; init; } = Type == AccountType.Organization ? SponsorTypes.Organization : SponsorTypes.User;
+}
+
+public record Tier(string Id, string Name, string Description, int Amount, bool OneTime, string? Previous = null)
 {
     public Dictionary<string, string> Meta { get; init; } = [];
 }

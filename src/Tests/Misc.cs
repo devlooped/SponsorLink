@@ -79,6 +79,23 @@ public class Misc(ITestOutputHelper output)
 
     record PurgeStatus(string status);
 
+    [SecretsFact("Pushover:Token", "Pushover:Key")]
+    public async Task PushMessage()
+    {
+        var options = new PushoverOptions();
+        Configuration.Bind("Pushover", options);
+        var pushover = new Pushover(Services.GetRequiredService<IHttpClientFactory>(), Options.Create(options));
+
+        await pushover.PostAsync(new PushoverMessage
+        {
+            Title = $"🐛 by kzu as Silver sponsor",
+            Message = "Add optional endpoint that can emit shields endpoint badge data",
+            Url = "https://github.com/devlooped/SponsorLink/pull/258",
+            UrlTitle = $"View Issue #{258}",
+            Priority = PushoverPriority.High
+        });
+    }
+
     public static void SponsorsAscii()
     {
         var heart =

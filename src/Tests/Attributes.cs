@@ -40,6 +40,27 @@ public class CIFactAttribute : FactAttribute
     }
 }
 
+public class SecretsTheoryAttribute : TheoryAttribute
+{
+    public SecretsTheoryAttribute(params string[] secrets)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddUserSecrets<SecretsTheoryAttribute>()
+            .Build();
+
+        var missing = new HashSet<string>();
+
+        foreach (var secret in secrets)
+        {
+            if (string.IsNullOrEmpty(configuration[secret]))
+                missing.Add(secret);
+        }
+
+        if (missing.Count > 0)
+            Skip = "Missing user secrets: " + string.Join(',', missing);
+    }
+}
+
 public class LocalTheoryAttribute : TheoryAttribute
 {
     public LocalTheoryAttribute()

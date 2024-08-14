@@ -20,11 +20,13 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.0" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Octokit" Version="13.0.1" />
     <PackageReference Include="SharpYaml" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.5.0" PrivateAssets="all" />
     <PackageReference Include="CliWrap" Version="3.6.6" />
+    <PackageReference Include="Octokit.Webhooks.AzureFunctions" Version="2.2.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />

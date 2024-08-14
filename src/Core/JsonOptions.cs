@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -15,6 +16,7 @@ static partial class JsonOptions
         new()
 #endif
         {
+            //Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             AllowTrailingCommas = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             ReadCommentHandling = JsonCommentHandling.Skip,

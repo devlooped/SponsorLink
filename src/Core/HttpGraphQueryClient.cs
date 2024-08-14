@@ -113,7 +113,11 @@ public class HttpGraphQueryClient(IHttpClientFactory factory, string name) : IGr
             if (typed is IEnumerable<object> array)
                 items.AddRange(array);
 
-            info = JsonSerializer.Deserialize<PageInfo>(await JQ.ExecuteAsync(raw, ".. | .pageInfo? | values"), JsonOptions.Default);
+            var pageInfoRaw = await JQ.ExecuteAsync(raw, ".. | .pageInfo? | values");
+            if (string.IsNullOrEmpty(pageInfoRaw))
+                break;
+
+            info = JsonSerializer.Deserialize<PageInfo>(pageInfoRaw, JsonOptions.Default);
             if (info is null || !info.HasNextPage)
                 break;
         }

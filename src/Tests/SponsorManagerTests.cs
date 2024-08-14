@@ -271,7 +271,7 @@ public sealed class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(),
             Mock.Of<ILogger<SponsorsManager>>());
 
-        var tiers = await manager.GetTiers();
+        var tiers = await manager.GetTiersAsync();
 
         // Meta is populated from <!-- --> comments in the sponsor listing description, 
         // which is used to hold a yaml block with metadata.
@@ -280,6 +280,55 @@ public sealed class SponsorManagerTests : IDisposable
 
         Assert.NotNull(tiers);
         Assert.NotEmpty(tiers);
-        Assert.Contains(tiers, x => x.Meta.ContainsKey("tier"));
+
+        // No tier should have fewer meta items than any previous one.
+        // NOTE: one-time tiers do not cascade to monthly tiers (they don't share parent tiers)
+
+        var meta = new HashSet<string>();
+        foreach (var tier in tiers.Values.Where(t => t.OneTime))
+        {
+            Assert.True(tier.Meta.Count >= meta.Count, $"Tier {tier.Name} does not have at least {meta.Count} metadata items");
+            meta.AddRange(tier.Meta.Keys);
+        }
+
+        meta.Clear();
+        foreach (var tier in tiers.Values.Where(t => !t.OneTime))
+        {
+            Assert.True(tier.Meta.Count >= meta.Count, $"Tier {tier.Name} does not have at least {meta.Count} metadata items");
+            meta.AddRange(tier.Meta.Keys);
+        }
+
+        Assert.All(tiers.Values, x => Assert.Contains("label", x.Meta.Keys));
+    }
+
+    [SecretsTheory("GitHub:Sponsorable")]
+    [InlineData("clarius", "basic", SponsorTypes.Organization)]
+    [InlineData("torutek-gh", "silver", SponsorTypes.User)]
+    [InlineData("KirillOsenkov", "silver", SponsorTypes.User)]
+    [InlineData("victorgarciaaprea", "basic", SponsorTypes.Organization)]
+    [InlineData("kzu", "team", SponsorTypes.Team)]
+    [InlineData("stakx", "contrib", SponsorTypes.None)] // since only *recent* (1yr) contributions count
+    public async Task GetTierForLogin(string login, string tier, SponsorTypes type)
+    {
+        var manager = new SponsorsManager(
+            services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
+            httpFactory,
+            services.GetRequiredService<IGraphQueryClientFactory>(),
+            services.GetRequiredService<IMemoryCache>(),
+            Mock.Of<ILogger<SponsorsManager>>());
+
+        var sponsor = await manager.FindSponsorAsync(login);
+
+        if (type == SponsorTypes.None)
+        {
+            Assert.Null(sponsor);
+            return;
+        }
+
+        Assert.NotNull(sponsor);
+
+        Assert.True(sponsor.Tier.Meta.TryGetValue("tier", out var existing));
+        Assert.Equal(tier, existing);
+        Assert.Equal(type, sponsor.Kind);
     }
 }

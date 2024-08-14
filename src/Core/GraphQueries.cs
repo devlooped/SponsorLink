@@ -1,4 +1,5 @@
-﻿using Scriban;
+﻿using System.Security.Principal;
+using Scriban;
 
 namespace Devlooped.Sponsors;
 
@@ -19,6 +20,21 @@ public static partial class GraphQueries
         // see https://stackoverflow.com/a/2387072/24684 on how this works to exclude noreply addresses
         """
         [.[] | select(.verified == true) | select(.email | test("^((?!noreply.github.com).)*$")) | .email]
+        """)
+    {
+        IsLegacy = true
+    };
+
+    /// <summary>
+    /// Emails API is not available in GraphQL (yet?). So we must use a legacy query via REST API.
+    /// </summary>
+    /// <remarks>
+    /// See https://github.com/orgs/community/discussions/24389#discussioncomment-3243994
+    /// </remarks>
+    public static GraphQuery<string[]> Emails(string user) => new(
+        $"/users/{user}",
+        """
+        [.email]
         """)
     {
         IsLegacy = true
@@ -418,11 +434,11 @@ public static partial class GraphQueries
 
     /// <summary>
     /// Returns the unique repository owners of all repositories the user has contributed 
-    /// commits to.
+    /// commits to within the last year.
     /// </summary>
     /// <remarks>
-    /// If a single user contributes to more than 100 repositories, we'd have a problem 
-    /// and would need to implement pagination.
+    /// See https://github.com/orgs/community/discussions/24350#discussioncomment-4195303. 
+    /// Contributions only includes last year's.
     /// </remarks>
     public static GraphQuery<string[]> UserContributions(string user, int pageSize = 100) => new(
         """
@@ -430,7 +446,6 @@ public static partial class GraphQueries
             user(login: $login) {
                 repositoriesContributedTo(first: $count, includeUserRepositories: true, contributionTypes: [COMMIT], after: $endCursor) {
                     nodes {
-                        nameWithOwner,
                         owner {
                             login
                         }
@@ -501,6 +516,29 @@ public static partial class GraphQueries
         """,
         """
         .data.repository.owner
+        """)
+    {
+        Variables =
+        {
+            { "login", account }
+        }
+    };
+
+    public static GraphQuery<Account> FindAccount(string account) => new(
+        """
+        query($login: String!) {
+          user(login: $login) {
+            login
+          	type: __typename
+          }
+          organization(login: $login) {
+            login
+          	type: __typename
+          }
+        }
+        """,
+        """
+        .data.user? + .data.organization?
         """)
     {
         Variables =
@@ -639,12 +677,13 @@ public static partial class GraphQueries
             sponsorsListing {
               tiers(first: 100){
                 nodes {
+                  id,
                   name,
                   description,
                   monthlyPriceInDollars,
                   isOneTime,
                   closestLesserValueTier {
-                    name
+                    id
                   },
                 }
               }
@@ -654,12 +693,13 @@ public static partial class GraphQueries
             sponsorsListing {
               tiers(first: 100){
                 nodes {
+                  id,
                   name,
                   description,
                   monthlyPriceInDollars,
                   isOneTime,
                   closestLesserValueTier {
-                    name
+                    id
                   },
                 }
               }
@@ -668,12 +708,74 @@ public static partial class GraphQueries
         }
         """,
         """
-        [(.data.user? + .data.organization?).sponsorsListing.tiers.nodes.[] | { name, description, amount: .monthlyPriceInDollars, oneTime: .isOneTime, previous: .closestLesserValueTier.name }]
+        [(.data.user? + .data.organization?).sponsorsListing.tiers.nodes.[] | { id, name, description, amount: .monthlyPriceInDollars, oneTime: .isOneTime, previous: .closestLesserValueTier.id }]
         """)
     {
         Variables =
         {
             { "login", account }
+        }
+    };
+
+    /// <summary>
+    /// If the sponsorable is a user, we don't support pagination for now and it will 
+    /// return the maximum limit of 100 entities.
+    /// </summary>
+    public static GraphQuery<Sponsor[]> Sponsors(string sponsorable) => new(
+        """
+        query($login:  String!, $endCursor: String) {
+          organization (login: $login) {
+            sponsorshipsAsMaintainer (activeOnly:true, first: 100, after: $endCursor) {
+              nodes { 
+                sponsorEntity {
+                  ... on Organization { login, __typename }
+                  ... on User { login, __typename }
+                }
+                tier { 
+                  id,
+                  name,
+                  description,
+                  isCustomAmount,
+                  isOneTime,
+                  monthlyPriceInDollars,
+                  closestLesserValueTier {
+                    id
+                  }
+                }
+              }
+              pageInfo { hasNextPage, endCursor }
+            }
+          }
+          user (login: $login) {
+            sponsorshipsAsMaintainer (activeOnly:true, first: 100) {
+              nodes { 
+                sponsorEntity {
+                  ... on Organization { login, __typename }
+                  ... on User { login, __typename }
+                }
+                tier { 
+                  id,
+                  name,
+                  description,
+                  isCustomAmount,
+                  isOneTime,
+                  monthlyPriceInDollars,
+                  closestLesserValueTier {
+                    id
+                  }
+                }
+              }
+            }
+          }
+        }
+        """,
+        """
+        [(.data.user? + .data.organization?).sponsorshipsAsMaintainer.nodes.[] | { login: .sponsorEntity.login, type: .sponsorEntity.__typename, tier: { id: .tier.id, name: .tier.name, description: .tier.description, amount: .tier.monthlyPriceInDollars, oneTime: .tier.isOneTime, previous: .tier.closestLesserValueTier.id } }]
+        """)
+    {
+        Variables =
+        {
+            { "login", sponsorable }
         }
     };
 
