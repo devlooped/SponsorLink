@@ -299,6 +299,8 @@ public sealed class SponsorManagerTests : IDisposable
         }
 
         Assert.All(tiers.Values, x => Assert.Contains("label", x.Meta.Keys));
+        Assert.All(tiers.Values, x => Assert.Contains("color", x.Meta.Keys));
+        Assert.All(tiers.Values, x => Assert.NotEmpty(x.Meta["color"]));
     }
 
     [SecretsTheory("GitHub:Sponsorable")]

@@ -100,7 +100,7 @@ public class Webhook(SponsorsManager manager, IConfiguration config, IPushover n
 
             if (!sponsor.Tier.Meta.TryGetValue("label", out var label))
                 label = "sponsor 💜";
-            if (!sponsor.Tier.Meta.TryGetValue("color", out var color))
+            if (!sponsor.Tier.Meta.TryGetValue("color", out var color) || string.IsNullOrEmpty(color))
                 color = "#D4C5F9";
 
             // ensure Issue has the given label applied
@@ -119,10 +119,13 @@ public class Webhook(SponsorsManager manager, IConfiguration config, IPushover n
                     Credentials = new Credentials(config["GitHub:Token"])
                 };
 
-                var definition = await client.Issue.Labels.Get(payload.Repository.Id, label);
-                if (definition == null)
+                try
                 {
-                    await client.Issue.Labels.Create(payload.Repository.Owner.Login, payload.Repository.Name, new NewLabel(label, color)
+                    await client.Issue.Labels.Get(payload.Repository.Id, label);
+                }
+                catch (NotFoundException)
+                {
+                    await client.Issue.Labels.Create(payload.Repository.Owner.Login, payload.Repository.Name, new NewLabel(label, color.TrimStart('#'))
                     {
                         Description = sponsor.Kind == SponsorTypes.Contributor ?
                             "Sponsor via contributions" :

@@ -16,7 +16,7 @@ static partial class JsonOptions
         new()
 #endif
         {
-            //Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             AllowTrailingCommas = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             ReadCommentHandling = JsonCommentHandling.Skip,
