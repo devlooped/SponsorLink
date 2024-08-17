@@ -62,7 +62,7 @@ public class PushoverMessage
     /// <summary>
     /// The priority of the message
     /// </summary>
-    public PushoverPriority Priority { get; set; } = PushoverPriority.Normal;
+    public PushoverPriority? Priority { get; set; }
 
     /// <summary>
     /// The name of the sound to use with 

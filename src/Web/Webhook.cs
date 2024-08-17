@@ -76,7 +76,7 @@ public class Webhook(SponsorsManager manager, IConfiguration config, IPushover n
                     Message = payload.Comment.Body,
                     Url = payload.Comment.Url,
                     UrlTitle = $"View comment on issue #{payload.Issue.Number}",
-                    Priority = PushoverPriority.High
+                    //Priority = PushoverPriority.Normal
                 });
             }
         }
@@ -116,7 +116,8 @@ public class Webhook(SponsorsManager manager, IConfiguration config, IPushover n
 
                 var client = new GitHubClient(new ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
                 {
-                    Credentials = new Credentials(config["GitHub:Token"])
+                    // Optional bot-token allows for a label updating by the bot
+                    Credentials = new Credentials(config["GitHub:BotToken"] ?? config["GitHub:Token"])
                 };
 
                 try
@@ -143,7 +144,7 @@ public class Webhook(SponsorsManager manager, IConfiguration config, IPushover n
                     Message = payload.Issue.Title,
                     Url = payload.Issue.Url,
                     UrlTitle = $"View Issue #{payload.Issue.Number}",
-                    Priority = PushoverPriority.High
+                    //Priority = PushoverPriority.Normal
                 });
             }
         }
