@@ -130,7 +130,7 @@ public class Webhook(SponsorsManager manager, IConfiguration config, IPushover n
                     {
                         Description = sponsor.Kind == SponsorTypes.Contributor ?
                             "Sponsor via contributions" :
-                            tier != null ?
+                            tier != null && !"basic".Equals(tier, StringComparison.OrdinalIgnoreCase) && !"sponsor".Equals(tier, StringComparison.OrdinalIgnoreCase) ?
                             $"{CultureInfo.InvariantCulture.TextInfo.ToTitleCase(tier)} Sponsor" :
                             "Sponsor"
                     });
