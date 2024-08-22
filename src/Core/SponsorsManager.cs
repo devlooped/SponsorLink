@@ -140,7 +140,7 @@ public partial class SponsorsManager(
 
             // Manifest audience should match the sponsorable account to avoid weird issues?
             if (account.Login != manifest.Sponsorable)
-                throw new InvalidOperationException("Manifest sponsorable account does not match configured sponsorable account.");
+                throw new InvalidOperationException($"Manifest sponsorable account {manifest.Sponsorable} does not match configured sponsorable account {account.Login}.");
 
             var cacheExpiration = TimeSpan.TryParse(options.ManifestExpiration, out var expiration) ? expiration : TimeSpan.FromHours(1);
 
