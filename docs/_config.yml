@@ -65,11 +65,15 @@ gh_edit_view_mode: tree
 
 issues_template: |
   {{#if available}}
-  <table class="highlight" class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
+  <p class="mt-6 highlight no-before">Available sponsorships</p>
+  <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
       {{#each available}}
       <tr>
           <td class="borderless">$ {{amount}}</td>
-          <td class="borderless"><button class="btn btn-green">link</button></td>
+          <td class="borderless">
+            <input class="border" style="max-width: auto;" type="text" placeholder="Issue URL" id="{{sponsorshipId}}">
+          </td>
+          <td class="borderless"><button class="btn btn-green" onclick="backIssue('{{sponsorshipId}}');">link</button></td>
       </tr>
       {{/each}}
   </table>
@@ -77,8 +81,8 @@ issues_template: |
   Please consider making one-time sponsorship(s) to <a href="https://github.com/sponsors/{{sponsorable}}/">{{sponsorable}}</a> to back your chosen issue(s). 
   {{/if}}
   {{#if backed}}
-  <div>Backed issues:</div>
-  <table class="note" class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
+  <p class="mt-6 note no-before">Backed issues</p>
+  <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
       {{#each backed}}
       <tr>
           <td class="borderless">$ {{amount}}</td>
