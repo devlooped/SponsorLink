@@ -1,7 +1,48 @@
 ﻿using System.Diagnostics;
 using Microsoft.Extensions.Options;
+using Octokit;
 
 namespace Devlooped.Sponsors;
+
+public static class SponsoredIssuesExtensions
+{
+    public static async Task UpdateBackedAsync(this SponsoredIssues issues, IGitHubClient github, long? repository, int number)
+    {
+        if (repository is null)
+            return;
+
+        var issue = await github.Issue.Get(repository.Value, number);
+        var amount = await issues.BackedAmount(repository.Value, number);
+        var updated = await issues.UpdateIssueBody(repository.Value, number, issue.Body);
+
+        // Ensure the backed badge is present, regardless of the amount.
+        if (updated != issue.Body)
+        {
+            await github.Issue.Update(repository.Value, number, new IssueUpdate
+            {
+                Body = updated,
+            });
+        }
+
+        if (amount > 0 && !issue.Labels.Any(x => x.Name == "backed"))
+        {
+            // Apply backed label, with GH Sponsors official color.
+            try
+            {
+                await github.Issue.Labels.Get(repository.Value, "backed");
+            }
+            catch (NotFoundException)
+            {
+                await github.Issue.Labels.Create(repository.Value, new NewLabel("backed", "EA4AAA")
+                {
+                    Description = "Backed via SponsorLink"
+                });
+            }
+
+            await github.Issue.Labels.AddToIssue(repository.Value, number, ["backed"]);
+        }
+    }
+}
 
 public partial class SponsoredIssues
 {

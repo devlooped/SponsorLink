@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Octokit;
@@ -14,7 +13,7 @@ namespace Devlooped.Sponsors;
 
 public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IConfiguration config, IGitHubClient github, IPushover notifier, ILogger<Webhook> logger) : WebhookEventProcessor
 {
-    static ActivitySource tracer = ActivityTracer.Source;
+    static readonly ActivitySource tracer = ActivityTracer.Source;
 
     protected override async Task ProcessSponsorshipWebhookAsync(WebhookHeaders headers, SponsorshipEvent payload, SponsorshipAction action)
     {
@@ -35,7 +34,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
     protected override async Task ProcessIssueCommentWebhookAsync(WebhookHeaders headers, IssueCommentEvent payload, IssueCommentAction action)
     {
-        await EnsureBackerAsync(payload.Repository?.Id, payload.Issue.Number, payload.Issue.Body);
+        await issues.UpdateBackedAsync(github, payload.Repository?.Id, (int)payload.Issue.Number);
 
         try
         {
@@ -76,9 +75,8 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
     protected override async Task ProcessIssuesWebhookAsync(WebhookHeaders headers, IssuesEvent payload, IssuesAction action)
     {
-        // Ensure backer amount badge is present/updated
-        await EnsureBackerAsync(payload.Repository?.Id, payload.Issue.Number, payload.Issue.Body);
-        
+        await issues.UpdateBackedAsync(github, payload.Repository?.Id, (int)payload.Issue.Number);
+
         try
         {
             using var activity = tracer.StartActivity("Issue");
@@ -166,24 +164,6 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         {
             logger.LogError(e, e.Message);
             throw;
-        }
-    }
-
-    async Task EnsureBackerAsync(long? repository, long number, string? body)
-    {
-        if (repository is null || body is null)
-            return;
-
-        var amount = await issues.BackedAmount(repository.Value, (int)number);
-        var updated = await issues.UpdateIssueBody(repository.Value, (int)number, body);
-
-        if (updated != body)
-        {
-            var issue = new IssueUpdate
-            {
-                Body = updated,
-            };
-            await github.Issue.Update(repository.Value, (int)number, issue);
         }
     }
 }
