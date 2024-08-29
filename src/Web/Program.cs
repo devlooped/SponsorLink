@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
+using Devlooped;
 using Devlooped.Sponsors;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
+using Octokit;
 using Octokit.Webhooks;
 using Octokit.Webhooks.AzureFunctions;
 
@@ -31,6 +33,8 @@ var host = new HostBuilder()
     {
         // Register first so it initializes always before every other initializer.
         services.AddSingleton<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
+        services.AddSingleton(sp => CloudStorageAccount.Parse(sp.GetRequiredService<IConfiguration>()["AzureWebJobsStorage"] ?? 
+            throw new InvalidOperationException("Missing required configuration 'AzureWebJobsStorage'.")));
 
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
@@ -44,16 +48,25 @@ var host = new HostBuilder()
 
         services
             .AddOptions<SponsorLinkOptions>()
-            .Configure<IConfiguration>((options, configuration) =>
+            .Configure<IConfiguration, IGraphQueryClientFactory>((options, configuration, client) =>
             {
                 configuration.GetSection("SponsorLink").Bind(options);
-            });
+                // Ensure default value is populated from the logged in account if we can't find it in the configuration.
+                if (string.IsNullOrEmpty(options.Account))
+                    options.Account = client.CreateClient("sponsorable").QueryAsync(GraphQueries.ViewerAccount).GetAwaiter().GetResult()?.Login;
+            })
+            .ValidateOnStart()
+            .ValidateDataAnnotations();
+
+        services.AddScoped(services => services.GetRequiredService<IOptions<SponsorLinkOptions>>().Value);
 
         services.AddOptions<PushoverOptions>()
             .Configure<IConfiguration>((options, configuration) =>
             {
                 configuration.GetSection("Pushover").Bind(options);
             });
+
+        services.AddScoped(services => services.GetRequiredService<IOptions<PushoverOptions>>().Value);
 
         services.AddHttpClient().ConfigureHttpClientDefaults(defaults => defaults.ConfigureHttpClient(http =>
         {
@@ -96,14 +109,21 @@ var host = new HostBuilder()
             return rsa;
         });
 
+        services.AddSingleton<IGitHubClient>(sp =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>();
+            return new GitHubClient(new Octokit.ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
+            {
+                Credentials = new Credentials(config["GitHub:BotToken"] ?? config["GitHub:Token"])
+            };
+        });
+
         services.AddSingleton<SponsorsManager>();
+        services.AddSingleton<SponsoredIssues>();
         services.AddSingleton<WebhookEventProcessor, Webhook>();
         services.AddSingleton<IPushover, Pushover>();
     })
     .ConfigureGitHubWebhooks(new ConfigurationBuilder().Configure().Build()["GitHub:Secret"])
     .Build();
-
-host.Services.GetRequiredService<ILogger<SponsorsManager>>()
-    .LogInformation($"Using GitHub:Secret {host.Services.GetRequiredService<IConfiguration>()["GitHub:Secret"]}");
 
 host.Run();

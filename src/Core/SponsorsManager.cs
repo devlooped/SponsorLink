@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Azure.Data.Tables;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,9 +11,8 @@ using SharpYaml.Serialization;
 
 namespace Devlooped.Sponsors;
 
-public partial class SponsorsManager(
-    IOptions<SponsorLinkOptions> options, IHttpClientFactory httpFactory,
-    IGraphQueryClientFactory graphFactory,
+public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
+    IHttpClientFactory httpFactory, IGraphQueryClientFactory graphFactory, 
     IMemoryCache cache, ILogger<SponsorsManager> logger)
 {
     internal const string JwtCacheKey = nameof(SponsorsManager) + ".JWT";
@@ -123,7 +123,7 @@ public partial class SponsorsManager(
             var client = graphFactory.CreateClient("sponsorable");
             var account = await GetSponsorable(cache, client, options);
 
-            var url = $"https://github.com/{account.Login}/.github/raw/main/sponsorlink.jwt";
+            var url = $"https://github.com/{account.Login}/.github/raw/{options.ManifestBranch ?? "main"}/sponsorlink.jwt";
 
             // Manifest should be public, so no need for any special HTTP client.
             using var http = httpFactory.CreateClient();
@@ -342,6 +342,17 @@ public partial class SponsorsManager(
         var account = await graph.QueryAsync(GraphQueries.FindAccount(login));
         var sponsorable = await GetSponsorable(cache, graph, options);
         var sponsors = await GetSponsorsAsync();
+
+        if (sponsorable.Login == login)
+        {
+            return new Sponsor(login, account?.Type ?? AccountType.User, new Tier("team", "Team", "Team", 0, false)
+            {
+                Meta = { ["tier"] = "team" }
+            })
+            {
+                Kind = SponsorTypes.Team,
+            };
+        }
 
         // This returns direct sponsors.
         if (sponsors.TryGetValue(login, out var sponsor))

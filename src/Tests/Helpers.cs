@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Net.Http.Headers;
+using Devlooped.Sponsors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
 namespace Devlooped;
@@ -44,6 +46,30 @@ class Helpers
             }))
             .AddAsyncLazy();
 
+        collection.AddGraphQueryClient();
+
+        collection
+            .AddOptions<SponsorLinkOptions>()
+            .Configure<IConfiguration, IGraphQueryClientFactory>((options, configuration, client) =>
+            {
+                configuration.GetSection("SponsorLink").Bind(options);
+                // Ensure default value is populated from the logged in account if we can't find it in the configuration.
+                if (string.IsNullOrEmpty(options.Account))
+                    options.Account = client.CreateClient("sponsorable").QueryAsync(GraphQueries.ViewerAccount).GetAwaiter().GetResult()?.Login;
+            })
+            .ValidateOnStart()
+            .ValidateDataAnnotations();
+
+        collection.AddScoped(services => services.GetRequiredService<IOptions<SponsorLinkOptions>>().Value);
+
+        collection.AddOptions<PushoverOptions>()
+            .Configure<IConfiguration>((options, configuration) =>
+            {
+                configuration.GetSection("Pushover").Bind(options);
+            });
+
+        collection.AddScoped(services => services.GetRequiredService<IOptions<PushoverOptions>>().Value);
+
         if (Configuration["GitHub:Token"] is { Length: > 0 } ghtoken)
         {
             collection.AddHttpClient("GitHub", http =>
@@ -62,6 +88,11 @@ class Helpers
         if (Configuration["GitHub:Sponsorable"] is { Length: > 0 } ghsponsorable)
         {
             collection.AddHttpClient("GitHub:Sponsorable", http =>
+            {
+                http.BaseAddress = new Uri("https://api.github.com");
+                http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghsponsorable);
+            });
+            collection.AddHttpClient("sponsorable", http =>
             {
                 http.BaseAddress = new Uri("https://api.github.com");
                 http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ghsponsorable);

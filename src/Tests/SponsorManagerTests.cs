@@ -265,7 +265,7 @@ public sealed class SponsorManagerTests : IDisposable
     public async Task GetTiersWithMetadata()
     {
         var manager = new SponsorsManager(
-            services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
+            Options.Create<SponsorLinkOptions>(new SponsorLinkOptions { Account = "devlooped" }),
             httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
             services.GetRequiredService<IMemoryCache>(),
