@@ -21,7 +21,7 @@ the issue URL you would like to back below.
                     <button class="btn btn-green" onclick="lookupSponsor();">Go</button>
                 </div>
             </td>
-            <td class="borderless" id="loading">
+            <td class="borderless" style="display: none;" id="loading">
                 <div class="spinner-border text-green-200" role="status"></div>                
             </td>
             <td class="borderless" style="display: none;" id="unsupported">
@@ -187,6 +187,7 @@ async function displayIssues() {
 
 async function lookupSponsor() {
     setError('');
+    setStatus("loading");
     data.account = document.getElementById('account').value;
     console.log('Looking up sponsor: ' + data.account);
     var branch = "main";
@@ -231,7 +232,7 @@ function setStatus(status) {
         document.getElementById('user').innerHTML = '';
     }
 
-    document.getElementById('loading').style.display = 'none';
+    document.getElementById('loading').style.display = status === 'loading' ? '' : 'none';
     document.getElementById('unsupported').style.display = status === 'unsupported' ? '' : 'none';
     document.getElementById('supported').style.display = status === 'ok' ? '' : 'none';
     document.getElementById('unauthorized').style.display = status === 'unauthorized' ? '' : 'none';

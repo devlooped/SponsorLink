@@ -117,7 +117,6 @@ partial class BackIssue(SponsorsManager sponsors, SponsoredIssues issues, IGitHu
             return await Unauthorized(req, manifest);
         }
 
-        var response = req.CreateResponse(HttpStatusCode.OK);
         var json = await req.ReadAsStringAsync();
 
         if (string.IsNullOrEmpty(json))
@@ -135,6 +134,9 @@ partial class BackIssue(SponsorsManager sponsors, SponsoredIssues issues, IGitHu
         if (!backed)
             return req.CreateResponse(HttpStatusCode.BadRequest);
 
+        await issues.UpdateBackedAsync(github, repo.Id, issue.Issue);
+
+        var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(new { status = "ok" });
 
         return response;
