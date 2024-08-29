@@ -3,7 +3,7 @@ plugins:
   - jekyll-seo-tag
   - jekyll-github-metadata
   - jekyll-include-cache
-  
+
 remote_theme: just-the-docs/just-the-docs@v0.6.1
 exclude: 
   - app/
@@ -62,3 +62,28 @@ gh_edit_repository: "https://github.com/devlooped/SponsorLink"
 gh_edit_branch: main
 gh_edit_source: docs
 gh_edit_view_mode: tree
+
+issues_template: |
+  {{#if available}}
+  <table class="highlight" class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
+      {{#each available}}
+      <tr>
+          <td class="borderless">$ {{amount}}</td>
+          <td class="borderless"><button class="btn btn-green">link</button></td>
+      </tr>
+      {{/each}}
+  </table>
+  {{else}}
+  Please consider making one-time sponsorship(s) to <a href="https://github.com/sponsors/{{sponsorable}}/">{{sponsorable}}</a> to back your chosen issue(s). 
+  {{/if}}
+  {{#if backed}}
+  <div>Backed issues:</div>
+  <table class="note" class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
+      {{#each backed}}
+      <tr>
+          <td class="borderless">$ {{amount}}</td>
+          <td class="borderless"><a href="{{url}}" target="_blank">{{issue}}</a></td>
+      </tr>
+      {{/each}}
+  </table>
+  {{/if}}
