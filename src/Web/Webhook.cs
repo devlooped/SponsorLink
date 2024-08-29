@@ -24,7 +24,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
         if (action == SponsorshipAction.Created && payload.Sponsorship.Tier.IsOneTime)
         {
-            await issues.AddSponsorshipAsync(
+            await issues.AddSponsorship(
                 payload.Sponsorship.Sponsor.Login,
                 payload.Sponsorship.NodeId,
                 payload.Sponsorship.Tier.MonthlyPriceInDollars);

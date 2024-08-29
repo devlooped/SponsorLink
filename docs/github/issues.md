@@ -9,17 +9,6 @@ This page allows you to back an issue on GitHub. If you arrived at this
 page from an email or link after a one-time sponsorship, you can specify 
 the issue URL you would like to back below.
 
-{% if site.env.CI == "true" %}
-{% else %}
-  <p class="highlight">Built for localhost</p>
-{% endif %}
-
-<style>
-  .no-before::before {
-    content: none !important;
-  }
-</style>
-
 <div id="sponsorable" markdown="0">
     <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;" markdown="0">
         <tr>
@@ -50,8 +39,15 @@ the issue URL you would like to back below.
     </table>
 </div>
 
+<p id="error" class="no-before" />
+
 <div id="user"></div>
-<div id="issues"></div>
+<div id="issues" class="mt-6"></div>
+
+{% if site.env.CI == "true" %}
+{% else %}
+  <p class="highlight">Built for localhost</p>
+{% endif %}
 
 <script>
 var template = Handlebars.compile(`
@@ -79,7 +75,79 @@ if (issuer !== null && issuer !== "") {
     lookupSponsor();
 }
 
-function displayIssues() {
+function setError(message) {
+    document.getElementById('error').innerHTML = message;
+    if (message !== '') {
+        document.getElementById('error').classList.add('warning');
+    } else {
+        document.getElementById('error').classList.remove('warning');
+    }
+}
+
+async function backIssue(sponsorshipId) {
+    setError('');
+    var issueUrl = document.getElementById(sponsorshipId).value;
+    if (issueUrl === null || issueUrl === "") {
+        return;
+    }
+
+    var parts = issueUrl.split('/');
+    if (parts.length < 7) {
+        setError('Invalid issue URL: ' + issueUrl);
+        return;
+    }
+
+    var owner = parts[3];
+    var repo = parts[4];
+    var number = parts[6];
+
+    try {
+        var issuer = data.issuer;
+        if (!issuer.startsWith('https://')) {
+            issuer = 'https://' + issuer;
+        }
+        if (issuer.endsWith('/')) {
+            issuer = issuer.slice(0, -1);
+        }
+        var url = issuer + '/github/issues';
+        console.log('Fetching URL:', url); // Add this line to log the URL
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                sponsorship: sponsorshipId,
+                owner: owner,
+                repo: repo,
+                issue: number
+            }),
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to back issue: ${response.statusText}`);
+        }
+        
+        var json = await response.json();
+        setStatus(json.status);
+        console.log(json);
+        if (response.status === 'unauthorized') {
+            document.getElementById('login').href = json.loginUrl;
+        } else {
+            await displayIssues();
+        }
+
+    } catch (error) {
+        console.error('Failed to back issue:', error);
+        setError('Failed to back issue: ' + error);
+    }
+}
+
+async function displayIssues() {
+    setError('');
+    document.getElementById('issues').innerHTML = '<div class="spinner-border text-green-200" role="status"></div>';
+    
     var issuer = data.issuer;
     if (!issuer.startsWith('https://')) {
         issuer = 'https://' + issuer;
@@ -88,36 +156,37 @@ function displayIssues() {
         issuer = issuer.slice(0, -1);
     }
 
-    fetch(issuer + '/github/issues', {
+    try {
+        const response = await fetch(issuer + '/github/issues', {
             method: 'GET',
             credentials: 'include'
-        })
-        .then(function(response) {
-            if (!response.ok) {
-                throw new Error('SponsorLink issuer failure.');
-            }
-            return response.text()
-        })
-        .then(function(json) {
-            var response = JSON.parse(json);
-            setStatus(response.status);
-            console.log(json);
-            if (response.status === 'unauthorized') {
-                document.getElementById('login').href = response.loginUrl;
-            } else if (response.status === 'ok') {
-                document.getElementById('user').innerHTML = `Welcome back ${response.user}!`;
-                document.getElementById('issues').innerHTML = template(response);
-            } else {
-                document.getElementById('issues').innerHTML = json;
-            }
-        })
-        .catch(function(err) {  
-            console.log('Failed to fetch page: ', err);  
-            setStatus("unsupported");
         });
+
+        if (!response.ok) {
+            throw new Error('SponsorLink issuer failure.');
+        }
+
+        const json = await response.json();
+        setStatus(json.status);
+        console.log(json);
+        if (json.status === 'unauthorized') {
+            document.getElementById('login').href = json.loginUrl;
+        } else if (json.status === 'ok') {
+            document.getElementById('user').innerHTML = `Welcome back ${json.user}!`;
+            document.getElementById('issues').innerHTML = template(json);
+        } else {
+            throw new Error('Unexpected response: ' + json);
+        }
+    } catch (error) {
+        console.error('Failed to fetch backed issues:', error);
+        setError('Failed to fetch backed issues: ' + error);
+        setStatus("unsupported");
+        document.getElementById('issues').innerHTML = '';
+    }
 }
 
-function lookupSponsor() {
+async function lookupSponsor() {
+    setError('');
     data.account = document.getElementById('account').value;
     console.log('Looking up sponsor: ' + data.account);
     var branch = "main";
@@ -125,36 +194,35 @@ function lookupSponsor() {
     branch = "dev";
     {% endif %}
 
-    fetch('https://raw.githubusercontent.com/' + data.account + '/.github/' + branch + '/sponsorlink.jwt')
-        .then(function(response) {
-            if (!response.ok) {
-                throw new Error('SponsorLink not supported.');
-            }
-            return response.text()
-        })
-        .then(function(token) {
-            var issuer = getIssuerFromJWT(token);
-            console.log('Issuer:', issuer);
-            data.issuer = issuer;
+    try {
+        const response = await fetch(`https://raw.githubusercontent.com/${data.account}/.github/${branch}/sponsorlink.jwt`);
+        if (!response.ok) {
+            throw new Error('SponsorLink not supported.');
+        }
 
-            const url = new URL(window.location);
-            url.searchParams.set('s', data.account);
-            // remove https:// and trailing slash from issuer
-            if (issuer.startsWith('https://')) {
-                issuer = issuer.slice(8);
-            }
-            if (issuer.endsWith('/')) {
-                issuer = issuer.slice(0, -1);
-            }
-            url.searchParams.set('i', issuer);
-            window.history.pushState({}, '', url);
-            
-            displayIssues();
-        })
-        .catch(function(err) {  
-            data.issuer = null;
-            setStatus("unsupported");
-        });
+        const token = await response.text();
+        var issuer = getIssuerFromJWT(token);
+        console.log('Issuer:', issuer);
+        data.issuer = issuer;
+
+        const url = new URL(window.location);
+        url.searchParams.set('s', data.account);
+        // remove https:// and trailing slash from issuer
+        if (issuer.startsWith('https://')) {
+            issuer = issuer.slice(8);
+        }
+        if (issuer.endsWith('/')) {
+            issuer = issuer.slice(0, -1);
+        }
+        url.searchParams.set('i', issuer);
+        window.history.pushState({}, '', url);
+        
+        await displayIssues();
+    } catch (error) {
+        data.issuer = null;
+        setStatus("unsupported");
+        setError(`Valid <a href="/github/#sponsorable-manifest">SponsorLink manifest</a> not found for ${data.account}.`);
+    }
 }
 
 function setStatus(status) {

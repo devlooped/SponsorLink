@@ -15,13 +15,13 @@ public partial class SponsoredIssues
 
     public record IssueSponsor([PartitionKey] string Account, [RowKey] string SponsorshipId, long Amount, string? Repository = null, long? RepositoryId = null, int? Issue = null);
 
-    public Task AddSponsorshipAsync(string sponsor, string sponsorshipId, long amount)
+    public Task AddSponsorship(string sponsor, string sponsorshipId, long amount)
         => TableRepository.Create<IssueSponsor>(table).PutAsync(new IssueSponsor(sponsor, sponsorshipId, amount));
 
     public IAsyncEnumerable<IssueSponsor> EnumerateSponsorships(string sponsor, CancellationToken cancellation = default)
         => TablePartition.Create<IssueSponsor>(table, sponsor).EnumerateAsync(cancellation);
 
-    public async Task<bool> BackIssueAsync(string account, string sponsorshipId, string repository, long repositoryId, int issue)
+    public async Task<bool> BackIssue(string account, string sponsorshipId, string repository, long repositoryId, int issue)
     {
         using var activity = ActivityTracer.Source.StartActivity();
         var repo = TableRepository.Create<IssueSponsor>(table);
