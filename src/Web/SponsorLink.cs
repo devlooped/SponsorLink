@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -19,7 +21,10 @@ namespace Devlooped.Sponsors;
 /// <summary>
 /// Returns a JWT or JSON manifest of the authenticated user's claims.
 /// </summary>
-partial class SponsorLink(IConfiguration configuration, IHttpClientFactory httpFactory, SponsorsManager sponsors, RSA rsa, IWebHostEnvironment host, ILogger<SponsorLink> logger)
+partial class SponsorLink(
+    IConfiguration configuration, IHttpClientFactory httpFactory, 
+    SponsorsManager sponsors, RSA rsa,
+    IWebHostEnvironment host, ILogger<SponsorLink> logger)
 {
     static ActivitySource tracer = ActivityTracer.Source;
 
