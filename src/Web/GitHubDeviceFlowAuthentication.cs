@@ -59,7 +59,9 @@ public static class GitHubDeviceFlowAuthenticationExtensions
                 return;
             }
 
-            if (!configuration.TryGetClientId(logger, out var clientId))
+            var noDeviceFlow = bool.TryParse(configuration["GitHub:DeviceFlow"], out var deviceFlow) && !deviceFlow;
+
+            if (!configuration.TryGetClientId(logger, out var clientId) || noDeviceFlow)
             {
                 await next(context);
                 return;
