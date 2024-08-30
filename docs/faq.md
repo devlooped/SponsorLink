@@ -65,9 +65,10 @@ of the [standard manifest format](spec.md) available in the
    **YES.** Read the [privacy policy](privacy.md) for more details.
 
 10. Does the sponsorable account have access to my sponsorship information?
+    
+    **YES.** Accounts you are currently sponsoring already have this information as 
+    part of their profile. SponsorLink itself does not use any information they 
+    don't already have access to, and the SponsorLink developer (Devlooped) does 
+    not have access to any of this information since it doesn't offer hosting for 
+    the backend that signs manifests.
 
-   **YES.** Accounts you are currently sponsoring already have this information as 
-   part of their profile. SponsorLink itself does not use any information they 
-   don't already have access to, and the SponsorLink developer (Devlooped) does 
-   not have access to any of this information since it doesn't offer hosting for 
-   the backend that signs manifests.
