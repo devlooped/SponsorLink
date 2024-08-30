@@ -1,3 +1,9 @@
+# add cert and key for ssl
+ssl_cert: localhost.crt
+ssl_key: localhost.key
+baseurl: "/SponsorLink"
+permalink: pretty
+
 plugins: 
   - jekyll-remote-theme
   - jekyll-seo-tag
@@ -54,14 +60,17 @@ compress_html:
   ignore:
     envs: all
     
+markdown: kramdown
 kramdown:
-  parse_block_html: true
+  input: GFM 
+  hard_wrap: false
   syntax_highlighter_opts:
     block:
       line_numbers: true
 
 footer_content: "Copyright &copy; 2024 Daniel Cazzulino."
 
+repository: devlooped/SponsorLink
 gh_edit_link: true
 gh_edit_link_text: "Edit on GitHub"
 gh_edit_repository: "https://github.com/devlooped/SponsorLink"
@@ -77,7 +86,7 @@ issues_template: |
       <tr>
           <td class="borderless">$ {{amount}}</td>
           <td class="borderless" style="width: 100%;">
-            <input class="border" style="width: 100%;" type="text" placeholder="Issue URL" id="{{sponsorshipId}}">
+            <input class="border" style="width: 100%;" type="text" value="{{url}}" placeholder="Issue URL" id="{{sponsorshipId}}">
           </td>
           <td class="borderless"><button class="btn btn-green" onclick="backIssue('{{sponsorshipId}}');">Assign</button></td>
       </tr>
