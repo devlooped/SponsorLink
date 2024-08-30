@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Azure.Data.Tables;
 using Microsoft.Extensions.Options;
 using Octokit;
 
@@ -154,14 +155,28 @@ public partial class SponsoredIssues
         return $"{body?.Trim()}{yaml}";
     }
 
-    public async Task RefreshBacked(IGitHubClient github)
+    public async Task<int> RefreshBacked(IGitHubClient github)
     {
-        await foreach (var item in TablePartition.Create(table, "backed").EnumerateAsync())
+        var updated = new HashSet<string>();
+
+        // Only consider recently updated issues.
+        DateTimeOffset? startDate = DateTimeOffset.UtcNow.AddDays(-7);
+        await foreach (var item in table.StorageAccount
+            .CreateTableServiceClient()
+            .GetTableClient(table.TableName)
+            .QueryAsync<TableEntity>(x => x.PartitionKey == "backed" && x.Timestamp > startDate))
         {
+            if (updated.Contains(item.RowKey))
+                continue;
+
             var parts = item.RowKey.Split('|');
             var repository = long.Parse(parts[0]);
             var issue = int.Parse(parts[1]);
+            
             await this.UpdateBacked(github, repository, issue);
+            updated.Add(item.RowKey);
         }
+
+        return updated.Count;
     }
 }

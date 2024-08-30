@@ -86,6 +86,28 @@ public class SponsoredIssuesTests : IDisposable
         Assert.Contains("backed-%2430", body);
     }
 
+    [Fact]
+    public async Task RefreshBackedRefreshesOncePerIssue()
+    {
+        var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
+        await sponsored.AddSponsorship("kzu", "1", 10);
+        await sponsored.BackIssue("kzu", "1", "devlooped/sandbox", 330812613, 16);
+
+        await sponsored.AddSponsorship("kzu", "2", 20);
+        await sponsored.BackIssue("kzu", "2", "devlooped/sandbox", 330812613, 15);
+
+        // Backs same as first
+        await sponsored.AddSponsorship("asdf", "3", 10);
+        await sponsored.BackIssue("asdf", "3", "devlooped/sandbox", 330812613, 16);
+
+        var github = new GitHubClient(new Octokit.ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
+        {
+            Credentials = new Credentials(Configuration["GitHub:Token"])
+        };
+
+        Assert.Equal(2, await sponsored.RefreshBacked(github));
+    }
+
     [SecretsFact("GitHub:Token")]
     public async Task BackingDeletedIssue()
     {
