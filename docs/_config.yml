@@ -76,10 +76,10 @@ issues_template: |
       {{#each available}}
       <tr>
           <td class="borderless">$ {{amount}}</td>
-          <td class="borderless">
-            <input class="border" style="max-width: auto;" type="text" placeholder="Issue URL" id="{{sponsorshipId}}">
+          <td class="borderless" style="width: 100%;">
+            <input class="border" style="width: 100%;" type="text" placeholder="Issue URL" id="{{sponsorshipId}}">
           </td>
-          <td class="borderless"><button class="btn btn-green" onclick="backIssue('{{sponsorshipId}}');">link</button></td>
+          <td class="borderless"><button class="btn btn-green" onclick="backIssue('{{sponsorshipId}}');">Assign</button></td>
       </tr>
       {{/each}}
   </table>
