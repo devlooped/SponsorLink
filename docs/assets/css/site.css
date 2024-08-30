@@ -9,31 +9,29 @@
     padding-left: 24px;
 }
 
-/* bring spinner style from bootstrap 5 */
-.spinner-border {
-    display: inline-block;
-    width: 2rem;
-    height: 2rem;
-    vertical-align: text-bottom;
-    border: 0.25em solid currentColor;
-    border-right-color: transparent;
+main {
+    position: relative;
+}
+
+.spinner {
+    /* Positioning */
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Spinner styling - example with border */
+    border: 4px solid transparent;
+    border-top: 4px solid currentColor;
     border-radius: 50%;
-    -webkit-animation: spinner-border 0.75s linear infinite;
-    animation: spinner-border 0.75s linear infinite;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
 }
 
-@-webkit-keyframes spinner-border {
-    to {
-        -webkit-transform: rotate(360deg);
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes spinner-border {
-    to {
-        -webkit-transform: rotate(360deg);
-        transform: rotate(360deg);
-    }
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .borderless {
@@ -46,4 +44,4 @@
 
 .no-before::before {
     content: none !important;
-  }
+}

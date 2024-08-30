@@ -3,7 +3,12 @@ title: Back an Issue
 parent: GitHub Sponsors
 ---
 
+<div id="spinner" class="spinner text-green-200" role="status"></div>
+
 # Back an Issue
+
+SponsorLink now also allows you to back an issue on GitHub. If a given GitHub 
+Sponsors account is set up with SponsorLink ()
 
 This page allows you to back an issue on GitHub. If you arrived at this 
 page from an email or link after a one-time sponsorship, you can specify 
@@ -20,9 +25,6 @@ the issue URL you would like to back below.
                 <div>
                     <button class="btn btn-green" onclick="lookupSponsor();">Go</button>
                 </div>
-            </td>
-            <td class="borderless" style="display: none;" id="loading">
-                <div class="spinner-border text-green-200" role="status"></div>                
             </td>
             <td class="borderless" style="display: none;" id="unsupported">
                 ⚠️ SponsorLink is not supported
@@ -44,11 +46,6 @@ the issue URL you would like to back below.
 <div id="user"></div>
 <div id="issues" class="mt-6"></div>
 
-{% if site.env.CI == "true" %}
-{% else %}
-  <p class="highlight">Built for localhost</p>
-{% endif %}
-
 <script>
 var template = Handlebars.compile(`
 {{ site.issues_template }}
@@ -60,11 +57,18 @@ var data = {
     "unsupported": false
 };
 
+//if site.env.CI != "true" then branch = "dev" else branch = "main"
+{% if site.env.CI != "true" %}
+data.issuer = "donkey-emerging-civet.ngrok-free.app";
+{% endif %}
+
 const urlParams = new URLSearchParams(window.location.search);
 var sponsorable = urlParams.get('s');
 if (sponsorable !== null && sponsorable !== "") {
     data.account = sponsorable;
     document.getElementById('account').value = sponsorable;
+} else {
+    document.getElementById('account').value = data.account;
 }
 
 var issuer = urlParams.get('i');
@@ -146,7 +150,7 @@ async function backIssue(sponsorshipId) {
 
 async function displayIssues() {
     setError('');
-    document.getElementById('issues').innerHTML = '<div class="spinner-border text-green-200" role="status"></div>';
+    setStatus('loading');
     
     var issuer = data.issuer;
     if (!issuer.startsWith('https://')) {
@@ -172,7 +176,7 @@ async function displayIssues() {
         if (json.status === 'unauthorized') {
             document.getElementById('login').href = json.loginUrl;
         } else if (json.status === 'ok') {
-            document.getElementById('user').innerHTML = `Welcome back ${json.user}!`;
+            document.getElementById('user').innerHTML = `Hi ${json.user.split(' ')[0]}!`;
             document.getElementById('issues').innerHTML = template(json);
         } else {
             throw new Error('Unexpected response: ' + json);
@@ -187,7 +191,7 @@ async function displayIssues() {
 
 async function lookupSponsor() {
     setError('');
-    setStatus("loading");
+    setStatus('loading');
     data.account = document.getElementById('account').value;
     console.log('Looking up sponsor: ' + data.account);
     var branch = "main";
@@ -232,7 +236,7 @@ function setStatus(status) {
         document.getElementById('user').innerHTML = '';
     }
 
-    document.getElementById('loading').style.display = status === 'loading' ? '' : 'none';
+    document.getElementById('spinner').style.display = status === 'loading' ? '' : 'none';
     document.getElementById('unsupported').style.display = status === 'unsupported' ? '' : 'none';
     document.getElementById('supported').style.display = status === 'ok' ? '' : 'none';
     document.getElementById('unauthorized').style.display = status === 'unauthorized' ? '' : 'none';

@@ -43,6 +43,12 @@ callouts:
   warning:
     title: Warning
     color: red
+  issues-available:
+    title: Available one-time funds
+    color: green
+  issues-backed:
+    title: Backed issues
+    color: yellow
 
 compress_html:
   ignore:
@@ -65,7 +71,7 @@ gh_edit_view_mode: tree
 
 issues_template: |
   {{#if available}}
-  <p class="mt-6 highlight no-before">Available sponsorships</p>
+  <p class="mt-6 issues-available">Your one-time sponsorships can be assigned to fund specific issues.</p>
   <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
       {{#each available}}
       <tr>
@@ -78,10 +84,10 @@ issues_template: |
       {{/each}}
   </table>
   {{else}}
-  Please consider making one-time sponsorship(s) to <a href="https://github.com/sponsors/{{sponsorable}}/">{{sponsorable}}</a> to back your chosen issue(s). 
+  Please consider making one-time sponsorship(s) to <a target="_blank" href="https://github.com/sponsors/{{sponsorable}}/">{{sponsorable}}</a> to back your chosen issue(s). 
   {{/if}}
   {{#if backed}}
-  <p class="mt-6 note no-before">Backed issues</p>
+  <p class="mt-6 issues-backed">Issues can be backed multiple times to increase their funding.</p>
   <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
       {{#each backed}}
       <tr>
