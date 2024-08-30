@@ -47,7 +47,7 @@ public static class SponsoredIssuesExtensions
 public partial class SponsoredIssues
 {
     readonly TableConnection table;
-    SponsorLinkOptions options;
+    readonly SponsorLinkOptions options;
 
     public SponsoredIssues(CloudStorageAccount storage, IOptions<SponsorLinkOptions> options) : this(new TableConnection(storage, "BackedIssues"), options.Value) { }
 
