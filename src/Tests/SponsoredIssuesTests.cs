@@ -31,7 +31,7 @@ public class SponsoredIssuesTests : IDisposable
     {
         var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
         await sponsored.AddSponsorship("kzu", "S_kwHOA6rues4AAwoC", 10);
-        await sponsored.BackIssue("kzu", "S_kwHOA6rues4AAwoC", "owner/repo", 42, 1234);
+        Assert.True(await sponsored.BackIssue("kzu", "S_kwHOA6rues4AAwoC", "owner/repo", 42, 1234));
 
         var amount = await sponsored.BackedAmount(42, 1234);
         Assert.Equal(10, amount);
@@ -42,10 +42,10 @@ public class SponsoredIssuesTests : IDisposable
     {
         var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
         await sponsored.AddSponsorship("kzu", "S_kwHOA6rues4AAwoC", 10);
-        await sponsored.BackIssue("kzu", "S_kwHOA6rues4AAwoC", "owner/repo", 42, 1234);
+        Assert.True(await sponsored.BackIssue("kzu", "S_kwHOA6rues4AAwoC", "owner/repo", 42, 1234));
 
         await sponsored.AddSponsorship("user", "S_asdf", 20);
-        await sponsored.BackIssue("user", "S_asdf", "owner/repo", 42, 1234);
+        Assert.True(await sponsored.BackIssue("user", "S_asdf", "owner/repo", 42, 1234));
 
         var amount = await sponsored.BackedAmount(42, 1234);
         Assert.Equal(30, amount);
@@ -66,11 +66,21 @@ public class SponsoredIssuesTests : IDisposable
     }
 
     [Fact]
+    public async Task BackAlreadyBacked()
+    {
+        var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
+        await sponsored.AddSponsorship("kzu", "S_kwHOA6rues4AAwoC", 10);
+
+        Assert.True(await sponsored.BackIssue("kzu", "S_kwHOA6rues4AAwoC", "owner/repo", 42, 1234));
+        Assert.False(await sponsored.BackIssue("kzu", "S_kwHOA6rues4AAwoC", "owner2/repo2", 42, 456));
+    }
+
+    [Fact]
     public async Task AddsBackedAmountBadge()
     {
         var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
         await sponsored.AddSponsorship("kzu", "1", 10);
-        await sponsored.BackIssue("kzu", "1","owner/repo", 42, 12345);
+        Assert.True(await sponsored.BackIssue("kzu", "1", "owner/repo", 42, 12345));
 
         var body = await sponsored.UpdateIssueBody(42, 12345, "Body");
 
@@ -78,7 +88,7 @@ public class SponsoredIssuesTests : IDisposable
         Assert.Contains("backed-%2410", body);
 
         await sponsored.AddSponsorship("kzu", "2", 20);
-        await sponsored.BackIssue("kzu", "2", "owner/repo", 42, 12345);
+        Assert.True(await sponsored.BackIssue("kzu", "2", "owner/repo", 42, 12345));
 
         body = await sponsored.UpdateIssueBody(42, 12345, body);
 
@@ -91,14 +101,14 @@ public class SponsoredIssuesTests : IDisposable
     {
         var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
         await sponsored.AddSponsorship("kzu", "1", 10);
-        await sponsored.BackIssue("kzu", "1", "devlooped/sandbox", 330812613, 16);
+        Assert.True(await sponsored.BackIssue("kzu", "1", "devlooped/sandbox", 330812613, 16));
 
         await sponsored.AddSponsorship("kzu", "2", 20);
-        await sponsored.BackIssue("kzu", "2", "devlooped/sandbox", 330812613, 15);
+        Assert.True(await sponsored.BackIssue("kzu", "2", "devlooped/sandbox", 330812613, 15));
 
         // Backs same as first
         await sponsored.AddSponsorship("asdf", "3", 10);
-        await sponsored.BackIssue("asdf", "3", "devlooped/sandbox", 330812613, 16);
+        Assert.True(await sponsored.BackIssue("asdf", "3", "devlooped/sandbox", 330812613, 16));
 
         var github = new GitHubClient(new Octokit.ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
         {
@@ -113,7 +123,7 @@ public class SponsoredIssuesTests : IDisposable
     {
         var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
         await sponsored.AddSponsorship("kzu", "1", 10);
-        await sponsored.BackIssue("kzu", "1", "devlooped/sandbox", 330812613, 20);
+        Assert.True(await sponsored.BackIssue("kzu", "1", "devlooped/sandbox", 330812613, 20));
 
         var github = new GitHubClient(new Octokit.ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
         {
@@ -128,7 +138,7 @@ public class SponsoredIssuesTests : IDisposable
     {
         var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
         await sponsored.AddSponsorship("kzu", "1", 10);
-        await sponsored.BackIssue("kzu", "1", "devlooped/sandbox", 330812613, 2000);
+        Assert.True(await sponsored.BackIssue("kzu", "1", "devlooped/sandbox", 330812613, 2000));
 
         var github = new GitHubClient(new Octokit.ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
         {
