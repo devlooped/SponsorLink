@@ -30,6 +30,11 @@ jobs:
       - name: 🙏 build
         run: dotnet build -m:1
 
+      - name: ⚙ azurite
+        run: |
+          npm install azurite
+          npx azurite &
+
       - name: 🧪 test
         run: dotnet test 
         
