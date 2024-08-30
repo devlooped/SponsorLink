@@ -5,6 +5,7 @@ using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Octokit;
 using Spectre.Console;
 using static Devlooped.Helpers;
 
@@ -45,6 +46,18 @@ public class Misc(ITestOutputHelper output)
         Assert.NotNull(typed);
         Assert.Equal("baz", typed.Bar);
         Assert.True(typed.Auto);
+    }
+
+    [SecretsFact("GitHub:Token")]
+    public async Task GetDeletedIssue()
+    {
+        var github = new GitHubClient(new Octokit.ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
+        {
+            Credentials = new Credentials(Configuration["GitHub:Token"])
+        };
+
+        var ex = await Assert.ThrowsAsync<ApiException>(async () => await github.Issue.Get("devlooped", "sandbox", 20));
+
     }
 
     [SecretsFact("Azure:SubscriptionId", "Azure:ResourceGroup", "Azure:LogAnalytics")]
