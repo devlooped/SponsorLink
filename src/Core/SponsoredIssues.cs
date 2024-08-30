@@ -86,6 +86,10 @@ public partial class SponsoredIssues
         if (backed == null || backed.Issue != null)
             return false;
 
+        // Don't allow changing it once assigned.
+        if (backed.Issue != null)
+            return false;
+
         backed = backed with { Repository = repository, RepositoryId = repositoryId, Issue = issue };
 
         await repo.PutAsync(backed);
