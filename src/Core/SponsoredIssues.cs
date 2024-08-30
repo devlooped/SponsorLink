@@ -142,13 +142,20 @@ public partial class SponsoredIssues
             }
         }
 
+        var domain = "https://www.devlooped.com/SponsorLink";
+#if DEBUG
+        domain = "https://127.0.0.1:4000";
+#endif
+        // Brings in the optional baseurl from the _config.yml from docs folder.
+        domain += ThisAssembly.Constants.DocsBaseUrl;
+
         var yaml =
             $"""
 
 
             <!-- sl -->
-            [![Back this issue](https://raw.githubusercontent.com/devlooped/SponsorLink/main/docs/assets/img/separator.png "Back this issue")](https://www.devlooped.com/SponsorLink/github/issue.html?s={options.Account})
-            [![Back this issue](https://img.shields.io/badge/backed-%24{amount}-EA4AAA?logo=githubsponsors "Back this issue")](https://www.devlooped.com/SponsorLink/github/issue.html?s={options.Account})
+            [![Back this issue](https://raw.githubusercontent.com/devlooped/SponsorLink/main/docs/assets/img/separator.png "Back this issue")]({domain}/github/issues/?s={options.Account})
+            [![Back this issue](https://img.shields.io/badge/backed-%24{amount}-EA4AAA?logo=githubsponsors "Back this issue")]({domain}/github/issues/?s={options.Account})
             <!-- sl -->
             """;
 
