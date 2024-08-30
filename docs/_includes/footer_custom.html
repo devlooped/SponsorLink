@@ -1,13 +1,48 @@
 <script>
-    const toggleDarkMode = document.querySelector('.js-toggle-dark-mode');
-    
-    jtd.addEvent(toggleDarkMode, 'click', function(){
-      if (jtd.getTheme() === 'dark') {
-        jtd.setTheme('light');
-        toggleDarkMode.textContent = '🌙';
-      } else {
-        jtd.setTheme('dark');
-        toggleDarkMode.textContent = '💡';
-      }
+    document.addEventListener("DOMContentLoaded", function () {
+        if (!jtd) { return; }
+
+        // If the browser suggests a color scheme, and user hasn't saved/switch one yet..
+        if (window.matchMedia && !localStorage['jtd-theme']) {
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                jtd.setTheme('dark');
+            } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+                jtd.setTheme('light');
+            }
+        } else if (localStorage['jtd-theme']) {
+            jtd.setTheme(localStorage['jtd-theme']);
+        }
+
+        setToggleText();
+
+        jtd.addEvent(document.querySelector('.js-toggle-theme-btn'), 'click', toggleTheme);
+        jtd.addEvent(document.querySelector('.js-toggle-theme-icn'), 'click', toggleTheme);
     });
+
+    function toggleTheme() {
+        if (jtd.getTheme() === 'dark') {
+            localStorage['jtd-theme'] = 'light';
+            jtd.setTheme('light');
+        } else {
+            jtd.setTheme('dark');
+            localStorage['jtd-theme'] = 'dark';
+        }
+        setToggleText();
+    }
+
+    function setToggleText() {
+        const toggleThemeBtn = document.querySelector('.js-toggle-theme-btn');
+        const toggleThemeIcn = document.querySelector('.js-toggle-theme-icn');
+        if (jtd.getTheme() === 'dark') {
+            toggleThemeBtn.textContent = '🔆 Light Mode';
+            toggleThemeBtn.ariaLabel = 'Switch to Light Mode';
+            toggleThemeIcn.textContent = '🔆';
+            toggleThemeIcn.ariaLabel = 'Switch to Light Mode';
+        } else {
+            toggleThemeBtn.textContent = '🌙 Dark Mode';
+            toggleThemeBtn.ariaLabel = 'Switch to Dark Mode';
+            toggleThemeIcn.textContent = '🌙';
+            toggleThemeIcn.ariaLabel = 'Switch to Dark Mode';
+        }
+    }
 </script>

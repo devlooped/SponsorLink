@@ -17,6 +17,16 @@ partial class BackIssue(SponsorsManager sponsors, SponsoredIssues issues, IGitHu
 
     record SponsorIssue(string Sponsorship, string Owner, string Repo, int Issue);
 
+    // create a timer triggered function that runs every day at 4am and updates all backed issues
+    [Function("issues_timer")]
+    public async Task RefreshIssues([TimerTrigger("0 0 4 * * *")] TimerInfo timer) => await issues.RefreshBacked(github);
+
+#if DEBUG
+    [Function("issues_update")]
+    public async Task RefreshIssuesForced([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "github/issues/update")] HttpRequestData req) 
+        => await issues.RefreshBacked(github);
+#endif
+
     [Function("issues_get")]
     public async Task<HttpResponseData> ListIssues([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "github/issues")] HttpRequestData req)
     {
@@ -38,6 +48,7 @@ partial class BackIssue(SponsorsManager sponsors, SponsoredIssues issues, IGitHu
         if (!sponsored.Any(x => x.SponsorshipId == "1"))
         {
             await issues.AddSponsorship(login, "1", 10);
+            await issues.BackIssue(login, "1", "devlooped/moq", 3689718, 1494);
             sponsored.Add(new SponsoredIssues.IssueSponsor(login, "1", 10, "devlooped/moq", 3689718, 1494));
         }
 
@@ -56,12 +67,14 @@ partial class BackIssue(SponsorsManager sponsors, SponsoredIssues issues, IGitHu
         if (!sponsored.Any(x => x.SponsorshipId == "4"))
         {
             await issues.AddSponsorship(login, "4", 50);
+            await issues.BackIssue(login, "4", "devlooped/GitInfo", 36271064, 324);
             sponsored.Add(new SponsoredIssues.IssueSponsor(login, "4", 50, "devlooped/GitInfo", 36271064, 324));
         }
 
         if (!sponsored.Any(x => x.SponsorshipId == "5"))
         {
             await issues.AddSponsorship(login, "5", 25);
+            await issues.BackIssue(login, "5", "devlooped/GitInfo", 36271064, 324);
             sponsored.Add(new SponsoredIssues.IssueSponsor(login, "5", 25, "devlooped/GitInfo", 36271064, 324));
         }
 
@@ -134,7 +147,7 @@ partial class BackIssue(SponsorsManager sponsors, SponsoredIssues issues, IGitHu
         if (!backed)
             return req.CreateResponse(HttpStatusCode.BadRequest);
 
-        await issues.UpdateBackedAsync(github, repo.Id, issue.Issue);
+        await issues.UpdateBacked(github, repo.Id, issue.Issue);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(new { status = "ok" });

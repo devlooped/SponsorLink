@@ -114,7 +114,8 @@ var host = new HostBuilder()
             var config = sp.GetRequiredService<IConfiguration>();
             return new GitHubClient(new Octokit.ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
             {
-                Credentials = new Credentials(config["GitHub:BotToken"] ?? config["GitHub:Token"])
+                Credentials = new Credentials(config["SponsorLink:BotToken"] ?? config["GitHub:BotToken"] ?? config["GitHub:Token"] ?? 
+                    throw new InvalidOperationException("Could not determine token to use for GitHub issues/pull request updates."))
             };
         });
 

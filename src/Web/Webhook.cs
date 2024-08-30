@@ -34,7 +34,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
     protected override async Task ProcessIssueCommentWebhookAsync(WebhookHeaders headers, IssueCommentEvent payload, IssueCommentAction action)
     {
-        await issues.UpdateBackedAsync(github, payload.Repository?.Id, (int)payload.Issue.Number);
+        await issues.UpdateBacked(github, payload.Repository?.Id, (int)payload.Issue.Number);
 
         try
         {
@@ -75,7 +75,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
     protected override async Task ProcessIssuesWebhookAsync(WebhookHeaders headers, IssuesEvent payload, IssuesAction action)
     {
-        await issues.UpdateBackedAsync(github, payload.Repository?.Id, (int)payload.Issue.Number);
+        await issues.UpdateBacked(github, payload.Repository?.Id, (int)payload.Issue.Number);
 
         try
         {

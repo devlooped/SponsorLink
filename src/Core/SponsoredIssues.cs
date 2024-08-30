@@ -6,7 +6,7 @@ namespace Devlooped.Sponsors;
 
 public static class SponsoredIssuesExtensions
 {
-    public static async Task UpdateBackedAsync(this SponsoredIssues issues, IGitHubClient github, long? repository, int number)
+    public static async Task UpdateBacked(this SponsoredIssues issues, IGitHubClient github, long? repository, int number)
     {
         if (repository is null)
             return;
@@ -81,6 +81,11 @@ public partial class SponsoredIssues
             x => x.SponsorshipId)
             .PutAsync(backed);
 
+        // Raw list of backed issues for periodic syning if needed to deal with potential 
+        // concurrent funding/backing where we might overwritte an issue body badge.
+        await TablePartition.Create(table, "backed")
+            .PutAsync(new("backed", $"{repositoryId}|{issue}"));
+
         activity?.AddEvent(new("Issue.Backed", tags: new ActivityTagsCollection(
             [
                 KeyValuePair.Create<string, object?>("Amount", backed.Amount),
@@ -106,17 +111,20 @@ public partial class SponsoredIssues
         return total;
     }
 
-    public async Task<string> UpdateIssueBody(long repository, int issue, string body)
+    public async Task<string> UpdateIssueBody(long repository, int issue, string? body)
     {
         var amount = await BackedAmount(repository, issue);
-        var start = body.IndexOf("<!-- sl", StringComparison.Ordinal);
-        if (start > 0)
+        if (!string.IsNullOrEmpty(body))
         {
-            var end = body.LastIndexOf("sl -->", StringComparison.Ordinal);
-            if (end > 0)
-                body = body.Replace(body.Substring(start, end - start + "sl -->".Length), "");
-            else
-                body = body.Substring(0, start);
+            var start = body.IndexOf("<!-- sl", StringComparison.Ordinal);
+            if (start > 0)
+            {
+                var end = body.LastIndexOf("sl -->", StringComparison.Ordinal);
+                if (end > 0)
+                    body = body.Replace(body.Substring(start, end - start + "sl -->".Length), "");
+                else
+                    body = body.Substring(0, start);
+            }
         }
 
         var yaml =
@@ -129,6 +137,17 @@ public partial class SponsoredIssues
             <!-- sl -->
             """;
 
-        return body.Trim() + yaml;
+        return $"{body?.Trim()}{yaml}";
+    }
+
+    public async Task RefreshBacked(IGitHubClient github)
+    {
+        await foreach (var item in TablePartition.Create(table, "backed").EnumerateAsync())
+        {
+            var parts = item.RowKey.Split('|');
+            var repository = long.Parse(parts[0]);
+            var issue = int.Parse(parts[1]);
+            await this.UpdateBacked(github, repository, issue);
+        }
     }
 }
