@@ -79,15 +79,6 @@ if (issuer !== null && issuer !== "") {
     lookupSponsor();
 }
 
-function setError(message) {
-    document.getElementById('error').innerHTML = message;
-    if (message !== '') {
-        document.getElementById('error').classList.add('warning');
-    } else {
-        document.getElementById('error').classList.remove('warning');
-    }
-}
-
 async function backIssue(sponsorshipId) {
     setError('');
     var issueUrl = document.getElementById(sponsorshipId).value;
@@ -114,7 +105,8 @@ async function backIssue(sponsorshipId) {
             issuer = issuer.slice(0, -1);
         }
         var url = issuer + '/github/issues';
-        console.log('Fetching URL:', url); // Add this line to log the URL
+        setBusy(true);
+        
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -145,6 +137,8 @@ async function backIssue(sponsorshipId) {
     } catch (error) {
         console.error('Failed to back issue:', error);
         setError('Failed to back issue: ' + error);
+    } finally {
+        setBusy(false);
     }
 }
 
@@ -230,13 +224,27 @@ async function lookupSponsor() {
     }
 }
 
+function setError(message) {
+    document.getElementById('error').innerHTML = message;
+    if (message !== '') {
+        document.getElementById('error').classList.add('warning');
+    } else {
+        document.getElementById('error').classList.remove('warning');
+    }
+}
+
+function setBusy(busy) {
+    document.getElementById('spinner').style.display = busy ? '' : 'none';
+}
+
 function setStatus(status) {
     if (status != 'ok') {
         document.getElementById('issues').innerHTML = '';
         document.getElementById('user').innerHTML = '';
     }
 
-    document.getElementById('spinner').style.display = status === 'loading' ? '' : 'none';
+    setBusy(status === 'loading');
+
     document.getElementById('unsupported').style.display = status === 'unsupported' ? '' : 'none';
     document.getElementById('supported').style.display = status === 'ok' ? '' : 'none';
     document.getElementById('unauthorized').style.display = status === 'unauthorized' ? '' : 'none';

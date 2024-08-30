@@ -9,9 +9,8 @@
     padding-left: 24px;
 }
 
-main {
-    position: relative;
-}
+main { position: relative; }
+th, td { min-width: 5rem; }
 
 .spinner {
     /* Positioning */
@@ -34,9 +33,7 @@ main {
     100% { transform: rotate(360deg); }
 }
 
-.borderless {
-    border: none;
-}
+.borderless { border: none; }
 
 .border {
     border: 1px solid silver;
