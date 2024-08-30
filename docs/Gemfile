@@ -1,5 +1,8 @@
 source 'https://rubygems.org'
 
 gem 'github-pages', '~> 232', group: :jekyll_plugins
+gem 'kramdown', '~> 2.4', group: :jekyll_plugins
+gem "jekyll-include-cache", group: :jekyll_plugins
+gem "html-proofer", "~> 5.0", :group => :development
+gem "jekyll-github-metadata", ">= 2.15"
 gem 'wdm', '>= 0.2.0' if Gem.win_platform?
-gem 'webrick', '~> 1.8'
