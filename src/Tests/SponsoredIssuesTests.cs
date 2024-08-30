@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using Devlooped.Sponsors;
 using Microsoft.Extensions.DependencyInjection;
+using Octokit;
 using static Devlooped.Helpers;
 
 namespace Devlooped.Tests;
@@ -83,6 +84,36 @@ public class SponsoredIssuesTests : IDisposable
 
         Assert.Single(Regex.Matches(body, "https://img.shields.io/badge/backed-"));
         Assert.Contains("backed-%2430", body);
+    }
+
+    [SecretsFact("GitHub:Token")]
+    public async Task BackingDeletedIssue()
+    {
+        var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
+        await sponsored.AddSponsorship("kzu", "1", 10);
+        await sponsored.BackIssue("kzu", "1", "devlooped/sandbox", 330812613, 20);
+
+        var github = new GitHubClient(new Octokit.ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
+        {
+            Credentials = new Credentials(Configuration["GitHub:Token"])
+        };
+
+        await sponsored.UpdateBacked(github, 330812613, 20);
+    }
+
+    [SecretsFact("GitHub:Token")]
+    public async Task BackingNonExistentIssue()
+    {
+        var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
+        await sponsored.AddSponsorship("kzu", "1", 10);
+        await sponsored.BackIssue("kzu", "1", "devlooped/sandbox", 330812613, 2000);
+
+        var github = new GitHubClient(new Octokit.ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
+        {
+            Credentials = new Credentials(Configuration["GitHub:Token"])
+        };
+
+        await sponsored.UpdateBacked(github, 330812613, 2000);
     }
 
     TableConnection GetTable([CallerMemberName] string? test = default)

@@ -11,7 +11,21 @@ public static class SponsoredIssuesExtensions
         if (repository is null)
             return;
 
-        var issue = await github.Issue.Get(repository.Value, number);
+        Issue issue;
+        try
+        {
+            // Issue might have been deleted or not exist at all for some reason.
+            issue = await github.Issue.Get(repository.Value, number);
+        }
+        catch (NotFoundException)
+        {
+            return;
+        }
+        catch (ApiException e) when (e.StatusCode == System.Net.HttpStatusCode.Gone)
+        {
+            return;
+        }
+
         var amount = await issues.BackedAmount(repository.Value, number);
         var updated = await issues.UpdateIssueBody(repository.Value, number, issue.Body);
 
