@@ -15,7 +15,7 @@ and come back here to back an issue.
 This way, you can push for the features you want and directly back the development that 
 excites you. Pretty neat, huh?
 
-<div id="sponsorable" markdown="0">
+<div id="sponsorable">
     <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;" markdown="0">
         <tr>
             <td class="borderless">GitHub Sponsor account:</td>
@@ -169,6 +169,7 @@ async function backIssue(sponsorshipId) {
         } else {
             // remove issue url from local storage after successful backing
             localStorage.removeItem('issueUrl');
+            data.issueUrl = null;
             await displayIssues();
         }
 
