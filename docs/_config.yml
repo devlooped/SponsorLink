@@ -92,8 +92,14 @@ issues_template: |
       </tr>
       {{/each}}
   </table>
+  <p class="fs-3">
+    <a href="https://github.com/sponsors/{{sponsorable}}?frequency=one-time"><button class="btn">➕ Add Funds</button></a>
+  </p>
   {{else}}
-  Please consider making one-time sponsorship(s) to <a target="_blank" href="https://github.com/sponsors/{{sponsorable}}/">{{sponsorable}}</a> to back your chosen issue(s). 
+  Please consider making one-time sponsorship(s) to <a target="_blank" href="https://github.com/sponsors/{{sponsorable}}?frequency=one-time">{{sponsorable}}</a> to back your chosen issue(s) 🙏. 
+  <p class="fs-3">
+    <a href="https://github.com/sponsors/{{sponsorable}}?frequency=one-time"><button class="btn">➕ Add Funds</button></a>
+  </p>
   {{/if}}
   {{#if backed}}
   <p class="mt-6 issues-backed">Issues can be backed multiple times to increase their funding.</p>
