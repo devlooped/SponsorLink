@@ -96,7 +96,7 @@ public class SponsoredIssuesTests : IDisposable
         Assert.Contains("backed-%2430", body);
     }
 
-    [Fact]
+    [SecretsFact("GitHub:Token")]
     public async Task RefreshBackedRefreshesOncePerIssue()
     {
         var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
