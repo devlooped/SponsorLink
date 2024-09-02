@@ -84,8 +84,7 @@ var data = {
     "unsupported": false
 };
 
-//if site.env.CI != "true" then branch = "dev" else branch = "main"
-{% if site.env.CI != "true" %}
+{% if ENV['CI'] != 'true' %}
 data.issuer = "donkey-emerging-civet.ngrok-free.app";
 {% endif %}
 
@@ -234,7 +233,7 @@ async function lookupSponsor() {
     data.account = document.getElementById('account').value;
     console.log('Looking up sponsor: ' + data.account);
     var branch = "main";
-    {% if site.env.CI != "true" %}
+    {% if ENV['CI'] != "true" %}
     branch = "dev";
     {% endif %}
 
