@@ -28,6 +28,8 @@
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.5.0" PrivateAssets="all" />
     <PackageReference Include="CliWrap" Version="3.6.6" />
     <PackageReference Include="Octokit.Webhooks.AzureFunctions" Version="2.2.3" />
+    <PackageReference Include="ThisAssembly.Constants" Version="1.5.0" PrivateAssets="all" />
+    <PackageReference Include="YamlPeek" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
@@ -36,4 +38,13 @@
     <None Update="@(None)" CopyToOutputDirectory="PreserveNewest" />
     <None Update="local.settings.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
+  <Target Name="ReadBaseUrl" BeforeTargets="PrepareConstants">
+    <!-- Make sure we use the same subdir from docs, in case it changes -->
+    <YamlPeek ContentPath="..\..\docs\_config.yml" Query="$.baseurl">
+      <Output TaskParameter="Result" PropertyName="DocsBaseUrl" />
+    </YamlPeek>
+    <ItemGroup>
+      <Constant Include="DocsBaseUrl" Value="$(DocsBaseUrl)" />
+    </ItemGroup>
+  </Target>
 </Project>

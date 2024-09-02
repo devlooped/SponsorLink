@@ -165,8 +165,13 @@ partial class BackIssue(SponsorsManager sponsors, SponsoredIssues issues, IGitHu
         if (!issuer.EndsWith("/"))
             issuer += "/";
 
-        var referer = request.Headers.GetValues("Referer").FirstOrDefault() ?? "https://www.devlooped.com/SponsorLink/";
-        var loginUrl = $"https://github.com/login/oauth/authorize?client_id={manifest.ClientId}&scope=read:user%20read:org%20user:email&redirect_uri={issuer}.auth/login/github/callback&state=redir={referer.TrimEnd('/')}/github/issues.html?s={manifest.Sponsorable}&i={new Uri(issuer).Host}";
+        var referer = request.Headers.GetValues("Referer").FirstOrDefault() ?? "https://www.devlooped.com/SponsorLink";
+        if (!string.IsNullOrEmpty(ThisAssembly.Constants.DocsBaseUrl) && !referer.EndsWith(ThisAssembly.Constants.DocsBaseUrl))
+            referer += ThisAssembly.Constants.DocsBaseUrl;
+
+        var redir = Uri.EscapeDataString($"redir={referer.TrimEnd('/')}/github/issues/?s={manifest.Sponsorable}&i={new Uri(issuer).Host}");
+
+        var loginUrl = $"https://github.com/login/oauth/authorize?client_id={manifest.ClientId}&scope=read:user%20read:org%20user:email&redirect_uri={issuer}.auth/login/github/callback&state={redir}";
 
         await response.WriteAsJsonAsync(new { status = "unauthorized", loginUrl });
         return response;
