@@ -31,6 +31,7 @@ jobs:
         run: dotnet build -m:1
 
       - name: ⚙ azurite
+        shell: bash
         run: |
           npm install azurite
           npx azurite &
