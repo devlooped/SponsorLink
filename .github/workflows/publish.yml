@@ -19,19 +19,16 @@ defaults:
     shell: pwsh
 
 jobs:
-  publish:
-    runs-on: windows-latest
+  build:
+    runs-on: ubuntu-latest
     steps:
       - name: 🤘 checkout
         uses: actions/checkout@v4
-        with: 
-          fetch-depth: 0
 
       - name: 🙏 build
         run: dotnet build -m:1
 
       - name: ⚙ azurite
-        shell: bash
         run: |
           npm install azurite
           npx azurite &
@@ -40,20 +37,42 @@ jobs:
         env: 
           GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
         run: dotnet test
-        
-      - name: ⚙ func 4.x
-        run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
+
+      - name: 🚀 sleet
+        env:
+          SLEET_CONNECTION: ${{ secrets.SLEET_CONNECTION }}
+        if: env.SLEET_CONNECTION != ''
+        run: |
+          dotnet tool install -g --version 4.0.18 sleet 
+          sleet push bin --config none -f --verbose -p "SLEET_FEED_CONTAINER=nuget" -p "SLEET_FEED_CONNECTIONSTRING=${{ secrets.SLEET_CONNECTION }}" -p "SLEET_FEED_TYPE=azure" || echo "No packages found"
+
+      - name: 🚀 nuget
+        if: github.ref_type == 'tag'
+        working-directory: bin
+        run: dotnet nuget push *.nupkg -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
+
+      - name: ⬆️ upload
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg
+          path: bin/*
+
+  deploy:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - name: 🤘 checkout
+        uses: actions/checkout@v4
 
       - name: 🔓 login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: ⚙ func 4.x
+        run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
+
       - name: 🚀 deploy
         working-directory: src\Web
-        run: func azure functionapp publish sponsorlink --dotnet-isolated
-
-      - name: 🚀 nuget
-        if: github.ref_type == 'tag'
-        working-directory: bin
-        run: dotnet nuget push *.nupkg -s https://api.nuget.org/v3/index.json -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
+        run: func azure functionapp publish sl-beta --dotnet-isolated
