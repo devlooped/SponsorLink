@@ -148,6 +148,31 @@ public class SponsoredIssuesTests : IDisposable
         await sponsored.UpdateBacked(github, 330812613, 2000);
     }
 
+    [SecretsFact("GitHub:Token")]
+    public async Task UpdatingPullRequestNoOp()
+    {
+        var sponsored = new SponsoredIssues(GetTable(), new SponsorLinkOptions { Account = "kzu" });
+        await sponsored.AddSponsorship("kzu", "1", 10);
+        Assert.True(await sponsored.BackIssue("kzu", "1", "devlooped/sandbox", 330812613, 14));
+
+        var github = new GitHubClient(new Octokit.ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
+        {
+            Credentials = new Credentials(Configuration["GitHub:Token"])
+        };
+
+        var issue = await github.Issue.Get(330812613, 14);
+        Assert.NotNull(issue.PullRequest);
+        var expected = issue.Body;
+
+        await sponsored.UpdateBacked(github, 330812613, 14);
+
+        issue = await github.Issue.Get(330812613, 14);
+        var actual = issue.Body;
+
+        Assert.Equal(expected, actual);
+    }
+
+
     TableConnection GetTable([CallerMemberName] string? test = default)
         => table = new TableConnection(CloudStorageAccount.DevelopmentStorageAccount, $"{nameof(SponsoredIssuesTests)}{test}");
 }

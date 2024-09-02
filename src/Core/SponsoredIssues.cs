@@ -27,6 +27,10 @@ public static class SponsoredIssuesExtensions
             return;
         }
 
+        // if the issue is a PR, no-op
+        if (issue.PullRequest != null)
+            return;
+
         var amount = await issues.BackedAmount(repository.Value, number);
         var updated = await issues.UpdateIssueBody(repository.Value, number, issue.Body);
 
