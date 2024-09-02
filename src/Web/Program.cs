@@ -33,7 +33,7 @@ var host = new HostBuilder()
     {
         // Register first so it initializes always before every other initializer.
         services.AddSingleton<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
-        services.AddSingleton(sp => CloudStorageAccount.Parse(sp.GetRequiredService<IConfiguration>()["AzureWebJobsStorage"] ?? 
+        services.AddSingleton(sp => CloudStorageAccount.Parse(sp.GetRequiredService<IConfiguration>()["AzureWebJobsStorage"] ??
             throw new InvalidOperationException("Missing required configuration 'AzureWebJobsStorage'.")));
 
         services.AddApplicationInsightsTelemetryWorkerService();
@@ -114,7 +114,7 @@ var host = new HostBuilder()
             var config = sp.GetRequiredService<IConfiguration>();
             return new GitHubClient(new Octokit.ProductHeaderValue(ThisAssembly.Info.Product, ThisAssembly.Info.InformationalVersion))
             {
-                Credentials = new Credentials(config["SponsorLink:BotToken"] ?? config["GitHub:BotToken"] ?? config["GitHub:Token"] ?? 
+                Credentials = new Credentials(config["SponsorLink:BotToken"] ?? config["GitHub:BotToken"] ?? config["GitHub:Token"] ??
                     throw new InvalidOperationException("Could not determine token to use for GitHub issues/pull request updates."))
             };
         });

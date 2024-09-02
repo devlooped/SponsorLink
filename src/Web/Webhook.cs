@@ -40,7 +40,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         {
             using var activity = tracer.StartActivity("IssueComment");
             activity?.AddEvent(new ActivityEvent($"{activity?.OperationName}.{CultureInfo.CurrentCulture.TextInfo.ToTitleCase(action)}"));
-            
+
             activity?.SetTag("sender", payload.Sender?.Login);
             activity?.SetTag("repo", payload.Repository?.FullName);
             activity?.SetTag("issue", payload.Issue.Number.ToString());

@@ -23,7 +23,7 @@ partial class BackIssue(SponsorsManager sponsors, SponsoredIssues issues, IGitHu
 
 #if DEBUG
     [Function("issues_update")]
-    public async Task RefreshIssuesForced([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "github/issues/update")] HttpRequestData req) 
+    public async Task RefreshIssuesForced([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "github/issues/update")] HttpRequestData req)
         => await issues.RefreshBacked(github);
 #endif
 

@@ -22,7 +22,7 @@ namespace Devlooped.Sponsors;
 /// Returns a JWT or JSON manifest of the authenticated user's claims.
 /// </summary>
 partial class SponsorLink(
-    IConfiguration configuration, IHttpClientFactory httpFactory, 
+    IConfiguration configuration, IHttpClientFactory httpFactory,
     SponsorsManager sponsors, RSA rsa,
     IWebHostEnvironment host, ILogger<SponsorLink> logger)
 {

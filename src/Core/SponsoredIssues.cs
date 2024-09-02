@@ -66,7 +66,7 @@ public partial class SponsoredIssues
 
     public SponsoredIssues(CloudStorageAccount storage, IOptions<SponsorLinkOptions> options) : this(new TableConnection(storage, "BackedIssues"), options.Value) { }
 
-    public SponsoredIssues(TableConnection connection, SponsorLinkOptions options) 
+    public SponsoredIssues(TableConnection connection, SponsorLinkOptions options)
         => (table, this.options) = (connection, options);
 
     public record IssueSponsor([PartitionKey] string Account, [RowKey] string SponsorshipId, long Amount, string? Repository = null, long? RepositoryId = null, int? Issue = null);
@@ -95,7 +95,7 @@ public partial class SponsoredIssues
         await repo.PutAsync(backed);
 
         // Indexed by repository|issue
-        await TableRepository.Create<IssueSponsor>(table, 
+        await TableRepository.Create<IssueSponsor>(table,
             x => x.RepositoryId + "|" + x.Issue!.ToString(),
             x => x.SponsorshipId)
             .PutAsync(backed);
@@ -118,8 +118,8 @@ public partial class SponsoredIssues
 
     public async Task<long> BackedAmount(long repository, int issue)
     {
-        var partition = TablePartition.Create<IssueSponsor>(table, 
-            repository + "|" + issue, 
+        var partition = TablePartition.Create<IssueSponsor>(table,
+            repository + "|" + issue,
             x => x.SponsorshipId);
 
         var total = 0L;
@@ -183,7 +183,7 @@ public partial class SponsoredIssues
             var parts = item.RowKey.Split('|');
             var repository = long.Parse(parts[0]);
             var issue = int.Parse(parts[1]);
-            
+
             await this.UpdateBacked(github, repository, issue);
             updated.Add(item.RowKey);
         }

@@ -127,15 +127,15 @@ public static class PushoverSounds
 public class Pushover(IHttpClientFactory factory, IOptions<PushoverOptions> options) : IPushover
 {
     static JsonSerializerOptions json = new(JsonSerializerDefaults.Web)
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault | JsonIgnoreCondition.WhenWritingNull,
-            WriteIndented = true,
-            //Converters =
-            //{
-            //    new JsonStringEnumConverter(allowIntegerValues: false),
-            //}
-        };
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault | JsonIgnoreCondition.WhenWritingNull,
+        WriteIndented = true,
+        //Converters =
+        //{
+        //    new JsonStringEnumConverter(allowIntegerValues: false),
+        //}
+    };
 
     readonly PushoverOptions options = options.Value;
 

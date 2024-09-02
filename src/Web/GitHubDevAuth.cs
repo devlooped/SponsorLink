@@ -93,9 +93,9 @@ class GitHubDevAuth(IConfiguration configuration, IHttpClientFactory httpFactory
             return new StatusCodeResult(401);
 
         // Simulate as close as possible the behavior of the easyauth endpoint.
-        return new ObjectResult(new 
-        { 
-            access_token = cookie.Value ,
+        return new ObjectResult(new
+        {
+            access_token = cookie.Value,
             provider_name = "github",
             user_claims = principal.Claims.Select(x => new { typ = x.Type, val = x.Value }),
             user_id = principal.FindFirstValue(ClaimTypes.Email),

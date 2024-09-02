@@ -12,7 +12,7 @@ using SharpYaml.Serialization;
 namespace Devlooped.Sponsors;
 
 public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
-    IHttpClientFactory httpFactory, IGraphQueryClientFactory graphFactory, 
+    IHttpClientFactory httpFactory, IGraphQueryClientFactory graphFactory,
     IMemoryCache cache, ILogger<SponsorsManager> logger)
 {
     internal const string JwtCacheKey = nameof(SponsorsManager) + ".JWT";
@@ -30,7 +30,7 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
     {
         if (sponsors is not null)
             return sponsors;
-     
+
         var client = graphFactory.CreateClient("sponsorable");
         var account = await GetSponsorable(cache, client, options);
         var tiers = await GetTiersAsync();
@@ -397,7 +397,7 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
         // Pick highest tier org.
         foreach (var org in orgs)
         {
-            if (await FindSponsorAsync(org.Login) is { } found && 
+            if (await FindSponsorAsync(org.Login) is { } found &&
                 (orgSponsor is null || found.Tier.Amount > orgSponsor.Tier.Amount))
             {
                 orgSponsor = found;
