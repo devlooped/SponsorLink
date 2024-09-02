@@ -84,7 +84,9 @@ var data = {
     "unsupported": false
 };
 
-{% if ENV['CI'] != 'true' %}
+{% if jekyll.environment == "production" %}
+// this is CI, use production issuer
+{% else %}
 data.issuer = "donkey-emerging-civet.ngrok-free.app";
 {% endif %}
 
@@ -233,7 +235,9 @@ async function lookupSponsor() {
     data.account = document.getElementById('account').value;
     console.log('Looking up sponsor: ' + data.account);
     var branch = "main";
-    {% if ENV['CI'] != "true" %}
+    {% if jekyll.environment == "production" %}
+    // this is CI, use main branch
+    {% else %}
     branch = "dev";
     {% endif %}
 
