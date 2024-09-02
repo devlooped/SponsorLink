@@ -146,7 +146,7 @@ public partial class SponsoredIssues
             }
         }
 
-        var domain = "https://www.devlooped.com/SponsorLink";
+        var domain = "https://www.devlooped.com";
 #if DEBUG
         domain = "https://127.0.0.1:4000";
 #endif
