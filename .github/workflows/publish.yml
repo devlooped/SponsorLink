@@ -36,7 +36,9 @@ jobs:
           npx azurite &
 
       - name: 🧪 test
-        run: dotnet test 
+        env: 
+          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: dotnet test
         
       - name: ⚙ func 4.x
         run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
