@@ -71,4 +71,4 @@ jobs:
 
       - name: 🚀 deploy
         working-directory: src\Web
-        run: func azure functionapp publish sl-beta --dotnet-isolated
+        run: func azure functionapp publish sponsorlink --dotnet-isolated
