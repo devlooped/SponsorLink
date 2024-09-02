@@ -56,7 +56,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: 🤘 checkout
         uses: actions/checkout@v4
@@ -70,5 +70,5 @@ jobs:
         run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
 
       - name: 🚀 deploy
-        working-directory: src\Web
+        working-directory: src/Web
         run: func azure functionapp publish sponsorlink --dotnet-isolated
