@@ -53,5 +53,5 @@ Active SponsorLink sync usage by sponsorship kind:
 ![Team](https://img.shields.io/endpoint?color=8A2BE2&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Fteam)
 ![Contributor](https://img.shields.io/endpoint?color=blue&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Fcontrib)
 
-Learn more [about the tool](https://github.com/devlooped/SponsorLink/blob/main/docs/github.md#sponsor-manifest-sync) 
-and related [telemetry](https://github.com/devlooped/SponsorLink/blob/main/docs/github.md#telemetry).
+Learn more [about the tool](https://github.com/devlooped/SponsorLink/blob/main/docs/github/index.md#sponsor-manifest-sync) 
+and related [telemetry](https://github.com/devlooped/SponsorLink/blob/main/docs/github/index.md#telemetry).

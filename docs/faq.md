@@ -5,7 +5,7 @@ page_toc: false
 ---
 # FAQ
 <!-- #content -->
-These are some frequently asked questions about the [reference implementation](github.md) 
+These are some frequently asked questions about the [reference implementation](github/index.md) 
 of the [standard manifest format](spec.md) available in the 
 [SponsorLink](https://github.com/devlooped/SponsorLink/) and 
 [`gh-sponsors`](https://github.com/devlooped/gh-sponsors/) repositories.

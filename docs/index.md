@@ -42,7 +42,7 @@ The synchronization is performed by a separate tool, which runs interactively so
 as to properly inform the user of the actions being taken and to ensure proper consent 
 is given before any data is exchanged.
 
-<!-- include github.md#sync -->
+<!-- include github/index.md#sync -->
 <!-- #sync -->
 ## Sponsor Manifest Sync
 
@@ -83,7 +83,7 @@ Whenever run, the tool performs the following steps:
 This implementation honors the recommended convention for manifest location and places them 
 at `~/.sponsorlink/github/[sponsorable].jwt`.
 <!-- #sync -->
-<!-- github.md#sync -->
+<!-- github/index.md#sync -->
 
 After a successful sync of the [sponsor manifest](spec.html#sponsor-manifest), the 
 libraries and tools can now check for its presence, authenticity and expiration 
@@ -92,5 +92,5 @@ libraries and tools can now check for its presence, authenticity and expiration
 *SponsorLink* itself does not dictate how a specific library or tool integrates 
 these checks, it only provides the [standard manifest format](spec.md) 
 that a sponsorable account backend needs to provide for local persistence 
-and subsequent (purely offline) checks. See [sponsoring checks](github.md#sponsoring-checks) 
+and subsequent (purely offline) checks. See [sponsoring checks](github/index.md#sponsoring-checks) 
 for some examples of how this might be done.
