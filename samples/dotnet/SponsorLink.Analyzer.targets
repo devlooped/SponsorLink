@@ -32,11 +32,12 @@
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)SponsorLink/*.resx"
                       Exclude="$(MSBuildThisFileDirectory)SponsorLink/bin/**;$(MSBuildThisFileDirectory)SponsorLink/obj/**"
                       Source="SponsorLink"
+                      Type="Resx"
                       ManifestResourceName="Devlooped.Sponsors.%(Filename)"/>
-    <EmbeddedResource Update="$(MSBuildThisFileDirectory)SponsorLink/Resources.resx" 
-                      StronglyTypedManifestPrefix="Devlooped.Sponsors" 
-                      StronglyTypedClassName="%(Filename)" 
-                      StronglyTypedNamespace="Devlooped.Sponsors" 
+    <EmbeddedResource Update="$(MSBuildThisFileDirectory)SponsorLink/Resources.resx"
+                      StronglyTypedManifestPrefix="Devlooped.Sponsors"
+                      StronglyTypedClassName="%(Filename)"
+                      StronglyTypedNamespace="Devlooped.Sponsors"
                       StronglyTypedLanguage="$(Language)" />
     <None Include="$(MSBuildThisFileDirectory)SponsorLink/buildTransitive/*.*"
           Source="SponsorLink"
