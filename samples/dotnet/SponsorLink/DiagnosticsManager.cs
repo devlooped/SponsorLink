@@ -202,7 +202,7 @@ class DiagnosticsManager
         description: string.Format(CultureInfo.CurrentCulture, Resources.Unknown_Description,
             string.Join(", ", sponsorable.Select(x => $"https://github.com/sponsors/{x}")),
             string.Join(" ", sponsorable.Select(x => "@" + x))),
-        helpLinkUri: "https://github.com/devlooped#sponsorlink",
+        helpLinkUri: Funding.HelpUrl,
         WellKnownDiagnosticTags.NotConfigurable, "CompilationEnd");
 
     internal static DiagnosticDescriptor CreateExpiring(string[] sponsorable, string prefix) => new(
@@ -235,7 +235,7 @@ class DiagnosticsManager
             hidden ? DiagnosticSeverity.Hidden : DiagnosticSeverity.Info,
             isEnabledByDefault: true,
             description: Resources.Sponsor_Description,
-            helpLinkUri: "https://github.com/devlooped#sponsorlink",
+            helpLinkUri: Funding.HelpUrl,
             "DoesNotSupportF1Help", "CompilationEnd");
 
     internal static DiagnosticDescriptor CreateContributor(string[] sponsorable, string prefix, bool hidden = false) => new(
@@ -246,6 +246,6 @@ class DiagnosticsManager
             hidden ? DiagnosticSeverity.Hidden : DiagnosticSeverity.Info,
             isEnabledByDefault: true,
             description: Resources.Contributor_Description,
-            helpLinkUri: "https://github.com/devlooped#sponsorlink",
+            helpLinkUri: Funding.HelpUrl,
             "DoesNotSupportF1Help", "CompilationEnd");
 }
