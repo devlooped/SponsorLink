@@ -17,6 +17,8 @@
     <FundingPrefix Condition="'$(FundingPrefix)' == ''">$([System.Text.RegularExpressions.Regex]::Replace("$(FundingProduct)", "[^A-Z]", ""))</FundingPrefix>
     <!-- Default grace days for an expired sponsor manifest -->
     <FundingGrace Condition="'$(FundingGrace)' == ''">21</FundingGrace>
+    <!-- Url to use as the helpUrl in diagnostics, to learn more about SL -->
+    <FundingHelpUrl Condition="'$(FundingHelpUrl)' == ''">https://github.com/devlooped#sponsorlink</FundingHelpUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +34,7 @@
   <ItemGroup>
     <EmbeddedResource Update="Resources.es-AR.resx" ManifestResourceName="Devlooped.Sponsors.%(Filename)" />
     <EmbeddedResource Update="Resources.es.resx" ManifestResourceName="Devlooped.Sponsors.%(Filename)" />
-    <EmbeddedResource Update="Resources.resx" Type="Resx" ManifestResourceName="Devlooped.Sponsors.%(Filename)" StronglyTypedManifestPrefix="Devlooped.Sponsors" StronglyTypedClassName="%(Filename)" StronglyTypedNamespace="Devlooped.Sponsors" StronglyTypedLanguage="$(Language)" />
+    <EmbeddedResource Update="Resources.resx" ManifestResourceName="Devlooped.Sponsors.%(Filename)" StronglyTypedManifestPrefix="Devlooped.Sponsors" StronglyTypedClassName="%(Filename)" StronglyTypedNamespace="Devlooped.Sponsors" StronglyTypedLanguage="$(Language)" />
   </ItemGroup>
 
   <ItemGroup>
