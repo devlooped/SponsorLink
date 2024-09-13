@@ -32,7 +32,7 @@
   <ItemGroup>
     <EmbeddedResource Update="Resources.es-AR.resx" ManifestResourceName="Devlooped.Sponsors.%(Filename)" />
     <EmbeddedResource Update="Resources.es.resx" ManifestResourceName="Devlooped.Sponsors.%(Filename)" />
-    <EmbeddedResource Update="Resources.resx" ManifestResourceName="Devlooped.Sponsors.%(Filename)" StronglyTypedManifestPrefix="Devlooped.Sponsors" StronglyTypedClassName="%(Filename)" StronglyTypedNamespace="Devlooped.Sponsors" StronglyTypedLanguage="$(Language)" />
+    <EmbeddedResource Update="Resources.resx" Type="Resx" ManifestResourceName="Devlooped.Sponsors.%(Filename)" StronglyTypedManifestPrefix="Devlooped.Sponsors" StronglyTypedClassName="%(Filename)" StronglyTypedNamespace="Devlooped.Sponsors" StronglyTypedLanguage="$(Language)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -68,6 +68,7 @@ partial class SponsorLink
         public static HashSet&lt;string&gt; PackageIds { get%3B } = [$(_FundingPackageIds)]%3B
         public const string Product = "$(FundingProduct)"%3B
         public const string Prefix = "$(FundingPrefix)"%3B
+        public const string HelpUrl = "$(FundingHelpUrl)"%3B
         public const int Grace = $(FundingGrace)%3B
     }
 }
