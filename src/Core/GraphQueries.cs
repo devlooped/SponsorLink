@@ -853,4 +853,30 @@ public static partial class GraphQueries
             { "pageSize", pageSize }
         }
     };
+
+    /// <summary>
+    /// Gets the contributors to a repository.
+    /// </summary>
+    public static GraphQuery<string[]> RepositoryContributors(string ownerRepo) => RepositoryContributors(ownerRepo.Split('/')[0], ownerRepo.Split('/')[1]);
+
+    /// <summary>
+    /// Gets the contributors to a repository.
+    /// </summary>
+    public static GraphQuery<string[]> RepositoryContributors(string owner, string repo) => new(
+        """
+        /repos/{owner}/{repo}/contributors
+        """,
+        // Do not return bot accounts
+        """
+        [.[] | select(.login | test("bot]$") | not) | .login]
+        """
+        )
+    {
+        IsLegacy = true,
+        Variables =
+        {
+            { "owner", owner },
+            { "repo", repo }
+        }
+    };
 }

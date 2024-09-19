@@ -23,7 +23,13 @@ public class CliGraphQueryClient : IGraphQueryClient
             args += $" --jq \"{query.JQ.Trim().Replace("\"", "\\\"")}\"";
 
         // For now, we only add support for auto-pagination of array results.
-        var paginate = typeof(T).IsArray && query.Query.Contains("$endCursor") && query.Query.Contains("first:");
+        var paginate = typeof(T).IsArray &&
+            // Legacy queries won't have anything in the "query" (a URL endpoint is expected), but can still paginate in the CLI.
+            // NOTE: this is an inconsistency with the HttpGraphQueryClient, which doesn't do pagination for legacy queries.
+            // TODO: perhaps we should implement that, but it's not needed right now.
+            (query.IsLegacy || 
+            (query.Query.Contains("$endCursor") && query.Query.Contains("first:")));
+
         if (paginate)
             args += " --paginate";
 
@@ -62,9 +68,9 @@ public class CliGraphQueryClient : IGraphQueryClient
             if (paginate && typeof(T).IsArray)
             {
                 var items = new List<object>();
-                foreach (var array in result.Split('[', StringSplitOptions.RemoveEmptyEntries).Select(x => JsonSerializer.Deserialize<T>("[" + x, JsonOptions.Default)))
+                foreach (var line in result.ReplaceLineEndings().Split(Environment.NewLine))
                 {
-                    if (array is IEnumerable<object> elements)
+                    if (JsonSerializer.Deserialize<T>(line, JsonOptions.Default) is IEnumerable<object> elements)
                         items.AddRange(elements);
                 }
 
