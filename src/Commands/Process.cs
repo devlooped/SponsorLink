@@ -16,7 +16,8 @@ public static class Process
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            RedirectStandardInput = input != null
+            RedirectStandardInput = input != null,
+            StandardOutputEncoding = System.Text.Encoding.UTF8,
         };
 
         try
