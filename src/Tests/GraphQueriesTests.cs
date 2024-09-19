@@ -345,6 +345,36 @@ public class GraphQueriesTests(ITestOutputHelper output)
         return sponsorships;
     }
 
+
+    [LocalFact("GitHub:Token")]
+    public async Task GetContributors()
+    {
+        EnsureAuthenticated();
+        var cli = new CliGraphQueryClient();
+        var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+
+        var clidata = await cli.QueryAsync(GraphQueries.RepositoryContributors("devlooped", "ThisAssembly"));
+        var httpdata = await http.QueryAsync(GraphQueries.RepositoryContributors("devlooped", "ThisAssembly"));
+
+        Assert.NotNull(clidata);
+        Assert.NotNull(httpdata);
+        Assert.Equal(clidata, httpdata);
+    }
+
+    [LocalFact("GitHub:Token")]
+    public async Task GetPagedContributors()
+    {
+        EnsureAuthenticated();
+        var cli = new CliGraphQueryClient();
+        var http = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
+
+        var clidata = await cli.QueryAsync(GraphQueries.RepositoryContributors("dotnet", "aspnetcore"));
+
+        Assert.NotNull(clidata);
+        // We can properly paginate.
+        Assert.True(clidata.Length > 200);
+    }
+
     [LocalFact("GitHub:Token")]
     public async Task GetPagedViewerSponsored()
     {
