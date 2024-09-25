@@ -73,6 +73,11 @@ public static class App
             config.AddCommand<SyncCommand>();
             config.AddCommand<ViewCommand>();
             config.AddCommand<WelcomeCommand>().IsHidden();
+            config.AddCommand<NuGetStatsCommand>("nuget")
+#if !DEBUG
+                .IsHidden()
+#endif
+                ;
         });
 
         services = registrar.Services.BuildServiceProvider();

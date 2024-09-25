@@ -17,6 +17,9 @@ if (args.Contains("--debug"))
 #endif
 
 var app = App.Create(out var services);
+#if DEBUG
+app.Configure(c => c.PropagateExceptions());
+#endif
 
 if (args.Contains("-?"))
     args = args.Select(x => x == "-?" ? "-h" : x).ToArray();
