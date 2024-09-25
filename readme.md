@@ -3,7 +3,7 @@
 Core specification and reference implementation for integrating GitHub Sponsors into 
 libraries and tools.
 
-[![Spec](https://img.shields.io/github/v/release/devlooped/SponsorLink?include_prereleases&sort=semver&display_name=tag&label=spec&labelColor=EA4AAA&color=black)](https://www.devlooped.com/SponsorLink/spec.html)
+[![Spec](https://img.shields.io/badge/spec-2.0.0-black?labelColor=EA4AAA)](https://www.devlooped.com/SponsorLink/spec/)
 [![Version](https://img.shields.io/nuget/v/dotnet-sponsor.svg?color=royalblue)](https://www.nuget.org/packages/dotnet-sponsor) 
 [![Downloads](https://img.shields.io/nuget/dt/dotnet-sponsor.svg?color=green)](https://www.nuget.org/packages/dotnet-sponsor) 
 
@@ -46,14 +46,14 @@ way.
 Roughly, the reference implementation works as follows:
 
 1. A library/tool author adds a check (i.e. on usage, build, etc.) for a 
-   [sponsor manifest](https://www.devlooped.com/SponsorLink/spec.html#sponsor-manifest) 
+   [sponsor manifest](https://www.devlooped.com/SponsorLink/spec/#sponsor-manifest) 
    at a well-known location in the local machine (i.e. `~/.sponsorlink/github/devlooped.jwt.`). If not found, the library/tool issues a notice to the user, typically stating 
    that they are seeking funding, how to fund the project and how to sync their status, 
    which is unknown at this point.
 2. User decides to sponsor the project, does so on github.com
 3. User installs the suggested [dotnet sponsor global tool](https://www.nuget.org/packages/dotnet-sponsor) and runs `sponsor sync [account]` to sync their sponsorships.
    * On first run, user accepts usage terms and conditions.
-4. The tool fetches the author's [sponsorable manifest](https://www.devlooped.com/SponsorLink/spec.html#sponsorable-manifest) from their community files repo 
+4. The tool fetches the author's [sponsorable manifest](https://www.devlooped.com/SponsorLink/spec/#sponsorable-manifest) from their community files repo 
    at `https://github.com/[account]/.github/blob/[default_branch]/sponsorlink.jwt` and 
    uses its information to authenticate the user on github.com with an OAuth app belonging 
    to the author, using device flow.
@@ -78,7 +78,7 @@ Notes:
    sponsor, but the actual behavior is up to the library/tool author.
 
 [Explore the documentation site](https://www.devlooped.com/SponsorLink) to learn more, 
-and make sure to check the [privacy statement](https://www.devlooped.com/SponsorLink/privacy.html).
+and make sure to check the [privacy statement](https://www.devlooped.com/SponsorLink/privacy/).
 
 ## Integrating via NuGet for .NET
 
