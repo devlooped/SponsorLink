@@ -1,5 +1,31 @@
 # Changelog
 
+## [v2.0.1](https://github.com/devlooped/SponsorLink/tree/v2.0.1) (2024-09-25)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.0...v2.0.1)
+
+:sparkles: Implemented enhancements:
+
+- Add command to fetch and discover nuget oss stats [\#338](https://github.com/devlooped/SponsorLink/pull/338) (@kzu)
+- Add query to retrieve contributors for a given repository [\#334](https://github.com/devlooped/SponsorLink/pull/334) (@kzu)
+- Enable UTF-8 output from GitHub CLI queries [\#333](https://github.com/devlooped/SponsorLink/pull/333) (@kzu)
+- Add overload to simplify getting or setting status [\#330](https://github.com/devlooped/SponsorLink/pull/330) (@kzu)
+- Add Grace period info reporting [\#327](https://github.com/devlooped/SponsorLink/pull/327) (@kzu)
+- Make the funding help url configurable via MSBuild [\#326](https://github.com/devlooped/SponsorLink/pull/326) (@kzu)
+- Add an easy way to check for design-time builds [\#319](https://github.com/devlooped/SponsorLink/pull/319) (@kzu)
+- Add Back an Issue feature [\#310](https://github.com/devlooped/SponsorLink/pull/310) (@kzu)
+- Add GitHub webhook for auto-labeling of sponsor issues [\#299](https://github.com/devlooped/SponsorLink/pull/299) (@kzu)
+- Add schema version to issued manifests [\#296](https://github.com/devlooped/SponsorLink/pull/296) (@kzu)
+- Add distinct diagnostic for contributors [\#294](https://github.com/devlooped/SponsorLink/pull/294) (@kzu)
+
+:twisted_rightwards_arrows: Merged:
+
+- Minor analyzer sample fixes [\#331](https://github.com/devlooped/SponsorLink/pull/331) (@kzu)
+- Add optional message to use as summary in sponsored APIs [\#328](https://github.com/devlooped/SponsorLink/pull/328) (@kzu)
+- Fix intellisense for SL resources [\#325](https://github.com/devlooped/SponsorLink/pull/325) (@kzu)
+- Fix dead links to the GitHub spec. [\#321](https://github.com/devlooped/SponsorLink/pull/321) (@teo-tsirpanis)
+- When multiple sponsorables, ensure @ each [\#318](https://github.com/devlooped/SponsorLink/pull/318) (@kzu)
+
 ## [v2.0.0](https://github.com/devlooped/SponsorLink/tree/v2.0.0) (2024-07-24)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.0-rc.6...v2.0.0)
