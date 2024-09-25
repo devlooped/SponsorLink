@@ -16,7 +16,7 @@
     <PackageReference Include="chromium" Version="2024.4.16" />
     <PackageReference Include="chromium.linux-x64" Version="2024.4.16" />
     <PackageReference Include="CliWrap" Version="3.6.6" />
-    <PackageReference Include="Azure.Core" Version="1.42.0" />
+    <PackageReference Include="Azure.Core" Version="1.43.0" />
     <PackageReference Include="Azure.Monitor.Query" Version="1.5.0" />
     <PackageReference Include="DotNetConfig" Version="1.2.0" />
     <PackageReference Include="DotNetConfig.Configuration" Version="1.2.0" />
