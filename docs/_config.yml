@@ -78,6 +78,8 @@ gh_edit_branch: main
 gh_edit_source: docs
 gh_edit_view_mode: tree
 
+# sponsorlink
+spec: 2.0.1
 issues_template: |
   {{#if available}}
   <p class="mt-6 issues-available">Your one-time sponsorships can be assigned to fund specific issues.</p>
