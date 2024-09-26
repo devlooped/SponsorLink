@@ -36,6 +36,7 @@ public class Badge(IHttpClientFactory httpFactory, IMemoryCache cache, IOptions<
         {
             "org" => nameof(SponsorTypes.Organization),
             "contrib" => nameof(SponsorTypes.Contributor),
+            "oss" => nameof(SponsorTypes.OpenSource),
             _ => type
         };
 
