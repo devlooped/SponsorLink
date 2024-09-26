@@ -1,6 +1,9 @@
 # add cert and key for ssl
+# uncomment when running the Back an Issue page, which 
+# requires SSL for CORS to work from the backend/functions
 #ssl_cert: localhost.crt
 #ssl_key: localhost.key
+
 baseurl: "/SponsorLink"
 permalink: pretty
 
