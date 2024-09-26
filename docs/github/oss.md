@@ -43,4 +43,4 @@ This page allows you to check your eligibility for indirect sponsorship as an OS
 
 <div id="data"></div>
 
-<script src="{{ site.baseurl }}/assets/js/oss.js"></script>
+<script src="{{ '/assets/js/oss.js' | relative_url }}"></script>
