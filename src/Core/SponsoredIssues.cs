@@ -7,10 +7,14 @@ namespace Devlooped.Sponsors;
 
 public static class SponsoredIssuesExtensions
 {
-    public static async Task UpdateBacked(this SponsoredIssues issues, IGitHubClient github, long? repository, int number)
+    /// <summary>
+    /// Updates the backed badge on an issue.
+    /// </summary>
+    /// <returns><see langword="false"/> if the issue number was actually a PR or not found. <see langword="true"/> otherwise.</returns>
+    public static async Task<bool> UpdateBacked(this SponsoredIssues issues, IGitHubClient github, long? repository, int number)
     {
         if (repository is null)
-            return;
+            return false;
 
         Issue issue;
         try
@@ -20,16 +24,16 @@ public static class SponsoredIssuesExtensions
         }
         catch (NotFoundException)
         {
-            return;
+            return false;
         }
         catch (ApiException e) when (e.StatusCode == System.Net.HttpStatusCode.Gone)
         {
-            return;
+            return false;
         }
 
         // if the issue is a PR, no-op
         if (issue.PullRequest != null)
-            return;
+            return false;
 
         var amount = await issues.BackedAmount(repository.Value, number);
         var updated = await issues.UpdateIssueBody(repository.Value, number, issue.Body);
@@ -60,6 +64,8 @@ public static class SponsoredIssuesExtensions
 
             await github.Issue.Labels.AddToIssue(repository.Value, number, ["backed"]);
         }
+
+        return true;
     }
 }
 
