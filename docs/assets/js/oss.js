@@ -40,18 +40,23 @@ async function lookupAccount() {
         document.getElementById('unsupported').style.display = '';
         document.getElementById('supported').style.display = 'none';
     } else {
-        const model = { 
-            repositories: data.authors[account].sort().map(repo => ({
-                repo: repo,
-                packages: Object.entries(data.packages[repo])
-                    .map(([id, downloads]) => ({
-                        id: id,
-                        downloads: downloads
-                    }))
-                    .sort((a, b) => a.id.localeCompare(b.id))
-            }))
-        };
-        document.getElementById('data').innerHTML = template(model);
+        const repositories = data.authors[account].sort().map(repo => ({
+            repo: repo,
+            packages: Object.entries(data.packages[repo])
+                .map(([id, downloads]) => ({
+                    id: id,
+                    downloads: downloads
+                }))
+                .sort((a, b) => a.id.localeCompare(b.id))
+        }));
+
+        const totalDownloads = repositories.reduce((total, repo) => {
+            return total + repo.packages.reduce((repoTotal, pkg) => {
+              return repoTotal + pkg.downloads;
+            }, 0);
+          }, 0);
+
+        document.getElementById('data').innerHTML = template({ repositories: repositories, downloads: totalDownloads });
         document.getElementById('unsupported').style.display = 'none';
         document.getElementById('supported').style.display = '';
     }

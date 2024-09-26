@@ -114,7 +114,7 @@ issues_template: |
   {{/if}}
 
 oss_template: |
-  <p class="mt-6">You contributed to the following repositories:</p>
+  <p class="mt-6">You contributed to the following repositories, with <strong>{{ format downloads }}</strong> combined daily downloads:</p>
   <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
       <tr>
           <th class="borderless">Repository</th>
