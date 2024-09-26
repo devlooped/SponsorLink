@@ -75,8 +75,10 @@ Notes:
    * `org`: the user is a member of an organization that sponsors the author.
    * `contrib`: the user is a contributor to the author's project(s).
    * `team`: the user is team a member of the author's organization.
+   * `oss`: the user is an author or contributor to an active open-source nuget package.
+     Elegibility can be checked at [OSS Authors](https://www.devlooped.com/SponsorLink/github/oss/)
 * Typically, an autor would consider any of the above roles to qualify as an active 
-   sponsor, but the actual behavior is up to the library/tool author.
+   sponsor (direct, indirect and implicit, respectively), but the actual behavior is up to the library/tool author.
 
 [Explore the documentation site](https://www.devlooped.com/SponsorLink) to learn more, 
 and make sure to check the [privacy statement](https://www.devlooped.com/SponsorLink/privacy/).
