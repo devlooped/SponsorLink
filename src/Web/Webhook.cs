@@ -8,6 +8,7 @@ using Octokit.Webhooks.Events;
 using Octokit.Webhooks.Events.IssueComment;
 using Octokit.Webhooks.Events.Issues;
 using Octokit.Webhooks.Events.Sponsorship;
+using Octokit.Webhooks.Models;
 
 namespace Devlooped.Sponsors;
 
@@ -36,6 +37,10 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
     {
         if (await issues.UpdateBacked(github, payload.Repository?.Id, (int)payload.Issue.Number) == false)
             // It was not an issue or it was not found.
+            return;
+
+        if (IsBot(payload.Sender))
+            // Ignore comments from bots.
             return;
 
         try
@@ -79,6 +84,10 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
     {
         if (await issues.UpdateBacked(github, payload.Repository?.Id, (int)payload.Issue.Number) == false)
             // It was not an issue or it was not found.
+            return;
+
+        if (IsBot(payload.Sender))
+            // Ignore comments from bots.
             return;
 
         try
@@ -170,4 +179,9 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
             throw;
         }
     }
+
+    static bool IsBot(Octokit.Webhooks.Models.User? user) => user?.Type == UserType.Bot ||
+                user?.Login.EndsWith("-bot") == true ||
+                user?.Name?.EndsWith("bot]") == true || user?.Name?.EndsWith("-bot") == true;
+
 }
