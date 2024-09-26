@@ -1,4 +1,5 @@
 ﻿using System.Security.Principal;
+using Octokit;
 using Scriban;
 
 namespace Devlooped.Sponsors;
@@ -242,7 +243,7 @@ public static partial class GraphQueries
 
     /// <summary>
     /// Returns the unique repository owners of all repositories the user has contributed 
-    /// commits to.
+    /// commits to (*recently*, from the docs at https://docs.github.com/en/graphql/reference/objects)
     /// </summary>
     internal static GraphQuery<string[]> CoreViewerContributedRepoOwners(int pageSize = 100) => new(
         """
@@ -590,6 +591,11 @@ public static partial class GraphQueries
             { "login", account }
         }
     };
+
+    /// <summary>
+    /// Gets the .github repo default branch, if it exists.
+    /// </summary>
+    public static GraphQuery DefaultCommunityBranch(string owner) => new($"/repos/{owner}/.github", ".default_branch") { IsLegacy = true };
 
     /// <summary>
     /// Gets a repository's default branch, if it exists.

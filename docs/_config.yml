@@ -1,6 +1,6 @@
 # add cert and key for ssl
-ssl_cert: localhost.crt
-ssl_key: localhost.key
+#ssl_cert: localhost.crt
+#ssl_key: localhost.key
 baseurl: "/SponsorLink"
 permalink: pretty
 
@@ -112,3 +112,24 @@ issues_template: |
       {{/each}}
   </table>
   {{/if}}
+
+oss_template: |
+  <p class="mt-6">You contributed to the following repositories:</p>
+  <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
+      <tr>
+          <th class="borderless">Repository</th>
+          <th class="borderless">Packages (downloads/day)</th>
+      </tr>
+      {{#each repositories}}
+      <tr>
+          <td class="borderless" style="vertical-align: text-top;"><a href="https://github.com/{{repo}}" target="_blank">{{repo}}</a></td>
+          <td class="borderless" style="width: 100%; vertical-align: text-top;">
+            <ul>
+              {{#each packages}}
+              <li><a href="https://nuget.org/packages/{{id}}"  target="_blank">{{id}}</a> ({{format downloads}})</li>
+              {{/each}}
+            </ul>
+          </td>
+      </tr>
+      {{/each}}
+  </table>

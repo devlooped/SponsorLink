@@ -2,7 +2,6 @@
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Azure.Data.Tables;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,7 +12,7 @@ namespace Devlooped.Sponsors;
 
 public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
     IHttpClientFactory httpFactory, IGraphQueryClientFactory graphFactory,
-    IMemoryCache cache, ILogger<SponsorsManager> logger)
+    IMemoryCache cache, AsyncLazy<OpenSource> oss, ILogger<SponsorsManager> logger)
 {
     internal const string JwtCacheKey = nameof(SponsorsManager) + ".JWT";
     internal const string ManifestCacheKey = nameof(SponsorsManager) + ".Manifest";
@@ -198,8 +197,9 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
         logger.Assert(sponsoring is not null);
 
         // User is checked for auth on first line above
-        if (principal.FindFirst("urn:github:login") is { Value.Length: > 0 } claim &&
-            sponsoring.Contains(claim.Value))
+        var user = principal.FindFirst("urn:github:login")!.Value;
+
+        if (sponsoring.Contains(user))
         {
             // the user is directly sponsoring
             type |= SponsorTypes.User;
@@ -215,13 +215,25 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
         }
 
         // Next we check for direct contributions too. 
-        // TODO: should this be configurable?
-        var contribs = await sponsor.QueryAsync(GraphQueries.ViewerContributedRepoOwners);
-        if (contribs is not null &&
-            contribs.Contains(manifest.Sponsorable))
+        if (options.NoContributors != true)
         {
-            type |= SponsorTypes.Contributor;
+            var contribs = await sponsor.QueryAsync(GraphQueries.ViewerContributedRepoOwners);
+            if (contribs is not null &&
+                contribs.Contains(manifest.Sponsorable))
+            {
+                type |= SponsorTypes.Contributor;
+            }
         }
+
+        // The OSS graph contains all contributors to active nuget packages that are open source.
+        // See NuGetStatsCommand.cs
+        if (options.NoOpenSource != true && await oss is { } graph && graph.Authors.ContainsKey(user))
+            type |= SponsorTypes.OpenSource;
+
+        // Determining if a user is an indirect sponsor via org emails is expensive, so if we already 
+        // have a sponsor type, we return early.
+        if (type != SponsorTypes.None)
+            return type;
 
         // Add verified org email(s) > user's emails check (even if user's email is not public 
         // and the logged in account does not belong to the org). This covers the scenario where a 
@@ -229,11 +241,6 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
         // personal account. The personal account would not be otherwise associated with any of his 
         // client's orgs, but he could still add his work emails to his personal account, keep them 
         // private and verified, and then use them to access and be considered an org sponsor.
-
-        // Only do this if we couldn't already determine if the user is a sponsor (directly or indirectly), 
-        // since it's expensive.
-        if (type != SponsorTypes.None)
-            return type;
 
         if (!cache.TryGetValue<Organization[]>(typeof(Organization[]), out var sponsoringOrgs) || sponsoringOrgs is null)
         {
@@ -326,6 +333,8 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
             claims.Add(new("roles", "user"));
         if (sponsor.HasFlag(SponsorTypes.Contributor))
             claims.Add(new("roles", "contrib"));
+        if (sponsor.HasFlag(SponsorTypes.OpenSource))
+            claims.Add(new("roles", "oss"));
 
         // Use shorthand JWT claim for emails. See https://www.iana.org/assignments/jwt/jwt.xhtml
         claims.AddRange(principal.Claims.Where(x => x.Type == ClaimTypes.Email).Select(x => new Claim(JwtRegisteredClaimNames.Email, x.Value)));
@@ -372,20 +381,39 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
         }
 
         // Lookup for indirect sponsors, first via repo contributions. 
-        var contribs = await graph.QueryAsync(GraphQueries.UserContributions(login));
-        if (contribs is not null && contribs.Contains(sponsorable.Login))
+        if (options.NoContributors != true)
         {
-            return new Sponsor(login, account?.Type ?? AccountType.User, new Tier("contrib", "Contributor", "Contributor", 0, false)
+            var contribs = await graph.QueryAsync(GraphQueries.UserContributions(login));
+            if (contribs is not null && contribs.Contains(sponsorable.Login))
+            {
+                return new Sponsor(login, account?.Type ?? AccountType.User, new Tier("contrib", "Contributor", "Contributor", 0, false)
+                {
+                    Meta =
+                    {
+                        ["tier"] = "contrib",
+                        ["label"] = "sponsor 💚",
+                        ["color"] = "#BFFFD3"
+                    }
+                })
+                {
+                    Kind = SponsorTypes.Contributor,
+                };
+            }
+        }
+
+        if (options.NoOpenSource != true && await oss is { } data && data.Authors.ContainsKey(login))
+        {
+            return new Sponsor(login, account?.Type ?? AccountType.User, new Tier("oss", "Open Source", "Open Source", 0, false)
             {
                 Meta =
                 {
-                    ["tier"] = "contrib",
+                    ["tier"] = "oss",
                     ["label"] = "sponsor 💚",
                     ["color"] = "#BFFFD3"
                 }
             })
             {
-                Kind = SponsorTypes.Contributor,
+                Kind = SponsorTypes.OpenSource,
             };
         }
 

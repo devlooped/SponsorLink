@@ -273,6 +273,17 @@ The backend's authentication and configuration can be tested manually by navigat
 which would redirect to the GitHub OAuth app for authentication and upon returning to your issuer site, return the 
 user's profile and claims as JSON.
 
+Optional backend app settings (all prefixed with `SponsorLink:`):
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| ManifestBranch | The branch to look for the sponsorable manifest | Default branch retrieved from GitHub API |
+| ManifestExpiration | The maximum timespan to cache the sponsorable manifest | `01:00:00` |
+| BadgeExpiration | The maximum timespan to cache the usage badge | `00:05:00` |
+| LogAnalytics | The Azure Log Analytics workspace ID to produce usage badges | |
+| NoContributors | Do not consider code contributors to sponsorable repositories as sponsors | `false` |
+| NoOpenSource | Do not consider open source authors to active nuget packages as sponsors | `false` |
+
 ## Conclusion
 
 By requiring a GitHub OAuth app for each the sponsorable, the reference implementation avoids having a central 

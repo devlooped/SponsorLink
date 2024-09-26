@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,23 @@ public sealed class SponsorManagerTests : IDisposable
     IGraphQueryClientFactory clientFactory;
     IConfiguration configuration;
     AsyncLazy<ClaimsPrincipal> principal;
+    static AsyncLazy<OpenSource> oss;
+
+    static SponsorManagerTests()
+    {
+        oss = new AsyncLazy<OpenSource>(async () =>
+        {
+            using var http = new HttpClient();
+            var response = await http.GetAsync("https://raw.githubusercontent.com/devlooped/nuget/refs/heads/main/nuget.json");
+
+            Assert.True(response.IsSuccessStatusCode);
+
+            var data = await JsonSerializer.DeserializeAsync<OpenSource>(response.Content.ReadAsStream(), JsonOptions.Default);
+            Assert.NotNull(data);
+
+            return data;
+        });
+    }
 
     public SponsorManagerTests()
     {
@@ -101,7 +119,7 @@ public sealed class SponsorManagerTests : IDisposable
             services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
             httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
-            services.GetRequiredService<IMemoryCache>(),
+            services.GetRequiredService<IMemoryCache>(), oss,
             Mock.Of<ILogger<SponsorsManager>>());
 
         Assert.Equal(SponsorTypes.None, await manager.GetSponsorTypeAsync());
@@ -130,7 +148,7 @@ public sealed class SponsorManagerTests : IDisposable
             services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
             httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
-            services.GetRequiredService<IMemoryCache>(),
+            services.GetRequiredService<IMemoryCache>(), oss,
             Mock.Of<ILogger<SponsorsManager>>());
 
         var types = await manager.GetSponsorTypeAsync();
@@ -148,7 +166,7 @@ public sealed class SponsorManagerTests : IDisposable
             services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
             httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
-            services.GetRequiredService<IMemoryCache>(),
+            services.GetRequiredService<IMemoryCache>(), oss,
             Mock.Of<ILogger<SponsorsManager>>());
 
         Assert.Equal(SponsorTypes.Organization, await manager.GetSponsorTypeAsync());
@@ -183,7 +201,7 @@ public sealed class SponsorManagerTests : IDisposable
             Mock.Of<IGraphQueryClientFactory>(x =>
                 x.CreateClient("sponsorable") == sponsorable &&
                 x.CreateClient("sponsor") == graph.Object),
-            services.GetRequiredService<IMemoryCache>(),
+            services.GetRequiredService<IMemoryCache>(), oss,
             Mock.Of<ILogger<SponsorsManager>>());
 
         Assert.Equal(SponsorTypes.Team, await manager.GetSponsorTypeAsync());
@@ -217,11 +235,17 @@ public sealed class SponsorManagerTests : IDisposable
                 x.CreateClient("sponsorable") == sponsorable &&
                 x.CreateClient("sponsor") == graph.Object),
             services.GetRequiredService<IMemoryCache>(),
+            oss,
             Mock.Of<ILogger<SponsorsManager>>());
 
         var types = await manager.GetSponsorTypeAsync();
 
         Assert.True(types.HasFlag(SponsorTypes.Organization));
+
+        // If authenticated user is an oss author, we should have the flag too.
+        var login = await sponsor.QueryAsync(GraphQueries.ViewerAccount);
+        if (login != null && await oss is { } data && data.Authors.ContainsKey(login.Login))
+            Assert.True(types.HasFlag(SponsorTypes.OpenSource));
     }
 
     [SecretsFact("GitHub:Token", "GitHub:PublicOrg")]
@@ -235,7 +259,7 @@ public sealed class SponsorManagerTests : IDisposable
             services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
             httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
-            services.GetRequiredService<IMemoryCache>(),
+            services.GetRequiredService<IMemoryCache>(), oss,
             Mock.Of<ILogger<SponsorsManager>>());
 
         var claims = await manager.GetSponsorClaimsAsync();
@@ -243,7 +267,9 @@ public sealed class SponsorManagerTests : IDisposable
         Assert.NotNull(claims);
         Assert.Contains(claims, claim => claim.Type == "roles" && claim.Value == "org");
 
-        var manifest = SponsorableManifest.Create(new Uri("https://sponsorlink.devlooped.com"), [new Uri("https://github.com/devlooped")], claims.First(c => c.Type == "client_id").Value);
+        var sponsorable = await manager.GetManifestAsync();
+
+        var manifest = SponsorableManifest.Create(new Uri(sponsorable.Issuer), [new Uri("https://github.com/" + sponsorable.Sponsorable)], claims.First(c => c.Type == "client_id").Value);
 
         var jwt = manifest.Sign(claims);
 
@@ -268,7 +294,7 @@ public sealed class SponsorManagerTests : IDisposable
             Options.Create<SponsorLinkOptions>(new SponsorLinkOptions { Account = "devlooped" }),
             httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
-            services.GetRequiredService<IMemoryCache>(),
+            services.GetRequiredService<IMemoryCache>(), oss,
             Mock.Of<ILogger<SponsorsManager>>());
 
         var tiers = await manager.GetTiersAsync();
@@ -309,14 +335,15 @@ public sealed class SponsorManagerTests : IDisposable
     [InlineData("KirillOsenkov", "silver", SponsorTypes.User)]
     [InlineData("victorgarciaaprea", "basic", SponsorTypes.Organization)]
     [InlineData("kzu", "team", SponsorTypes.Team)]
-    [InlineData("stakx", "contrib", SponsorTypes.None)] // since only *recent* (1yr) contributions count
+    [InlineData("stakx", "oss", SponsorTypes.OpenSource)] // since he's currently active on castle
+    [InlineData("test", "none", SponsorTypes.None)] // https://github.com/test not contributing to nugets
     public async Task GetTierForLogin(string login, string tier, SponsorTypes type)
     {
         var manager = new SponsorsManager(
             services.GetRequiredService<IOptions<SponsorLinkOptions>>(),
             httpFactory,
             services.GetRequiredService<IGraphQueryClientFactory>(),
-            services.GetRequiredService<IMemoryCache>(),
+            services.GetRequiredService<IMemoryCache>(), oss,
             Mock.Of<ILogger<SponsorsManager>>());
 
         var sponsor = await manager.FindSponsorAsync(login);

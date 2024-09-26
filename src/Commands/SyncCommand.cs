@@ -206,9 +206,7 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
                         if (status == SponsorableManifest.Status.NotFound)
                         {
                             // We can directly query via the default HTTP client since the .github repository must be public.
-                            branch = await httpFactory.GetQueryClient().QueryAsync(new GraphQuery(
-                                $"/repos/{account}/.github", ".default_branch")
-                            { IsLegacy = true });
+                            branch = await httpFactory.GetQueryClient().QueryAsync(GraphQueries.DefaultCommunityBranch(account));
 
                             if (branch != null && branch != "main")
                                 // Retry discovery with non-'main' branch
@@ -258,9 +256,7 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
                 if (status == SponsorableManifest.Status.NotFound)
                 {
                     // We can directly query via the default HTTP client since the .github repository must be public.
-                    branch = await httpFactory.GetQueryClient().QueryAsync(new GraphQuery(
-                        $"/repos/{sponsorable}/.github", ".default_branch")
-                    { IsLegacy = true });
+                    branch = await httpFactory.GetQueryClient().QueryAsync(GraphQueries.DefaultCommunityBranch(sponsorable));
 
                     if (branch != null && branch != "main")
                         // Retry discovery with non-'main' branch
