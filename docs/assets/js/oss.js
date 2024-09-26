@@ -9,6 +9,8 @@ var data = {
     packages: { }
 };
 
+var authors = { };
+
 fetch('https://raw.githubusercontent.com/devlooped/nuget/refs/heads/main/nuget.json')
     .then(response => {
         // Check if the response is successful
@@ -20,6 +22,11 @@ fetch('https://raw.githubusercontent.com/devlooped/nuget/refs/heads/main/nuget.j
     })
     .then(json => {
         data = json;
+        // make authors lowercase for case-insensitive lookup
+        authors = Object.keys(data.authors).reduce((acc, key) => {
+            acc[key.toLowerCase()] = data.authors[key];
+            return acc;
+          }, {});        
         setBusy(false);
     });
 
@@ -27,7 +34,7 @@ async function lookupAccount() {
     setBusy(true);
     setError('');
     document.getElementById('data').innerHTML = '';
-    var account = document.getElementById('account').value;
+    var account = document.getElementById('account').value.toLowerCase();
     console.log('Looking up account: ' + account);
 
     if (account === '') {
@@ -36,11 +43,11 @@ async function lookupAccount() {
         return;
     }
 
-    if (data.authors[account] === undefined) {
+    if (authors[account] === undefined) {
         document.getElementById('unsupported').style.display = '';
         document.getElementById('supported').style.display = 'none';
     } else {
-        const repositories = data.authors[account].sort().map(repo => ({
+        const repositories = authors[account].sort().map(repo => ({
             repo: repo,
             packages: Object.entries(data.packages[repo])
                 .map(([id, downloads]) => ({
