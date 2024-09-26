@@ -1,5 +1,7 @@
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Security.Cryptography;
+using System.Text.Json;
 using Devlooped;
 using Devlooped.Sponsors;
 using Microsoft.ApplicationInsights;
@@ -123,6 +125,23 @@ var host = new HostBuilder()
         services.AddSingleton<SponsoredIssues>();
         services.AddSingleton<WebhookEventProcessor, Webhook>();
         services.AddSingleton<IPushover, Pushover>();
+
+        services.AddSingleton(sp => new AsyncLazy<OpenSource>(async () =>
+        {
+            using var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient();
+            var response = await http.GetAsync("https://raw.githubusercontent.com/devlooped/nuget/refs/heads/main/nuget.json");
+
+            if (!response.IsSuccessStatusCode)
+                throw new InvalidOperationException($"Failed to fetch open source data: {response.StatusCode}");
+
+            var oss = await JsonSerializer.DeserializeAsync<OpenSource>(response.Content.ReadAsStream(), JsonOptions.Default);
+
+            if (oss is null)
+                throw new InvalidOperationException("Failed to deserialize open source data.");
+
+            return oss;
+        }));
+
     })
     .ConfigureGitHubWebhooks(new ConfigurationBuilder().Configure().Build()["GitHub:Secret"])
     .Build();

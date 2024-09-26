@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using System.Xml;
 using System.Xml.Linq;
 using Devlooped.Web;
 using DotNetConfig;
@@ -24,8 +23,6 @@ namespace Devlooped.Sponsors;
 [Description("Emits the nuget.json manifest with all contributors to active nuget packages")]
 public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient graph, IHttpClientFactory httpFactory) : GitHubAsyncCommand<NuGetStatsCommand.NuGetStatsSettings>(app, config)
 {
-    record Model(ConcurrentDictionary<string, HashSet<string>> Authors, ConcurrentDictionary<string, HashSet<string>> Repositories, ConcurrentDictionary<string, ConcurrentDictionary<string, long>> Packages);
-
     // Maximum versions to consider from a package history for determining whether the package 
     // is a popular with a minimum amount of downloads.
     const int MaxVersions = 5;
@@ -88,11 +85,11 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
         // gh api repos/dotnet/aspnetcore/contributors --paginate | jq '[.[] | .login]'
 
         // The resulting model we'll populate.
-        Model model;
+        OpenSource model;
         if (File.Exists("nuget.json") && settings.Force != true)
-            model = JsonSerializer.Deserialize<Model>(File.ReadAllText("nuget.json"), JsonOptions.Default) ?? new Model([], [], []);
+            model = JsonSerializer.Deserialize<OpenSource>(File.ReadAllText("nuget.json"), JsonOptions.Default) ?? new OpenSource([], [], []);
         else
-            model = new Model([], [], []);
+            model = new OpenSource([], [], []);
 
         using var http = httpFactory.CreateClient();
 

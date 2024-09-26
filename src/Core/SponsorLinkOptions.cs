@@ -42,4 +42,14 @@ public class SponsorLinkOptions
     /// Example badge usage: https://img.shields.io/endpoint?color=blue&url=https://sponsorlink.devlooped.com/badge?user
     /// </remarks>
     public string? LogAnalytics { get; init; }
+
+    /// <summary>
+    /// Do not consider contributors to sponsorable repositories as sponsors.
+    /// </summary>
+    public bool NoContributors { get; init; }
+
+    /// <summary>
+    /// Do not consider authors that contribute to other open-source projects as indirect sponsors.
+    /// </summary>
+    public bool NoOpenSource { get; init; }
 }

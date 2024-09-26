@@ -28,4 +28,9 @@ public enum SponsorTypes
     /// The user is the sponsorable account or member of the organization.
     /// </summary>
     Team = 8,
+    /// <summary>
+    /// The user is considered a sponsor because he is a contributor 
+    /// to an active open-source project.
+    /// </summary>
+    OpenSource,
 }

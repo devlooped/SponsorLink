@@ -1,5 +1,6 @@
 ﻿using Devlooped.Sponsors;
 using DotNetConfig;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Spectre.Console.Cli;
@@ -73,14 +74,15 @@ public class SyncCommandTests
         EnsureAuthenticated();
 
         var graph = new Mock<IGraphQueryClient>();
-        // Return default 'main' branch from GraphQueries.DefaultBranch
-        graph.Setup(x => x.QueryAsync(GraphQueries.DefaultBranch("kzu", ".github"))).ReturnsAsync("main");
+        var auth = new Mock<IGitHubAppAuthenticator>(MockBehavior.Strict);
+        auth.Setup(x => x.AuthenticateAsync(It.IsAny<string>(), It.IsAny<IProgress<string>>(), false, "com.devlooped", null))
+            .ReturnsAsync(Configuration["GitHub:Token"]);
 
         var command = new SyncCommand(
             Mock.Of<ICommandApp>(MockBehavior.Strict),
             config,
             graph.Object,
-            Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
+            auth.Object,
             Services.GetRequiredService<IHttpClientFactory>());
 
         var settings = new SyncCommand.SyncSettings
@@ -140,6 +142,10 @@ public class SyncCommandTests
             Namespace = "nonsponsoring",
             Unattended = true,
         };
+
+        var manifestFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink", "github", "devlooped.jwt");
+        if (File.Exists(manifestFile))
+            File.Delete(manifestFile);
 
         var result = await command.ExecuteAsync(new CommandContext(["sync"], Mock.Of<IRemainingArguments>(), "sync", null), settings);
 

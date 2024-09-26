@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Concurrent;
+using System.ComponentModel;
 
 namespace Devlooped.Sponsors;
 
@@ -33,3 +34,5 @@ public record Tier(string Id, string Name, string Description, int Amount, bool 
 public record OwnerRepo(string Owner, string Repo);
 
 public record FundedRepository(string OwnerRepo, string[] Sponsorables);
+
+public record OpenSource(ConcurrentDictionary<string, HashSet<string>> Authors, ConcurrentDictionary<string, HashSet<string>> Repositories, ConcurrentDictionary<string, ConcurrentDictionary<string, long>> Packages);
