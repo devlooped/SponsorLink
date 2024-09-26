@@ -1,5 +1,6 @@
 ---
 title: OSS Authors
+description: See your impact as a GitHub OSS author and contributor
 parent: GitHub Sponsors
 page_toc: false
 ---

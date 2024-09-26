@@ -1,5 +1,6 @@
 ---
 title: Privacy Statement
+description: SponsorLink Privacy Statement
 nav_order: 5
 ---
 <!-- #content -->

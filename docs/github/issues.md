@@ -1,5 +1,6 @@
 ---
 title: Back an Issue
+description: Fund the GitHub issues that matter most to you
 parent: GitHub Sponsors
 page_toc: false
 ---

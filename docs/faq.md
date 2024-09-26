@@ -1,5 +1,6 @@
 ---
 title: FAQ
+description: Frequently Asked Questions about SponsorLink
 nav_order: 4
 page_toc: false
 ---
@@ -28,8 +29,8 @@ of the [standard manifest format](spec.md) available in the
    and subsequently requests a sponsor manifest from the sponsored accounts.
    This is NOT needed when synchronizing a specific account.
 
-4. Does the SponsorLink developer (Devlooped) get access to my profile
-   or sponsorship data when synchronizing other account's manifests?
+4. Does the SponsorLink developer ([Devlooped](https://github.com/devlooped)) get access to 
+   my profile sponsorship data when synchronizing other account's manifests?
 
    **NO.** The backend that signs manifests must be self-hosted by each sponsored 
    account that wants to leverage SponsorLink. This code is also OSS at the 
@@ -68,7 +69,7 @@ of the [standard manifest format](spec.md) available in the
     
     **YES.** Accounts you are currently sponsoring already have this information as 
     part of their profile. SponsorLink itself does not use any information they 
-    don't already have access to, and the SponsorLink developer (Devlooped) does 
-    not have access to any of this information since it doesn't offer hosting for 
-    the backend that signs manifests.
+    don't already have access to, and the SponsorLink developer 
+    ([Devlooped](https://github.com/devlooped)) does not have access to any of 
+    this information since it doesn't offer hosting for the backend that signs manifests.
 
