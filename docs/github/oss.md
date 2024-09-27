@@ -15,6 +15,8 @@ nuget packages that are open-source and are hosted on GitHub.
 
 > An active nuget package has at least 200 downloads per day in aggregate across the last 5 versions.
 
+<p id="summary" style="font-style: italic; font-size: 85%;" class="hidden"></p>
+
 This page allows you to check your eligibility for indirect sponsorship as an OSS author/contributor.
 
 <div id="github">

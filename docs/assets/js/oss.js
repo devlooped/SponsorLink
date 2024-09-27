@@ -26,7 +26,28 @@ fetch('https://raw.githubusercontent.com/devlooped/nuget/refs/heads/main/nuget.j
         authors = Object.keys(data.authors).reduce((acc, key) => {
             acc[key.toLowerCase()] = data.authors[key];
             return acc;
-          }, {});        
+          }, {});
+        
+        const formatter = new Intl.NumberFormat();
+        const authorCount = formatter.format(Object.keys(data.authors).length);
+        const repositoryCount = formatter.format(Object.keys(data.repositories).length);
+
+        let packageCount = 0;
+        for (const repo in data.packages) {
+            packageCount += Object.keys(data.packages[repo]).length;
+        }
+        packageCount = formatter.format(packageCount);
+
+        let totalDownloads = 0;
+        for (const repo in data.packages) {
+            for (const pkg in data.packages[repo]) {
+                totalDownloads += data.packages[repo][pkg];
+            }
+        }
+        totalDownloads = formatter.format(totalDownloads);
+        
+        document.getElementById('summary').innerHTML = `<a href="https://github.com/devlooped/nuget/blob/main/nuget.json">Tracking</a> ${authorCount} authors contributing to ${repositoryCount} repositories producing ${packageCount} packages with ${totalDownloads} combined daily downloads. Learn <a href="https://github.com/devlooped/SponsorLink/blob/main/src/Commands/NuGetStatsCommand.cs">how</a> and <a href="https://github.com/devlooped/nuget/blob/main/.github/workflows/nuget.yml">when</a> your contributions are refreshed.`;
+        document.getElementById('summary').className = '';
         setBusy(false);
     });
 
