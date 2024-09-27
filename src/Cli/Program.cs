@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using Devlooped.Sponsors;
 using DotNetConfig;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +8,8 @@ using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 using Spectre.Console;
 using Spectre.Console.Cli;
+
+Console.InputEncoding = Console.OutputEncoding = Encoding.UTF8;
 
 #if DEBUG
 if (args.Contains("--debug"))
