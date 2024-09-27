@@ -1,5 +1,15 @@
 # Changelog
 
+## [v2.0.2](https://github.com/devlooped/SponsorLink/tree/v2.0.2) (2024-09-27)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.1...v2.0.2)
+
+:sparkles: Implemented enhancements:
+
+- If starting browser fails, render the URI to navigate to [\#344](https://github.com/devlooped/SponsorLink/pull/344) (@kzu)
+- Ensure output is UTF-8 [\#343](https://github.com/devlooped/SponsorLink/pull/343) (@kzu)
+- Add support for considering oss authors/contribs as indirect sponsors [\#339](https://github.com/devlooped/SponsorLink/pull/339) (@kzu)
+
 ## [v2.0.1](https://github.com/devlooped/SponsorLink/tree/v2.0.1) (2024-09-25)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.0...v2.0.1)
