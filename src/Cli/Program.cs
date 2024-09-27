@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using Devlooped.Sponsors;
 using DotNetConfig;
@@ -9,7 +10,10 @@ using NuGet.Versioning;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-Console.InputEncoding = Console.OutputEncoding = Encoding.UTF8;
+// Some users reported not getting emoji on Windows, so we force UTF-8 encoding.
+// This not great, but I couldn't find a better way to do it.
+if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    Console.InputEncoding = Console.OutputEncoding = Encoding.UTF8;
 
 #if DEBUG
 if (args.Contains("--debug"))
