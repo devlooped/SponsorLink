@@ -78,7 +78,14 @@ public class GitHubAppAuthenticator(IHttpClientFactory httpFactory) : IGitHubApp
         try
         {
             // Start the browser to the verification URL
-            System.Diagnostics.Process.Start(new ProcessStartInfo(auth!.verification_uri) { UseShellExecute = true });
+            try
+            {
+                System.Diagnostics.Process.Start(new ProcessStartInfo(auth!.verification_uri) { UseShellExecute = true });
+            }
+            catch (Exception)
+            {
+                progress.Report($":globe_with_meridians: Please navigate to the following page and use the code above: {auth!.verification_uri}");
+            }
 
             AuthCode? code;
             do
