@@ -4,7 +4,6 @@ using Devlooped.Sponsors;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.Playwright;
 
 namespace Devlooped;
 
@@ -29,21 +28,6 @@ class Helpers
             }))
             .AddLogging()
             .AddSingleton<IConfiguration>(Configuration)
-            .AddSingleton(_ => AsyncLazy.Create(async () =>
-            {
-                var playwright = await Playwright.CreateAsync();
-                var options = new BrowserTypeLaunchOptions
-                {
-                    Headless = !Debugger.IsAttached,
-                };
-
-                if (OperatingSystem.IsWindows())
-                    options.Channel = "msedge";
-                else
-                    options.ExecutablePath = Chromium.Path;
-
-                return await playwright.Chromium.LaunchAsync(options);
-            }))
             .AddAsyncLazy();
 
         collection.AddGraphQueryClient();

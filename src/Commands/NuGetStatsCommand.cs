@@ -33,7 +33,7 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
     static readonly CultureInfo ParseCulture = new("en-US");
 
     // We skip these package owners since they belong to plaforms, not individual/small teams.
-    static readonly HashSet<string> SkippedOwners = new HashSet<string>(
+    static readonly HashSet<string> SkippedOwners = new(
     [
         "aspnet",
         "dotnetframework",
