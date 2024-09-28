@@ -1,5 +1,14 @@
 # Changelog
 
+## [v2.0.4](https://github.com/devlooped/SponsorLink/tree/v2.0.4) (2024-09-28)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.3...v2.0.4)
+
+:sparkles: Implemented enhancements:
+
+- Render globals totals after running nuget command [\#349](https://github.com/devlooped/SponsorLink/pull/349) (@kzu)
+- Add exception propagation behavior with --exceptions [\#348](https://github.com/devlooped/SponsorLink/pull/348) (@kzu)
+
 ## [v2.0.3](https://github.com/devlooped/SponsorLink/tree/v2.0.3) (2024-09-28)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.2...v2.0.3)
