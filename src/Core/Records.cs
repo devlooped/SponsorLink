@@ -1,5 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Security.Cryptography;
+using Humanizer;
 
 namespace Devlooped.Sponsors;
 
@@ -37,13 +39,26 @@ public record FundedRepository(string OwnerRepo, string[] Sponsorables);
 
 public record OpenSource(ConcurrentDictionary<string, HashSet<string>> Authors, ConcurrentDictionary<string, HashSet<string>> Repositories, ConcurrentDictionary<string, ConcurrentDictionary<string, long>> Packages)
 {
-    public OpenSourceSummary Totals => new(this);
+    OpenSourceSummary? summary;
+    OpenSourceTotals? totals;
 
-    public class OpenSourceSummary(OpenSource source)
+    public OpenSourceSummary Summary => summary ??= new(Totals);
+
+    public OpenSourceTotals Totals => totals ??= new(this);
+
+    public class OpenSourceTotals(OpenSource source)
     {
-        public long Authors => source.Authors.Count;
-        public long Repositories => source.Repositories.Count;
-        public long Packages => source.Packages.Sum(x => x.Value.Count);
-        public long Downloads => source.Packages.Sum(x => x.Value.Sum(y => y.Value));
+        public double Authors => source.Authors.Count;
+        public double Repositories => source.Repositories.Count;
+        public double Packages => source.Packages.Sum(x => x.Value.Count);
+        public double Downloads => source.Packages.Sum(x => x.Value.Sum(y => y.Value));
+    }
+
+    public class OpenSourceSummary(OpenSourceTotals totals)
+    {
+        public string Authors => totals.Authors.ToMetric(decimals: 1);
+        public string Repositories => totals.Repositories.ToMetric(decimals: 1);
+        public string Packages => totals.Packages.ToMetric(decimals: 1);
+        public string Downloads => totals.Packages.ToMetric(decimals: 1);
     }
 }
