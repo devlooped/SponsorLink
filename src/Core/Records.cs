@@ -59,6 +59,6 @@ public record OpenSource(ConcurrentDictionary<string, HashSet<string>> Authors, 
         public string Authors => totals.Authors.ToMetric(decimals: 1);
         public string Repositories => totals.Repositories.ToMetric(decimals: 1);
         public string Packages => totals.Packages.ToMetric(decimals: 1);
-        public string Downloads => totals.Packages.ToMetric(decimals: 1);
+        public string Downloads => totals.Downloads.ToMetric(decimals: 1);
     }
 }
