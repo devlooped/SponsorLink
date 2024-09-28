@@ -1,5 +1,13 @@
 # Changelog
 
+## [v2.0.6](https://github.com/devlooped/SponsorLink/tree/v2.0.6) (2024-09-28)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.5...v2.0.6)
+
+:sparkles: Implemented enhancements:
+
+- Use new human readable metric summary values [\#351](https://github.com/devlooped/SponsorLink/pull/351) (@kzu)
+
 ## [v2.0.5](https://github.com/devlooped/SponsorLink/tree/v2.0.5) (2024-09-28)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.4...v2.0.5)
