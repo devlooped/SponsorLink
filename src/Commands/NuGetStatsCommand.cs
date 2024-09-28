@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Net;
@@ -9,6 +8,7 @@ using System.Xml.Linq;
 using Devlooped.Web;
 using DotNetConfig;
 using Humanizer;
+using Microsoft.OData;
 using NuGet.Configuration;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
@@ -62,6 +62,32 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
         [Description("Pages to skip")]
         [CommandOption("--skip", IsHidden = true)]
         public int Skip { get; set; }
+
+        [Description("Specific package owner to fetch full stats for")]
+        [CommandOption("--owner")]
+        public string? Owner { get; set; }
+
+        [Description("Only include OSS packages hosted on GitHub")]
+        [DefaultValue(true)]
+        [CommandOption("--gh-only")]
+        public bool GitHubOnly { get; set; } = true;
+
+        [Description("Only include OSS packages")]
+        [DefaultValue(true)]
+        [CommandOption("--oss-only")]
+        public bool OssOnly { get; set; } = true;
+
+        public override ValidationResult Validate()
+        {
+            if (OssOnly == false && Owner == null)
+                return ValidationResult.Error("Non-OSS packages can only be fetched for a specific owner.");
+
+            // If not requesting OSS, change default for GH only.
+            if (OssOnly == false)
+                GitHubOnly = false;
+
+            return base.Validate();
+        }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, NuGetStatsSettings settings)
@@ -82,12 +108,12 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
             .Or<NullReferenceException>()
             .WaitAndRetryForeverAsync(retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-        // gh api repos/dotnet/aspnetcore/contributors --paginate | jq '[.[] | .login]'
+        var fileName = (settings.Owner ?? "nuget") + ".json";
 
         // The resulting model we'll populate.
         OpenSource model;
-        if (File.Exists("nuget.json") && settings.Force != true)
-            model = JsonSerializer.Deserialize<OpenSource>(File.ReadAllText("nuget.json"), JsonOptions.Default) ?? new OpenSource([], [], []);
+        if (File.Exists(fileName) && settings.Force != true)
+            model = JsonSerializer.Deserialize<OpenSource>(File.ReadAllText(fileName), JsonOptions.Default) ?? new OpenSource([], [], []);
         else
             model = new OpenSource([], [], []);
 
@@ -104,11 +130,15 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
         if (settings.Skip > 0)
             index = settings.Skip + 1;
 
+        var baseUrl = "https://www.nuget.org/packages?sortBy=totalDownloads-desc&";
+        if (settings.Owner != null)
+            baseUrl += $"q=owner%3A{settings.Owner}&";
+
         await progress.StartAsync(async context =>
         {
             while (true)
             {
-                var listUrl = $"https://www.nuget.org/packages?page={index}&prerel=false&sortBy=totalDownloads-desc";
+                var listUrl = $"{baseUrl}page={index}";
                 AnsiConsole.MarkupLine($":globe_with_meridians: [aqua][link={listUrl}]packages#{index}[/][/]");
                 var listTask = context.AddTask($":backhand_index_pointing_right: [grey]Processing page[/] [aqua][link={listUrl}]#{index}[/][/][grey]. Total[/] [lime]{model.Authors.Count}[/] [grey]oss authors so far across[/] {model.Repositories.Count} [grey]repos[/]", false);
                 // Parse search page
@@ -131,8 +161,10 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
                 }
 
                 // Skip corp owners
-                var ids = allIds
-                    .Where(x => !x.Any(i => SkippedOwners.Contains(i.Owner)))
+                var ids = (settings.Owner != null
+                        // Don't filter anything if we're fetching a specific owner
+                        ? allIds
+                        : allIds.Where(x => settings.Owner == null && !x.Any(i => SkippedOwners.Contains(i.Owner))))
                     .Select(x => new PackageIdentity(x.Key, NuGetVersion.Parse(x.First().Version)))
                     .ToList();
 
@@ -188,11 +220,12 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
                                 return;
                             }
 
-                            if (!string.IsNullOrEmpty(repoMeta?.Url))
+                            if (!string.IsNullOrEmpty(repoMeta?.Url) &&
+                                Uri.TryCreate(repoMeta.Url, UriKind.Absolute, out var uri))
                             {
                                 repoUrl = repoMeta.Url;
-                                if (!Uri.TryCreate(repoUrl, UriKind.Absolute, out var uri) ||
-                                    uri.Host != "github.com")
+
+                                if (settings.GitHubOnly && uri.Host != "github.com")
                                 {
                                     task.Description = $":cross_mark: [yellow]{link}[/]: non GitHub source, skipping";
                                     return;
@@ -203,18 +236,22 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
                                     // change scheme to https
                                     uri = new UriBuilder(uri) { Scheme = "https", Port = 443 }.Uri;
 
-                                try
+                                if (settings.GitHubOnly)
                                 {
-                                    if (!(await http.SendAsync(new(HttpMethod.Head, uri), cancellation)).IsSuccessStatusCode)
+                                    // Ensure we get an existing GH source repo as requested
+                                    try
+                                    {
+                                        if (!(await http.SendAsync(new(HttpMethod.Head, uri), cancellation)).IsSuccessStatusCode)
+                                        {
+                                            task.Description = $":cross_mark: [yellow]{link}[/]: GitHub repo from nuspec not found at {uri}";
+                                            return;
+                                        }
+                                    }
+                                    catch (Exception)
                                     {
                                         task.Description = $":cross_mark: [yellow]{link}[/]: GitHub repo from nuspec not found at {uri}";
                                         return;
                                     }
-                                }
-                                catch (Exception)
-                                {
-                                    task.Description = $":cross_mark: [yellow]{link}[/]: GitHub repo from nuspec not found at {uri}";
-                                    return;
                                 }
 
                                 ownerRepo = uri.PathAndQuery.TrimStart('/');
@@ -222,18 +259,21 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
                                     ownerRepo = ownerRepo[..^4];
 
                                 var parts = ownerRepo.Split(['/'], StringSplitOptions.RemoveEmptyEntries);
-                                if (parts.Length < 2)
+                                if (uri.Host == "github.com")
                                 {
-                                    task.Description = $":cross_mark: [yellow]{link}[/]: source URL '{uri}' missing specific repo";
-                                    return;
-                                }
-                                else if (parts.Length > 2)
-                                {
-                                    ownerRepo = string.Join('/', ownerRepo.Split(['/'], StringSplitOptions.RemoveEmptyEntries)[..2]);
+                                    if (parts.Length < 2)
+                                    {
+                                        task.Description = $":cross_mark: [yellow]{link}[/]: source URL '{uri}' missing specific repo";
+                                        return;
+                                    }
+                                    else if (parts.Length > 2)
+                                    {
+                                        ownerRepo = string.Join('/', ownerRepo.Split(['/'], StringSplitOptions.RemoveEmptyEntries)[..2]);
+                                    }
                                 }
                                 // otherwise just keep the original.
                             }
-                            else
+                            else if (settings.OssOnly)
                             {
                                 // stop as there's no repo info even if we got nuspec ok
                                 task.Description = $":locked: [yellow]{link}[/]: no source repo information";
@@ -322,26 +362,35 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
                         var daysSince = Convert.ToInt32(Math.Max(1, Math.Round((DateTimeOffset.UtcNow - updated).TotalDays)));
                         var dailyDownloads = Convert.ToInt32(downloads / daysSince);
                         // We only consider the package "active" if it's got a minimum amount of downloads per day in the last x versions we consider.
-                        if (dailyDownloads < DailyDownloadsThreshold)
+                        // We don't filter inactive packages if we're fetching a specific owner.
+                        if (settings.Owner == null && dailyDownloads < DailyDownloadsThreshold)
                         {
                             inactive++;
                             task.Description = $":thumbs_down: [yellow]{link}[/]: skipping with {dailyDownloads} downloads/day";
                             return;
                         }
 
-                        // Check contributors only once per repo, since multiple packages can come out of the same repository
-                        if (!model.Repositories.ContainsKey(ownerRepo))
+                        if (ownerRepo != null)
                         {
-                            var contribs = await graph.QueryAsync(GraphQueries.RepositoryContributors(ownerRepo));
-                            if (contribs != null)
-                                model.Repositories.TryAdd(ownerRepo, new(contribs));
+                            // Check contributors only once per repo, since multiple packages can come out of the same repository
+                            if (!model.Repositories.ContainsKey(ownerRepo))
+                            {
+                                var contribs = await graph.QueryAsync(GraphQueries.RepositoryContributors(ownerRepo));
+                                if (contribs != null)
+                                    model.Repositories.TryAdd(ownerRepo, new(contribs));
+                                else
+                                    // Might not be a GH repo at all, or perhaps it's just empty?
+                                    model.Repositories.TryAdd(ownerRepo, []);
+                            }
+
+                            foreach (var author in model.Repositories[ownerRepo])
+                                model.Authors.GetOrAdd(author, []).Add(ownerRepo);
                         }
 
-                        foreach (var author in model.Repositories[ownerRepo])
-                            model.Authors.GetOrAdd(author, []).Add(ownerRepo);
-
-                        model.Packages.GetOrAdd(ownerRepo, []).TryAdd(id.Id, dailyDownloads);
-                        task.Description = $":check_mark_button: [deepskyblue1]{link}[/]: [white]{ownerRepo}[/] [grey]has[/] [lime]{model.Repositories[ownerRepo].Count}[/] [grey]contributors.[/]";
+                        // If we allow non-oss packages, we won't have an ownerRepo, so consider that an empty string.
+                        model.Packages.GetOrAdd(ownerRepo ?? "", []).TryAdd(id.Id, dailyDownloads);
+                        if (ownerRepo != null)
+                            task.Description = $":check_mark_button: [deepskyblue1]{link}[/]: [white]{ownerRepo}[/] [grey]has[/] [lime]{model.Repositories[ownerRepo].Count}[/] [grey]contributors.[/]";
                     }
                     finally
                     {
@@ -354,7 +403,7 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
                 listTask.Description = $":hourglass_not_done: [grey]Finished page[/] [aqua]#{index}[/][grey]. Persisting model...[/]";
                 lock (model)
                 {
-                    File.WriteAllText("nuget.json", JsonSerializer.Serialize(model, JsonOptions.Default));
+                    File.WriteAllText(fileName, JsonSerializer.Serialize(model, JsonOptions.Default));
                 }
 
                 listTask.Description = $":call_me_hand: [grey]Finished page[/] [aqua]#{index}[/][grey]. Total[/] [lime]{model.Authors.Count}[/] [grey]oss authors so far across[/] {model.Repositories.Count} [grey]repos.[/]";
@@ -363,8 +412,8 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
             }
         });
 
-        var path = new FileInfo("nuget.json").FullName;
-        AnsiConsole.MarkupLine($"Total [lime]{model.Authors.Count}[/] oss authors across {model.Repositories.Count} repos => [link={path}]nuget.json[/]");
+        var path = new FileInfo(fileName).FullName;
+        AnsiConsole.MarkupLine($"Total [lime]{model.Authors.Count}[/] oss authors across {model.Repositories.Count} repos => [link={path}]{fileName}[/]");
 
         return 0;
     }
