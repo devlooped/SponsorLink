@@ -8,7 +8,6 @@ using System.Xml.Linq;
 using Devlooped.Web;
 using DotNetConfig;
 using Humanizer;
-using Microsoft.OData;
 using NuGet.Configuration;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
@@ -406,14 +405,14 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
                     File.WriteAllText(fileName, JsonSerializer.Serialize(model, JsonOptions.Default));
                 }
 
-                listTask.Description = $":call_me_hand: [grey]Finished page[/] [aqua]#{index}[/][grey]. Total[/] [lime]{model.Authors.Count}[/] [grey]oss authors so far across[/] {model.Repositories.Count} [grey]repos.[/]";
+                listTask.Description = $":call_me_hand: [grey]Finished page[/] [aqua]#{index}[/][grey]. Total[/] [lime]{model.Totals.Authors}[/] [grey]oss authors so far across[/] {model.Totals.Repositories} [grey]repos.[/]";
                 listTask.StopTask();
                 index++;
             }
         });
 
         var path = new FileInfo(fileName).FullName;
-        AnsiConsole.MarkupLine($"Total [lime]{model.Authors.Count}[/] oss authors across {model.Repositories.Count} repos => [link={path}]{fileName}[/]");
+        AnsiConsole.MarkupLine($"Total [lime]{model.Totals.Authors}[/] oss authors contributing to {model.Totals.Repositories} repos producing {model.Totals.Packages} with {model.Totals.Downloads} dl/day => [link={path}]{fileName}[/]");
 
         return 0;
     }
