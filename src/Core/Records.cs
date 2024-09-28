@@ -35,4 +35,15 @@ public record OwnerRepo(string Owner, string Repo);
 
 public record FundedRepository(string OwnerRepo, string[] Sponsorables);
 
-public record OpenSource(ConcurrentDictionary<string, HashSet<string>> Authors, ConcurrentDictionary<string, HashSet<string>> Repositories, ConcurrentDictionary<string, ConcurrentDictionary<string, long>> Packages);
+public record OpenSource(ConcurrentDictionary<string, HashSet<string>> Authors, ConcurrentDictionary<string, HashSet<string>> Repositories, ConcurrentDictionary<string, ConcurrentDictionary<string, long>> Packages)
+{
+    public OpenSourceSummary Totals => new(this);
+
+    public class OpenSourceSummary(OpenSource source)
+    {
+        public long Authors => source.Authors.Count;
+        public long Repositories => source.Repositories.Count;
+        public long Packages => source.Packages.Sum(x => x.Value.Count);
+        public long Downloads => source.Packages.Sum(x => x.Value.Sum(y => y.Value));
+    }
+}
