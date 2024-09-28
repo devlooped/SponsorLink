@@ -1,5 +1,13 @@
 # Changelog
 
+## [v2.0.5](https://github.com/devlooped/SponsorLink/tree/v2.0.5) (2024-09-28)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.4...v2.0.5)
+
+:sparkles: Implemented enhancements:
+
+- Add user-friendly render of nuget stats totals [\#350](https://github.com/devlooped/SponsorLink/pull/350) (@kzu)
+
 ## [v2.0.4](https://github.com/devlooped/SponsorLink/tree/v2.0.4) (2024-09-28)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.3...v2.0.4)
