@@ -1,7 +1,7 @@
-﻿using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Azure.Functions.Worker;
-using System.Net;
+﻿using System.Net;
 using Humanizer;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 
 namespace Devlooped.Sponsors;
 

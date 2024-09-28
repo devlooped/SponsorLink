@@ -32,7 +32,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
         await base.ProcessSponsorshipWebhookAsync(headers, payload, action);
     }
-    
+
     protected override async Task ProcessIssueCommentWebhookAsync(WebhookHeaders headers, IssueCommentEvent payload, IssueCommentAction action)
     {
         if (await issues.UpdateBacked(github, payload.Repository?.Id, (int)payload.Issue.Number) == false)
