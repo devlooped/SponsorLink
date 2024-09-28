@@ -1,5 +1,15 @@
 # Changelog
 
+## [v2.0.3](https://github.com/devlooped/SponsorLink/tree/v2.0.3) (2024-09-28)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.2...v2.0.3)
+
+:sparkles: Implemented enhancements:
+
+- Add totals summary for nuget stats [\#347](https://github.com/devlooped/SponsorLink/pull/347) (@kzu)
+- Allow fetching specific nuget owner stats [\#346](https://github.com/devlooped/SponsorLink/pull/346) (@kzu)
+- Allow retrieving a shields.io badge with nuget stats [\#345](https://github.com/devlooped/SponsorLink/pull/345) (@kzu)
+
 ## [v2.0.2](https://github.com/devlooped/SponsorLink/tree/v2.0.2) (2024-09-27)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.1...v2.0.2)
