@@ -26,6 +26,12 @@ if (args.Contains("--debug"))
 var app = App.Create(out var services);
 #if DEBUG
 app.Configure(c => c.PropagateExceptions());
+#else
+if (args.Contains("--exceptions"))
+{
+    app.Configure(c => c.PropagateExceptions());
+    args = args.Where(x => x != "--exceptions").ToArray();
+}
 #endif
 
 if (args.Contains("-?"))
