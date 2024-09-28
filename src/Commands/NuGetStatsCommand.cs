@@ -405,14 +405,14 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
                     File.WriteAllText(fileName, JsonSerializer.Serialize(model, JsonOptions.Default));
                 }
 
-                listTask.Description = $":call_me_hand: [grey]Finished page[/] [aqua]#{index}[/][grey]. Total[/] [lime]{model.Totals.Authors}[/] [grey]oss authors so far across[/] {model.Totals.Repositories} [grey]repos.[/]";
+                listTask.Description = $":call_me_hand: [grey]Finished page[/] [aqua]#{index}[/][grey]. Total[/] [lime]{model.Summary.Authors}[/] [grey]oss authors so far across[/] {model.Summary.Repositories} [grey]repos.[/]";
                 listTask.StopTask();
                 index++;
             }
         });
 
         var path = new FileInfo(fileName).FullName;
-        AnsiConsole.MarkupLine($"Total [lime]{model.Totals.Authors}[/] oss authors contributing to {model.Totals.Repositories} repos producing {model.Totals.Packages} with {model.Totals.Downloads} dl/day => [link={path}]{fileName}[/]");
+        AnsiConsole.MarkupLine($"Total [lime]{model.Summary.Authors}[/] oss authors contributing to {model.Summary.Repositories} repos producing {model.Summary.Packages} packages with {model.Summary.Downloads} dl/day => [link={path}]{fileName}[/]");
 
         return 0;
     }
