@@ -48,7 +48,10 @@ excites you. Pretty neat, huh?
 <div id="user"></div>
 <div id="issues"></div>
 
-## How it works
+<details close markdown="block">
+  <summary>
+    <small>How this works (in-depth)</small>
+  </summary>
 
 Any GitHub account can be SponsorLink-enabled by following the instructions in the 
 [sponsorable setup]({{ site.baseurl }}/github/#sponsorable-setup) guide. Once enabled,
@@ -73,5 +76,7 @@ of the backend reference implementation of SponsorLink, does not have any visibi
 into the sponsorships or the sponsorable's GitHub account since it's all 
 [self-hosted]({{ site.baseurl }}/github/#sponsorable-backend-self-hosting) by each 
 project owner.
+
+</details>
  
 <script src="{{ '/assets/js/issues.js' | relative_url }}"></script> 
