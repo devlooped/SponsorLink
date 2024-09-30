@@ -1,3 +1,6 @@
+---
+layout: null
+---
 Handlebars.registerHelper('format', function(number) {
     return new Intl.NumberFormat().format(number);
   });
@@ -75,7 +78,7 @@ async function lookupAccount() {
             }, 0);
           }, 0);
 
-        document.getElementById('data').innerHTML = template({ repositories: repositories, downloads: totalDownloads });
+        document.getElementById('data').innerHTML = template({ account: account, icon: "{{ '/assets/img/copy.svg' | relative_url }}", repositories: repositories, downloads: totalDownloads });
         document.getElementById('unsupported').style.display = 'none';
         document.getElementById('supported').style.display = '';
 
@@ -101,4 +104,17 @@ function setError(message) {
 
 function setBusy(busy) {
     document.getElementById('spinner').style.display = busy ? '' : 'none';
+}
+
+function copyMarkdown() {
+    const url = new URL(window.location);
+    const account = url.searchParams.get('a');
+    if (account)
+    {
+        const markdown = `
+![Popular packages](https://img.shields.io/endpoint?label=popular%20packages&style=social&logo=nuget&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fnuget%2Fall?${account})
+![Daily downloads](https://img.shields.io/endpoint?label=Daily%20downloads&style=social&logo=nuget&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fnuget%2Fdl?${account})
+`;
+        navigator.clipboard.writeText(markdown);
+    }
 }
