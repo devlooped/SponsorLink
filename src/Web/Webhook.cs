@@ -53,7 +53,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
             activity?.SetTag("issue", payload.Issue.Number.ToString());
             activity?.SetTag("comment", payload.Comment.Id.ToString());
 
-            if (await manager.FindSponsorAsync(payload.Sender?.Login) is { } sponsor && sponsor.Kind != SponsorTypes.Team)
+            if (await manager.FindSponsorAsync(payload.Sender?.Login) is { } sponsor && sponsor.Kind != SponsorTypes.Team && sponsor.Kind != SponsorTypes.OpenSource)
             {
                 if (sponsor.Tier.Meta.TryGetValue("tier", out var tier))
                     activity?.SetTag("sponsor", tier);
@@ -99,7 +99,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
             activity?.SetTag("repo", payload.Repository?.FullName);
             activity?.SetTag("issue", payload.Issue.Number.ToString());
 
-            if (await manager.FindSponsorAsync(payload.Sender?.Login) is { } sponsor && sponsor.Kind != SponsorTypes.Team)
+            if (await manager.FindSponsorAsync(payload.Sender?.Login) is { } sponsor && sponsor.Kind != SponsorTypes.Team && sponsor.Kind != SponsorTypes.OpenSource)
             {
                 if (sponsor.Tier.Meta.TryGetValue("tier", out var tier))
                     activity?.SetTag("sponsor", tier);
