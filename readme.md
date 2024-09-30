@@ -83,6 +83,16 @@ Notes:
 [Explore the documentation site](https://www.devlooped.com/SponsorLink) to learn more, 
 and make sure to check the [privacy statement](https://www.devlooped.com/SponsorLink/privacy/).
 
+## Stats
+
+Active SponsorLink sync usage by sponsorship kind:
+
+![User](https://img.shields.io/endpoint?color=ea4aaa&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Fuser)
+![Organization](https://img.shields.io/endpoint?color=yellow&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Forg)
+![Team](https://img.shields.io/endpoint?color=8A2BE2&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Fteam)
+![Contributor](https://img.shields.io/endpoint?color=blue&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Fcontrib)
+![OSS](https://img.shields.io/endpoint?color=green&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Foss)
+
 ## Integrating via NuGet for .NET
 
 The reference implementation .NET global tool, `dotnet-sponsor`, provides generic 
