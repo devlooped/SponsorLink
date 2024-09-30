@@ -31,6 +31,15 @@ fetch('https://raw.githubusercontent.com/devlooped/nuget/refs/heads/main/nuget.j
         document.getElementById('summary').innerHTML = `<a href="https://github.com/devlooped/nuget/blob/main/nuget.json">Tracking</a> ${data.summary.authors} authors contributing to ${data.summary.repositories} repositories producing ${data.summary.packages} packages with ${data.summary.downloads} combined daily downloads. Learn <a href="https://github.com/devlooped/SponsorLink/blob/main/src/Commands/NuGetStatsCommand.cs">how</a> and <a href="https://github.com/devlooped/nuget/blob/main/.github/workflows/nuget.yml">when</a> your contributions are refreshed.`;
         document.getElementById('summary').className = '';
         setBusy(false);
+
+        // if there's an account in the query string, look it up
+        const url = new URL(window.location);
+        const account = url.searchParams.get('a');
+        if (account)
+        {
+            document.getElementById('account').value = account;
+            lookupAccount();
+        }
     });
 
 async function lookupAccount() {
@@ -69,6 +78,13 @@ async function lookupAccount() {
         document.getElementById('data').innerHTML = template({ repositories: repositories, downloads: totalDownloads });
         document.getElementById('unsupported').style.display = 'none';
         document.getElementById('supported').style.display = '';
+
+        // push to history if the search url is different than ?a=account
+        const url = new URL(window.location);
+        if (url.searchParams.get('a') !== account) {
+            url.searchParams.set('a', account);
+            window.history.pushState({}, '', url);
+        }
     }
 
     setBusy(false);
