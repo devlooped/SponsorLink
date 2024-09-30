@@ -54,7 +54,7 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
     {
         var stats = await oss;
         var manifest = await manager.GetManifestAsync();
-        var count = 0l;
+        var count = 0L;
 
         if (req.Query.Count == 1)
         {
