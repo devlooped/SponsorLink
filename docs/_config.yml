@@ -120,6 +120,11 @@ issues_template: |
 
 oss_template: |
   <p class="mt-6">You contributed to the following repositories, with <strong>{{ format downloads }}</strong> combined daily downloads:</p>
+  <p>
+  <img src="https://img.shields.io/endpoint?label=popular%20packages&style=social&logo=nuget&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fnuget%2Fall?{{account}}" />
+  <img src="https://img.shields.io/endpoint?label=Daily%20downloads&style=social&logo=nuget&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fnuget%2Fdl?{{account}}" />
+  <a href="#" onclick="copyMarkdown(event)"><img src="https://img.shields.io/badge/copy-md?logo=Markdown&color=%23000000"></a>
+  </p>
   <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
       <tr>
           <th class="borderless">Repository</th>

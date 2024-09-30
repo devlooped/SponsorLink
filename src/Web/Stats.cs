@@ -14,11 +14,26 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
     {
         var stats = await oss;
         var manifest = await manager.GetManifestAsync();
-        var owner = req.Query.Count == 1 ? req.Query.ToString() : manifest.Sponsorable;
+        var count = 0;
 
-        var count = stats.Packages
-            .Where(x => x.Key.StartsWith(owner + "/"))
-            .Sum(x => x.Value.Count);
+        if (req.Query.Count == 1)
+        {
+            // Sum all packages across all repositories contributed to by the author in the querystring
+            if (req.Query.ToString() is { } author && 
+                stats.Authors.TryGetValue(author, out var repositories))
+            {
+                count = stats.Packages
+                    .Where(x => repositories.Contains(x.Key))
+                    .SelectMany(x => x.Value.Keys)
+                    .Count();
+            }
+        }
+        else
+        {
+            count = stats.Packages
+                .Where(x => x.Key.StartsWith(manifest.Sponsorable + "/"))
+                .Sum(x => x.Value.Count);
+        }
 
         var output = req.CreateResponse(HttpStatusCode.OK);
 
@@ -39,11 +54,25 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
     {
         var stats = await oss;
         var manifest = await manager.GetManifestAsync();
-        var owner = req.Query.Count == 1 ? req.Query.ToString() : manifest.Sponsorable;
+        var count = 0l;
 
-        var count = stats.Packages
-            .Where(x => x.Key.StartsWith(owner + "/"))
-            .Sum(x => x.Value.Sum(y => y.Value));
+        if (req.Query.Count == 1)
+        {
+            // Sum all packages across all repositories contributed to by the author in the querystring
+            if (req.Query.ToString() is { } author &&
+                stats.Authors.TryGetValue(author, out var repositories))
+            {
+                count = stats.Packages
+                    .Where(x => repositories.Contains(x.Key))
+                    .Sum(x => x.Value.Sum(x => x.Value));
+            }
+        }
+        else
+        {
+            count = stats.Packages
+                .Where(x => x.Key.StartsWith(manifest.Sponsorable + "/"))
+                .Sum(x => x.Value.Sum(y => y.Value));
+        }
 
         var output = req.CreateResponse(HttpStatusCode.OK);
 
