@@ -66,7 +66,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                     {
                         Title = $"🗨️ by {payload.Sender?.Login} as {CultureInfo.InvariantCulture.TextInfo.ToTitleCase(tier ?? "")} sponsor",
                         Message = payload.Comment.Body,
-                        Url = payload.Comment.Url,
+                        Url = payload.Comment.HtmlUrl,
                         UrlTitle = $"View comment on issue #{payload.Issue.Number}",
                         //Priority = PushoverPriority.Normal
                     });
@@ -166,7 +166,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                     {
                         Title = $"🐛 by {payload.Sender?.Login} as {CultureInfo.InvariantCulture.TextInfo.ToTitleCase(tier ?? "")} sponsor",
                         Message = payload.Issue.Title,
-                        Url = payload.Issue.Url,
+                        Url = payload.Issue.HtmlUrl,
                         UrlTitle = $"View Issue #{payload.Issue.Number}",
                         //Priority = PushoverPriority.Normal
                     });
