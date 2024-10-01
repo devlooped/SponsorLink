@@ -298,16 +298,16 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
             return null;
 
         var manifest = await GetManifestAsync();
-        SponsorTypes sponsor;
+        SponsorTypes types;
 
         using (var activity = ActivityTracer.Source.StartActivity("Sponsor.Lookup"))
         {
-            sponsor = await GetSponsorTypeAsync(principal);
+            types = await GetSponsorTypeAsync(principal);
             // coma-separated list of types can be parsed easily with parse_csv
-            activity?.SetTag("Type", sponsor.ToString().Replace(" ", ""));
+            activity?.SetTag("Type", types.ToString().Replace(" ", ""));
         }
 
-        if (sponsor == SponsorTypes.None)
+        if (types == SponsorTypes.None)
             return null;
 
         if (principal?.FindFirst("urn:github:login")?.Value is not string login)
@@ -325,16 +325,20 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
         // check for each flags SponsorTypes and add claims accordingly
         // Note that in JWT IANA, roles is plural, unlike the more common role (singular) in claims-based auth.
         // See https://www.iana.org/assignments/jwt/jwt.xhtml
-        if (sponsor.HasFlag(SponsorTypes.Team))
+        if (types.HasFlag(SponsorTypes.Team))
             claims.Add(new("roles", "team"));
-        if (sponsor.HasFlag(SponsorTypes.Organization))
+        if (types.HasFlag(SponsorTypes.Organization))
             claims.Add(new("roles", "org"));
-        if (sponsor.HasFlag(SponsorTypes.User))
+        if (types.HasFlag(SponsorTypes.User))
             claims.Add(new("roles", "user"));
-        if (sponsor.HasFlag(SponsorTypes.Contributor))
+        if (types.HasFlag(SponsorTypes.Contributor))
             claims.Add(new("roles", "contrib"));
-        if (sponsor.HasFlag(SponsorTypes.OpenSource))
+        if (types.HasFlag(SponsorTypes.OpenSource))
             claims.Add(new("roles", "oss"));
+
+        var sponsor = await FindSponsorAsync(login);
+        if (sponsor is not null)
+            claims.AddRange(sponsor.Tier.Meta.Select(x => new Claim(x.Key, x.Value)));
 
         // Use shorthand JWT claim for emails. See https://www.iana.org/assignments/jwt/jwt.xhtml
         claims.AddRange(principal.Claims.Where(x => x.Type == ClaimTypes.Email).Select(x => new Claim(JwtRegisteredClaimNames.Email, x.Value)));

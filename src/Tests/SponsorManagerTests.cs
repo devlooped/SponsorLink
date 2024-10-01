@@ -359,5 +359,10 @@ public sealed class SponsorManagerTests : IDisposable
         Assert.True(sponsor.Tier.Meta.TryGetValue("tier", out var existing));
         Assert.Equal(tier, existing);
         Assert.Equal(type, sponsor.Kind);
+
+        var claims = await manager.GetSponsorClaimsAsync(new ClaimsPrincipal(new ClaimsIdentity([new("urn:github:login", login)], "github")));
+
+        Assert.NotNull(claims);
+        Assert.Contains(claims, claim => claim.Type == "tier" && claim.Value == tier);
     }
 }
