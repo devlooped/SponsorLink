@@ -18,14 +18,12 @@ public class CheckTokenCommand(IGraphQueryClient graph, ICommandApp app, Config 
 
     public override async Task<int> ExecuteAsync(CommandContext context, CheckSettings settings)
     {
-        if (await base.ExecuteAsync(context, settings) is not 0)
-            return -1;
-
         using var withToken = GitHub.WithToken(settings.Token);
-
-        if (withToken is null)
+        // NOTE: gh cli will not set an invalid token, so we first need to check for that (null withToken)
+        // before checking the base execute which will also authenticate.
+        if (withToken is null || await base.ExecuteAsync(context, settings) is not 0)
         {
-            AnsiConsole.MarkupLine("[red]Invalid token[/]");
+            AnsiConsole.MarkupLine(":cross_mark: [yellow]Invalid GitHub token provided[/]");
             return -1;
         }
 
