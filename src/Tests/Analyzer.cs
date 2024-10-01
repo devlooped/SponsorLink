@@ -3,7 +3,6 @@ using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
-using Microsoft.CodeAnalysis.Testing.Verifiers;
 
 namespace Devlooped.Tests;
 
@@ -40,7 +39,7 @@ public class AnalyzerTests(ITestOutputHelper Output)
     [Fact]
     public async Task CreateSponsorLinkAsync()
     {
-        var test = new Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<TestSponsorLink, XUnitVerifier>();
+        var test = new Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<TestSponsorLink, DefaultVerifier>();
 
         test.TestCode = "// ";
 
