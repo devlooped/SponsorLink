@@ -52,6 +52,8 @@ public static class Process
             output = output.Trim();
             if (string.IsNullOrEmpty(output))
                 output = null;
+            if (output == null && gotError && !string.IsNullOrWhiteSpace(error))
+                output = error.Trim();
 
             return !gotError && proc.ExitCode == 0;
         }
