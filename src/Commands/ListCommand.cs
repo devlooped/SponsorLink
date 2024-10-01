@@ -28,6 +28,11 @@ public class ListCommand(ICommandApp app, Config config, IGraphQueryClient clien
             token = new StreamReader(Console.OpenStandardInput()).ReadToEnd().Trim();
 
         using var withToken = GitHub.WithToken(token);
+        if (token != null && withToken == null)
+        {
+            AnsiConsole.MarkupLine(":cross_mark: [yellow]Invalid GitHub token provided[/]");
+            return -1;
+        }
 
         var result = await base.ExecuteAsync(context, settings);
         if (result != 0)
