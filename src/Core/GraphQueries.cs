@@ -874,7 +874,7 @@ public static partial class GraphQueries
         """,
         // Do not return bot accounts
         """
-        [.[] | select(.login | test("bot]$") | not) | .login]
+        [.[] | select(.login | test("bot]$|-bot$") | not) | .login]
         """
         )
     {
