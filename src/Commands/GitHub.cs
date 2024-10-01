@@ -78,7 +78,7 @@ public static class GitHub
             return null;
         }
 
-        return new TransientToken(token);
+        return TransientToken.TrySet(token);
     }
 
     public static AccountInfo? Authenticate()
@@ -109,13 +109,23 @@ public static class GitHub
     {
         readonly string? existingToken;
 
-        public TransientToken(string token)
+        public static TransientToken? TrySet(string token)
+        {
+            var transient = new TransientToken(token);
+
+            if (!TryExecute("gh", $"auth login --with-token", token, out var output))
+            {
+                Debug.Fail(output);
+                return null;
+            }
+
+            return transient;
+        }
+
+        TransientToken(string token)
         {
             if (TryExecute("gh", "auth status", out var _))
                 TryExecute("gh", "auth token", out existingToken);
-
-            if (!TryExecute("gh", $"auth login --with-token", token, out var output))
-                Debug.Fail(output);
         }
 
         public void Dispose()

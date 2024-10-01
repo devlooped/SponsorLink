@@ -78,6 +78,9 @@ public static class App
                 .IsHidden()
 #endif
                 ;
+#if DEBUG
+            config.AddCommand<CheckTokenCommand>("check");
+#endif
         });
 
         services = registrar.Services.BuildServiceProvider();

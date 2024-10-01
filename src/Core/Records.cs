@@ -62,3 +62,7 @@ public record OpenSource(ConcurrentDictionary<string, HashSet<string>> Authors, 
         public string Downloads => totals.Downloads.ToMetric(decimals: 1);
     }
 }
+
+public record Rate(RateLimit General, RateLimit GraphQL);
+
+public record RateLimit(int Limit, int Used, int Remaining, long Reset);

@@ -885,4 +885,18 @@ public static partial class GraphQueries
             { "repo", repo }
         }
     };
+
+    /// <summary>
+    /// Gets rate limit information.
+    /// </summary>
+    public static GraphQuery<Rate> RateLimits => new(
+        """
+        /rate_limit
+        """,
+        """
+        { general: .rate, graphql: .resources.graphql }
+        """)
+    {
+        IsLegacy = true
+    };
 }
