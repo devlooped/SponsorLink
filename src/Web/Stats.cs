@@ -19,7 +19,7 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
         if (req.Query.Count == 1)
         {
             // Sum all packages across all repositories contributed to by the author in the querystring
-            if (req.Query.ToString() is { } author && 
+            if (req.Query.ToString() is { } author &&
                 stats.Authors.TryGetValue(author, out var repositories))
             {
                 count = stats.Packages
