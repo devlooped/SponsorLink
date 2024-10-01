@@ -27,6 +27,7 @@ public class CliGraphQueryClient : IGraphQueryClient
             // Legacy queries won't have anything in the "query" (a URL endpoint is expected), but can still paginate in the CLI.
             // NOTE: this is an inconsistency with the HttpGraphQueryClient, which doesn't do pagination for legacy queries.
             // TODO: perhaps we should implement that, but it's not needed right now.
+            // In Particular, we ARE levarging this inconsistency in our RepositoryContributors query.
             (query.IsLegacy ||
             (query.Query.Contains("$endCursor") && query.Query.Contains("first:")));
 

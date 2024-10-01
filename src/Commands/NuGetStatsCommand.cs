@@ -97,6 +97,10 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
 
         using var withToken = GitHub.WithToken(token);
         if (!string.IsNullOrEmpty(token) && withToken is null)
+        {
+            AnsiConsole.MarkupLine(":cross_mark: [yellow]Invalid GitHub token provided[/]");
+            return -1;
+        }
 
         var repository = new SourceRepository(new PackageSource("https://api.nuget.org/v3/index.json"), Repository.Provider.GetCoreV3());
         var resource = await repository.GetResourceAsync<PackageMetadataResource>();
@@ -376,11 +380,33 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
                             if (!model.Repositories.ContainsKey(ownerRepo))
                             {
                                 var contribs = await graph.QueryAsync(GraphQueries.RepositoryContributors(ownerRepo));
+                                if (contribs?.Length == 0)
+                                {
+                                    // Make sure we haven't exhausted the GH API rate limit
+                                    var rate = await graph.QueryAsync(GraphQueries.RateLimits);
+                                    if (rate is not { })
+                                        throw new InvalidOperationException("Failed to get rate limits for current token.");
+
+                                    if (rate.General.Remaining < 10 || rate.GraphQL.Remaining < 10)
+                                    {
+                                        var reset = DateTimeOffset.FromUnixTimeSeconds(Math.Min(rate.General.Reset, rate.GraphQL.Reset));
+                                        var wait = reset - DateTimeOffset.UtcNow;
+                                        task.Description = $":hourglass_not_done: [yellow]Rate limit exhausted, waiting {wait.Humanize()} until reset[/]";
+                                        await Task.Delay(wait, cancellation);
+                                        contribs = await graph.QueryAsync(GraphQueries.RepositoryContributors(ownerRepo));
+                                    }
+                                }
+
                                 if (contribs != null)
+                                {
                                     model.Repositories.TryAdd(ownerRepo, new(contribs));
+                                }
                                 else
+                                {
                                     // Might not be a GH repo at all, or perhaps it's just empty?
                                     model.Repositories.TryAdd(ownerRepo, []);
+                                    AnsiConsole.MarkupLine($":warning: [yellow]{link}[/]: no contributors found for [white]{ownerRepo}[/]");
+                                }
                             }
 
                             foreach (var author in model.Repositories[ownerRepo])
