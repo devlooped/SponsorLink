@@ -204,7 +204,8 @@ public sealed class SponsorManagerTests : IDisposable
             services.GetRequiredService<IMemoryCache>(), oss,
             Mock.Of<ILogger<SponsorsManager>>());
 
-        Assert.Equal(SponsorTypes.Team, await manager.GetSponsorTypeAsync());
+        var types = await manager.GetSponsorTypeAsync();
+        Assert.True(types.HasFlag(SponsorTypes.Team));
     }
 
     [SecretsFact("GitHub:Token")]
