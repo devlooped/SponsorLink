@@ -96,6 +96,7 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
             token = new StreamReader(Console.OpenStandardInput()).ReadToEnd().Trim();
 
         using var withToken = GitHub.WithToken(token);
+        if (!string.IsNullOrEmpty(token) && withToken is null)
 
         var repository = new SourceRepository(new PackageSource("https://api.nuget.org/v3/index.json"), Repository.Provider.GetCoreV3());
         var resource = await repository.GetResourceAsync<PackageMetadataResource>();
