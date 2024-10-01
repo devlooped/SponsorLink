@@ -42,6 +42,10 @@ public record OpenSource(ConcurrentDictionary<string, HashSet<string>> Authors, 
     OpenSourceSummary? summary;
     OpenSourceTotals? totals;
 
+    public OpenSource() : this(new(FnvHashComparer.Default), new(FnvHashComparer.Default), new(FnvHashComparer.Default))
+    {            
+    }
+
     public OpenSourceSummary Summary => summary ??= new(Totals);
 
     public OpenSourceTotals Totals => totals ??= new(this);
