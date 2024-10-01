@@ -1,4 +1,3 @@
-﻿```shell
 DESCRIPTION:
 Synchronizes sponsorship manifests
 

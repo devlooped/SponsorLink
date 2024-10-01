@@ -41,12 +41,12 @@
 
   <Target Name="RenderHelp" AfterTargets="Build" Condition="$(DesignTimeBuild) != 'true'">
     <WriteLinesToFile Lines="```shell" Overwrite="true" Encoding="UTF-8" File="help.md" />
-    <Exec Command="dotnet run --no-build -c:$(Configuration) -- --help &gt;&gt; help.md" StdOutEncoding="UTF-8"
+    <Exec Command="dotnet run --no-build -c:$(Configuration) -- --help &gt; help.md" StdOutEncoding="UTF-8"
           EnvironmentVariables="NO_COLOR=true" />
     <WriteLinesToFile Lines="```" Overwrite="false" Encoding="UTF-8" File="help.md" />
 
     <WriteLinesToFile Lines="```shell" Overwrite="true" Encoding="UTF-8" File="sync.md" />
-    <Exec Command="dotnet run --no-build -c:$(Configuration) -- sync --help &gt;&gt; sync.md" StdOutEncoding="UTF-8"
+    <Exec Command="dotnet run --no-build -c:$(Configuration) -- sync --help &gt; sync.md" StdOutEncoding="UTF-8"
           EnvironmentVariables="NO_COLOR=true" />
     <WriteLinesToFile Lines="```" Overwrite="false" Encoding="UTF-8" File="sync.md" />
   </Target>
