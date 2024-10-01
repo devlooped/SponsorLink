@@ -232,7 +232,7 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
 
         // Determining if a user is an indirect sponsor via org emails is expensive, so if we already 
         // have a sponsor type, we return early.
-        if (type != SponsorTypes.None)
+        if (type != SponsorTypes.None && type != SponsorTypes.OpenSource)
             return type;
 
         // Add verified org email(s) > user's emails check (even if user's email is not public 
