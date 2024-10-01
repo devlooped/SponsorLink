@@ -1,5 +1,25 @@
 # Changelog
 
+## [v2.0.8](https://github.com/devlooped/SponsorLink/tree/v2.0.8) (2024-10-01)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.7...v2.0.8)
+
+:sparkles: Implemented enhancements:
+
+- Add tier as sponsor claim [\#234](https://github.com/devlooped/SponsorLink/issues/234)
+- When auth fails during nuget stats, render failure [\#363](https://github.com/devlooped/SponsorLink/pull/363) (@kzu)
+- Use stable hash comparer for nuget/oss model [\#361](https://github.com/devlooped/SponsorLink/pull/361) (@kzu)
+- Add arbitrary yaml metadata from tier as sponsor claims [\#359](https://github.com/devlooped/SponsorLink/pull/359) (@kzu)
+- Allow viewing the manifest of a specific account [\#358](https://github.com/devlooped/SponsorLink/pull/358) (@kzu)
+
+:bug: Fixed bugs:
+
+- Ensure org sponsorships are collected for OSS authors too [\#360](https://github.com/devlooped/SponsorLink/pull/360) (@kzu)
+
+:twisted_rightwards_arrows: Merged:
+
+- Make sure we never inadvertently push launchSettings.json [\#362](https://github.com/devlooped/SponsorLink/pull/362) (@kzu)
+
 ## [v2.0.7](https://github.com/devlooped/SponsorLink/tree/v2.0.7) (2024-10-01)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.6...v2.0.7)
