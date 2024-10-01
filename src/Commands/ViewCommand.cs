@@ -19,6 +19,10 @@ public partial class ViewCommand(IHttpClientFactory clientFactory) : AsyncComman
         [CommandOption("-d|--details")]
         [DefaultValue(true)]
         public bool Details { get; set; } = true;
+
+        [Description("Optional sponsored account(s) to view")]
+        [CommandArgument(0, "[account]")]
+        public string[]? Sponsorable { get; set; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, ViewSettings settings)
@@ -35,6 +39,9 @@ public partial class ViewCommand(IHttpClientFactory clientFactory) : AsyncComman
             foreach (var file in Directory.EnumerateFiles(targetDir, "*.jwt", SearchOption.AllDirectories))
             {
                 var account = Path.GetFileNameWithoutExtension(file);
+                if (settings.Sponsorable is not null && !settings.Sponsorable.Contains(account))
+                    continue;
+
                 var relative = string.Join(Path.DirectorySeparatorChar, file.Split(Path.DirectorySeparatorChar)[^2..]);
                 ctx.Status(Strings.Validate.ValidatingManifest(relative));
 
