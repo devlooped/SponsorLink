@@ -116,6 +116,10 @@ public static class GitHub
             if (!TryExecute("gh", $"auth login --with-token", token, out var output))
             {
                 Debug.Fail(output);
+                AnsiConsole.MarkupLine("[red]Failed to authenticate with provided token[/]");
+                if (output.Trim().Length > 0)
+                    AnsiConsole.MarkupLine($"[dim]{output.Trim()}[/]");
+
                 return null;
             }
 

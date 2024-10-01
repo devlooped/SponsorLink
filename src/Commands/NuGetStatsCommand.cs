@@ -58,6 +58,12 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
         [CommandOption("--with-token")]
         public bool WithToken { get; set; }
 
+#if DEBUG
+        [Description(@"Specific GitHub authentication token for debug")]
+        [CommandOption("--token")]
+        public string? Token { get; set; }
+#endif
+
         [Description("Pages to skip")]
         [CommandOption("--skip", IsHidden = true)]
         public int Skip { get; set; }
@@ -92,13 +98,17 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
     public override async Task<int> ExecuteAsync(CommandContext context, NuGetStatsSettings settings)
     {
         string? token = default;
+#if DEBUG
+        token = settings.Token;
+#endif
         if (settings.WithToken)
             token = new StreamReader(Console.OpenStandardInput()).ReadToEnd().Trim();
 
         using var withToken = GitHub.WithToken(token);
-        if (!string.IsNullOrEmpty(token) && withToken is null)
+        // Whether via custom token or exiting one, we need to ensure user can be authenticated with the GH CLI
+        if ((token != null && withToken == null) || await base.ExecuteAsync(context, settings) is not 0)
         {
-            AnsiConsole.MarkupLine(":cross_mark: [yellow]Invalid GitHub token provided[/]");
+            AnsiConsole.MarkupLine(":cross_mark: [yellow]GitHub CLI auth status could not be determined[/]");
             return -1;
         }
 
