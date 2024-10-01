@@ -42,12 +42,26 @@
   <Target Name="RenderHelp" AfterTargets="Build" Condition="$(DesignTimeBuild) != 'true'">
     <WriteLinesToFile Lines="```shell" Overwrite="true" Encoding="UTF-8" File="help.md" />
     <Exec Command="dotnet run --no-build -c:$(Configuration) -- --help --tos --unattended &gt; help.md" StdOutEncoding="UTF-8"
+          EnvironmentVariables="NO_COLOR=true" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="MSBuildLastExitCode" />
+    </Exec>
+    <!-- Run again if it failed, but without the output redirect, for troubleshooting via build logs -->
+    <Exec Condition="$(MSBuildLastExitCode) != '0'"
+          Command="dotnet run --no-build -c:$(Configuration) -- --help --tos --unattended" StdOutEncoding="UTF-8"
           EnvironmentVariables="NO_COLOR=true" />
+    <Error Text="Failed to get help output." Condition="'$(MSBuildLastExitCode)' != '0'" />
     <WriteLinesToFile Lines="```" Overwrite="false" Encoding="UTF-8" File="help.md" />
 
     <WriteLinesToFile Lines="```shell" Overwrite="true" Encoding="UTF-8" File="sync.md" />
     <Exec Command="dotnet run --no-build -c:$(Configuration) -- sync --help --unattended &gt; sync.md" StdOutEncoding="UTF-8"
+          EnvironmentVariables="NO_COLOR=true" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="MSBuildLastExitCode" />
+    </Exec>
+    <!-- Run again if it failed, but without the output redirect, for troubleshooting via build logs -->
+    <Exec Condition="$(MSBuildLastExitCode) != '0'"
+          Command="dotnet run --no-build -c:$(Configuration) -- sync --help --unattended &gt; sync.md" StdOutEncoding="UTF-8"
           EnvironmentVariables="NO_COLOR=true" />
+    <Error Text="Failed to get help output." Condition="'$(MSBuildLastExitCode)' != '0'" />
     <WriteLinesToFile Lines="```" Overwrite="false" Encoding="UTF-8" File="sync.md" />
   </Target>
 
