@@ -117,9 +117,9 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
         // The resulting model we'll populate.
         OpenSource model;
         if (File.Exists(fileName) && settings.Force != true)
-            model = JsonSerializer.Deserialize<OpenSource>(File.ReadAllText(fileName), JsonOptions.Default) ?? new OpenSource([], [], []);
+            model = JsonSerializer.Deserialize<OpenSource>(File.ReadAllText(fileName), JsonOptions.Default) ?? new OpenSource();
         else
-            model = new OpenSource([], [], []);
+            model = new OpenSource();
 
         using var http = httpFactory.CreateClient();
 
@@ -399,22 +399,22 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
 
                                 if (contribs != null)
                                 {
-                                    model.Repositories.TryAdd(ownerRepo, new(contribs));
+                                    model.Repositories.TryAdd(ownerRepo, new(contribs, FnvHashComparer.Default));
                                 }
                                 else
                                 {
                                     // Might not be a GH repo at all, or perhaps it's just empty?
-                                    model.Repositories.TryAdd(ownerRepo, []);
+                                    model.Repositories.TryAdd(ownerRepo, new(FnvHashComparer.Default));
                                     AnsiConsole.MarkupLine($":warning: [yellow]{link}[/]: no contributors found for [white]{ownerRepo}[/]");
                                 }
                             }
 
                             foreach (var author in model.Repositories[ownerRepo])
-                                model.Authors.GetOrAdd(author, []).Add(ownerRepo);
+                                model.Authors.GetOrAdd(author, _ => new(FnvHashComparer.Default)).Add(ownerRepo);
                         }
 
                         // If we allow non-oss packages, we won't have an ownerRepo, so consider that an empty string.
-                        model.Packages.GetOrAdd(ownerRepo ?? "", []).TryAdd(id.Id, dailyDownloads);
+                        model.Packages.GetOrAdd(ownerRepo ?? "", _ => new(FnvHashComparer.Default)).TryAdd(id.Id, dailyDownloads);
                         if (ownerRepo != null)
                             task.Description = $":check_mark_button: [deepskyblue1]{link}[/]: [white]{ownerRepo}[/] [grey]has[/] [lime]{model.Repositories[ownerRepo].Count}[/] [grey]contributors.[/]";
                     }
