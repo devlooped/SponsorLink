@@ -8,14 +8,17 @@ has_toc: false
 
 {%- assign versions = site[page.collection]
   | default: site.html_pages
-  | where: "parent", page.title -%}
+  | where: "parent", page.title -%}  
 
 {% for spec in versions -%}
-{% if spec.title == site.spec -%}
+    {%- assign delimited = ';' | append: spec.title | append: ';' -%}
+    {%- unless site.spec_skip contains delimited -%}
+      {% if spec.title == site.spec -%}
 [{{ spec.title }}]({{ spec.url | relative_url }}){: .btn .btn-blue }
-{% else -%}
+      {% else -%}
 [{{ spec.title }}]({{ spec.url | relative_url }}){: .btn }
-{% endif -%}
+      {% endif -%}
+    {%- endunless -%}
 {% endfor -%}
 
 {% capture source %}{% include_relative spec/{{ site.spec }}.md %}{% endcapture %}
