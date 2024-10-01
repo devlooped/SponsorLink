@@ -1,5 +1,14 @@
 # Changelog
 
+## [v2.0.7](https://github.com/devlooped/SponsorLink/tree/v2.0.7) (2024-10-01)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.6...v2.0.7)
+
+:sparkles: Implemented enhancements:
+
+- Allow easily copying markdown of OSS author badges [\#356](https://github.com/devlooped/SponsorLink/pull/356) (@kzu)
+- Add specific diagnostic/status for oss authors [\#355](https://github.com/devlooped/SponsorLink/pull/355) (@kzu)
+
 ## [v2.0.6](https://github.com/devlooped/SponsorLink/tree/v2.0.6) (2024-09-28)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.5...v2.0.6)
