@@ -81,6 +81,9 @@ public static class App
 #if DEBUG
             config.AddCommand<CheckTokenCommand>("check");
 #endif
+
+            if (Environment.GetEnvironmentVariables().Contains("NO_COLOR"))
+                config.Settings.HelpProviderStyles = null;
         });
 
         services = registrar.Services.BuildServiceProvider();
