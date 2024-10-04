@@ -5,7 +5,7 @@ using Microsoft.Azure.Functions.Worker.Http;
 
 namespace Devlooped.Sponsors;
 
-public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
+public class Stats(AsyncLazy<OpenSource> oss, IGraphQueryClientFactory graph, SponsorsManager manager)
 {
     readonly TimeSpan expiration = TimeSpan.FromDays(1);
 
@@ -26,6 +26,22 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
         }
         else
         {
+            // Single-account shorthand used by the static page, where we need to disambiguate user vs org accounts
+            if (req.Query.Get("a") is string a)
+            {
+                if (await graph.CreateClient("sponsorable").QueryAsync(GraphQueries.FindAccount(a)) is { } account)
+                {
+                    if (account.Type == AccountType.Organization)
+                        req.Query["owner"] = account.Login;
+                    else
+                        req.Query["author"] = account.Login;
+                }
+                else
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+            }
+
             // now we can either have ?a={author} or ?o={owner}
             if (req.Query.GetValues("author") is { Length: > 0 } authors)
             {
@@ -94,6 +110,22 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
         }
         else
         {
+            // Single-account shorthand used by the static page, where we need to disambiguate user vs org accounts
+            if (req.Query.Get("a") is string a)
+            {
+                if (await graph.CreateClient("sponsorable").QueryAsync(GraphQueries.FindAccount(a)) is { } account)
+                {
+                    if (account.Type == AccountType.Organization)
+                        req.Query["owner"] = account.Login;
+                    else
+                        req.Query["author"] = account.Login;
+                }
+                else
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+            }
+
             // now we can either have ?a={author} or ?o={owner}
             if (req.Query.GetValues("author") is { Length: > 0 } authors)
             {

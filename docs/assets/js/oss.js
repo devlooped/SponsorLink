@@ -112,8 +112,8 @@ function copyMarkdown() {
     if (account)
     {
         const markdown = `
-![Popular packages](https://img.shields.io/endpoint?label=popular%20packages&style=social&logo=nuget&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fnuget%2Fall?${account})
-![Daily downloads](https://img.shields.io/endpoint?label=Daily%20downloads&style=social&logo=nuget&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fnuget%2Fdl?${account})
+![Popular packages](https://img.shields.io/endpoint?label=Popular%20packages&style=social&logo=nuget&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fnuget%2Fid%3Fa%3D${account})
+![Daily downloads](https://img.shields.io/endpoint?label=Daily%20downloads&style=social&logo=nuget&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fnuget%2Fdl%3Fa%3D${account})
 `;
         navigator.clipboard.writeText(markdown);
     }
