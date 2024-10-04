@@ -12,6 +12,7 @@ using NuGet.Configuration;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
 using NuGet.Protocol.Core.Types;
+using NuGet.Protocol.Providers;
 using NuGet.Versioning;
 using Polly;
 using Spectre.Console;
@@ -386,10 +387,15 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
 
                         if (ownerRepo != null)
                         {
+                            // Account for repo renames/ownership transfers
+                            if (await graph.QueryAsync(GraphQueries.RepositoryFullName(ownerRepo)) is { } fullName)
+                                ownerRepo = fullName;
+
                             // Check contributors only once per repo, since multiple packages can come out of the same repository
                             if (!model.Repositories.ContainsKey(ownerRepo))
                             {
                                 var contribs = await graph.QueryAsync(GraphQueries.RepositoryContributors(ownerRepo));
+
                                 if (contribs?.Length == 0)
                                 {
                                     // Make sure we haven't exhausted the GH API rate limit
