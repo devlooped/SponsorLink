@@ -887,6 +887,14 @@ public static partial class GraphQueries
     };
 
     /// <summary>
+    /// Gets the current full name of the specified owner/repo (might have been renamed and/or moved to another owner).
+    /// </summary>
+    public static GraphQuery<string> RepositoryFullName(string ownerRepo) => new($"/repos/{ownerRepo}", ".full_name")
+    {
+        IsLegacy = true,
+    };
+
+    /// <summary>
     /// Gets rate limit information.
     /// </summary>
     public static GraphQuery<Rate> RateLimits => new(
