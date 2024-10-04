@@ -58,39 +58,59 @@ async function lookupAccount() {
         return;
     }
 
-    if (authors[account] === undefined) {
-        document.getElementById('unsupported').style.display = '';
-        document.getElementById('supported').style.display = 'none';
-    } else {
-        const repositories = authors[account].sort().map(repo => ({
-            repo: repo,
-            packages: Object.entries(data.packages[repo])
-                .map(([id, downloads]) => ({
-                    id: id,
-                    downloads: downloads
-                }))
-                .sort((a, b) => a.id.localeCompare(b.id))
-        }));
+    // data format is { "authors": { "account": [ "repo" ] }, "repositories": { "repo": [ "package " ] }, "packages": { "repo": { "package": 1234 } } } 
+    // the number being the download count
 
-        const totalDownloads = repositories.reduce((total, repo) => {
-            return total + repo.packages.reduce((repoTotal, pkg) => {
-              return repoTotal + pkg.downloads;
-            }, 0);
-          }, 0);
-
-        document.getElementById('data').innerHTML = template({ account: account, icon: "{{ '/assets/img/copy.svg' | relative_url }}", repositories: repositories, downloads: totalDownloads });
-        document.getElementById('unsupported').style.display = 'none';
-        document.getElementById('supported').style.display = '';
-
-        // push to history if the search url is different than ?a=account
-        const url = new URL(window.location);
-        if (url.searchParams.get('a') !== account) {
-            url.searchParams.set('a', account);
-            window.history.pushState({}, '', url);
-        }
+    var repositories = {};
+    if (authors[account] != undefined) {
+        // project a list of repositories (with packages) for the account
+        repositories = authors[account]
+            // The resulting object should have the form { "repo1": [ { "package": 1234 }  ] }
+            .map(repo => [repo, Object.entries(data.packages[repo])]);
+    }
+    else
+    {
+        // if repositories is empty, use all repositories starting with "account/"
+        // filter case insensitively
+        repositories = Object.entries(data.repositories)
+            .filter(([repo, _]) => repo.toLowerCase().startsWith(account + '/'))
+            // The resulting object should have the form { "repo1": [ { "package": 1234 }  ] }
+            .map(([repo, _]) => [repo, Object.entries(data.packages[repo])]);
     }
 
+    // sort list of repositories by repository name, then by package id
+    // The resulting object should have the form { "repo": "repo1", "packages": [ { "id": "package", "downloads": 1234 }  ] }
+    repositories = repositories
+        .map(([repo, packages]) => ({ repo: repo, packages: packages.map(([id, downloads]) => ({ id: id, downloads: downloads })) }))
+        .sort((a, b) => a.repo.localeCompare(b.repo))
+        .map(({ repo, packages }) => ({ repo: repo, packages: packages.sort((a, b) => a.id.localeCompare(b.id)) }));
+
+    // Sum up the downloads for all packages
+    const totalDownloads = repositories
+        .map(repo => repo.packages)
+        .reduce((acc, val) => acc.concat(val), [])
+        .map(pkg => pkg.downloads)
+        .reduce((acc, val) => acc + val, 0);
+
     setBusy(false);
+        
+    if (totalDownloads < 200) {
+        document.getElementById('unsupported').style.display = '';
+        document.getElementById('supported').style.display = 'none';
+        return;
+    }
+
+    const model = { account: account, icon: "{{ '/assets/img/copy.svg' | relative_url }}", repositories: repositories, downloads: totalDownloads };
+    document.getElementById('data').innerHTML = template(model);
+    document.getElementById('unsupported').style.display = 'none';
+    document.getElementById('supported').style.display = '';
+
+    // push to history if the search url is different than ?a=account
+    const url = new URL(window.location);
+    if (url.searchParams.get('a') !== account) {
+        url.searchParams.set('a', account);
+        window.history.pushState({}, '', url);
+    }
 }
 
 function setError(message) {
