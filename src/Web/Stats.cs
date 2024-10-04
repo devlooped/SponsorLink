@@ -70,7 +70,7 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
         await output.WriteAsJsonAsync(new
         {
             schemaVersion = 1,
-            label = $"nugets by {by}" ,
+            label = $"{by} nugets" ,
             message = ((double)count).ToMetric(decimals: 1)
         });
 
@@ -138,7 +138,7 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
         await output.WriteAsJsonAsync(new
         {
             schemaVersion = 1,
-            label = $"dl/day by {by}",
+            label = $"{by} dl/day",
             message = ((double)count).ToMetric(decimals: 1)
         });
 
