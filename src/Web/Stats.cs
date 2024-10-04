@@ -10,29 +10,57 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
     readonly TimeSpan expiration = TimeSpan.FromDays(1);
 
     [Function("nuget-count")]
-    public async Task<HttpResponseData> NuGetCountAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "nuget/all")] HttpRequestData req)
+    public async Task<HttpResponseData> NuGetCountAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "nuget/id")] HttpRequestData req)
     {
         var stats = await oss;
         var manifest = await manager.GetManifestAsync();
         var count = 0;
+        var by = manifest.Sponsorable;
 
-        if (req.Query.Count == 1)
+        if (req.Query.Count == 0)
         {
-            // Sum all packages across all repositories contributed to by the author in the querystring
-            if (req.Query.ToString() is { } author &&
-                stats.Authors.TryGetValue(author, out var repositories))
-            {
-                count = stats.Packages
-                    .Where(x => repositories.Contains(x.Key))
-                    .SelectMany(x => x.Value.Keys)
-                    .Count();
-            }
+            var owner = manifest.Sponsorable + "/";
+            count = stats.Packages
+                .Where(x => x.Key.StartsWith(owner))
+                .Sum(x => x.Value.Count);
         }
         else
         {
-            count = stats.Packages
-                .Where(x => x.Key.StartsWith(manifest.Sponsorable + "/"))
-                .Sum(x => x.Value.Count);
+            // now we can either have ?a={author} or ?o={owner}
+            if (req.Query.GetValues("author") is { Length: > 0 } authors)
+            {
+                // Sum all (unique) packages across all repositories contributed to by
+                // the authors in the querystring
+                count = stats.Authors.Where(x => authors.Contains(x.Key))
+                    // First all repos by all authors
+                    .SelectMany(x => x.Value)
+                    // Deduplicate the repos
+                    .Distinct()
+                    // Then all packages in those repos
+                    .SelectMany(x => stats.Packages[x])
+                    // Deduplicate the packages
+                    .Distinct()
+                    .Count();
+
+                by = string.Join(",", authors);
+            }
+            else if (req.Query.GetValues("owner") is { Length: > 0 } values)
+            {
+                var owners = values.Select(x => x += "/").ToHashSet();
+                by = string.Join(",", values);
+                count = stats.Packages
+                    // filter those that start with each of the owners
+                    .Where(x => owners.Any(o => x.Key.StartsWith(o)))
+                    .Sum(x => x.Value.Count);
+            }
+            else
+            {
+                // Default to sponsorable packages for cases where we didn't get neither authors nor owners
+                var owner = manifest.Sponsorable + "/";
+                count = stats.Packages
+                    .Where(x => x.Key.StartsWith(owner))
+                    .Sum(x => x.Value.Count);
+            }
         }
 
         var output = req.CreateResponse(HttpStatusCode.OK);
@@ -42,7 +70,7 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
         await output.WriteAsJsonAsync(new
         {
             schemaVersion = 1,
-            label = "nugets",
+            label = $"nugets by {by}" ,
             message = ((double)count).ToMetric(decimals: 1)
         });
 
@@ -55,23 +83,52 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
         var stats = await oss;
         var manifest = await manager.GetManifestAsync();
         var count = 0L;
+        var by = manifest.Sponsorable;
 
-        if (req.Query.Count == 1)
+        if (req.Query.Count == 0)
         {
-            // Sum all packages across all repositories contributed to by the author in the querystring
-            if (req.Query.ToString() is { } author &&
-                stats.Authors.TryGetValue(author, out var repositories))
-            {
-                count = stats.Packages
-                    .Where(x => repositories.Contains(x.Key))
-                    .Sum(x => x.Value.Sum(x => x.Value));
-            }
+            var owner = manifest.Sponsorable + "/";
+            count = stats.Packages
+                .Where(x => x.Key.StartsWith(owner))
+                .Sum(x => x.Value.Sum(s => s.Value));
         }
         else
         {
-            count = stats.Packages
-                .Where(x => x.Key.StartsWith(manifest.Sponsorable + "/"))
-                .Sum(x => x.Value.Sum(y => y.Value));
+            // now we can either have ?a={author} or ?o={owner}
+            if (req.Query.GetValues("author") is { Length: > 0 } authors)
+            {
+                // Sum all (unique) packages across all repositories contributed to by
+                // the authors in the querystring
+                count = stats.Authors.Where(x => authors.Contains(x.Key))
+                    // First all repos by all authors
+                    .SelectMany(x => x.Value)
+                    // Deduplicate the repos
+                    .Distinct()
+                    // Then all packages in those repos
+                    .SelectMany(x => stats.Packages[x])
+                    // Deduplicate the packages
+                    .Distinct()
+                    .Sum(x => x.Value);
+    
+                by = string.Join(",", authors);
+            }
+            else if (req.Query.GetValues("owner") is { Length: > 0 } values)
+            {
+                var owners = values.Select(x => x += "/").ToHashSet();
+                by = string.Join(",", values);
+                count = stats.Packages
+                    // filter those that start with each of the owners
+                    .Where(x => owners.Any(o => x.Key.StartsWith(o)))
+                    .Sum(x => x.Value.Sum(s => s.Value));
+            }
+            else
+            {
+                // Default to sponsorable packages for cases where we didn't get neither authors nor owners
+                var owner = manifest.Sponsorable + "/";
+                count = stats.Packages
+                    .Where(x => x.Key.StartsWith(owner))
+                    .Sum(x => x.Value.Sum(s => s.Value));
+            }
         }
 
         var output = req.CreateResponse(HttpStatusCode.OK);
@@ -81,7 +138,7 @@ public class Stats(AsyncLazy<OpenSource> oss, SponsorsManager manager)
         await output.WriteAsJsonAsync(new
         {
             schemaVersion = 1,
-            label = "dl/day",
+            label = $"dl/day by {by}",
             message = ((double)count).ToMetric(decimals: 1)
         });
 
