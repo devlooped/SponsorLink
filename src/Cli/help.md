@@ -1,3 +1,4 @@
+﻿```shell
 USAGE:
     sponsor [OPTIONS] <COMMAND>
 
