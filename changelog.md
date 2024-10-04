@@ -1,5 +1,19 @@
 # Changelog
 
+## [v2.0.9](https://github.com/devlooped/SponsorLink/tree/v2.0.9) (2024-10-04)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.8...v2.0.9)
+
+:sparkles: Implemented enhancements:
+
+- Account for source repo name/ownership changes for nuget stats [\#369](https://github.com/devlooped/SponsorLink/pull/369) (@kzu)
+- Add support for getting stats by author\(s\) and owner\(s\) [\#368](https://github.com/devlooped/SponsorLink/pull/368) (@kzu)
+
+:twisted_rightwards_arrows: Merged:
+
+- Fix test warning due to obsolete package [\#365](https://github.com/devlooped/SponsorLink/pull/365) (@kzu)
+- Self-document CLI options and arguments [\#364](https://github.com/devlooped/SponsorLink/pull/364) (@kzu)
+
 ## [v2.0.8](https://github.com/devlooped/SponsorLink/tree/v2.0.8) (2024-10-01)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.7...v2.0.8)
