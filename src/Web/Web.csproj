@@ -28,7 +28,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.0.3" PrivateAssets="all" />
     <PackageReference Include="CliWrap" Version="3.6.6" />
-    <PackageReference Include="Octokit.Webhooks.AzureFunctions" Version="2.2.3" />
+    <PackageReference Include="Octokit.Webhooks.AzureFunctions" Version="2.4.0" />
     <PackageReference Include="ThisAssembly.Constants" Version="2.0.3" PrivateAssets="all" />
     <PackageReference Include="YamlPeek" Version="1.0.0" />
   </ItemGroup>
