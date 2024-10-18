@@ -10,7 +10,7 @@ page_toc: false
 # OSS Authors
 
 [Devlooped](https://devlooped.com) is a proud supporter of open-source software and its 
-authors. Therefore, we consider implicit sponsors any and all contributors to active 
+authors. Therefore, we consider implicit sponsors all contributors to active 
 nuget packages that are open-source and are hosted on GitHub. 
 
 > An active nuget package has at least 200 downloads per day in aggregate across the last 5 versions.
