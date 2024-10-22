@@ -8,7 +8,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Azure.Identity" Version="1.13.0" />
-    <PackageReference Include="Devlooped.CredentialManager" Version="2.5.0.1" />
+    <PackageReference Include="Devlooped.CredentialManager" Version="2.6.0" />
     <PackageReference Include="DotNetConfig.Configuration" Version="1.2.0" />
     <PackageReference Include="Humanizer.Core" Version="2.14.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" />
