@@ -7,6 +7,7 @@ updates:
   directories: 
     - "/"
     - "/samples/**/*"
+    - "/samples/**/*.targets"
   schedule:
     interval: daily
   groups:
