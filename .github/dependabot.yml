@@ -6,7 +6,7 @@ updates:
 - package-ecosystem: nuget
   directories: 
     - "/"
-    - "/samples/**/*"
+    - "/samples/dotnet/"
   schedule:
     interval: daily
   ignore:
