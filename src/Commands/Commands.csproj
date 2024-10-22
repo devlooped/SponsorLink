@@ -20,10 +20,10 @@
     <PackageReference Include="DotNetConfig" Version="1.2.0" />
     <PackageReference Include="DotNetConfig.Configuration" Version="1.2.0" />
     <PackageReference Include="Spectre.Console.Analyzer" Version="1.0.0" PrivateAssets="all" />
-    <PackageReference Include="ThisAssembly.Strings" Version="2.0.3" PrivateAssets="all" />
-    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.0.3" PrivateAssets="all" />
-    <PackageReference Include="ThisAssembly.Project" Version="2.0.3" PrivateAssets="all" />
-    <PackageReference Include="ThisAssembly.Constants" Version="2.0.3" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.Strings" Version="2.0.5" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.0.5" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.Project" Version="2.0.5" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.Constants" Version="2.0.5" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
