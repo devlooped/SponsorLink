@@ -41,8 +41,5 @@
       <AssemblyMetadata Include="Funding.GitHub.kzu" Value="$(TestJwk)" />
     </ItemGroup>
   </Target>
-  <ItemGroup>
-    <PackageReference Update="ILRepack" Version="2.0.35" />
-  </ItemGroup>
 
 </Project>
