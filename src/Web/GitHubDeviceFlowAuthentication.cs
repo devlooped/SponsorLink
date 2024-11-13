@@ -165,8 +165,10 @@ public static class GitHubDeviceFlowAuthenticationExtensions
                     {
                         case JsonResult jr:
                             if (jr.Value is not null)
-                                await response.WriteAsJsonAsync(jr.Value, jr.ContentType ?? "application/json; charset=utf-8",
-                                    (HttpStatusCode)(jr.StatusCode ?? 200));
+                            {
+                                await response.WriteAsJsonAsync(jr.Value, jr.ContentType ?? "application/json; charset=utf-8");
+                                response.StatusCode = (HttpStatusCode)(jr.StatusCode ?? 200);
+                            }
                             else if (jr.StatusCode is not null)
                                 response.StatusCode = (HttpStatusCode)jr.StatusCode;
                             break;
