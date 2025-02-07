@@ -14,7 +14,7 @@
     <PackageReference Include="NuGetizer" Version="1.2.3" PrivateAssets="all" />
     <PackageReference Include="Octokit" Version="13.0.1" />
     <PackageReference Include="Scriban" Version="5.11.0" />
-    <PackageReference Include="Std.UriTemplate" Version="2.0.0" />
+    <PackageReference Include="Std.UriTemplate" Version="2.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="SharpYaml" Version="2.1.1" />
     <PackageReference Include="Devlooped.JQ" Version="1.7.1.2" />
