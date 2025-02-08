@@ -29,6 +29,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Tests" />
+    <!-- $(FundingPackageId) will suffice once ThisAssembly bumps to this fixed Devlooped.Sponsors.targets -->
+    <FundingAnalyzerPackageId Include="SponsorableLib" />
   </ItemGroup>
 
   <!-- To support tests, fake an extra sponsorable with the test key -->
