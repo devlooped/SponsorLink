@@ -20,13 +20,13 @@
 	weak
 [file ".github/workflows/dotnet-file.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/dotnet-file.yml
-	sha = 7afe350f7e80a230e922db026d4e1198ba15cae1
-	etag = 65e9794df6caff779eb989c8f71ddf4d4109b24a75af79e4f8d0fe6ba7bd9702
+	sha = 59aaf432369b5ea597831d4feec5a6ac4024c2e3
+	etag = 1374e3f8c9b7af69c443605c03f7262300dcb7d783738d9eb9fe84268ed2d10c
 	weak
 [file ".github/workflows/includes.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/includes.yml
-	sha = d152e7437fd0d6f6d9363d23cb3b78c07335ea49
-	etag = ec40db34f379d0c6d83b2ec15624f330318a172cc4f85b5417c63e86eaf601df
+	sha = 85829f2510f335f4a411867f3dbaaa116c3ab3de
+	etag = 086f6b6316cc6ea7089c0dcc6980be519e6ed6e6201e65042ef41b82634ec0ee
 	weak
 [file "src/Directory.Build.props"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
