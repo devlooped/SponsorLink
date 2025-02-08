@@ -23,6 +23,14 @@ jobs:
       - name: 🤘 checkout
         uses: actions/checkout@v4
 
+      - name: ⚙ dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            6.x
+            8.x
+            9.x
+
       - name: 🙏 build
         run: dotnet build -m:1 -bl
 
