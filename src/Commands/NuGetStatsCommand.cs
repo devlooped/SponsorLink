@@ -273,7 +273,7 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
                                 if (ownerRepo.EndsWith(".git"))
                                     ownerRepo = ownerRepo[..^4];
 
-                                var parts = ownerRepo.Split(['/'], StringSplitOptions.RemoveEmptyEntries);
+                                var parts = ownerRepo.Split("/", StringSplitOptions.RemoveEmptyEntries);
                                 if (uri.Host == "github.com")
                                 {
                                     if (parts.Length < 2)
@@ -283,7 +283,7 @@ public class NuGetStatsCommand(ICommandApp app, Config config, IGraphQueryClient
                                     }
                                     else if (parts.Length > 2)
                                     {
-                                        ownerRepo = string.Join('/', ownerRepo.Split(['/'], StringSplitOptions.RemoveEmptyEntries)[..2]);
+                                        ownerRepo = string.Join('/', ownerRepo.Split("/", StringSplitOptions.RemoveEmptyEntries)[..2]);
                                     }
                                 }
                                 // otherwise just keep the original.
