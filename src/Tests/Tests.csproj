@@ -23,9 +23,9 @@
     <PackageReference Include="Meziantou.Extensions.Logging.Xunit" Version="1.0.7" />
     <PackageReference Include="Microsoft.Build.Tasks.Git" Version="8.0.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.2" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.5.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -34,8 +34,8 @@
     <PackageReference Include="Octokit" Version="13.0.1" />
     <PackageReference Include="ThisAssembly" Version="2.0.3" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.10.0" Pack="false" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.2" />
     <PackageReference Include="System.Net.Http.WinHttpHandler" Version="8.0.2" />
     <PackageReference Include="Xunit.SkippableFact" Version="1.5.23" />
   </ItemGroup>
