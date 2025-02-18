@@ -11,7 +11,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.5.0" />
-    <PackageReference Include="NuGetizer" Version="1.2.3" PrivateAssets="all" />
+    <PackageReference Include="NuGetizer" Version="1.2.4" PrivateAssets="all" />
     <PackageReference Include="Octokit" Version="13.0.1" />
     <PackageReference Include="Scriban" Version="5.12.1" />
     <PackageReference Include="Std.UriTemplate" Version="2.0.3" />
