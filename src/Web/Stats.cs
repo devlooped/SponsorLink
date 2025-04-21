@@ -86,7 +86,7 @@ public class Stats(AsyncLazy<OpenSource> oss, IGraphQueryClientFactory graph, Sp
         await output.WriteAsJsonAsync(new
         {
             schemaVersion = 1,
-            label = $"{by} nugets" ,
+            label = $"{by} nugets",
             message = ((double)count).ToMetric(decimals: 1)
         });
 
@@ -141,7 +141,7 @@ public class Stats(AsyncLazy<OpenSource> oss, IGraphQueryClientFactory graph, Sp
                     // Deduplicate the packages
                     .Distinct()
                     .Sum(x => x.Value);
-    
+
                 by = string.Join(",", authors);
             }
             else if (req.Query.GetValues("owner") is { Length: > 0 } values)
