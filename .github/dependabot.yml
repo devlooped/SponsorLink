@@ -4,13 +4,9 @@
 version: 2
 updates:
 - package-ecosystem: nuget
-  directories: 
-    - "/"
-    - "/samples/dotnet/"
+  directory: /
   schedule:
     interval: daily
-  ignore:
-    - dependency-name: "ThisAssembly*"
   groups:
     Azure:
       patterns:
@@ -42,3 +38,6 @@ updates:
     ProtoBuf:
       patterns:
         - "protobuf-*"
+    Spectre:
+      patterns:
+        - "Spectre.Console*"
