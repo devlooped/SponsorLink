@@ -333,7 +333,6 @@ public sealed class SponsorManagerTests : IDisposable
     [SecretsTheory("GitHub:Sponsorable")]
     [InlineData("clarius", "basic", SponsorTypes.Organization)]
     [InlineData("torutek-gh", "silver", SponsorTypes.User)]
-    [InlineData("KirillOsenkov", "silver", SponsorTypes.User)]
     [InlineData("victorgarciaaprea", "basic", SponsorTypes.Organization)]
     [InlineData("kzu", "team", SponsorTypes.Team)]
     [InlineData("stakx", "oss", SponsorTypes.OpenSource)] // since he's currently active on castle

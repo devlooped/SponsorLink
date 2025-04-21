@@ -23,7 +23,6 @@ public class RemoveCommandTests
         graph.Setup(x => x.QueryAsync(GraphQueries.DefaultBranch("devlooped", ".github"))).ReturnsAsync("main");
 
         var command = new SyncCommand(
-            Mock.Of<ICommandApp>(MockBehavior.Strict),
             config,
             graph.Object,
             new GitHubAppAuthenticator(Services.GetRequiredService<IHttpClientFactory>()),

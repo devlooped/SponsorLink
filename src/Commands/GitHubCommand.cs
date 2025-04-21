@@ -13,7 +13,7 @@ namespace Devlooped.Sponsors;
 /// Returns -1 if the user isn't signed in. -2 if usage terms were 
 /// not accepted (WelcomeCommand result).
 /// </remarks>
-public abstract class GitHubCommand(ICommandApp app, Config config) : Command
+public abstract class GitHubCommand(Config config) : Command
 {
     /// <summary>
     /// Ensures the user is signed in the GH CLI and has run the 
@@ -23,7 +23,7 @@ public abstract class GitHubCommand(ICommandApp app, Config config) : Command
     /// -1 if the user isn't signed in. -2 if usage terms were 
     /// not accepted.
     /// </returns>
-    internal static int Execute(ICommandApp app, Config config, Action<AccountInfo?> callback)
+    internal static int Execute(Config config, Action<AccountInfo?> callback)
     {
         if (!GitHub.TryAuthenticate(out var account))
             return -1;
@@ -33,7 +33,7 @@ public abstract class GitHubCommand(ICommandApp app, Config config) : Command
         return 0;
     }
 
-    public override int Execute(CommandContext context) => Execute(app, config, acc => Account = acc);
+    public override int Execute(CommandContext context) => Execute(config, acc => Account = acc);
 
     /// <summary>
     /// Authenticated user account in the GH CLI.
@@ -41,9 +41,9 @@ public abstract class GitHubCommand(ICommandApp app, Config config) : Command
     protected AccountInfo? Account { get; private set; }
 }
 
-public abstract class GitHubCommand<TSettings>(ICommandApp app, Config config) : Command<TSettings> where TSettings : CommandSettings
+public abstract class GitHubCommand<TSettings>(Config config) : Command<TSettings> where TSettings : CommandSettings
 {
-    public override int Execute(CommandContext context, TSettings settings) => GitHubCommand.Execute(app, config, acc => Account = acc);
+    public override int Execute(CommandContext context, TSettings settings) => GitHubCommand.Execute(config, acc => Account = acc);
 
     /// <summary>
     /// Authenticated user account in the GH CLI.
@@ -51,9 +51,9 @@ public abstract class GitHubCommand<TSettings>(ICommandApp app, Config config) :
     protected AccountInfo? Account { get; private set; }
 }
 
-public abstract class GitHubAsyncCommand(ICommandApp app, Config config) : AsyncCommand
+public abstract class GitHubAsyncCommand(Config config) : AsyncCommand
 {
-    public override Task<int> ExecuteAsync(CommandContext context) => Task.FromResult(Execute(app, config, acc => Account = acc));
+    public override Task<int> ExecuteAsync(CommandContext context) => Task.FromResult(Execute(config, acc => Account = acc));
 
     /// <summary>
     /// Authenticated user account in the GH CLI.
@@ -61,9 +61,9 @@ public abstract class GitHubAsyncCommand(ICommandApp app, Config config) : Async
     protected AccountInfo? Account { get; private set; }
 }
 
-public abstract class GitHubAsyncCommand<TSettings>(ICommandApp app, Config config) : AsyncCommand<TSettings> where TSettings : CommandSettings
+public abstract class GitHubAsyncCommand<TSettings>(Config config) : AsyncCommand<TSettings> where TSettings : CommandSettings
 {
-    public override Task<int> ExecuteAsync(CommandContext context, TSettings settings) => Task.FromResult(Execute(app, config, acc => Account = acc));
+    public override Task<int> ExecuteAsync(CommandContext context, TSettings settings) => Task.FromResult(Execute(config, acc => Account = acc));
 
     /// <summary>
     /// Authenticated user account in the GH CLI.
