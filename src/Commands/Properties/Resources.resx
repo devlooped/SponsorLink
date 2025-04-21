@@ -150,7 +150,7 @@ When you synchronize your sponsorship with a given account, the following steps 
 
 You can easily inspect the JWT of both the sponsorable account and your sponsor manifest using [link]https://jwt.io/[/], for example. 
 
-This manifest needs to be sync'ed once a month, which is the only point at which each SponsorLink backend computes, signs your sponsorship manifest and sets a new expiration date. You can also enable [link=https://www.devlooped.com/SponsorLink/github.html#auto-sync]automatic synchronization[/]. Learn more yat [link]https://www.devlooped.com/SponsorLink/[/].</value>
+This manifest needs to be sync'ed once a month, which is the only point at which each SponsorLink backend computes, signs your sponsorship manifest and sets a new expiration date. You can also enable [link=https://www.devlooped.com/SponsorLink/github.html#auto-sync]automatic synchronization[/]. Learn more at [link]https://www.devlooped.com/SponsorLink/[/].</value>
     <comment>How</comment>
   </data>
   <data name="FirstRun_HowTitle" xml:space="preserve">

@@ -14,7 +14,7 @@ using static ThisAssembly.Strings;
 namespace Devlooped.Sponsors;
 
 [Description("Synchronizes sponsorship manifests")]
-public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory) : GitHubAsyncCommand<SyncCommand.SyncSettings>(app, config)
+public partial class SyncCommand(DotNetConfig.Config config, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory) : GitHubAsyncCommand<SyncCommand.SyncSettings>(config)
 {
     public static class ErrorCodes
     {
@@ -90,7 +90,7 @@ public partial class SyncCommand(ICommandApp app, DotNetConfig.Config config, IG
         var result = 0;
         var ghDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink", "github");
         Directory.CreateDirectory(ghDir);
-
+        
         var sponsorables = new HashSet<string>();
         if (settings.Sponsorable?.Length > 0)
         {

@@ -24,7 +24,6 @@ public class SyncCommandTests
         graph.SetReturnsDefault<Task<string[]?>>(Task.FromResult<string[]?>(null));
 
         var command = new SyncCommand(
-            Mock.Of<ICommandApp>(MockBehavior.Strict),
             config,
             // This allows the graph client to not fail and return null, causing a discovery failure.
             graph.Object,
@@ -51,7 +50,6 @@ public class SyncCommandTests
         graph.SetReturnsDefault<Task<Organization[]?>>(Task.FromResult<Organization[]?>(null));
 
         var command = new SyncCommand(
-            Mock.Of<ICommandApp>(MockBehavior.Strict),
             config,
             // This allows the graph client to not fail and return null, causing a discovery failure.
             graph.Object,
@@ -79,7 +77,6 @@ public class SyncCommandTests
             .ReturnsAsync(Configuration["GitHub:Token"]);
 
         var command = new SyncCommand(
-            Mock.Of<ICommandApp>(MockBehavior.Strict),
             config,
             graph.Object,
             auth.Object,
@@ -102,7 +99,6 @@ public class SyncCommandTests
         EnsureAuthenticated();
 
         var command = new SyncCommand(
-            Mock.Of<ICommandApp>(MockBehavior.Strict),
             config,
             Mock.Of<IGraphQueryClient>(MockBehavior.Strict),
             Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
@@ -122,14 +118,13 @@ public class SyncCommandTests
     [SecretsFact("GitHub:NonSponsoring")]
     public async Task ExplicitSponsorableSync_NonSponsoringUser()
     {
-        EnsureAuthenticated("GitHub:NonSponsoring");
+        using var auth = GitHub.WithToken(Configuration["GitHub:NonSponsoring"]);
 
         var graph = new Mock<IGraphQueryClient>();
         // Return default 'main' branch from GraphQueries.DefaultBranch
         graph.Setup(x => x.QueryAsync(GraphQueries.DefaultBranch("devlooped", ".github"))).ReturnsAsync("main");
 
         var command = new SyncCommand(
-            Mock.Of<ICommandApp>(MockBehavior.Strict),
             config,
             graph.Object,
             new GitHubAppAuthenticator(Services.GetRequiredService<IHttpClientFactory>()),

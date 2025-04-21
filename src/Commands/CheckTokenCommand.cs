@@ -8,7 +8,7 @@ using Spectre.Console.Json;
 namespace Devlooped.Sponsors;
 
 [Description("Checks the validity of a GitHub token.")]
-public class CheckTokenCommand(IGraphQueryClient graph, ICommandApp app, Config config) : GitHubAsyncCommand<CheckTokenCommand.CheckSettings>(app, config)
+public class CheckTokenCommand(IGraphQueryClient graph, Config config) : GitHubAsyncCommand<CheckTokenCommand.CheckSettings>(config)
 {
     public class CheckSettings : ToSSettings
     {

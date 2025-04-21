@@ -9,7 +9,7 @@ using static Devlooped.Sponsors.ListCommand;
 namespace Devlooped.Sponsors;
 
 [Description("Lists current user and organization sponsorships leveraging the GitHub CLI")]
-public class ListCommand(ICommandApp app, Config config, IGraphQueryClient client) : GitHubAsyncCommand<ListSettings>(app, config)
+public class ListCommand(Config config, IGraphQueryClient client) : GitHubAsyncCommand<ListSettings>(config)
 {
     public class ListSettings : ToSSettings
     {

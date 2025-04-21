@@ -251,7 +251,7 @@ public class GraphQueriesTests(ITestOutputHelper output)
     {
         var client = new HttpGraphQueryClient(Services.GetRequiredService<IHttpClientFactory>(), "GitHub:Token");
 
-        var orgs = await client.QueryAsync<Organization[]>(GraphQueries.UserOrganizations("paxan"));
+        var orgs = await client.QueryAsync<Organization[]>(GraphQueries.UserOrganizations("jamesls"));
 
         Assert.NotNull(orgs);
         Assert.Contains(orgs, x => x.Login == "aws");
