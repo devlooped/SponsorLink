@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>sponsor</AssemblyName>
@@ -22,8 +22,8 @@
     <PackageReference Include="NuGet.Protocol" Version="6.12.1" />
     <PackageReference Include="NuGetizer" Version="1.2.4" PrivateAssets="all" />
     <PackageReference Include="Spectre.Console.Cli" Version="0.50.0" />
-    <PackageReference Include="ThisAssembly.Git" Version="2.0.3" PrivateAssets="all" />
-    <PackageReference Include="ThisAssembly.Project" Version="2.0.3" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.Git" Version="2.0.12" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.Project" Version="2.0.12" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
