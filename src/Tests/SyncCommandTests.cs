@@ -30,7 +30,7 @@ public class SyncCommandTests
             Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
             Mock.Of<IHttpClientFactory>(MockBehavior.Strict));
 
-        var settings = new SyncCommand.SyncSettings
+        var settings = new SyncCommand.SponsorableSyncSettings
         {
             Unattended = true,
         };
@@ -56,7 +56,7 @@ public class SyncCommandTests
             Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
             Mock.Of<IHttpClientFactory>(MockBehavior.Strict));
 
-        var settings = new SyncCommand.SyncSettings
+        var settings = new SyncCommand.SponsorableSyncSettings
         {
             Unattended = true,
         };
@@ -82,7 +82,7 @@ public class SyncCommandTests
             auth.Object,
             Services.GetRequiredService<IHttpClientFactory>());
 
-        var settings = new SyncCommand.SyncSettings
+        var settings = new SyncCommand.SponsorableSyncSettings
         {
             Sponsorable = ["kzu"],
             Unattended = true,
@@ -104,7 +104,7 @@ public class SyncCommandTests
             Mock.Of<IGitHubAppAuthenticator>(MockBehavior.Strict),
             Services.GetRequiredService<IHttpClientFactory>());
 
-        var settings = new SyncCommand.SyncSettings
+        var settings = new SyncCommand.SponsorableSyncSettings
         {
             Sponsorable = ["devlooped-bot"],
             Unattended = true,
@@ -130,7 +130,7 @@ public class SyncCommandTests
             new GitHubAppAuthenticator(Services.GetRequiredService<IHttpClientFactory>()),
             Services.GetRequiredService<IHttpClientFactory>());
 
-        var settings = new SyncCommand.SyncSettings
+        var settings = new SyncCommand.SponsorableSyncSettings
         {
             Sponsorable = ["devlooped"],
             // NOTE: requires prior running of the `sponsor sync --namespace nonsponsoring` command for interactive auth.
