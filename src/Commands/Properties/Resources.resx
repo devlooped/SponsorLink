@@ -338,4 +338,7 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
   <data name="FirstRun_TelemetryTitle" xml:space="preserve">
     <value>Telemetry</value>
   </data>
+  <data name="Sync_LocalNotFound" xml:space="preserve">
+    <value>No local manifests found for --local sync.</value>
+  </data>
 </root>

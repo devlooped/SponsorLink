@@ -28,7 +28,7 @@ public class RemoveCommandTests
             new GitHubAppAuthenticator(Services.GetRequiredService<IHttpClientFactory>()),
             Services.GetRequiredService<IHttpClientFactory>());
 
-        var result = await command.ExecuteAsync(new CommandContext(["sync"], Mock.Of<IRemainingArguments>(), "sync", null), new SyncCommand.SyncSettings
+        var result = await command.ExecuteAsync(new CommandContext(["sync"], Mock.Of<IRemainingArguments>(), "sync", null), new SyncCommand.SponsorableSyncSettings
         {
             Sponsorable = ["devlooped"],
             // NOTE: would only succeed if we hav previously sync'ed at least once with the devlooped gh app

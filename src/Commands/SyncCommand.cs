@@ -8,13 +8,103 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using static Devlooped.Sponsors.SyncCommand;
 using static Spectre.Console.AnsiConsole;
 using static ThisAssembly.Strings;
 
 namespace Devlooped.Sponsors;
 
+public interface ISponsorableSettings
+{
+    string[]? Sponsorable { get; set; }
+}
+
+public class SyncSettings : ToSSettings
+{
+    [Description("Enable or disable automatic synchronization of expired manifests")]
+    [CommandOption("--autosync")]
+    public bool? AutoSync { get; set; }
+
+    [Description("Force sync, regardless of expiration of manifests found locally")]
+    [CommandOption("-f|--force")]
+    public bool? Force { get; set; }
+
+    [Description("Validate local manifests using the issuer public key")]
+    [CommandOption("-v|--validate")]
+    public bool? ValidateLocal { get; set; }
+
+    [Description("Prevent interactive credentials refresh")]
+    [DefaultValue(false)]
+    [CommandOption("-u|--unattended")]
+    public bool Unattended { get; set; }
+
+    [Description(@"Read GitHub authentication token from standard input for sync")]
+    [DefaultValue(false)]
+    [CommandOption("--with-token")]
+    public bool WithToken { get; set; }
+
+    /// <summary>
+    /// Override issuer for testing.
+    /// </summary>
+    [CommandOption("-i|--issuer", IsHidden = true)]
+    public string? Issuer { get; set; }
+
+    /// <summary>
+    /// Property used to modify the namespace from tests for scoping stored passwords.
+    /// </summary>
+    [CommandOption("--namespace", IsHidden = true)]
+    public string Namespace { get; set; } = GitHubAppAuthenticator.DefaultNamespace;
+
+    public override ValidationResult Validate()
+    {
+        if (WithToken)
+            Unattended = true;
+
+        return base.Validate();
+    }
+}
+
 [Description("Synchronizes sponsorship manifests")]
-public partial class SyncCommand(DotNetConfig.Config config, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory) : GitHubAsyncCommand<SyncCommand.SyncSettings>(config)
+public partial class SyncCommand(DotNetConfig.Config config, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory) :
+    SyncCommand<SponsorableSyncSettings>(config, client, authenticator, httpFactory)
+{
+    public class SponsorableSyncSettings : SyncSettings, ISponsorableSettings
+    {
+        [Description("Optional sponsored account(s) to synchronize")]
+        [CommandArgument(0, "[account]")]
+        public string[]? Sponsorable { get; set; }
+
+        [Description("Sync only existing local manifests")]
+        [DefaultValue(false)]
+        [CommandOption("-l|--local")]
+        public virtual bool LocalDiscovery { get; set; }
+
+        public override ValidationResult Validate()
+        {
+            if (Sponsorable?.Length > 0 && LocalDiscovery)
+                return ValidationResult.Error(Sync.LocalOrSponsorables);
+
+            if (LocalDiscovery)
+            {
+                var ghDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink", "github");
+                if (Directory.Exists(ghDir))
+                {
+                    Sponsorable = [..Directory
+                        .EnumerateFiles(ghDir, "*.jwt")
+                        .Select(x => Path.GetFileNameWithoutExtension(x)!)];
+                }
+                if (Sponsorable?.Length == 0)
+                    return ValidationResult.Error(Sync.LocalNotFound);
+            }
+
+            return base.Validate();
+        }
+    }
+}
+
+[Description("Synchronizes sponsorship manifests")]
+public abstract class SyncCommand<TSettings>(DotNetConfig.Config config, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory)
+    : GitHubAsyncCommand<TSettings>(config) where TSettings : SyncSettings, ISponsorableSettings
 {
     public static class ErrorCodes
     {
@@ -27,79 +117,17 @@ public partial class SyncCommand(DotNetConfig.Config config, IGraphQueryClient c
         public const int SyncFailure = -7;
     }
 
-    public class SyncSettings : ToSSettings
-    {
-        [Description("Optional sponsored account(s) to synchronize")]
-        [CommandArgument(0, "[account]")]
-        public string[]? Sponsorable { get; set; }
-
-        [Description("Enable or disable automatic synchronization of expired manifests")]
-        [CommandOption("--autosync")]
-        public bool? AutoSync { get; set; }
-
-        [Description("Sync only existing local manifests")]
-        [DefaultValue(false)]
-        [CommandOption("-l|--local")]
-        public bool LocalDiscovery { get; set; }
-
-        [Description("Force sync, regardless of expiration of manifests found locally")]
-        [CommandOption("-f|--force")]
-        public bool? Force { get; set; }
-
-        [Description("Validate local manifests using the issuer public key")]
-        [CommandOption("-v|--validate")]
-        public bool? ValidateLocal { get; set; }
-
-        [Description("Prevent interactive credentials refresh")]
-        [DefaultValue(false)]
-        [CommandOption("-u|--unattended")]
-        public bool Unattended { get; set; }
-
-        [Description(@"Read GitHub authentication token from standard input for sync")]
-        [DefaultValue(false)]
-        [CommandOption("--with-token")]
-        public bool WithToken { get; set; }
-
-        /// <summary>
-        /// Override issuer for testing.
-        /// </summary>
-        [CommandOption("-i|--issuer", IsHidden = true)]
-        public string? Issuer { get; set; }
-
-        /// <summary>
-        /// Property used to modify the namespace from tests for scoping stored passwords.
-        /// </summary>
-        [CommandOption("--namespace", IsHidden = true)]
-        public string Namespace { get; set; } = GitHubAppAuthenticator.DefaultNamespace;
-
-        public override ValidationResult Validate()
-        {
-            if (Sponsorable?.Length > 0 && LocalDiscovery)
-                return ValidationResult.Error(Sync.LocalOrSponsorables);
-
-            if (WithToken)
-                Unattended = true;
-
-            return base.Validate();
-        }
-    }
-
-    public override async Task<int> ExecuteAsync(CommandContext context, SyncSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, TSettings settings)
     {
         // NOTE: ToS acceptance ALWAYS runs from Program.cs
         var result = 0;
         var ghDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink", "github");
         Directory.CreateDirectory(ghDir);
-        
+
         var sponsorables = new HashSet<string>();
         if (settings.Sponsorable?.Length > 0)
         {
             sponsorables.AddRange(settings.Sponsorable);
-        }
-        else if (settings.LocalDiscovery)
-        {
-            sponsorables.AddRange(Directory.EnumerateFiles(ghDir, "*.jwt")
-                .Select(x => Path.GetFileNameWithoutExtension(x)!));
         }
         else
         {
