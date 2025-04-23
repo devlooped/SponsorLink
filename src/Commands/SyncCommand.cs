@@ -14,11 +14,6 @@ using static ThisAssembly.Strings;
 
 namespace Devlooped.Sponsors;
 
-public interface ISponsorableSettings
-{
-    string[]? Sponsorable { get; set; }
-}
-
 public class SyncSettings : ToSSettings
 {
     [Description("Enable or disable automatic synchronization of expired manifests")]
@@ -102,7 +97,6 @@ public partial class SyncCommand(DotNetConfig.Config config, IGraphQueryClient c
     }
 }
 
-[Description("Synchronizes sponsorship manifests")]
 public abstract class SyncCommand<TSettings>(DotNetConfig.Config config, IGraphQueryClient client, IGitHubAppAuthenticator authenticator, IHttpClientFactory httpFactory)
     : GitHubAsyncCommand<TSettings>(config) where TSettings : SyncSettings, ISponsorableSettings
 {
