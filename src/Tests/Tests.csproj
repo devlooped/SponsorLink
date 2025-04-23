@@ -13,7 +13,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
     <PackageReference Include="Azure.Identity" Version="1.13.2" />
-    <PackageReference Include="CliWrap" Version="3.6.7" />
+    <PackageReference Include="CliWrap" Version="3.8.2" />
     <PackageReference Include="Azure.Core" Version="1.45.0" />
     <PackageReference Include="Azure.Monitor.Query" Version="1.6.0" />
     <PackageReference Include="DotNetConfig" Version="1.2.0" />
