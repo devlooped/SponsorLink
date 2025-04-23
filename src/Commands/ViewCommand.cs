@@ -5,27 +5,35 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using static Devlooped.Sponsors.ViewCommand;
 using static Spectre.Console.AnsiConsole;
 using static ThisAssembly;
 
 namespace Devlooped.Sponsors;
 
-[Description("Validates and displays the active sponsor manifests, if any")]
-public partial class ViewCommand(IHttpClientFactory clientFactory) : AsyncCommand<ViewCommand.ViewSettings>
+public class ViewSettings : ToSSettings
 {
-    public class ViewSettings : ToSSettings
-    {
-        [Description("Show detailed information about each manifest")]
-        [CommandOption("-d|--details")]
-        [DefaultValue(true)]
-        public bool Details { get; set; } = true;
+    [Description("Show detailed information about each manifest")]
+    [CommandOption("-d|--details")]
+    [DefaultValue(true)]
+    public bool Details { get; set; } = true;
+}
 
+[Description("Validates and displays the active sponsor manifests, if any")]
+public partial class ViewCommand(IHttpClientFactory clientFactory) : ViewCommand<SponsorableViewSettings>(clientFactory) 
+{
+    public class SponsorableViewSettings : ViewSettings, ISponsorableSettings
+    {
         [Description("Optional sponsored account(s) to view")]
         [CommandArgument(0, "[account]")]
         public string[]? Sponsorable { get; set; }
     }
+}
 
-    public override async Task<int> ExecuteAsync(CommandContext context, ViewSettings settings)
+public abstract class ViewCommand<TSettings>(IHttpClientFactory clientFactory) : AsyncCommand<TSettings>
+    where TSettings : ViewSettings, ISponsorableSettings, new()
+{
+    public override async Task<int> ExecuteAsync(CommandContext context, TSettings settings)
     {
         var targetDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink");
 
