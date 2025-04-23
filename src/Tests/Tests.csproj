@@ -19,7 +19,7 @@
     <PackageReference Include="DotNetConfig" Version="1.2.0" />
     <PackageReference Include="DotNetConfig.Configuration" Version="1.2.0" />
     <PackageReference Include="Humanizer.Core" Version="2.14.1" />
-    <PackageReference Include="LibGit2Sharp" Version="0.30.0" />
+    <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
     <PackageReference Include="Meziantou.Extensions.Logging.Xunit" Version="1.0.11" />
     <PackageReference Include="Microsoft.Build.Tasks.Git" Version="8.0.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="1.1.2" />
