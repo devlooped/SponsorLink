@@ -18,7 +18,7 @@
     <PackageReference Include="Polly" Version="8.5.2" />
     <PackageReference Include="Spectre.Console.Cli" Version="0.50.0" />
     <PackageReference Include="Spectre.Console.Json" Version="0.50.0" />
-    <PackageReference Include="Devlooped.CredentialManager" Version="2.6.0" />
+    <PackageReference Include="Devlooped.CredentialManager" Version="2.6.1" />
     <PackageReference Include="DotNetConfig" Version="1.2.0" />
     <PackageReference Include="DotNetConfig.Configuration" Version="1.2.0" />
     <PackageReference Include="Spectre.Console.Analyzer" Version="1.0.0" PrivateAssets="all" />
