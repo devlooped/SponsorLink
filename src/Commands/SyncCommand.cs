@@ -10,7 +10,7 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 using static Devlooped.Sponsors.SyncCommand;
 using static Spectre.Console.AnsiConsole;
-using static ThisAssembly.Strings;
+using static Devlooped.Sponsors.ThisAssembly.Strings;
 
 namespace Devlooped.Sponsors;
 
