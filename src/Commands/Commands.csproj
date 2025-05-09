@@ -7,6 +7,8 @@
     <Product>SponsorLink</Product>
     <Description>Commands used by the dotnet-sponsor CLI to manage sponsorship manifests.</Description>
     <PackageId>Devlooped.Sponsors.Commands</PackageId>
+    <ThisAssemblyNamespace>Devlooped.Sponsors</ThisAssemblyNamespace>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
   <ItemGroup>

@@ -7,7 +7,7 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 using static Devlooped.Sponsors.ViewCommand;
 using static Spectre.Console.AnsiConsole;
-using static ThisAssembly;
+using static Devlooped.Sponsors.ThisAssembly;
 
 namespace Devlooped.Sponsors;
 
