@@ -3,7 +3,7 @@ using Spectre.Console.Cli;
 
 namespace Devlooped.Sponsors;
 
-public sealed class TypeRegistrar(IServiceCollection? builder = default) : ITypeRegistrar
+sealed class TypeRegistrar(IServiceCollection? builder = default) : ITypeRegistrar
 {
     readonly IServiceCollection builder = builder ?? new ServiceCollection();
 
