@@ -133,16 +133,14 @@ var host = new HostBuilder()
             if (!response.IsSuccessStatusCode)
                 throw new InvalidOperationException($"Failed to fetch open source data: {response.StatusCode}");
 
-            var oss = await JsonSerializer.DeserializeAsync<OpenSource>(response.Content.ReadAsStream(), JsonOptions.Default);
-
-            if (oss is null)
-                throw new InvalidOperationException("Failed to deserialize open source data.");
+            var oss = await JsonSerializer.DeserializeAsync<OpenSource>(response.Content.ReadAsStream(), JsonOptions.Default)
+                ?? throw new InvalidOperationException("Failed to deserialize open source data.");
 
             return oss;
         }));
 
     })
-    .ConfigureGitHubWebhooks(new ConfigurationBuilder().Configure().Build()["GitHub:Secret"])
+    .ConfigureGitHubWebhooks(config => config["GitHub:Secret"] ?? throw new ArgumentException("Missing GitHub:Secret configuration"))
     .Build();
 
 host.Run();
