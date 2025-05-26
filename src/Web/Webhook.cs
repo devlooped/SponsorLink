@@ -92,9 +92,9 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
             await notifier.PostAsync(new PushoverMessage
             {
                 Title = $"💸 Issue #{payload.Issue.Number} is backed!",
-                Message = $"This issue is now backed with ${amount}.",
+                Message = $"${amount} 👉 {payload.Issue.Title}\n@{payload.Repository?.FullName}#{payload.Issue.Number}",
                 Url = payload.Issue.HtmlUrl,
-                UrlTitle = $"View Issue #{payload.Issue.Number}",
+                UrlTitle = $"View issue #{payload.Issue.Number}",
             });
 
             // But otherwise ignore comments/changes from bot.
