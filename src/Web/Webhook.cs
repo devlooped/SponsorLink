@@ -180,8 +180,10 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         }
     }
 
-    static bool IsBot(Octokit.Webhooks.Models.User? user) => user?.Type == UserType.Bot ||
-                user?.Login.EndsWith("-bot") == true ||
-                user?.Name?.EndsWith("bot]") == true || user?.Name?.EndsWith("-bot") == true;
+    static bool IsBot(Octokit.Webhooks.Models.User? user) =>
+        user?.Type == UserType.Bot ||
+        user?.Login.EndsWith("-bot") == true ||
+        user?.Name?.EndsWith("bot]") == true ||
+        user?.Name?.EndsWith("-bot") == true;
 
 }
