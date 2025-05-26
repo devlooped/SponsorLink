@@ -10,11 +10,12 @@ public static class SponsoredIssuesExtensions
     /// <summary>
     /// Updates the backed badge on an issue.
     /// </summary>
-    /// <returns><see langword="false"/> if the issue number was actually a PR or not found. <see langword="true"/> otherwise.</returns>
-    public static async Task<bool> UpdateBacked(this SponsoredIssues issues, IGitHubClient github, long? repository, int number)
+    /// <returns><see langword="null"/> if the issue number was actually a PR or not found. The backed 
+    /// amount otherwise.</returns>
+    public static async Task<long?> UpdateBacked(this SponsoredIssues issues, IGitHubClient github, long? repository, int number)
     {
         if (repository is null)
-            return false;
+            return null;
 
         Issue issue;
         try
@@ -24,16 +25,16 @@ public static class SponsoredIssuesExtensions
         }
         catch (NotFoundException)
         {
-            return false;
+            return null;
         }
         catch (ApiException e) when (e.StatusCode == System.Net.HttpStatusCode.Gone)
         {
-            return false;
+            return null;
         }
 
         // if the issue is a PR, no-op
         if (issue.PullRequest != null)
-            return false;
+            return null;
 
         var amount = await issues.BackedAmount(repository.Value, number);
         var updated = await issues.UpdateIssueBody(repository.Value, number, issue.Body);
@@ -65,7 +66,7 @@ public static class SponsoredIssuesExtensions
             await github.Issue.Labels.AddToIssue(repository.Value, number, ["backed"]);
         }
 
-        return true;
+        return amount;
     }
 }
 

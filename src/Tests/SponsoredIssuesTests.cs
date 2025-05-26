@@ -1,7 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Devlooped.Sponsors;
-using Microsoft.Extensions.DependencyInjection;
 using Octokit;
 using static Devlooped.Helpers;
 
@@ -116,6 +115,7 @@ public class SponsoredIssuesTests : IDisposable
         };
 
         Assert.Equal(2, await sponsored.RefreshBacked(github));
+        Assert.Equal(20, await sponsored.UpdateBacked(github, 330812613, 15));
     }
 
     [SecretsFact("GitHub:Token")]
@@ -130,7 +130,7 @@ public class SponsoredIssuesTests : IDisposable
             Credentials = new Credentials(Configuration["GitHub:Token"])
         };
 
-        await sponsored.UpdateBacked(github, 330812613, 20);
+        Assert.Null(await sponsored.UpdateBacked(github, 330812613, 20));
     }
 
     [SecretsFact("GitHub:Token")]
@@ -145,7 +145,7 @@ public class SponsoredIssuesTests : IDisposable
             Credentials = new Credentials(Configuration["GitHub:Token"])
         };
 
-        await sponsored.UpdateBacked(github, 330812613, 2000);
+        Assert.Null(await sponsored.UpdateBacked(github, 330812613, 2000));
     }
 
     [SecretsFact("GitHub:Token")]
@@ -164,7 +164,7 @@ public class SponsoredIssuesTests : IDisposable
         Assert.NotNull(issue.PullRequest);
         var expected = issue.Body;
 
-        await sponsored.UpdateBacked(github, 330812613, 14);
+        Assert.Null(await sponsored.UpdateBacked(github, 330812613, 14));
 
         issue = await github.Issue.Get(330812613, 14);
         var actual = issue.Body;

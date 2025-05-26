@@ -35,7 +35,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
     protected override async Task ProcessIssueCommentWebhookAsync(WebhookHeaders headers, IssueCommentEvent payload, IssueCommentAction action)
     {
-        if (await issues.UpdateBacked(github, payload.Repository?.Id, (int)payload.Issue.Number) == false)
+        if (await issues.UpdateBacked(github, payload.Repository?.Id, (int)payload.Issue.Number) is null)
             // It was not an issue or it was not found.
             return;
 
@@ -82,13 +82,24 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
     protected override async Task ProcessIssuesWebhookAsync(WebhookHeaders headers, IssuesEvent payload, IssuesAction action)
     {
-        if (await issues.UpdateBacked(github, payload.Repository?.Id, (int)payload.Issue.Number) == false)
+        if (await issues.UpdateBacked(github, payload.Repository?.Id, (int)payload.Issue.Number) is not { } amount)
             // It was not an issue or it was not found.
             return;
 
-        if (IsBot(payload.Sender))
-            // Ignore comments from bots.
+        // Notify of changes to the issue body, if the issue was backed.
+        if (IsBot(payload.Sender) && amount > 0)
+        {
+            await notifier.PostAsync(new PushoverMessage
+            {
+                Title = $"💸 Issue #{payload.Issue.Number} is backed!",
+                Message = $"This issue is now backed with ${amount}.",
+                Url = payload.Issue.HtmlUrl,
+                UrlTitle = $"View Issue #{payload.Issue.Number}",
+            });
+
+            // But otherwise ignore comments/changes from bot.
             return;
+        }
 
         try
         {
