@@ -8,14 +8,14 @@
 
   <ItemGroup>
     <PackageReference Include="Humanizer.Core" Version="2.14.1" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.9.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.6" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.12.0" />
     <PackageReference Include="NuGetizer" Version="1.2.4" PrivateAssets="all" />
     <PackageReference Include="Octokit" Version="14.0.0" />
     <PackageReference Include="Scriban" Version="6.2.1" />
     <PackageReference Include="Std.UriTemplate" Version="2.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.6" />
     <PackageReference Include="SharpYaml" Version="2.1.1" />
     <PackageReference Include="Devlooped.JQ" Version="1.7.1.8" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.0.14" PrivateAssets="all" />
