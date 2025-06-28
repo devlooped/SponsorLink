@@ -330,8 +330,8 @@ public abstract class SyncCommand<TSettings>(DotNetConfig.Config config, IGraphQ
             }
 
             using var http = httpFactory.CreateClient();
-            var (status, jwt) = await Status().StartAsync(Sync.Synchronizing(manifest.Sponsorable), async ctx => await SponsorManifest.FetchAsync(manifest, token, http));
-            if (status == SponsorManifest.Status.NotSponsoring)
+            var (status, jwt) = await Status().StartAsync(Sync.Synchronizing(manifest.Sponsorable), async ctx => await SponsorManifestFetcher.FetchAsync(manifest, token, http));
+            if (status == SponsorManifestFetcher.Status.NotSponsoring)
             {
                 var links = string.Join(", ", manifest.Audience.Select(x => $"[link]{x}[/]"));
                 MarkupLine(Sync.ConsiderSponsoring(manifest.Sponsorable.PadRight(maxlength), links));
@@ -339,7 +339,7 @@ public abstract class SyncCommand<TSettings>(DotNetConfig.Config config, IGraphQ
                 continue;
             }
 
-            if (status == SponsorManifest.Status.Success)
+            if (status == SponsorManifestFetcher.Status.Success)
             {
                 File.WriteAllText(Path.Combine(ghDir, manifest.Sponsorable + ".jwt"), jwt, Encoding.UTF8);
                 var roles = new JsonWebTokenHandler
@@ -373,14 +373,14 @@ public abstract class SyncCommand<TSettings>(DotNetConfig.Config config, IGraphQ
                         return;
 
                     using var http = httpFactory.CreateClient();
-                    var (status, jwt) = await SponsorManifest.FetchAsync(manifest, token, http);
-                    if (status == SponsorManifest.Status.NotSponsoring)
+                    var (status, jwt) = await SponsorManifestFetcher.FetchAsync(manifest, token, http);
+                    if (status == SponsorManifestFetcher.Status.NotSponsoring)
                     {
                         var links = string.Join(", ", manifest.Audience.Select(x => $"[link]{x}[/]"));
                         MarkupLine(Sync.ConsiderSponsoring(manifest.Sponsorable.PadRight(maxlength), links));
                         result = ErrorCodes.NotSponsoring;
                     }
-                    else if (status == SponsorManifest.Status.Success)
+                    else if (status == SponsorManifestFetcher.Status.Success)
                     {
                         File.WriteAllText(Path.Combine(ghDir, manifest.Sponsorable + ".jwt"), jwt);
                         var roles = new JsonWebTokenHandler()
