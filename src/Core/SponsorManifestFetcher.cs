@@ -6,7 +6,7 @@ namespace Devlooped.Sponsors;
 /// <summary>
 /// Allows synchronizing client sponsor manifests.
 /// </summary>
-public class SponsorManifest
+public class SponsorManifestFetcher
 {
     /// <summary>
     /// Status of a manifest refresh operation.
@@ -30,10 +30,10 @@ public class SponsorManifest
     /// <summary>
     /// Refreshes the sponsor manifest for the given sponsorable account.
     /// </summary>
-    /// <param name="accessToken">The access token to use for fetching the manifest, must be an OAuth token issued by GitHub for the sponsorable app..</param>
+    /// <param name="accessToken">The access token to use for fetching the manifest, must be an OAuth token issued by GitHub for the sponsorable app, representing the sponsoring user.</param>
     /// <param name="manifest">The SponsorLink manifest provided by the sponsorable account.</param>
     /// <param name="jwt">The sponsor manifest token, if sponsoring.</param>
-    /// <returns>The status of the manifest synchronization.</returns>
+    /// <returns>The status of the manifest synchronization and the optional JWT of the authenticated user if validation succeeded.</returns>
     public static async Task<(Status, string?)> FetchAsync(SponsorableManifest manifest, string accessToken, HttpClient? http = default)
     {
         var disposeHttp = http == null;
