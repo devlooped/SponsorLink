@@ -5,8 +5,8 @@
 	weak
 [file ".gitignore"]
 	url = https://github.com/devlooped/oss/blob/main/.gitignore
-	sha = e0be248fff1d39133345283b8227372b36574b75
-	etag = c449ec6f76803e1891357ca2b8b4fcb5b2e5deeff8311622fd92ca9fbf1e6575
+	sha = 3776526342afb3f57da7e80f2095e5fdca3c31c9
+	etag = 11767f73556aa4c6c8bcc153b77ee8e8114f99fa3b885b0a7d66d082f91e77b3
 	weak
 [file ".gitattributes"]
 	url = https://github.com/devlooped/oss/blob/main/.gitattributes
@@ -30,13 +30,13 @@
 	weak
 [file "src/Directory.Build.props"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
-	sha = 81d972fd0760c244d134dae7f4b17d6c43cb004a
-	etag = 1368697c1521e465a1dea88b93787b1c7def441c37d62afc903fb8d07179e4f6
+	sha = c509be4378ff6789df4f66338cb88119453c0975
+	etag = cbbdc1a4d3030f353f3e5306a6c380238dd4ed0945aad2d56ba87b49fcfcd66d
 	weak
 [file "src/Directory.Build.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
-	sha = a8b208093599263b7f2d1fe3854634c588ea5199
-	etag = 19087699f05396205e6b050d999a43b175bd242f6e8fac86f6df936310178b03
+	sha = 4339749ef4b8f66def75931df09ef99c149f8421
+	etag = 8b4492765755c030c4c351e058a92f53ab493cab440c1c0ef431f6635c4dae0e
 	weak
 [file ".github/dependabot.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/dependabot.yml
@@ -103,6 +103,6 @@
 	weak
 [file "src/Core/System/Collections/Generic/IAsyncEnumerableExtensions.cs"]
 	url = https://github.com/devlooped/catbag/blob/main/System/Collections/Generic/IAsyncEnumerableExtensions.cs
-	sha = fd4229d4b2ebcad93768ddb6afee652d4a476fe2
-	etag = 8710a896af867e690062b025b3f95de9f2e3f219555942ec91e1364ad8d9bfac
+	sha = 3e2b4bfe3f2707bf3567bcd6367db5c7eb2696c0
+	etag = 371342087cec0269473a91f7fc295fd1049e21f016a1b7113614f2c4e3eefe5f
 	weak

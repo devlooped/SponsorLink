@@ -39,7 +39,7 @@ namespace System.Collections.Generic
         /// </summary>
         /// <exception cref="ArgumentException">The <paramref name="source"/> does not implement 
         /// <see cref="IAsyncEnumerable{T}"/>.</exception>
-        public static async Task<TSource[]> ToArrayAsync<TSource>(this IAsyncEnumerable<TSource> source)
+        public static async ValueTask<TSource[]> ToArrayAsync<TSource>(this IAsyncEnumerable<TSource> source)
             => (await ToListAsync(source)).ToArray();
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace System.Collections.Generic
         /// </summary>
         /// <exception cref="ArgumentException">The <paramref name="source"/> does not implement 
         /// <see cref="IAsyncEnumerable{T}"/>.</exception>
-        public static Task<Dictionary<TKey, TSource>> ToDictionaryAsync<TSource, TKey>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector) where TKey : notnull
+        public static ValueTask<Dictionary<TKey, TSource>> ToDictionaryAsync<TSource, TKey>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector) where TKey : notnull
             => ToDictionaryAsync(source, keySelector, x => x, null);
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace System.Collections.Generic
         /// </summary>
         /// <exception cref="ArgumentException">The <paramref name="source"/> does not implement 
         /// <see cref="IAsyncEnumerable{T}"/>.</exception>
-        public static Task<Dictionary<TKey, TSource>> ToDictionaryAsync<TSource, TKey>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, IEqualityComparer<TKey> comparer) where TKey : notnull
+        public static ValueTask<Dictionary<TKey, TSource>> ToDictionaryAsync<TSource, TKey>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, IEqualityComparer<TKey> comparer) where TKey : notnull
             => ToDictionaryAsync(source, keySelector, x => x, comparer);
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace System.Collections.Generic
         /// </summary>
         /// <exception cref="ArgumentException">The <paramref name="source"/> does not implement 
         /// <see cref="IAsyncEnumerable{T}"/>.</exception>
-        public static Task<Dictionary<TKey, TElement>> ToDictionaryAsync<TSource, TKey, TElement>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector) where TKey : notnull
+        public static ValueTask<Dictionary<TKey, TElement>> ToDictionaryAsync<TSource, TKey, TElement>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector) where TKey : notnull
             => ToDictionaryAsync(source, keySelector, elementSelector, null);
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace System.Collections.Generic
         /// </summary>
         /// <exception cref="ArgumentException">The <paramref name="source"/> does not implement 
         /// <see cref="IAsyncEnumerable{T}"/>.</exception>
-        public static async Task<Dictionary<TKey, TElement>> ToDictionaryAsync<TSource, TKey, TElement>(
+        public static async ValueTask<Dictionary<TKey, TElement>> ToDictionaryAsync<TSource, TKey, TElement>(
             this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector,
             Func<TSource, TElement> elementSelector, IEqualityComparer<TKey>? comparer) where TKey : notnull
         {
@@ -93,7 +93,7 @@ namespace System.Collections.Generic
         /// </summary>
         /// <exception cref="ArgumentException">The <paramref name="source"/> does not implement 
         /// <see cref="IAsyncEnumerable{T}"/>.</exception>
-        public static Task<HashSet<TSource>> ToHashSetAsync<TSource>(this IAsyncEnumerable<TSource> source)
+        public static ValueTask<HashSet<TSource>> ToHashSetAsync<TSource>(this IAsyncEnumerable<TSource> source)
             => ToHashSetAsync(source, null);
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace System.Collections.Generic
         /// </summary>
         /// <exception cref="ArgumentException">The <paramref name="source"/> does not implement 
         /// <see cref="IAsyncEnumerable{T}"/>.</exception>
-        public static async Task<HashSet<TSource>> ToHashSetAsync<TSource>(this IAsyncEnumerable<TSource> source, IEqualityComparer<TSource>? comparer)
+        public static async ValueTask<HashSet<TSource>> ToHashSetAsync<TSource>(this IAsyncEnumerable<TSource> source, IEqualityComparer<TSource>? comparer)
         {
             var set = new HashSet<TSource>(comparer);
             await foreach (var item in source)
@@ -117,7 +117,7 @@ namespace System.Collections.Generic
         /// </summary>
         /// <exception cref="ArgumentException">The <paramref name="source"/> does not implement 
         /// <see cref="IAsyncEnumerable{T}"/>.</exception>
-        public static async Task<List<TSource>> ToListAsync<TSource>(this IAsyncEnumerable<TSource> source)
+        public static async ValueTask<List<TSource>> ToListAsync<TSource>(this IAsyncEnumerable<TSource> source)
         {
             var list = new List<TSource>();
             await foreach (var item in source)
