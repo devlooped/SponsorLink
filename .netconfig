@@ -53,11 +53,9 @@
 	sha = 5fb172362c767bef7c36478f1a6bdc264723f8f9
 	etag = ad1efa56d6024ee1add2bcda81a7e4e38d0e9069473c6ff70374d5ce06af1f5a
 	weak
-[file "docs/_config.yml"]
+[file "_config.yml"]
 	url = https://github.com/devlooped/oss/blob/main/_config.yml
-	sha = 68b409c486842062e0de0e5b11e6fdb7cd12d6e2
-	etag = d608aa0ddaedc2d8a87260f50756e8d8314964ad4671b76bd085bcb458757010
-	weak
+	skip
 [file "src/Core/System/Threading/Tasks/AsyncLazy.cs"]
 	url = https://github.com/devlooped/catbag/blob/main/System/Threading/Tasks/AsyncLazy.cs
 	sha = 9f3330f09713aa5f746047e3a50ee839147a5797

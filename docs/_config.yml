@@ -1,3 +1,146 @@
-theme: jekyll-theme-slate
+# add cert and key for ssl
+# uncomment when running the Back an Issue page, which 
+# requires SSL for CORS to work from the backend/functions
+#ssl_cert: localhost.crt
+#ssl_key: localhost.key
 
-exclude: [ 'src/', '*.sln', '*.slnx', 'Gemfile*', '*.rsp' ]
+baseurl: "/SponsorLink"
+permalink: pretty
+
+plugins: 
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+  - jekyll-github-metadata
+  - jekyll-include-cache
+
+remote_theme: just-the-docs/just-the-docs@v0.6.1
+exclude: 
+  - app/
+  - bin/
+  - loc/
+  - src/
+  - '*.sln'
+  - Gemfile*
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/ 
+
+# logo: "/assets/img/sponsorlink.png"
+ga_tracking: "G-BL91Q8VYCL"
+
+aux_links_new_tab: true
+aux_links:
+  "GitHub":
+    - "https://github.com/devlooped/SponsorLink"
+
+callouts_level: quiet # or loud
+callouts:
+  highlight:
+    color: yellow
+  important:
+    title: Important
+    color: blue
+  new:
+    title: New
+    color: green
+  note:
+    title: Note
+    color: purple
+  warning:
+    title: Warning
+    color: red
+  issues-available:
+    title: Available one-time funds
+    color: green
+  issues-backed:
+    title: Backed issues
+    color: yellow
+
+compress_html:
+  ignore:
+    envs: all
+    
+markdown: kramdown
+kramdown:
+  input: GFM 
+  hard_wrap: false
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+
+footer_content: "Copyright &copy; 2024 Daniel Cazzulino."
+
+repository: devlooped/SponsorLink
+gh_edit_link: true
+gh_edit_link_text: "Edit on GitHub"
+gh_edit_repository: "https://github.com/devlooped/SponsorLink"
+gh_edit_branch: main
+gh_edit_source: docs
+gh_edit_view_mode: tree
+
+# sponsorlink
+spec: 2.0.1
+spec_skip: ";2.0.0;2.0.0-rc.1;2.0.0-rc.2;"
+issues_template: |
+  {{#if available}}
+  <p class="mt-6 issues-available">Your one-time sponsorships can be assigned to fund specific issues.</p>
+  <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
+      {{#each available}}
+      <tr>
+          <td class="borderless">$ {{amount}}</td>
+          <td class="borderless" style="width: 100%;">
+            <input class="border" style="width: 100%;" type="text" value="{{url}}" placeholder="Issue URL" id="{{sponsorshipId}}">
+          </td>
+          <td class="borderless"><button class="btn btn-green" onclick="backIssue('{{sponsorshipId}}');">Assign</button></td>
+      </tr>
+      {{/each}}
+  </table>
+  <p class="fs-3">
+    <a href="https://github.com/sponsors/{{sponsorable}}?frequency=one-time" target="_blank"><button class="btn">➕ Add Funds</button></a>
+  </p>
+  {{else}}
+  Please consider making one-time sponsorship(s) to <a target="_blank" href="https://github.com/sponsors/{{sponsorable}}?frequency=one-time">{{sponsorable}}</a> to back your chosen issue(s) 🙏. 
+  <p class="fs-3">
+    <a href="https://github.com/sponsors/{{sponsorable}}?frequency=one-time" target="_blank"><button class="btn">➕ Add Funds</button></a>
+  </p>
+  {{/if}}
+  {{#if backed}}
+  <p class="mt-6 issues-backed">Issues can be backed multiple times to increase their funding.</p>
+  <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
+      {{#each backed}}
+      <tr>
+          <td class="borderless">$ {{amount}}</td>
+          <td class="borderless"><a href="{{url}}" target="_blank">{{issue}}</a></td>
+      </tr>
+      {{/each}}
+  </table>
+  {{/if}}
+
+oss_template: |
+  <p class="mt-6">You contributed to the following repositories, with <strong>{{ format downloads }}</strong> combined daily downloads:</p>
+  <p>
+  <img src="https://img.shields.io/endpoint?label=popular%20packages&style=social&logo=nuget&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fnuget%2Fid%3Fa%3D{{account}}" />
+  <img src="https://img.shields.io/endpoint?label=Daily%20downloads&style=social&logo=nuget&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fnuget%2Fdl%3Fa%3D{{account}}" />
+  <a href="#" onclick="copyMarkdown(event)"><img src="https://img.shields.io/badge/copy-md?logo=Markdown&color=%23000000"></a>
+  </p>
+  <table class="borderless" style="border-collapse: collapse; padding: 4px; min-width: unset;">
+      <tr>
+          <th class="borderless">Repository</th>
+          <th class="borderless">Packages (downloads/day)</th>
+      </tr>
+      {{#each repositories}}
+      <tr>
+          <td class="borderless" style="vertical-align: text-top;"><a href="https://github.com/{{repo}}" target="_blank">{{repo}}</a></td>
+          <td class="borderless" style="width: 100%; vertical-align: text-top;">
+            <ul>
+              {{#each packages}}
+              <li><a href="https://nuget.org/packages/{{id}}"  target="_blank">{{id}}</a> ({{format downloads}})</li>
+              {{/each}}
+            </ul>
+          </td>
+      </tr>
+      {{/each}}
+  </table>
