@@ -134,7 +134,7 @@
     <comment>What</comment>
   </data>
   <data name="FirstRun_How" xml:space="preserve">
-    <value>GitHub users and organizations using [link=https://github.com/sponsors/]GitHub Sponsors[/] (a.k.a. [italic]sponsorables[/]) can opt-in to SponsorLink by providing [link=https://www.devlooped.com/SponsorLink/spec.html#sponsorable-manifest]a standard JWT manifest[/] at [link=https://github.com/devlooped/.github/blob/main/sponsorlink.jwt][blue]https://github.com/[/][dim][[user/org]][/][blue]/.github/sponsorlink.jwt[/][/]. This is the same location used for other [link=https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file]community health files[/]. 
+    <value>GitHub users and organizations using [link=https://github.com/sponsors/]GitHub Sponsors[/] (a.k.a. [italic]sponsorables[/]) can opt-in to SponsorLink by providing [link=https://www.devlooped.com/SponsorLink/spec#sponsorable-manifest]a standard JWT manifest[/] at [link=https://github.com/devlooped/.github/blob/main/sponsorlink.jwt][blue]https://github.com/[/][dim][[user/org]][/][blue]/.github/sponsorlink.jwt[/][/]. This is the same location used for other [link=https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file]community health files[/]. 
     
 When you synchronize your sponsorship with a given account, the following steps take place:
     
@@ -150,7 +150,7 @@ When you synchronize your sponsorship with a given account, the following steps 
 
 You can easily inspect the JWT of both the sponsorable account and your sponsor manifest using [link]https://jwt.io/[/], for example. 
 
-This manifest needs to be sync'ed once a month, which is the only point at which each SponsorLink backend computes, signs your sponsorship manifest and sets a new expiration date. You can also enable [link=https://www.devlooped.com/SponsorLink/github.html#auto-sync]automatic synchronization[/]. Learn more at [link]https://www.devlooped.com/SponsorLink/[/].</value>
+This manifest needs to be sync'ed once a month, which is the only point at which each SponsorLink backend computes, signs your sponsorship manifest and sets a new expiration date. You can also enable [link=https://www.devlooped.com/SponsorLink/github#auto-sync]automatic synchronization[/]. Learn more at [link]https://www.devlooped.com/SponsorLink/[/].</value>
     <comment>How</comment>
   </data>
   <data name="FirstRun_HowTitle" xml:space="preserve">
@@ -189,10 +189,10 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
     <value>Fetching SponsorLink manifests for {count} accounts</value>
   </data>
   <data name="Sync_InteractiveAuthNeeded" xml:space="preserve">
-    <value>[lime]?[/] {count} sponsorable accounts require [link=https://www.devlooped.com/SponsorLink/github.html#authentication][blue]interactive authentication[/][/] for synchronization. Do you want to Proceed?</value>
+    <value>[lime]?[/] {count} sponsorable accounts require [link=https://www.devlooped.com/SponsorLink/github#authentication][blue]interactive authentication[/][/] for synchronization. Do you want to Proceed?</value>
   </data>
   <data name="Sync_InteractiveAuthNeeded1" xml:space="preserve">
-    <value>[lime]?[/] Sponsors account [yellow]{account}[/] requires [link=https://www.devlooped.com/SponsorLink/github.html#authentication][blue]interactive authentication[/][/] for synchronization. Do you want to Proceed?</value>
+    <value>[lime]?[/] Sponsors account [yellow]{account}[/] requires [link=https://www.devlooped.com/SponsorLink/github#authentication][blue]interactive authentication[/][/] for synchronization. Do you want to Proceed?</value>
   </data>
   <data name="Sync_InvalidManifest" xml:space="preserve">
     <value>:cross_mark: [yellow]{sponsorable}[/] provided an invalid SponsorLink manifest ({status})</value>
@@ -228,13 +228,13 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
     <value>:check_mark_button: [lime]{sponsorable}[/]: thanks for sponsoring 💟 [dim](roles: {roles})[/]</value>
   </data>
   <data name="Sync_AutoSync" xml:space="preserve">
-    <value>[lime]?[/] Do you want to enable [link=https://www.devlooped.com/SponsorLink/github.html#auto-sync][blue]auto sync[/][/] of expired manifests?</value>
+    <value>[lime]?[/] Do you want to enable [link=https://www.devlooped.com/SponsorLink/github#auto-sync][blue]auto sync[/][/] of expired manifests?</value>
   </data>
   <data name="Sync_AutoSyncEnabled" xml:space="preserve">
-    <value>:check_mark_button: Sponsor manifests [link=https://www.devlooped.com/SponsorLink/github.html#auto-sync][blue]auto sync[/][/] was [lime]enabled[/]</value>
+    <value>:check_mark_button: Sponsor manifests [link=https://www.devlooped.com/SponsorLink/github#auto-sync][blue]auto sync[/][/] was [lime]enabled[/]</value>
   </data>
   <data name="Sync_AutoSyncDisabled" xml:space="preserve">
-    <value>:check_mark_button: Sponsor manifests [link=https://www.devlooped.com/SponsorLink/github.html#auto-sync][blue]auto sync[/][/] was [yellow]disabled[/]</value>
+    <value>:check_mark_button: Sponsor manifests [link=https://www.devlooped.com/SponsorLink/github#auto-sync][blue]auto sync[/][/] was [yellow]disabled[/]</value>
   </data>
   <data name="Variables_Cleared" xml:space="preserve">
     <value>:check_mark_button: Cleared {0} user environment variable</value>
@@ -273,7 +273,7 @@ Code for the backend and this app are [link=https://www.devlooped.com/SponsorLin
     <value>:cross_mark: [lime]{sponsorable}[/]: manifest is invalid. Run [yellow]sponsor sync[/] to generate a new one</value>
   </data>
   <data name="Sync_UnattendedWithInteractiveAuth" xml:space="preserve">
-    <value>[lime]?[/] Sponsors account [yellow]{account}[/] requires [link=https://www.devlooped.com/SponsorLink/github.html#authentication][blue]interactive authentication[/][/] for synchronization. Please run [yellow]sponsor sync {account}[/] interactively.</value>
+    <value>[lime]?[/] Sponsors account [yellow]{account}[/] requires [link=https://www.devlooped.com/SponsorLink/github#authentication][blue]interactive authentication[/][/] for synchronization. Please run [yellow]sponsor sync {account}[/] interactively.</value>
   </data>
   <data name="Remove_AllOrSponsorable" xml:space="preserve">
     <value>Either specify accounts to remove or use --all to remove all manifests.</value>
