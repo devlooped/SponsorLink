@@ -162,7 +162,7 @@ This manifest needs to be sync'ed once a month, which is the only point at which
 The short story is: 
 :backhand_index_pointing_right: sponsorship manifests are purely local and offline :check_mark_button: no info persisted in the cloud
 :backhand_index_pointing_right: the backend uses a limited GitHub OAuth app token  :check_mark_button: only email(s) and organization membership determine sponsorships
-:backhand_index_pointing_right: you can be a direct or indirect supporter/sponsor  :purple_heart: indirect sponsorship via an organization or project contributions 
+:backhand_index_pointing_right: you can be a direct or indirect supporter/sponsor  :purple_heart: implicit sponsorship via an organization or project contributions 
 
 Code for the backend and this app are [link=https://www.devlooped.com/SponsorLink/]open source[/]. Please read the [link=https://github.com/devlooped/SponsorLink/blob/main/privacy.md]full privacy policy[/] to learn more.</value>
     <comment>Privacy</comment>
