@@ -1,5 +1,29 @@
 # Changelog
 
+## [v2.0.10](https://github.com/devlooped/SponsorLink/tree/v2.0.10) (2025-08-18)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.9...v2.0.10)
+
+:sparkles: Implemented enhancements:
+
+- Move ThisAssembly to Devlooped.Sponsors namespace [\#473](https://github.com/devlooped/SponsorLink/pull/473) (@kzu)
+- Extend same customization support for View command [\#457](https://github.com/devlooped/SponsorLink/pull/457) (@kzu)
+- Allow customizing the sponsorables for sync from a derived command [\#456](https://github.com/devlooped/SponsorLink/pull/456) (@kzu)
+- Improve wording on editor usage requiring sponsorship [\#450](https://github.com/devlooped/SponsorLink/pull/450) (@kzu)
+- Introduce standalone SponsorManifest for read/validate [\#448](https://github.com/devlooped/SponsorLink/pull/448) (@kzu)
+
+:bug: Fixed bugs:
+
+- autisync link is broken on page https://github.com/devlooped\#autosync [\#379](https://github.com/devlooped/SponsorLink/issues/379)
+- Fix URLs to static website [\#570](https://github.com/devlooped/SponsorLink/pull/570) (@kzu)
+
+:twisted_rightwards_arrows: Merged:
+
+- Rename fecher to avoid confusion with manifest itself [\#517](https://github.com/devlooped/SponsorLink/pull/517) (@kzu)
+- Don't make the type registrar public [\#475](https://github.com/devlooped/SponsorLink/pull/475) (@kzu)
+- Allow standalone usage of SL commands from other CLIs [\#449](https://github.com/devlooped/SponsorLink/pull/449) (@kzu)
+- Bump nuget dependencies for the dotnet analyzer sample [\#427](https://github.com/devlooped/SponsorLink/pull/427) (@kzu)
+
 ## [v2.0.9](https://github.com/devlooped/SponsorLink/tree/v2.0.9) (2024-10-04)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.8...v2.0.9)
