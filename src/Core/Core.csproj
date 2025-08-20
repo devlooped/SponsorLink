@@ -25,6 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.Core" Version="1.47.2" />
+    <PackageReference Include="Azure.Identity" Version="1.15.0" />
     <None Update="@(None)" CopyToOutputDirectory="PreserveNewest" />
     <InternalsVisibleTo Include="Devlooped.Sponsors.Commands;Tests;Web" />
   </ItemGroup>
