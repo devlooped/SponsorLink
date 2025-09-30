@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Octokit;
@@ -7,6 +8,7 @@ using Octokit.Webhooks;
 using Octokit.Webhooks.Events;
 using Octokit.Webhooks.Events.IssueComment;
 using Octokit.Webhooks.Events.Issues;
+using Octokit.Webhooks.Events.Release;
 using Octokit.Webhooks.Events.Sponsorship;
 using Octokit.Webhooks.Models;
 
@@ -16,7 +18,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 {
     static readonly ActivitySource tracer = ActivityTracer.Source;
 
-    protected override async Task ProcessSponsorshipWebhookAsync(WebhookHeaders headers, SponsorshipEvent payload, SponsorshipAction action)
+    protected override async ValueTask ProcessSponsorshipWebhookAsync(WebhookHeaders headers, SponsorshipEvent payload, SponsorshipAction action, CancellationToken cancellationToken = default)
     {
         using var activity = tracer.StartActivity("Sponsorship");
         activity?.AddEvent(new ActivityEvent($"{activity?.OperationName}.{CultureInfo.CurrentCulture.TextInfo.ToTitleCase(action)}"));
@@ -33,7 +35,112 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         await base.ProcessSponsorshipWebhookAsync(headers, payload, action);
     }
 
-    protected override async Task ProcessIssueCommentWebhookAsync(WebhookHeaders headers, IssueCommentEvent payload, IssueCommentAction action)
+    protected override async ValueTask ProcessReleaseWebhookAsync(WebhookHeaders headers, ReleaseEvent payload, ReleaseAction action, CancellationToken cancellationToken = default)
+    {
+        if (action != ReleaseAction.Deleted)
+        {
+            // fetch sponsors markdown from https://github.com/devlooped/sponsors/raw/refs/heads/main/sponsors.md
+            // lookup for <!-- sponsors --> and <!-- /sponsors --> markers
+            // replace that section in the release body with the markdown
+
+            try
+            {
+                using var activity = tracer.StartActivity("Release");
+                activity?.AddEvent(new ActivityEvent($"{activity?.OperationName}.{CultureInfo.CurrentCulture.TextInfo.ToTitleCase(action)}"));
+
+                var body = payload.Release.Body ?? string.Empty;
+                if (body.Contains("<!-- nosponsors -->"))
+                    return;
+
+                const string startMarker = "<!-- sponsors -->";
+                const string endMarker = "<!-- /sponsors -->";
+
+                // Get sponsors markdown
+                using var http = new HttpClient();
+                var sponsorsMarkdown = await http.GetStringAsync("https://github.com/devlooped/sponsors/raw/refs/heads/main/sponsors.md", cancellationToken);
+                if (string.IsNullOrWhiteSpace(sponsorsMarkdown))
+                    return;
+
+                var logins = LoginExpr().Matches(sponsorsMarkdown)
+                    .Select(x => x.Groups["login"].Value)
+                    .Where(x => !string.IsNullOrEmpty(x))
+                    .Select(x => "@" + x)
+                    .Distinct();
+
+                var newSection =
+                    $"""
+                    <!-- avoid this section by leaving a nosponsors tag -->
+                    ## Sponsors
+
+                    The following sponsors made this release possible: {string.Join(", ", logins)}.
+
+                    Thanks 💜
+                    """;
+
+                // NOTE: no need to append the images since GH already does this by showing them in a 
+                // Contributors generated section.
+                // {string.Concat(sponsorsMarkdown.ReplaceLineEndings().Replace(Environment.NewLine, ""))}
+
+                // In case we want to split into rows of X max icons instead...
+                //+ string.Join(
+                //    Environment.NewLine,
+                //    sponsorsMarkdown.ReplaceLineEndings()
+                //        .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                //        .Batch(15)
+                //        .Select(batch => string.Concat(batch.Select(s => s.Trim())).Trim()));
+
+                var before = body;
+                var after = "";
+
+                var start = body.IndexOf(startMarker, StringComparison.Ordinal);
+                if (start > 0)
+                {
+                    // Build the updated body preserving the markers
+                    before = body[..start];
+                    var end = body.IndexOf(endMarker, start + startMarker.Length, StringComparison.Ordinal);
+                    if (end > 0)
+                        after = body[(end + endMarker.Length)..];
+                }
+
+                var newBody =
+                    $"""
+                    {before.Trim()}
+
+                    {startMarker}
+
+                    {newSection.Trim()}
+
+                    {endMarker}
+
+                    {after.Trim()}
+                    """;
+
+                if (!string.Equals(newBody, body, StringComparison.Ordinal))
+                {
+                    // Update release body via GitHub API
+                    var repo = payload.Repository;
+                    if (repo is not null)
+                    {
+                        var update = new ReleaseUpdate
+                        {
+                            Body = newBody
+                        };
+
+                        await github.Repository.Release.Edit(repo.Owner.Login, repo.Name, payload.Release.Id, update);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, e.Message);
+                throw;
+            }
+        }
+
+        await base.ProcessReleaseWebhookAsync(headers, payload, action);
+    }
+
+    protected override async ValueTask ProcessIssueCommentWebhookAsync(WebhookHeaders headers, IssueCommentEvent payload, IssueCommentAction action, CancellationToken cancellationToken = default)
     {
         if (await issues.UpdateBacked(github, payload.Repository?.Id, (int)payload.Issue.Number) is null)
             // It was not an issue or it was not found.
@@ -80,7 +187,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         }
     }
 
-    protected override async Task ProcessIssuesWebhookAsync(WebhookHeaders headers, IssuesEvent payload, IssuesAction action)
+    protected override async ValueTask ProcessIssuesWebhookAsync(WebhookHeaders headers, IssuesEvent payload, IssuesAction action, CancellationToken cancellationToken = default)
     {
         if (await issues.UpdateBacked(github, payload.Repository?.Id, (int)payload.Issue.Number) is not { } amount)
             // It was not an issue or it was not found.
@@ -197,4 +304,6 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         user?.Name?.EndsWith("bot]") == true ||
         user?.Name?.EndsWith("-bot") == true;
 
+    [GeneratedRegex(@"\(https://github.com/(?<login>[^\)]+)\)")]
+    private static partial Regex LoginExpr();
 }
