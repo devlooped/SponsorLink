@@ -25,8 +25,8 @@
 	weak
 [file ".github/workflows/includes.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/workflows/includes.yml
-	sha = 85829f2510f335f4a411867f3dbaaa116c3ab3de
-	etag = 086f6b6316cc6ea7089c0dcc6980be519e6ed6e6201e65042ef41b82634ec0ee
+	sha = 26e8cb798ce72dec7072db826cc9694d456797bd
+	etag = df06492eeb2daaae4168d71bbb643f5da2693b67cdd58c42ffa44a191ee99b69
 	weak
 [file "src/Directory.Build.props"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.props
