@@ -21,7 +21,7 @@
   <ItemGroup>
     <PackageReference Include="NuGet.Protocol" Version="6.13.2" />
     <PackageReference Include="NuGetizer" Version="1.2.4" PrivateAssets="all" />
-    <PackageReference Include="Spectre.Console.Cli" Version="0.50.0" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.52.0" />
     <PackageReference Include="ThisAssembly.Git" Version="2.0.14" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.Project" Version="2.0.14" PrivateAssets="all" />
   </ItemGroup>
