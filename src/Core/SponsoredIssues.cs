@@ -169,7 +169,7 @@ public partial class SponsoredIssues
 
 
             <!-- sl -->
-            [![Back this issue](https://raw.githubusercontent.com/devlooped/SponsorLink/main/docs/assets/img/separator.png "Back this issue")]({domain}/github/issues/?s={options.Account})
+            [![Back this issue](https://sponsorlink.blob.core.windows.net/public/separator.png "Back this issue")]({domain}/github/issues/?s={options.Account})
             [![Back this issue](https://img.shields.io/badge/backed-%24{amount}-EA4AAA?logo=githubsponsors "Back this issue")]({domain}/github/issues/?s={options.Account})
             <!-- sl -->
             """;
