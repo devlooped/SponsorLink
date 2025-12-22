@@ -117,36 +117,31 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                     {after.Trim()}
                     """;
 
-                var repo = payload.Repository;
-
-                if (!string.Equals(newBody, body, StringComparison.Ordinal))
+                if (!string.Equals(newBody, body, StringComparison.Ordinal) && payload.Repository is { } repo)
                 {
-                    if (repo is not null)
+                    if (payload.Release.Draft)
                     {
-                        if (payload.Release.Draft)
-                        {
-                            await github.Repository.Release.Delete(repo.Owner.Login, repo.Name, payload.Release.Id);
-                            var release = await github.Repository.Release.Create(repo.Owner.Login, repo.Name,
-                                new NewRelease(payload.Release.TagName)
-                                {
-                                    Name = payload.Release.Name,
-                                    Body = newBody,
-                                    Draft = false,
-                                    Prerelease = payload.Release.Prerelease,
-                                    TargetCommitish = payload.Release.TargetCommitish
-                                });
+                        await github.Repository.Release.Delete(repo.Owner.Login, repo.Name, payload.Release.Id);
+                        var release = await github.Repository.Release.Create(repo.Owner.Login, repo.Name,
+                            new NewRelease(payload.Release.TagName)
+                            {
+                                Name = payload.Release.Name,
+                                Body = newBody,
+                                Draft = false,
+                                Prerelease = payload.Release.Prerelease,
+                                TargetCommitish = payload.Release.TargetCommitish
+                            });
 
-                            await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
-                        }
-                        else
-                        {
-                            var release = await github.Repository.Release.Edit(repo.Owner.Login, repo.Name, payload.Release.Id,
-                                new ReleaseUpdate
-                                {
-                                    Body = newBody
-                                });
-                            await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
-                        }
+                        await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
+                    }
+                    else
+                    {
+                        var release = await github.Repository.Release.Edit(repo.Owner.Login, repo.Name, payload.Release.Id,
+                            new ReleaseUpdate
+                            {
+                                Body = newBody
+                            });
+                        await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
                     }
                 }
             }
