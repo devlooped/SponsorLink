@@ -117,16 +117,30 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
                 if (!string.Equals(newBody, body, StringComparison.Ordinal))
                 {
-                    // Update release body via GitHub API
                     var repo = payload.Repository;
                     if (repo is not null)
                     {
-                        var update = new ReleaseUpdate
+                        if (payload.Release.Draft)
                         {
-                            Body = newBody
-                        };
-
-                        await github.Repository.Release.Edit(repo.Owner.Login, repo.Name, payload.Release.Id, update);
+                            await github.Repository.Release.Delete(repo.Owner.Login, repo.Name, payload.Release.Id);
+                            await github.Repository.Release.Create(repo.Owner.Login, repo.Name,
+                                new NewRelease(payload.Release.TagName)
+                                {
+                                    Name = payload.Release.Name,
+                                    Body = newBody,
+                                    Draft = false,
+                                    Prerelease = payload.Release.Prerelease,
+                                    TargetCommitish = payload.Release.TargetCommitish
+                                });
+                        }
+                        else
+                        {
+                            await github.Repository.Release.Edit(repo.Owner.Login, repo.Name, payload.Release.Id,
+                                new ReleaseUpdate
+                                {
+                                    Body = newBody
+                                });
+                        }
                     }
                 }
             }
