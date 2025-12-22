@@ -10,7 +10,7 @@ using Octokit;
 
 namespace Devlooped.Sponsors;
 
-partial class BackIssue(SponsorsManager sponsors, SponsoredIssues issues, IGitHubClient github, IConfiguration configuration, ILogger<BackIssue> logger)
+partial class BackIssue(SponsorsManager sponsors, SponsoredIssues issues, IGitHubClient github)
 {
     static readonly JsonSerializerOptions options = new(JsonSerializerDefaults.Web);
     static readonly ActivitySource tracer = ActivityTracer.Source;

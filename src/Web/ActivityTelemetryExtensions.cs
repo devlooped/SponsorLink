@@ -106,7 +106,7 @@ public static partial class ActivityTelemetryExtensions
         }
     }
 
-    class Middleware(Lazy<TelemetryClient> telemetry, IConfiguration config) : IFunctionsWorkerMiddleware
+    class Middleware(Lazy<TelemetryClient> telemetry) : IFunctionsWorkerMiddleware
     {
         public async Task Invoke(FunctionContext context, FunctionExecutionDelegate next)
         {
