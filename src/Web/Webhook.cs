@@ -141,7 +141,9 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                             {
                                 Body = newBody
                             });
-                        await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
+
+                        if (action == ReleaseAction.Published)
+                            await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
                     }
                 }
             }
@@ -155,16 +157,16 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         await base.ProcessReleaseWebhookAsync(headers, payload, action);
     }
 
-    async Task CreateReleaseDiscussion(Octokit.Release release, string newBody, Octokit.Webhooks.Models.Repository repo, CancellationToken cancellationToken)
+    async Task CreateReleaseDiscussion(ReleaseAction action, Octokit.Release release, string content, Octokit.Webhooks.Models.Repository repo, CancellationToken cancellationToken)
     {
         if (config["SponsorLink:Account"] is string account)
         {
             try
             {
-                var discussionTitle = $"New release {repo.Owner.Login}/{repo.Name}@{release.TagName}";
-                var discussionBody = $"{newBody}\n\n---\n\n🔗 [View Release]({release.HtmlUrl})";
+                var title = $"New release {repo.Owner.Login}/{repo.Name}@{release.TagName}";
+                var body = $"{content}\n\n---\n\n🔗 [View Release]({release.HtmlUrl})";
 
-                await CreateDiscussionAsync(account, ".github", discussionTitle, discussionBody, cancellationToken);
+                await CreateDiscussionAsync(account, ".github", title, body, cancellationToken);
             }
             catch (Exception e)
             {
