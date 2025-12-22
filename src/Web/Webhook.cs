@@ -122,10 +122,10 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                     if (payload.Release.Draft)
                     {
                         await github.Repository.Release.Delete(repo.Owner.Login, repo.Name, payload.Release.Id);
-                        // In this case, the TagName will be a untagged thing, we use the release name instead.
 
+                        var tagName = payload.Release.TagName.StartsWith("unnamedtag") ? payload.Release.Name : payload.Release.TagName;
                         var release = await github.Repository.Release.Create(repo.Owner.Login, repo.Name,
-                            new NewRelease(payload.Release.Name)
+                            new NewRelease(tagName)
                             {
                                 Name = payload.Release.Name,
                                 Body = newBody,
