@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -14,7 +16,7 @@ using Octokit.Webhooks.Models;
 
 namespace Devlooped.Sponsors;
 
-public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IConfiguration config, IGitHubClient github, IPushover notifier, ILogger<Webhook> logger) : WebhookEventProcessor
+public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IConfiguration config, IGitHubClient github, IPushover notifier, ILogger<Webhook> logger, IHttpClientFactory httpFactory) : WebhookEventProcessor
 {
     static readonly ActivitySource tracer = ActivityTracer.Source;
 
@@ -115,15 +117,16 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                     {after.Trim()}
                     """;
 
+                var repo = payload.Repository;
+
                 if (!string.Equals(newBody, body, StringComparison.Ordinal))
                 {
-                    var repo = payload.Repository;
                     if (repo is not null)
                     {
                         if (payload.Release.Draft)
                         {
                             await github.Repository.Release.Delete(repo.Owner.Login, repo.Name, payload.Release.Id);
-                            await github.Repository.Release.Create(repo.Owner.Login, repo.Name,
+                            var release = await github.Repository.Release.Create(repo.Owner.Login, repo.Name,
                                 new NewRelease(payload.Release.TagName)
                                 {
                                     Name = payload.Release.Name,
@@ -132,14 +135,17 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                                     Prerelease = payload.Release.Prerelease,
                                     TargetCommitish = payload.Release.TargetCommitish
                                 });
+
+                            await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
                         }
                         else
                         {
-                            await github.Repository.Release.Edit(repo.Owner.Login, repo.Name, payload.Release.Id,
+                            var release = await github.Repository.Release.Edit(repo.Owner.Login, repo.Name, payload.Release.Id,
                                 new ReleaseUpdate
                                 {
                                     Body = newBody
                                 });
+                            await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
                         }
                     }
                 }
@@ -152,6 +158,136 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         }
 
         await base.ProcessReleaseWebhookAsync(headers, payload, action);
+    }
+
+    async Task CreateReleaseDiscussion(Octokit.Release release, string newBody, Octokit.Webhooks.Models.Repository repo, CancellationToken cancellationToken)
+    {
+        if (config["SponsorLink:Account"] is string account)
+        {
+            try
+            {
+                var discussionTitle = $"New release {repo.Owner.Login}/{repo.Name}@{release.TagName}";
+                var discussionBody = $"{newBody}\n\n---\n\n🔗 [View Release]({release.HtmlUrl})";
+
+                await CreateDiscussionAsync(account, ".github", discussionTitle, discussionBody, cancellationToken);
+            }
+            catch (Exception e)
+            {
+                // Don't fail the whole webhook if discussion creation fails
+                logger.LogWarning(e, "Failed to create discussion for release {Release}", release.TagName);
+            }
+        }
+    }
+
+    async Task CreateDiscussionAsync(string owner, string repo, string title, string body, CancellationToken cancellationToken)
+    {
+        // First, get the repository ID and discussion category ID
+        var getRepoQuery = """
+            query($owner: String!, $repo: String!) {
+              repository(owner: $owner, name: $repo) {
+                id
+                discussionCategories(first: 10) {
+                  nodes {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+            """;
+
+        using var httpClient = httpFactory.CreateClient();
+
+        // Add authentication header
+        if (config["GitHub:Token"] is string token)
+        {
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "SponsorLink-Webhook");
+        }
+
+        var queryResponse = await httpClient.PostAsJsonAsync("https://api.github.com/graphql", new
+        {
+            query = getRepoQuery,
+            variables = new { owner, repo }
+        }, cancellationToken);
+
+        if (!queryResponse.IsSuccessStatusCode)
+        {
+            logger.LogWarning("Failed to get repository info for discussion creation: {Status}", queryResponse.StatusCode);
+            return;
+        }
+
+        var queryResult = await queryResponse.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
+        var repositoryId = queryResult?.RootElement
+            .GetProperty("data")
+            .GetProperty("repository")
+            .GetProperty("id")
+            .GetString();
+
+        // Find the "Announcements" category
+        var categoryId = queryResult?.RootElement
+            .GetProperty("data")
+            .GetProperty("repository")
+            .GetProperty("discussionCategories")
+            .GetProperty("nodes")
+            .EnumerateArray()
+            .FirstOrDefault(node =>
+                node.TryGetProperty("name", out var nameProperty) &&
+                nameProperty.GetString() == "Announcements")
+            .GetProperty("id")
+            .GetString();
+
+        if (string.IsNullOrEmpty(repositoryId) || string.IsNullOrEmpty(categoryId))
+        {
+            logger.LogWarning("Could not find repository or Announcements category for {Owner}/{Repo}", owner, repo);
+            return;
+        }
+
+        // Create the discussion
+        var createDiscussionMutation = """
+            mutation($repositoryId: ID!, $categoryId: ID!, $title: String!, $body: String!) {
+              createDiscussion(input: {
+                repositoryId: $repositoryId,
+                categoryId: $categoryId,
+                title: $title,
+                body: $body
+              }) {
+                discussion {
+                  id
+                  url
+                }
+              }
+            }
+            """;
+
+        var mutationResponse = await httpClient.PostAsJsonAsync("https://api.github.com/graphql", new
+        {
+            query = createDiscussionMutation,
+            variables = new
+            {
+                repositoryId,
+                categoryId,
+                title,
+                body
+            }
+        }, cancellationToken);
+
+        if (mutationResponse.IsSuccessStatusCode)
+        {
+            var mutationResult = await mutationResponse.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: cancellationToken);
+            var discussionUrl = mutationResult?.RootElement
+                .GetProperty("data")
+                .GetProperty("createDiscussion")
+                .GetProperty("discussion")
+                .GetProperty("url")
+                .GetString();
+
+            logger.LogInformation("Created discussion for release: {DiscussionUrl}", discussionUrl);
+        }
+        else
+        {
+            logger.LogWarning("Failed to create discussion: {Status}", mutationResponse.StatusCode);
+        }
     }
 
     protected override async ValueTask ProcessIssueCommentWebhookAsync(WebhookHeaders headers, IssueCommentEvent payload, IssueCommentAction action, CancellationToken cancellationToken = default)
