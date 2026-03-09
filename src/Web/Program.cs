@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Octokit;
@@ -139,6 +140,46 @@ var host = new HostBuilder()
             return oss;
         }));
 
+    })
+    .ConfigureServices((context, services) =>
+    {
+        // Register keyed IChatClient for AI release summarization
+        var releaserSection = context.Configuration.GetSection("AI:Clients:releaser");
+        if (releaserSection.Exists() && !string.IsNullOrEmpty(releaserSection["ModelId"]))
+        {
+            services.AddKeyedSingleton<IChatClient>("releaser", (sp, key) =>
+            {
+                var section = sp.GetRequiredService<IConfiguration>().GetSection("AI:Clients:releaser");
+                var modelId = section["ModelId"]!;
+                var apiKey = section["ApiKey"] ?? throw new InvalidOperationException("Missing AI:Clients:releaser:ApiKey");
+                var endpoint = section["Endpoint"];
+
+                var clientOptions = new OpenAI.OpenAIClientOptions();
+                if (!string.IsNullOrEmpty(endpoint))
+                    clientOptions.Endpoint = new Uri(endpoint);
+
+                return new OpenAI.OpenAIClient(new System.ClientModel.ApiKeyCredential(apiKey), clientOptions)
+                    .GetChatClient(modelId)
+                    .AsIChatClient();
+            });
+        }
+
+        // X/Twitter release announcement services
+        services.AddOptions<ReleaseAnnouncementOptions>()
+            .Configure<IConfiguration>((options, configuration) =>
+            {
+                configuration.GetSection("X").Bind(options);
+            });
+
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<ReleaseAnnouncementOptions>>().Value);
+        services.AddSingleton<OAuth1Helper>();
+        services.AddSingleton<XClient>();
+        services.AddSingleton(sp => new ReleaseSummarizer(
+            sp.GetKeyedService<IChatClient>("releaser"),
+            sp.GetRequiredService<ILogger<ReleaseSummarizer>>()));
+        services.AddSingleton<ReleaseAnnouncementFormatter>();
+        services.AddSingleton<ReleaseAnnouncementTracker>();
+        services.AddSingleton<ReleaseAnnouncer>();
     })
     .ConfigureGitHubWebhooks(config => config["GitHub:Secret"] ?? throw new ArgumentException("Missing GitHub:Secret configuration"))
     .Build();

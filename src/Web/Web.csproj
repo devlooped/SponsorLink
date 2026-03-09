@@ -34,6 +34,9 @@
     <PackageReference Include="Octokit.Webhooks.AzureFunctions" Version="3.2.1" />
     <PackageReference Include="ThisAssembly.Constants" Version="2.0.14" PrivateAssets="all" />
     <PackageReference Include="YamlPeek" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.3.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.3.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.24.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
