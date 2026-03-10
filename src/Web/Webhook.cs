@@ -170,14 +170,19 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                 if (services.GetService<IOptions<AuthOptions>>()?.Value is { } authOptions && !authOptions.IsConfigured)
                     logger.LogWarning("X client auth not configured. Skipping release announcement.");
             }
-
-            Task.Run(() => announcer.AnnounceReleaseAsync(
-                    announcementRepo.Owner.Login,
-                    announcementRepo.Name,
-                    payload.Release.TagName,
-                    payload.Release.Body ?? string.Empty,
-                    payload.Release.HtmlUrl))
-                .Forget();
+            else
+            {
+                Task.Factory.StartNew(
+                    async () => await announcer.AnnounceReleaseAsync(
+                        announcementRepo.Owner.Login,
+                        announcementRepo.Name,
+                        payload.Release.TagName,
+                        payload.Release.Body ?? string.Empty,
+                        payload.Release.HtmlUrl),
+                    CancellationToken.None,
+                    TaskCreationOptions.DenyChildAttach,
+                    TaskScheduler.Default).Unwrap().Forget();
+            }
         }
 
         await base.ProcessReleaseWebhookAsync(headers, payload, action);
