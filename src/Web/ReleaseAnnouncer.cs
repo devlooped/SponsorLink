@@ -7,14 +7,13 @@ namespace Devlooped.Sponsors;
 /// thread formatting → X/Twitter posting → mark as announced.
 /// </summary>
 public class ReleaseAnnouncer(
-    ReleaseAnnouncementOptions options,
     XClient xClient,
     ReleaseSummarizer summarizer,
     ReleaseAnnouncementFormatter formatter,
     ReleaseAnnouncementTracker tracker,
     ILogger<ReleaseAnnouncer> logger)
 {
-    public bool IsConfigured => options.IsConfigured && summarizer.IsConfigured;
+    public bool IsConfigured => summarizer.IsConfigured;
 
     public async Task AnnounceReleaseAsync(string owner, string repo, string tagName, string body, string releaseUrl, CancellationToken cancellationToken = default)
     {

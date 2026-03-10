@@ -1,3 +1,5 @@
+using System.Configuration;
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -6,11 +8,11 @@ using Devlooped.Sponsors;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Octokit;
@@ -31,8 +33,10 @@ var host = new HostBuilder()
         builder.UseClaimsPrincipal();
         builder.UseActivityTelemetry();
     })
-    .ConfigureServices(services =>
+    .ConfigureServices((context, services) =>
     {
+        services.AddChatClients(context.Configuration);
+
         // Register first so it initializes always before every other initializer.
         services.AddSingleton<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
         services.AddSingleton(sp => CloudStorageAccount.Parse(sp.GetRequiredService<IConfiguration>()["AzureWebJobsStorage"] ??
@@ -143,37 +147,10 @@ var host = new HostBuilder()
     })
     .ConfigureServices((context, services) =>
     {
-        // Register keyed IChatClient for AI release summarization
-        var releaserSection = context.Configuration.GetSection("AI:Clients:releaser");
-        if (releaserSection.Exists() && !string.IsNullOrEmpty(releaserSection["ModelId"]))
-        {
-            services.AddKeyedSingleton<IChatClient>("releaser", (sp, key) =>
-            {
-                var section = sp.GetRequiredService<IConfiguration>().GetSection("AI:Clients:releaser");
-                var modelId = section["ModelId"]!;
-                var apiKey = section["ApiKey"] ?? throw new InvalidOperationException("Missing AI:Clients:releaser:ApiKey");
-                var endpoint = section["Endpoint"];
+        services.AddTransient<AuthMessageHandler>();
+        services.Configure<AuthOptions>(context.Configuration.GetSection("X"));
+        services.AddHttpClient("x").AddHttpMessageHandler<AuthMessageHandler>().AddStandardResilienceHandler();
 
-                var clientOptions = new OpenAI.OpenAIClientOptions();
-                if (!string.IsNullOrEmpty(endpoint))
-                    clientOptions.Endpoint = new Uri(endpoint);
-
-                return new OpenAI.OpenAIClient(new System.ClientModel.ApiKeyCredential(apiKey), clientOptions)
-                    .GetChatClient(modelId)
-                    .AsIChatClient();
-            });
-        }
-
-        // X/Twitter release announcement services
-        services.AddOptions<ReleaseAnnouncementOptions>()
-            .Configure<IConfiguration>((options, configuration) =>
-            {
-                configuration.GetSection("X").Bind(options);
-            });
-
-        services.AddSingleton(sp => sp.GetRequiredService<IOptions<ReleaseAnnouncementOptions>>().Value);
-        services.AddSingleton<OAuth1Helper>();
-        services.AddSingleton<XClient>();
         services.AddSingleton(sp => new ReleaseSummarizer(
             sp.GetKeyedService<IChatClient>("releaser"),
             sp.GetRequiredService<ILogger<ReleaseSummarizer>>()));

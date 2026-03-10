@@ -2,28 +2,19 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Devlooped.Sponsors;
 
 /// <summary>
 /// Client for posting tweets and threaded reply chains to the X/Twitter API v2.
 /// </summary>
-public class XClient
+public class XClient(ILogger<XClient> logger, IOptions<AuthOptions> options, IHttpClientFactory httpClientFactory)
 {
     const string TwitterApiUrl = "https://api.x.com/2/tweets";
+    readonly HttpClient httpClient = httpClientFactory.CreateClient("x");
 
-    readonly ILogger<XClient> logger;
-    readonly HttpClient httpClient;
-    readonly OAuth1Helper oauth;
-
-    public bool IsConfigured => oauth.IsConfigured;
-
-    public XClient(ILogger<XClient> logger, IHttpClientFactory httpClientFactory, OAuth1Helper oauth)
-    {
-        this.logger = logger;
-        this.httpClient = httpClientFactory.CreateClient();
-        this.oauth = oauth;
-    }
+    public bool IsConfigured => options.Value.IsConfigured;
 
     public async Task<string?> PostTweetAndGetIdAsync(string text, string? replyToTweetId = null)
     {
@@ -38,11 +29,7 @@ public class XClient
             logger.LogInformation("Posting to X: {Preview}...",
                 text.Length > 50 ? text[..50] : text);
 
-            var authHeader = oauth.GenerateAuthorizationHeader("POST", TwitterApiUrl);
-
             using var request = new HttpRequestMessage(HttpMethod.Post, TwitterApiUrl);
-            request.Headers.Add("Authorization", authHeader);
-
             var body = new XPostRequest { Text = text };
             if (!string.IsNullOrEmpty(replyToTweetId))
                 body.Reply = new XReplyRequest { InReplyToTweetId = replyToTweetId };

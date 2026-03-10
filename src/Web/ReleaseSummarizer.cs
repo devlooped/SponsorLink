@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Devlooped.Sponsors;
@@ -9,7 +10,7 @@ namespace Devlooped.Sponsors;
 /// Summarizes release notes using an AI chat client, producing a ranked list of
 /// emoji-prefixed feature lines suitable for threaded X/Twitter announcements.
 /// </summary>
-public partial class ReleaseSummarizer(IChatClient? chatClient, ILogger<ReleaseSummarizer> logger)
+public partial class ReleaseSummarizer([FromKeyedServices("releaser")] IChatClient? chatClient, ILogger<ReleaseSummarizer> logger)
 {
     const int MaxContentLength = 4000;
     const int MaxRetries = 3;
@@ -47,10 +48,7 @@ public partial class ReleaseSummarizer(IChatClient? chatClient, ILogger<ReleaseS
                 logger.LogInformation("Requesting AI release summary for {Tag} (attempt {Attempt}/{Max})",
                     tagName, attempt, MaxRetries);
 
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                cts.CancelAfter(TimeSpan.FromSeconds(60));
-
-                var response = await chatClient.GetResponseAsync(messages, options, cts.Token);
+                var response = await chatClient.GetResponseAsync(messages, options);
                 var json = StripCodeFences(response.Messages.LastOrDefault()?.Text?.Trim() ?? string.Empty);
 
                 var plan = JsonSerializer.Deserialize<ThreadPlan>(json, jsonOptions);
