@@ -1,4 +1,6 @@
+using System.Security.Principal;
 using System.Text.Json;
+using Azure.Data.Tables;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
@@ -6,7 +8,7 @@ namespace Devlooped.Sponsors;
 
 public record AnnounceRelease(string Owner, string Repo, string TagName, string Body, string ReleaseUrl);
 
-public class ReleaseAnnouncerFunctions(ReleaseAnnouncer announcer, ILogger<ReleaseAnnouncer> logger)
+public class ReleaseAnnouncerFunctions(ReleaseAnnouncer announcer, CloudStorageAccount storage, ILogger<ReleaseAnnouncer> logger)
 {
     public const string QueueName = "announcer";
 
@@ -14,7 +16,17 @@ public class ReleaseAnnouncerFunctions(ReleaseAnnouncer announcer, ILogger<Relea
     public async Task DequeueAsync([QueueTrigger(QueueName, Connection = "AzureWebJobsStorage")] string json)
     {
         if (JsonSerializer.Deserialize<AnnounceRelease>(json) is AnnounceRelease release)
+        {
+            var table = TableRepository.Create(storage, QueueName);
+            if (await table.GetAsync($"{release.Owner}_{release.Repo}", release.TagName) is not null)
+            {
+                logger.LogInformation("Release {Owner}/{Repo}@{Tag} already announced. Skipping.", release.Owner, release.Repo, release.TagName);
+                return;
+            }
+
             await announcer.AnnounceReleaseAsync(release);
+            await table.PutAsync(new TableEntity($"{release.Owner}_{release.Repo}", release.TagName));
+        }
         else
             logger.LogWarning("Failed to deserialize release announcement from queue: {Json}", json);
     }
