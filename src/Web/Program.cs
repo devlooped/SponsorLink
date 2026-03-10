@@ -176,6 +176,10 @@ var host = new HostBuilder()
             return new QueueServiceClient(context.Configuration["AzureWebJobsStorage"]!, options);
         });
     })
+    .ConfigureLogging(logging =>
+    {
+        logging.AddFilter("Devlooped", LogLevel.Trace);
+    })
     .ConfigureGitHubWebhooks(config => config["GitHub:Secret"] ?? throw new ArgumentException("Missing GitHub:Secret configuration"))
     .Build();
 
