@@ -162,6 +162,8 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         // Post release announcement to X/Twitter
         if (action == ReleaseAction.Published && !payload.Release.Draft && payload.Repository is { } announcementRepo)
         {
+            logger.LogInformation("Checking release announcement configuration for {Repository}", announcementRepo.Name);
+
             if (!announcer.IsConfigured)
             {
                 logger.LogWarning("Release announcement not fully configured. Skipping.");
@@ -172,6 +174,9 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
             }
             else
             {
+                logger.LogInformation("Release {Action} for {Repository}@{Release} meets announcement criteria. Processing announcement.",
+                    action, payload.Repository?.FullName, payload.Release.TagName);
+
                 Task.Factory.StartNew(
                     async () => await announcer.AnnounceReleaseAsync(
                         announcementRepo.Owner.Login,
@@ -183,6 +188,11 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                     TaskCreationOptions.DenyChildAttach,
                     TaskScheduler.Default).Unwrap().Forget();
             }
+        }
+        else
+        {
+            logger.LogInformation("Release {Action} for {Repository}@{Release} does not meet announcement criteria. Skipping.",
+                action, payload.Repository?.FullName, payload.Release.TagName);
         }
 
         await base.ProcessReleaseWebhookAsync(headers, payload, action);
