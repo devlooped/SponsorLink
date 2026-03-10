@@ -1,6 +1,22 @@
+using System.Text.Json;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
 namespace Devlooped.Sponsors;
+
+public record AnnounceRelease(string Owner, string Repo, string TagName, string Body, string ReleaseUrl);
+
+public class ReleaseAnnouncerFunctions(ReleaseAnnouncer announcer)
+{
+    public const string QueueName = "announcer";
+
+    [Function("announcer_dequeue")]
+    public async Task DequeueAsync([QueueTrigger(QueueName, Connection = "AzureWebJobsStorage")] string json)
+    {
+        if (JsonSerializer.Deserialize<AnnounceRelease>(json) is AnnounceRelease release)
+            await announcer.AnnounceReleaseAsync(release);
+    }
+}
 
 /// <summary>
 /// Orchestrates the release announcement flow: dedup check → AI summarization →
@@ -14,6 +30,9 @@ public class ReleaseAnnouncer(
     ILogger<ReleaseAnnouncer> logger)
 {
     public bool IsConfigured => summarizer.IsConfigured;
+
+    public Task AnnounceReleaseAsync(AnnounceRelease release, CancellationToken cancellationToken = default)
+        => AnnounceReleaseAsync(release.Owner, release.Repo, release.TagName, release.Body, release.ReleaseUrl, cancellationToken);
 
     public async Task AnnounceReleaseAsync(string owner, string repo, string tagName, string body, string releaseUrl, CancellationToken cancellationToken = default)
     {

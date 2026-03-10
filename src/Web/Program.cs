@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Azure.Storage.Queues;
 using Devlooped;
 using Devlooped.Sponsors;
 using Microsoft.ApplicationInsights;
@@ -18,6 +19,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Octokit;
 using Octokit.Webhooks;
 using Octokit.Webhooks.AzureFunctions;
+using Octokit.Webhooks.Models;
 
 var host = new HostBuilder()
     .ConfigureAppConfiguration(builder => builder.Configure())
@@ -158,8 +160,31 @@ var host = new HostBuilder()
         services.AddSingleton<ReleaseAnnouncementTracker>();
         services.AddSingleton<ReleaseAnnouncer>();
         services.AddSingleton<XClient>();
+
+        services.AddSingleton(services =>
+        {
+            var options = new QueueClientOptions
+            {
+                MessageEncoding = QueueMessageEncoding.Base64
+            };
+
+            if (context.HostingEnvironment.IsDevelopment())
+            {
+                options.Diagnostics.IsLoggingEnabled = true;
+                options.Diagnostics.IsLoggingContentEnabled = true;
+            }
+
+            return new QueueServiceClient(context.Configuration["AzureWebJobsStorage"]!, options);
+        });
     })
     .ConfigureGitHubWebhooks(config => config["GitHub:Secret"] ?? throw new ArgumentException("Missing GitHub:Secret configuration"))
     .Build();
+
+var queues = host.Services.GetRequiredService<QueueServiceClient>();
+var queue = queues.GetQueueClient(ReleaseAnnouncerFunctions.QueueName);
+await queue.CreateIfNotExistsAsync();
+#if DEBUG
+await queue.ClearMessagesAsync();
+#endif
 
 host.Run();

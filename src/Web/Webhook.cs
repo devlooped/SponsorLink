@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Azure.Storage.Queues;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +20,7 @@ using Octokit.Webhooks.Models;
 
 namespace Devlooped.Sponsors;
 
-public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IConfiguration config, IGitHubClient github, IPushover notifier, ILogger<Webhook> logger, IHttpClientFactory httpFactory, ReleaseAnnouncer announcer, IServiceProvider services) : WebhookEventProcessor
+public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IConfiguration config, IGitHubClient github, IPushover notifier, ILogger<Webhook> logger, IHttpClientFactory httpFactory, QueueServiceClient queues, IServiceProvider services) : WebhookEventProcessor
 {
     static readonly ActivitySource tracer = ActivityTracer.Source;
 
@@ -44,7 +45,9 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
     {
         await base.ProcessReleaseWebhookAsync(headers, payload, action);
 
-        if (await github.User.Current() is { } user && user.Login.Contains("bot"))
+        // Don't re-process something we did ourselves by checking if the sender is the same as the authenticated
+        // user used to make changes to the release.
+        if (await github.User.Current() is { } user && payload.Sender?.Login == user.Login)
             return;
 
         if (action != ReleaseAction.Deleted)
@@ -164,40 +167,23 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
             }
         }
 
-        // Post release announcement to X/Twitter
+        // Enqueue release announcement to X/Twitter
         if (action == ReleaseAction.Published && !payload.Release.Draft && payload.Repository is { } announcementRepo)
         {
-            logger.LogInformation("Checking release announcement configuration for {Repository}", announcementRepo.Name);
-
-            if (!announcer.IsConfigured)
+            var queue = queues.GetQueueClient(ReleaseAnnouncerFunctions.QueueName);
+            try
             {
-                logger.LogWarning("Release announcement not fully configured. Skipping.");
-                if (services.GetKeyedService<IChatClient>("releaser") is null)
-                    logger.LogWarning("AI chat client not configured. Cannot summarize release for announcement.");
-                if (services.GetService<IOptions<AuthOptions>>()?.Value is { } authOptions && !authOptions.IsConfigured)
-                    logger.LogWarning("X client auth not configured. Skipping release announcement.");
+                await queue.SendMessageAsync(JsonSerializer.Serialize(new AnnounceRelease(
+                    announcementRepo.Owner.Login,
+                    announcementRepo.Name,
+                    payload.Release.TagName,
+                    payload.Release.Body ?? string.Empty,
+                    payload.Release.HtmlUrl)), cancellationToken);
             }
-            else
+            catch (Exception e)
             {
-                logger.LogInformation("Release {Action} for {Repository}@{Release} meets announcement criteria. Processing announcement.",
-                    (string)action, payload.Repository?.FullName, payload.Release.TagName);
-
-                Task.Factory.StartNew(
-                    async () => await announcer.AnnounceReleaseAsync(
-                        announcementRepo.Owner.Login,
-                        announcementRepo.Name,
-                        payload.Release.TagName,
-                        payload.Release.Body ?? string.Empty,
-                        payload.Release.HtmlUrl),
-                    CancellationToken.None,
-                    TaskCreationOptions.DenyChildAttach,
-                    TaskScheduler.Default).Unwrap().Forget();
+                logger.LogError(e, "Failed to queue release announcement");
             }
-        }
-        else
-        {
-            logger.LogInformation("Release {Action} for {Repository}@{Release} does not meet announcement criteria. Skipping.",
-                (string)action, payload.Repository?.FullName, payload.Release.TagName);
         }
     }
 
