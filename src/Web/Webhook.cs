@@ -42,6 +42,11 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
     protected override async ValueTask ProcessReleaseWebhookAsync(WebhookHeaders headers, ReleaseEvent payload, ReleaseAction action, CancellationToken cancellationToken = default)
     {
+        await base.ProcessReleaseWebhookAsync(headers, payload, action);
+
+        if (await github.User.Current() is { } user && user.Login.Contains("bot"))
+            return;
+
         if (action != ReleaseAction.Deleted)
         {
             // fetch sponsors markdown from https://github.com/devlooped/sponsors/raw/refs/heads/main/sponsors.md
@@ -175,7 +180,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
             else
             {
                 logger.LogInformation("Release {Action} for {Repository}@{Release} meets announcement criteria. Processing announcement.",
-                    action, payload.Repository?.FullName, payload.Release.TagName);
+                    (string)action, payload.Repository?.FullName, payload.Release.TagName);
 
                 Task.Factory.StartNew(
                     async () => await announcer.AnnounceReleaseAsync(
@@ -192,10 +197,8 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         else
         {
             logger.LogInformation("Release {Action} for {Repository}@{Release} does not meet announcement criteria. Skipping.",
-                action, payload.Repository?.FullName, payload.Release.TagName);
+                (string)action, payload.Repository?.FullName, payload.Release.TagName);
         }
-
-        await base.ProcessReleaseWebhookAsync(headers, payload, action);
     }
 
     async Task CreateReleaseDiscussion(Octokit.Release release, string content, Octokit.Webhooks.Models.Repository repo, CancellationToken cancellationToken)
