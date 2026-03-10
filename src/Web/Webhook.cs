@@ -3,8 +3,11 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Octokit;
 using Octokit.Webhooks;
 using Octokit.Webhooks.Events;
@@ -16,7 +19,7 @@ using Octokit.Webhooks.Models;
 
 namespace Devlooped.Sponsors;
 
-public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IConfiguration config, IGitHubClient github, IPushover notifier, ILogger<Webhook> logger, IHttpClientFactory httpFactory, ReleaseAnnouncer announcer) : WebhookEventProcessor
+public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IConfiguration config, IGitHubClient github, IPushover notifier, ILogger<Webhook> logger, IHttpClientFactory httpFactory, ReleaseAnnouncer announcer, IServiceProvider services) : WebhookEventProcessor
 {
     static readonly ActivitySource tracer = ActivityTracer.Source;
 
@@ -159,6 +162,15 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         // Post release announcement to X/Twitter
         if (action == ReleaseAction.Published && !payload.Release.Draft && payload.Repository is { } announcementRepo)
         {
+            if (!announcer.IsConfigured)
+            {
+                logger.LogWarning("Release announcement not fully configured. Skipping.");
+                if (services.GetKeyedService<IChatClient>("releaser") is null)
+                    logger.LogWarning("AI chat client not configured. Cannot summarize release for announcement.");
+                if (services.GetService<IOptions<AuthOptions>>()?.Value is { } authOptions && !authOptions.IsConfigured)
+                    logger.LogWarning("X client auth not configured. Skipping release announcement.");
+            }
+
             Task.Run(() => announcer.AnnounceReleaseAsync(
                     announcementRepo.Owner.Login,
                     announcementRepo.Name,
