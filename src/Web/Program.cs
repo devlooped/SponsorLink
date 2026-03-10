@@ -157,6 +157,7 @@ var host = new HostBuilder()
         services.AddSingleton<ReleaseAnnouncementFormatter>();
         services.AddSingleton<ReleaseAnnouncementTracker>();
         services.AddSingleton<ReleaseAnnouncer>();
+        services.AddSingleton<XClient>();
     })
     .ConfigureGitHubWebhooks(config => config["GitHub:Secret"] ?? throw new ArgumentException("Missing GitHub:Secret configuration"))
     .Build();
