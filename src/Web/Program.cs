@@ -152,9 +152,7 @@ var host = new HostBuilder()
         services.Configure<AuthOptions>(context.Configuration.GetSection("X"));
         services.AddHttpClient("x").AddHttpMessageHandler<AuthMessageHandler>().AddStandardResilienceHandler();
 
-        services.AddSingleton(sp => new ReleaseSummarizer(
-            sp.GetKeyedService<IChatClient>("releaser"),
-            sp.GetRequiredService<ILogger<ReleaseSummarizer>>()));
+        services.AddSingleton<ReleaseSummarizer>();
         services.AddSingleton<ReleaseAnnouncementFormatter>();
         services.AddSingleton<ReleaseAnnouncementTracker>();
         services.AddSingleton<ReleaseAnnouncer>();
@@ -199,5 +197,9 @@ await queue.CreateIfNotExistsAsync();
 #if DEBUG
 await queue.ClearMessagesAsync();
 #endif
+
+var chat = host.Services.GetChatClient("grok");
+if (chat is null)
+    host.Services.GetRequiredService<ILogger<Program>>().LogWarning("No 'grok' AI chat client configured.");
 
 host.Run();
