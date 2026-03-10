@@ -10,7 +10,7 @@ namespace Devlooped.Sponsors;
 /// Summarizes release notes using an AI chat client, producing a ranked list of
 /// emoji-prefixed feature lines suitable for threaded X/Twitter announcements.
 /// </summary>
-public partial class ReleaseSummarizer([FromKeyedServices("releaser")] IChatClient? chatClient, ILogger<ReleaseSummarizer> logger)
+public partial class ReleaseSummarizer([FromKeyedServices("Grok")] IChatClient? chatClient, ILogger<ReleaseSummarizer> logger)
 {
     const int MaxContentLength = 4000;
     const int MaxRetries = 3;

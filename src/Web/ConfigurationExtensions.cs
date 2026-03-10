@@ -7,6 +7,7 @@ public static class ConfigurationExtensions
 {
     public static IConfigurationBuilder Configure(this IConfigurationBuilder builder)
     {
+        builder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
         builder.AddUserSecrets("A85AC898-E41C-4D9D-AD9B-52ED748D9901");
         builder.AddEnvironmentVariables();
 

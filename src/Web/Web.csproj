@@ -6,9 +6,6 @@
     <Product>SponsorLink</Product>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="local.settings.json" />
-  </ItemGroup>
-  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Azure.Identity" Version="1.18.0" />
     <PackageReference Include="Devlooped.CredentialManager" Version="2.7.0" />
@@ -44,6 +41,7 @@
   <ItemGroup>
     <None Update="@(None)" CopyToOutputDirectory="PreserveNewest" />
     <None Update="local.settings.json" CopyToPublishDirectory="Never" />
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <Target Name="ReadBaseUrl" BeforeTargets="PrepareConstants">
     <!-- Make sure we use the same subdir from docs, in case it changes -->

@@ -19,7 +19,6 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Octokit;
 using Octokit.Webhooks;
 using Octokit.Webhooks.AzureFunctions;
-using Octokit.Webhooks.Models;
 
 var host = new HostBuilder()
     .ConfigureAppConfiguration(builder => builder.Configure())
