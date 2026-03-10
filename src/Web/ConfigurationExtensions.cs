@@ -11,8 +11,10 @@ public static class ConfigurationExtensions
         builder.AddEnvironmentVariables();
 
         // Optionally, use key vault for secrets instead of plain-text app service configuration
-        if (Environment.GetEnvironmentVariable("AZURE_KEYVAULT") is string kv)
-            builder.AddAzureKeyVault(new Uri($"https://{kv}.vault.azure.net/"), new DefaultAzureCredential());
+        if (Environment.GetEnvironmentVariable("AZURE_KEYVAULT") is string kve)
+            builder.AddAzureKeyVault(new Uri($"https://{kve}.vault.azure.net/"), new DefaultAzureCredential());
+        else if (builder.Build()["azure:keyvault"] is string kvc)
+            builder.AddAzureKeyVault(new Uri($"https://{kvc}.vault.azure.net/"), new DefaultAzureCredential());
 
 #if DEBUG
         // Allows using SL config for local development. 

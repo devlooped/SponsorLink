@@ -26,7 +26,7 @@ public static class GitHubDeviceFlowAuthenticationExtensions
     public static IFunctionsWorkerApplicationBuilder UseGitHubDeviceFlowAuthentication(this IFunctionsWorkerApplicationBuilder builder)
         => builder.UseMiddleware<GitHubDeviceFlowMiddleware>();
 
-    class GitHubDeviceFlowMiddleware(IHttpClientFactory httpFactory, IConfiguration configuration, ILogger<GitHubDeviceFlowMiddleware> logger) : IFunctionsWorkerMiddleware
+    class GitHubDeviceFlowMiddleware(System.Net.Http.IHttpClientFactory httpFactory, IConfiguration configuration, ILogger<GitHubDeviceFlowMiddleware> logger) : IFunctionsWorkerMiddleware
     {
         static readonly JsonSerializerOptions options = new(JsonSerializerDefaults.Web)
         {

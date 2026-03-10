@@ -120,7 +120,7 @@ public static partial class ActivityTelemetryExtensions
             }
 #if DEBUG
             // In local debug, we fetch the id from the local config for easier testing
-            else if (config["sponsorlink:id"] is { Length: > 0 } localId)
+            else if (context.InstanceServices.GetRequiredService<IConfiguration>()["sponsorlink:id"] is { Length: > 0 } localId)
             {
                 // Associate with opaque installation id
                 Activity.Current?.AddBaggage("session_Id", localId);
