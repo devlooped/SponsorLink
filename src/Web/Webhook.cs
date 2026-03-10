@@ -159,20 +159,13 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         // Post release announcement to X/Twitter
         if (action == ReleaseAction.Published && !payload.Release.Draft && payload.Repository is { } announcementRepo)
         {
-            try
-            {
-                await announcer.AnnounceReleaseAsync(
+            Task.Run(() => announcer.AnnounceReleaseAsync(
                     announcementRepo.Owner.Login,
                     announcementRepo.Name,
                     payload.Release.TagName,
                     payload.Release.Body ?? string.Empty,
-                    payload.Release.HtmlUrl,
-                    cancellationToken);
-            }
-            catch (Exception e)
-            {
-                logger.LogWarning(e, "Failed to announce release {Tag} to X", payload.Release.TagName);
-            }
+                    payload.Release.HtmlUrl))
+                .Forget();
         }
 
         await base.ProcessReleaseWebhookAsync(headers, payload, action);
