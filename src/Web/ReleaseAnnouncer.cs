@@ -11,13 +11,13 @@ public record AnnounceRelease(string Owner, string Repo, string TagName, string 
 public class ReleaseAnnouncerFunctions(ReleaseAnnouncer announcer, CloudStorageAccount storage, ILogger<ReleaseAnnouncer> logger)
 {
     public const string QueueName = "announcer";
+    readonly ITableRepository<TableEntity> table = TableRepository.Create(storage, QueueName);
 
     [Function("announcer_dequeue")]
     public async Task DequeueAsync([QueueTrigger(QueueName, Connection = "AzureWebJobsStorage")] string json)
     {
         if (JsonSerializer.Deserialize<AnnounceRelease>(json) is AnnounceRelease release)
         {
-            var table = TableRepository.Create(storage, QueueName);
             if (await table.GetAsync($"{release.Owner}_{release.Repo}", release.TagName) is not null)
             {
                 logger.LogInformation("Release {Owner}/{Repo}@{Tag} already announced. Skipping.", release.Owner, release.Repo, release.TagName);
