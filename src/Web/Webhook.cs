@@ -50,7 +50,8 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         if (await github.User.Current() is { } user && payload.Sender?.Login == user.Login)
             return;
 
-        if (action != ReleaseAction.Deleted)
+        if (action != ReleaseAction.Deleted &&
+            payload.Repository?.Name != "sandbox")
         {
             // fetch sponsors markdown from https://github.com/devlooped/sponsors/raw/refs/heads/main/sponsors.md
             // lookup for <!-- sponsors --> and <!-- /sponsors --> markers
