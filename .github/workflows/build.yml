@@ -111,7 +111,9 @@ jobs:
       - name: ⚙ dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.x
+          dotnet-version: |
+            8.x  
+            10.x
 
       - name: ⚙ install
         working-directory: bin
