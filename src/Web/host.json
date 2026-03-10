@@ -6,6 +6,9 @@
     }
   },
   "logging": {
+    "logLevel": {
+      "Devlooped": "Trace"
+    },
     "applicationInsights": {
       "samplingSettings": {
         "isEnabled": true,
