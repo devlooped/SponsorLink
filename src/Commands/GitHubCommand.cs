@@ -33,7 +33,7 @@ public abstract class GitHubCommand(Config config) : Command
         return 0;
     }
 
-    public override int Execute(CommandContext context) => Execute(config, acc => Account = acc);
+    public override int Execute(CommandContext context, CancellationToken cancellation) => Execute(config, acc => Account = acc);
 
     /// <summary>
     /// Authenticated user account in the GH CLI.
@@ -43,7 +43,7 @@ public abstract class GitHubCommand(Config config) : Command
 
 public abstract class GitHubCommand<TSettings>(Config config) : Command<TSettings> where TSettings : CommandSettings
 {
-    public override int Execute(CommandContext context, TSettings settings) => GitHubCommand.Execute(config, acc => Account = acc);
+    public override int Execute(CommandContext context, TSettings settings, CancellationToken cancellation) => GitHubCommand.Execute(config, acc => Account = acc);
 
     /// <summary>
     /// Authenticated user account in the GH CLI.
@@ -53,7 +53,7 @@ public abstract class GitHubCommand<TSettings>(Config config) : Command<TSetting
 
 public abstract class GitHubAsyncCommand(Config config) : AsyncCommand
 {
-    public override Task<int> ExecuteAsync(CommandContext context) => Task.FromResult(Execute(config, acc => Account = acc));
+    public override Task<int> ExecuteAsync(CommandContext context, CancellationToken cancellation) => Task.FromResult(Execute(config, acc => Account = acc));
 
     /// <summary>
     /// Authenticated user account in the GH CLI.
@@ -63,7 +63,7 @@ public abstract class GitHubAsyncCommand(Config config) : AsyncCommand
 
 public abstract class GitHubAsyncCommand<TSettings>(Config config) : AsyncCommand<TSettings> where TSettings : CommandSettings
 {
-    public override Task<int> ExecuteAsync(CommandContext context, TSettings settings) => Task.FromResult(Execute(config, acc => Account = acc));
+    public override Task<int> ExecuteAsync(CommandContext context, TSettings settings, CancellationToken cancellation) => Task.FromResult(Execute(config, acc => Account = acc));
 
     /// <summary>
     /// Authenticated user account in the GH CLI.

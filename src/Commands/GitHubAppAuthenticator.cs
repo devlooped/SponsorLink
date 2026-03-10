@@ -11,7 +11,7 @@ public interface IGitHubAppAuthenticator
     Task<string?> AuthenticateAsync(string clientId, IProgress<string> progress, bool interactive, string @namespace = GitHubAppAuthenticator.DefaultNamespace, ICredentialStore? credentials = default);
 }
 
-public class GitHubAppAuthenticator(IHttpClientFactory httpFactory) : IGitHubAppAuthenticator
+public class GitHubAppAuthenticator(System.Net.Http.IHttpClientFactory httpFactory) : IGitHubAppAuthenticator
 {
     /// <summary>
     /// Default namespace used to scope credentials stored by this authenticator.

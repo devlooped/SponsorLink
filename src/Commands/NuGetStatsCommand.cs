@@ -96,7 +96,7 @@ public class NuGetStatsCommand(Config config, IGraphQueryClient graph, IHttpClie
         }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, NuGetStatsSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, NuGetStatsSettings settings, CancellationToken cancellation)
     {
         string? token = default;
 #if DEBUG
@@ -107,7 +107,7 @@ public class NuGetStatsCommand(Config config, IGraphQueryClient graph, IHttpClie
 
         using var withToken = GitHub.WithToken(token);
         // Whether via custom token or exiting one, we need to ensure user can be authenticated with the GH CLI
-        if ((token != null && withToken == null) || await base.ExecuteAsync(context, settings) is not 0)
+        if ((token != null && withToken == null) || await base.ExecuteAsync(context, settings, cancellation) is not 0)
         {
             AnsiConsole.MarkupLine(":cross_mark: [yellow]GitHub CLI auth status could not be determined[/]");
             return -1;

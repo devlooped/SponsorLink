@@ -17,12 +17,12 @@ public class CheckTokenCommand(IGraphQueryClient graph, Config config) : GitHubA
         public required string Token { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, CheckSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, CheckSettings settings, CancellationToken cancellation)
     {
         using var withToken = GitHub.WithToken(settings.Token);
         // NOTE: gh cli will not set an invalid token, so we first need to check for that (null withToken)
         // before checking the base execute which will also authenticate.
-        if (withToken is null || await base.ExecuteAsync(context, settings) is not 0)
+        if (withToken is null || await base.ExecuteAsync(context, settings, cancellation) is not 0)
         {
             AnsiConsole.MarkupLine(":cross_mark: [yellow]Invalid GitHub token provided[/]");
             return -1;

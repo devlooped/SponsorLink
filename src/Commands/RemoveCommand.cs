@@ -3,8 +3,8 @@ using System.Text;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using static Spectre.Console.AnsiConsole;
 using static Devlooped.Sponsors.ThisAssembly.Strings;
+using static Spectre.Console.AnsiConsole;
 
 namespace Devlooped.Sponsors;
 
@@ -40,7 +40,7 @@ public class RemoveCommand(IHttpClientFactory httpFactory, IGitHubAppAuthenticat
     }
 
 
-    public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings, CancellationToken cancellation = default)
     {
         var sponsorables = new HashSet<string>();
         if (settings.Sponsorable != null)

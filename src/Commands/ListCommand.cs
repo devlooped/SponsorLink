@@ -21,7 +21,7 @@ public class ListCommand(Config config, IGraphQueryClient client) : GitHubAsyncC
 
     record Organization(string Login, string[] Sponsorables);
 
-    public override async Task<int> ExecuteAsync(CommandContext context, ListSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, ListSettings settings, CancellationToken cancellation)
     {
         string? token = default;
         if (settings.WithToken)
@@ -34,7 +34,7 @@ public class ListCommand(Config config, IGraphQueryClient client) : GitHubAsyncC
             return -1;
         }
 
-        var result = await base.ExecuteAsync(context, settings);
+        var result = await base.ExecuteAsync(context, settings, cancellation);
         if (result != 0)
             return result;
 

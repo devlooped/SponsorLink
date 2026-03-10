@@ -53,7 +53,7 @@ public partial class InitCommand : AsyncCommand<InitCommand.Settings>
         }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellation)
     {
         var sponsorable = settings.Audience
             .Where(x => x.Host == "github.com")

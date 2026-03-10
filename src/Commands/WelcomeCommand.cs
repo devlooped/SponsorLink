@@ -14,7 +14,7 @@ public class WelcomeCommand(Config config) : Command<WelcomeCommand.WelcomeSetti
         public bool Force { get; set; }
     }
 
-    public override int Execute(CommandContext context, WelcomeSettings settings)
+    public override int Execute(CommandContext context, WelcomeSettings settings, CancellationToken cancellation)
     {
         if (settings.ToS == true)
         {

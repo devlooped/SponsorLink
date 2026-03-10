@@ -9,8 +9,9 @@ using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using static Devlooped.Sponsors.SyncCommand;
-using static Spectre.Console.AnsiConsole;
 using static Devlooped.Sponsors.ThisAssembly.Strings;
+using static Spectre.Console.AnsiConsole;
+using IHttpClientFactory = System.Net.Http.IHttpClientFactory;
 
 namespace Devlooped.Sponsors;
 
@@ -111,7 +112,7 @@ public abstract class SyncCommand<TSettings>(DotNetConfig.Config config, IGraphQ
         public const int SyncFailure = -7;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, TSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, TSettings settings, CancellationToken cancellation = default)
     {
         // NOTE: ToS acceptance ALWAYS runs from Program.cs
         var result = 0;
@@ -130,7 +131,7 @@ public abstract class SyncCommand<TSettings>(DotNetConfig.Config config, IGraphQ
             if (runDiscovery)
             {
                 // In order to run discovery, we need an authenticated user
-                result = await base.ExecuteAsync(context, settings);
+                result = await base.ExecuteAsync(context, settings, cancellation);
                 if (result != 0)
                     return result;
 
@@ -413,7 +414,7 @@ public abstract class SyncCommand<TSettings>(DotNetConfig.Config config, IGraphQ
 
         // Let the config be handled by the config command for consistency.
         if (autosync != null)
-            new ConfigCommand(config).Execute(context, new ConfigCommand.ConfigSettings { AutoSync = autosync });
+            new ConfigCommand(config).Execute(context, new ConfigCommand.ConfigSettings { AutoSync = autosync }, cancellation);
 
         return result;
     }

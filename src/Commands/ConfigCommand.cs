@@ -2,8 +2,8 @@
 using DotNetConfig;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using static Spectre.Console.AnsiConsole;
 using static Devlooped.Sponsors.ThisAssembly;
+using static Spectre.Console.AnsiConsole;
 
 namespace Devlooped.Sponsors;
 
@@ -33,7 +33,7 @@ public class ConfigCommand(Config config) : Command<ConfigCommand.ConfigSettings
         public string Namespace { get; set; } = "com.devlooped";
     }
 
-    public override int Execute(CommandContext context, ConfigSettings settings)
+    public override int Execute(CommandContext context, ConfigSettings settings, CancellationToken cancellation)
     {
         if (settings.AutoSync == true)
         {

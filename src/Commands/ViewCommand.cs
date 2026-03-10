@@ -5,9 +5,9 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using static Devlooped.Sponsors.ThisAssembly;
 using static Devlooped.Sponsors.ViewCommand;
 using static Spectre.Console.AnsiConsole;
-using static Devlooped.Sponsors.ThisAssembly;
 
 namespace Devlooped.Sponsors;
 
@@ -20,7 +20,7 @@ public class ViewSettings : ToSSettings
 }
 
 [Description("Validates and displays the active sponsor manifests, if any")]
-public partial class ViewCommand(IHttpClientFactory clientFactory) : ViewCommand<SponsorableViewSettings>(clientFactory) 
+public partial class ViewCommand(IHttpClientFactory clientFactory) : ViewCommand<SponsorableViewSettings>(clientFactory)
 {
     public class SponsorableViewSettings : ViewSettings, ISponsorableSettings
     {
@@ -33,7 +33,7 @@ public partial class ViewCommand(IHttpClientFactory clientFactory) : ViewCommand
 public abstract class ViewCommand<TSettings>(IHttpClientFactory clientFactory) : AsyncCommand<TSettings>
     where TSettings : ViewSettings, ISponsorableSettings, new()
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, TSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, TSettings settings, CancellationToken cancellation)
     {
         var targetDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".sponsorlink");
 
