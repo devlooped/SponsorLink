@@ -6,7 +6,7 @@ namespace Devlooped.Sponsors;
 
 public record AnnounceRelease(string Owner, string Repo, string TagName, string Body, string ReleaseUrl);
 
-public class ReleaseAnnouncerFunctions(ReleaseAnnouncer announcer)
+public class ReleaseAnnouncerFunctions(ReleaseAnnouncer announcer, ILogger<ReleaseAnnouncer> logger)
 {
     public const string QueueName = "announcer";
 
@@ -15,6 +15,8 @@ public class ReleaseAnnouncerFunctions(ReleaseAnnouncer announcer)
     {
         if (JsonSerializer.Deserialize<AnnounceRelease>(json) is AnnounceRelease release)
             await announcer.AnnounceReleaseAsync(release);
+        else
+            logger.LogWarning("Failed to deserialize release announcement from queue: {Json}", json);
     }
 }
 
