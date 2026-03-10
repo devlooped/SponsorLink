@@ -179,6 +179,16 @@ var host = new HostBuilder()
     .ConfigureLogging(logging =>
     {
         logging.AddFilter("Devlooped", LogLevel.Trace);
+
+        // The Application Insights SDK adds a default logging filter that instructs ILogger to
+        // capture only Warning and above. Remove it so our category-level filters actually apply.
+        logging.Services.Configure<LoggerFilterOptions>(options =>
+        {
+            var defaultRule = options.Rules.FirstOrDefault(rule => rule.ProviderName
+                == "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider");
+            if (defaultRule is not null)
+                options.Rules.Remove(defaultRule);
+        });
     })
     .ConfigureGitHubWebhooks(config => config["GitHub:Secret"] ?? throw new ArgumentException("Missing GitHub:Secret configuration"))
     .Build();
