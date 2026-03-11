@@ -45,13 +45,14 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
     {
         await base.ProcessReleaseWebhookAsync(headers, payload, action);
 
-        // Don't re-process something we did ourselves by checking if the sender is the same as the authenticated
-        // user used to make changes to the release.
-        if (await github.User.Current() is { } user && payload.Sender?.Login == user.Login)
-            return;
+        //if (await github.User.Current() is { } user && payload.Sender?.Login == user.Login)
+        //    return;
 
         if (action != ReleaseAction.Deleted &&
-            payload.Repository?.Name != "sandbox")
+            payload.Repository?.Name != "sandbox" &&
+            // Don't re-process something we did ourselves by checking if the sender is the same as the authenticated
+            // user used to make changes to the release.
+            await github.User.Current() is { } user && payload.Sender?.Login != user.Login)
         {
             // fetch sponsors markdown from https://github.com/devlooped/sponsors/raw/refs/heads/main/sponsors.md
             // lookup for <!-- sponsors --> and <!-- /sponsors --> markers
