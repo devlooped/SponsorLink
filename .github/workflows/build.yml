@@ -102,6 +102,9 @@ jobs:
       matrix:
         os: [ 'windows-latest', 'ubuntu-latest', 'macOS-latest' ]
     steps:
+      - name: 🤘 checkout
+        uses: actions/checkout@v4
+
       - name: ⬇️ artifacts
         uses: actions/download-artifact@v4
         with:
@@ -109,11 +112,7 @@ jobs:
           path: bin
 
       - name: ⚙ dotnet
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: |
-            8.x  
-            10.x
+        uses: devlooped/actions-dotnet-env@v1
 
       - name: ⚙ install
         working-directory: bin
