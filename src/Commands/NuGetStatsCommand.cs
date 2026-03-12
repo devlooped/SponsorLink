@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Devlooped.Web;
 using DotNetConfig;
@@ -21,7 +22,7 @@ using Spectre.Console.Cli;
 namespace Devlooped.Sponsors;
 
 [Description("Emits the nuget.json manifest with all contributors to active nuget packages")]
-public class NuGetStatsCommand(Config config, IGraphQueryClient graph, IHttpClientFactory httpFactory) : GitHubAsyncCommand<NuGetStatsCommand.NuGetStatsSettings>(config)
+public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, IHttpClientFactory httpFactory) : GitHubAsyncCommand<NuGetStatsCommand.NuGetStatsSettings>(config)
 {
     // Maximum versions to consider from a package history for determining whether the package 
     // is a popular with a minimum amount of downloads.
@@ -132,7 +133,7 @@ public class NuGetStatsCommand(Config config, IGraphQueryClient graph, IHttpClie
         else
             model = new OpenSource();
 
-        using var http = httpFactory.CreateClient();
+        using var http = httpFactory.CreateClient("NuGet");
 
         var progress = AnsiConsole.Progress()
             .Columns(
@@ -339,7 +340,9 @@ public class NuGetStatsCommand(Config config, IGraphQueryClient graph, IHttpClie
 
                             while (retries < 5)
                             {
-                                var details = await retry.ExecuteAsync(() => Task.FromResult(HtmlDocument.Load($"https://www.nuget.org/packages/{id.Id}")));
+                                var html = await http.GetStringAsync($"https://www.nuget.org/packages/{id.Id}", cancellation);
+                                html = CleanSponsorshipUrlBug().Replace(html, "");
+                                var details = HtmlDocument.Load(new StringReader(html));
 
                                 // First determine if the package is active, so we can stop scraping when we reach the low-numbers
                                 // Get the row matching the latest version in the API (there can be prereleases, we don't want to consider those 
@@ -434,6 +437,11 @@ public class NuGetStatsCommand(Config config, IGraphQueryClient graph, IHttpClie
                         if (ownerRepo != null)
                             task.Description = $":check_mark_button: [deepskyblue1]{link}[/]: [white]{ownerRepo}[/] [grey]has[/] [lime]{model.Repositories[ownerRepo].Count}[/] [grey]contributors.[/]";
                     }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        task.Description = $":cross_mark: [yellow]{link}[/]: error processing '{ex.Message}'";
+                        AnsiConsole.MarkupLine($":warning: [red]Failed to process https://www.nuget.org/packages/{id.Id}[/]: {ex.GetType().Name}: {ex.Message}");
+                    }
                     finally
                     {
                         task.Value = task.MaxValue;
@@ -459,4 +467,11 @@ public class NuGetStatsCommand(Config config, IGraphQueryClient graph, IHttpClie
 
         return 0;
     }
+
+    // Remove when https://github.com/NuGet/NuGetGallery/issues/10739 is fixed
+    [GeneratedRegex(
+        """
+        data-sponsorship-url=""[^"]*""
+        """)]
+    private static partial Regex CleanSponsorshipUrlBug();
 }
