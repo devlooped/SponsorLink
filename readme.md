@@ -25,7 +25,7 @@ SponsorLink supports two scenarios:
 
 ## Why GitHub sponsors?
 
-![Octocat lifted by a sponsors heart-shaped globe](/assets/img/sponsors-mona.png)
+![Octocat lifted by a sponsors heart-shaped globe](assets/img/sponsors-mona.png)
 
 [GitHub Sponsors](https://github.com/sponsors/) is a great way to support open 
 source projects, and it's available throughout most of the world. 
@@ -83,6 +83,7 @@ Notes:
 [Explore the documentation site](https://www.devlooped.com/SponsorLink) to learn more, 
 and make sure to check the [privacy statement](https://www.devlooped.com/SponsorLink/privacy/).
 
+<!-- 
 ## Stats
 
 Active SponsorLink sync usage by sponsorship kind:
@@ -92,6 +93,7 @@ Active SponsorLink sync usage by sponsorship kind:
 ![Team](https://img.shields.io/endpoint?color=8A2BE2&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Fteam)
 ![Contributor](https://img.shields.io/endpoint?color=blue&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Fcontrib)
 ![OSS](https://img.shields.io/endpoint?color=green&url=https%3A%2F%2Fsponsorlink.devlooped.com%2Fbadge%3Foss)
+-->
 
 ## Integrating via NuGet for .NET
 
@@ -108,3 +110,4 @@ time, run-time, build-time, etc.).
 
 If you are looking for inspiration on how to do this for .NET with NuGet and C#, 
 check the [the analyzer sample](samples/dotnet).
+

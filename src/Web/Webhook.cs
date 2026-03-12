@@ -43,7 +43,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
     protected override async ValueTask ProcessReleaseWebhookAsync(WebhookHeaders headers, ReleaseEvent payload, ReleaseAction action, CancellationToken cancellationToken = default)
     {
-        await base.ProcessReleaseWebhookAsync(headers, payload, action);
+        await base.ProcessReleaseWebhookAsync(headers, payload, action, cancellationToken);
 
         //if (await github.User.Current() is { } user && payload.Sender?.Login == user.Login)
         //    return;
@@ -170,7 +170,9 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         }
 
         // Enqueue release announcement to X/Twitter
-        if (action == ReleaseAction.Published && !payload.Release.Draft && payload.Repository is { } announcementRepo)
+        if (action == ReleaseAction.Published && !payload.Release.Draft &&
+            payload.Repository is { } announcementRepo &&
+            !string.IsNullOrEmpty(payload.Release.Body))
         {
             var queue = queues.GetQueueClient(ReleaseAnnouncerFunctions.QueueName);
             try

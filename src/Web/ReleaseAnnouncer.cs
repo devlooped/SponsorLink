@@ -3,6 +3,7 @@ using System.Text.Json;
 using Azure.Data.Tables;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using SharpYaml;
 
 namespace Devlooped.Sponsors;
 
@@ -42,6 +43,15 @@ public class ReleaseAnnouncer(
     ReleaseAnnouncementFormatter formatter,
     ILogger<ReleaseAnnouncer> logger)
 {
+    static readonly List<string> releaseTitles;
+
+    static ReleaseAnnouncer()
+    {
+        var dict = YamlSerializer.Deserialize<Dictionary<string, object>>(ThisAssembly.Resources.release.Text);
+        var json = JsonDocument.Parse(JsonSerializer.Serialize(dict));
+        releaseTitles = [.. Devlooped.Jq.Evaluate(".. | .title? // empty", json.RootElement).Select(x => x.ToString())];
+    }
+
     public bool IsConfigured => summarizer.IsConfigured;
 
     public Task<bool> AnnounceReleaseAsync(AnnounceRelease release, CancellationToken cancellationToken = default)
@@ -58,6 +68,12 @@ public class ReleaseAnnouncer(
         if (!xClient.IsConfigured)
         {
             logger.LogDebug("X client not configured. Skipping release announcement.");
+            return false;
+        }
+
+        if (!releaseTitles.Any(title => body.Contains(title, StringComparison.OrdinalIgnoreCase)))
+        {
+            logger.LogInformation("Release body does not match any release section titles for publication. Skipping announcement for {Owner}/{Repo}@{Tag}.", tagName, owner, repo);
             return false;
         }
 

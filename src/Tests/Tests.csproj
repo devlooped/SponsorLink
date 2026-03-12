@@ -16,6 +16,8 @@
     <PackageReference Include="CliWrap" Version="3.10.0" />
     <PackageReference Include="Azure.Core" Version="1.46.1" />
     <PackageReference Include="Azure.Monitor.Query" Version="1.6.0" />
+    <PackageReference Include="Devlooped.JQSharp" Version="1.0.0" />
+    <PackageReference Include="SharpYaml" Version="3.4.0" />
     <PackageReference Include="DotNetConfig" Version="1.2.0" />
     <PackageReference Include="DotNetConfig.Configuration" Version="1.2.0" />
     <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
@@ -46,11 +48,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\.github\release.yml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Commands\Commands.csproj" />
     <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="..\..\.github\release.yml" Link="release.yml" />
     <None Update="@(None)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

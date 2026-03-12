@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <EmbeddedResource Include="..\..\.github\release.yml"  Kind="Text"/>
     <PackageReference Include="Azure.Identity" Version="1.18.0" />
     <PackageReference Include="Devlooped.CredentialManager" Version="2.7.0" />
     <PackageReference Include="Devlooped.Extensions.AI" Version="2.0.0" />
@@ -25,11 +26,13 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Octokit" Version="14.0.0" />
-    <PackageReference Include="SharpYaml" Version="2.1.1" />
+    <PackageReference Include="Devlooped.JQSharp" Version="1.0.0" />
+    <PackageReference Include="SharpYaml" Version="3.4.0" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.1.2" PrivateAssets="all" />
     <PackageReference Include="CliWrap" Version="3.10.0" />
     <PackageReference Include="Octokit.Webhooks.AzureFunctions" Version="3.2.1" />
     <PackageReference Include="ThisAssembly.Constants" Version="2.1.2" PrivateAssets="all" />
+    <PackageReference Include="ThisAssembly.Resources" Version="2.1.2" PrivateAssets="all" />
     <PackageReference Include="xAI" Version="2.0.3" />
     <PackageReference Include="YamlPeek" Version="1.0.1" />
     <PackageReference Include="Microsoft.Extensions.AI" Version="10.4.0" />
@@ -40,6 +43,7 @@
     <ProjectReference Include="..\Core\Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="..\..\.github\release.yml" Link="release.yml" />
     <None Update="@(None)" CopyToOutputDirectory="PreserveNewest" />
     <None Update="local.settings.json" CopyToPublishDirectory="Never" />
     <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
