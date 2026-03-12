@@ -24,8 +24,8 @@ public class ReleaseAnnouncerFunctions(ReleaseAnnouncer announcer, CloudStorageA
                 return;
             }
 
-            await announcer.AnnounceReleaseAsync(release);
-            await table.PutAsync(new TableEntity($"{release.Owner}_{release.Repo}", release.TagName));
+            if (await announcer.AnnounceReleaseAsync(release))
+                await table.PutAsync(new TableEntity($"{release.Owner}_{release.Repo}", release.TagName));
         }
         else
             logger.LogWarning("Failed to deserialize release announcement from queue: {Json}", json);
@@ -40,32 +40,25 @@ public class ReleaseAnnouncer(
     XClient xClient,
     ReleaseSummarizer summarizer,
     ReleaseAnnouncementFormatter formatter,
-    ReleaseAnnouncementTracker tracker,
     ILogger<ReleaseAnnouncer> logger)
 {
     public bool IsConfigured => summarizer.IsConfigured;
 
-    public Task AnnounceReleaseAsync(AnnounceRelease release, CancellationToken cancellationToken = default)
+    public Task<bool> AnnounceReleaseAsync(AnnounceRelease release, CancellationToken cancellationToken = default)
         => AnnounceReleaseAsync(release.Owner, release.Repo, release.TagName, release.Body, release.ReleaseUrl, cancellationToken);
 
-    public async Task AnnounceReleaseAsync(string owner, string repo, string tagName, string body, string releaseUrl, CancellationToken cancellationToken = default)
+    public async Task<bool> AnnounceReleaseAsync(string owner, string repo, string tagName, string body, string releaseUrl, CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)
         {
             logger.LogDebug("Release announcement not fully configured. Skipping.");
-            return;
+            return false;
         }
 
         if (!xClient.IsConfigured)
         {
             logger.LogDebug("X client not configured. Skipping release announcement.");
-            return;
-        }
-
-        if (await tracker.HasBeenAnnouncedAsync(owner, repo, tagName, cancellationToken))
-        {
-            logger.LogInformation("Release {Owner}/{Repo}@{Tag} already announced. Skipping.", owner, repo, tagName);
-            return;
+            return false;
         }
 
         logger.LogInformation("Announcing release {Owner}/{Repo}@{Tag} to X", owner, repo, tagName);
@@ -74,26 +67,27 @@ public class ReleaseAnnouncer(
         if (plan == null)
         {
             logger.LogWarning("Failed to generate summary for {Owner}/{Repo}@{Tag}. Skipping announcement.", owner, repo, tagName);
-            return;
+            return false;
         }
 
         var posts = formatter.FormatThread(plan, $"{owner}/{repo}", tagName, releaseUrl);
         if (posts.Count == 0)
         {
             logger.LogWarning("Formatter produced no posts for {Owner}/{Repo}@{Tag}.", owner, repo, tagName);
-            return;
+            return false;
         }
 
         logger.LogInformation("Posting {Count} tweets for {Owner}/{Repo}@{Tag}", posts.Count, owner, repo, tagName);
 
         if (await xClient.PostThreadAsync(posts))
         {
-            await tracker.MarkAnnouncedAsync(owner, repo, tagName, cancellationToken);
             logger.LogInformation("Successfully announced {Owner}/{Repo}@{Tag} to X", owner, repo, tagName);
+            return true;
         }
         else
         {
             logger.LogWarning("Failed to post thread for {Owner}/{Repo}@{Tag} to X", owner, repo, tagName);
+            return false;
         }
     }
 }

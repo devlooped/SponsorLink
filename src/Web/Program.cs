@@ -154,7 +154,6 @@ var host = new HostBuilder()
 
         services.AddSingleton<ReleaseSummarizer>();
         services.AddSingleton<ReleaseAnnouncementFormatter>();
-        services.AddSingleton<ReleaseAnnouncementTracker>();
         services.AddSingleton<ReleaseAnnouncer>();
         services.AddSingleton<XClient>();
 
