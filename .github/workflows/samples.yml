@@ -21,7 +21,7 @@ defaults:
     shell: bash
 
 jobs:
-  analyzer:
+  sample:
     name: sample-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -30,6 +30,9 @@ jobs:
     steps:
       - name: 🤘 checkout
         uses: actions/checkout@v4
+
+      - name: ⚙ dotnet
+        uses: devlooped/actions-dotnet-env@v1
 
       - name: 🙏 build
         working-directory: samples/dotnet
