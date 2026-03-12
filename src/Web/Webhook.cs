@@ -170,7 +170,8 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         }
 
         // Enqueue release announcement to X/Twitter
-        if (action == ReleaseAction.Published && !payload.Release.Draft &&
+        if ((action == ReleaseAction.Published || ReleaseAnnouncer.HasForceAnnounce(payload.Release.Body)) &&
+            !payload.Release.Draft &&
             payload.Repository is { } announcementRepo &&
             !string.IsNullOrEmpty(payload.Release.Body))
         {
@@ -182,7 +183,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                     announcementRepo.Name,
                     payload.Release.TagName,
                     payload.Release.Body ?? string.Empty,
-                    payload.Release.HtmlUrl)), cancellationToken);
+                    payload.Release.HtmlUrl)));
             }
             catch (Exception e)
             {

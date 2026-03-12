@@ -1,19 +1,58 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using NuGet.ContentModel;
 using Octokit;
 using Spectre.Console;
 using static Devlooped.Helpers;
 
 namespace Devlooped.Sponsors;
 
-public class Misc(ITestOutputHelper output)
+public partial class Misc(ITestOutputHelper output)
 {
+    [Fact]
+    public void AnnounceMarkers()
+    {
+        Assert.True(ReleaseAnnouncer.HasSkipAnnounce(
+            """
+            <!-- !x -->
+            """));
+
+        Assert.True(ReleaseAnnouncer.HasSkipAnnounce(
+            """
+            <!-- !X -->
+            """));
+
+        Assert.True(ReleaseAnnouncer.HasSkipAnnounce(
+            """
+            <!--  !x  -->
+            """));
+
+        Assert.False(ReleaseAnnouncer.HasSkipAnnounce(
+            """
+            #joya 
+            <!-- blah -->
+            """));
+
+        Assert.True(ReleaseAnnouncer.HasForceAnnounce(
+            """
+            dale gas
+            <!-- x -->
+            """));
+
+        Assert.True(ReleaseAnnouncer.HasForceAnnounce(
+            """
+            dale gas
+            <!-- X  -->
+            """));
+    }
+
     public record TypedConfig
     {
         public required string Bar { get; init; }
@@ -113,7 +152,7 @@ public class Misc(ITestOutputHelper output)
     public static void SponsorsAscii()
     {
         var heart =
-            """        
+            """
               xxxxxxxxxxx      xxxxxxxxxx
              xxxxxxxxxxxxxx   xxxxxxxxxxxxx
             xxxxxxxxxxxxxxxx xxxxxxxxxxxxxx

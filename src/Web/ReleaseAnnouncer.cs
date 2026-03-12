@@ -1,5 +1,6 @@
 using System.Security.Principal;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Azure.Data.Tables;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -37,7 +38,7 @@ public class ReleaseAnnouncerFunctions(ReleaseAnnouncer announcer, CloudStorageA
 /// Orchestrates the release announcement flow: dedup check → AI summarization →
 /// thread formatting → X/Twitter posting → mark as announced.
 /// </summary>
-public class ReleaseAnnouncer(
+public partial class ReleaseAnnouncer(
     XClient xClient,
     ReleaseSummarizer summarizer,
     ReleaseAnnouncementFormatter formatter,
@@ -57,23 +58,43 @@ public class ReleaseAnnouncer(
     public Task<bool> AnnounceReleaseAsync(AnnounceRelease release, CancellationToken cancellationToken = default)
         => AnnounceReleaseAsync(release.Owner, release.Repo, release.TagName, release.Body, release.ReleaseUrl, cancellationToken);
 
+
+    /// <summary>The <paramref name="body"/> contains an HTML comment with a single X in it, to force publish even edited releases.</summary>
+    public static bool HasForceAnnounce(string? body) => !string.IsNullOrEmpty(body) && ForceAnnounceExpr().IsMatch(body);
+
+    /// <summary>The <paramref name="body"/> contains an HTML comment with a single X in it, to force publish even edited releases.</summary>
+    public static bool HasSkipAnnounce(string? body) => !string.IsNullOrEmpty(body) && NoAnnounceExpr().IsMatch(body);
+
+    [GeneratedRegex(@"\<!--\s+[xX]\s+--\>")]
+    private static partial Regex ForceAnnounceExpr();
+
+    [GeneratedRegex(@"\<!--\s+![xX]\s+--\>")]
+    private static partial Regex NoAnnounceExpr();
+
     public async Task<bool> AnnounceReleaseAsync(string owner, string repo, string tagName, string body, string releaseUrl, CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)
         {
-            logger.LogDebug("Release announcement not fully configured. Skipping.");
+            logger.LogWarning("Release announcement not fully configured. Skipping.");
             return false;
         }
 
         if (!xClient.IsConfigured)
         {
-            logger.LogDebug("X client not configured. Skipping release announcement.");
+            logger.LogWarning("X client not configured. Skipping release announcement.");
             return false;
         }
 
-        if (!releaseTitles.Any(title => body.Contains(title, StringComparison.OrdinalIgnoreCase)))
+        if (NoAnnounceExpr().IsMatch(body))
         {
-            logger.LogInformation("Release body does not match any release section titles for publication. Skipping announcement for {Owner}/{Repo}@{Tag}.", tagName, owner, repo);
+            logger.LogWarning("Release body contains no-announce marker. Skipping announcement for {Owner}/{Repo}@{Tag}.", owner, repo, tagName);
+            return false;
+        }
+
+        // NOTE: if we have the force announce comment, we don't check for anything else in the body.
+        if (!HasForceAnnounce(body) && !releaseTitles.Any(title => body.Contains(title, StringComparison.OrdinalIgnoreCase)))
+        {
+            logger.LogWarning("Release body does not match any release section titles for publication. Skipping announcement for {Owner}/{Repo}@{Tag}.", tagName, owner, repo);
             return false;
         }
 
