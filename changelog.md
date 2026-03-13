@@ -1,5 +1,17 @@
 # Changelog
 
+## [v2.0.12](https://github.com/devlooped/SponsorLink/tree/v2.0.12) (2026-03-13)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.11...v2.0.12)
+
+:sparkles: Implemented enhancements:
+
+- During the grace period, issue Info before switching to Warning? [\#316](https://github.com/devlooped/SponsorLink/issues/316)
+
+:hammer: Other:
+
+- SL Manifest docs & feedback [\#100](https://github.com/devlooped/SponsorLink/issues/100)
+
 ## [v2.0.11](https://github.com/devlooped/SponsorLink/tree/v2.0.11) (2026-03-13)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.10...v2.0.11)
