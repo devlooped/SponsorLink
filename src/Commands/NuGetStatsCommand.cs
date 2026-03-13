@@ -286,13 +286,13 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                                     {
                                         if (!(await http.SendAsync(new(HttpMethod.Head, uri), cancellation)).IsSuccessStatusCode)
                                         {
-                                            task.Description = $":cross_mark: [yellow]{link}[/]: GitHub repo from nuspec not found at {uri}";
+                                            task.Description = $":red_question_mark: [yellow]{link}[/]: GitHub repo from nuspec not found at {uri}";
                                             return;
                                         }
                                     }
                                     catch (Exception)
                                     {
-                                        task.Description = $":cross_mark: [yellow]{link}[/]: GitHub repo from nuspec not found at {uri}";
+                                        task.Description = $":red_question_mark: [yellow]{link}[/]: GitHub repo from nuspec not found at {uri}";
                                         return;
                                     }
                                 }
@@ -306,7 +306,7 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                                 {
                                     if (parts.Length < 2)
                                     {
-                                        task.Description = $":cross_mark: [yellow]{link}[/]: source URL '{uri}' missing specific repo";
+                                        task.Description = $":warning: [yellow]{link}[/]: source URL '{uri}' missing specific repo";
                                         return;
                                     }
                                     else if (parts.Length > 2)
@@ -485,6 +485,8 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                         model.Packages.GetOrAdd(ownerRepo ?? "", _ => new(FnvHashComparer.Default)).TryAdd(id.Id, dailyDownloads);
                         if (ownerRepo != null)
                             task.Description = $":check_mark_button: [deepskyblue1]{link}[/]: [white]{ownerRepo}[/] [grey]has[/] [lime]{model.Repositories[ownerRepo].Count}[/] [grey]contributors.[/]";
+                        else
+                            task.Description = $":check_mark_button: [deepskyblue1]{link}[/]: [grey]no source repo information[/]";
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
                     {
