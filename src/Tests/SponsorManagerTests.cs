@@ -172,7 +172,7 @@ public sealed class SponsorManagerTests : IDisposable
         Assert.Equal(SponsorTypes.Organization, await manager.GetSponsorTypeAsync());
     }
 
-    [SecretsFact("GitHub:Token")]
+    [SecretsFact("GitHub:Token", "GitHub:Sponsorable", "SponsorLink:Sponsorable")]
     public async Task GetSponsorshipViaOrganizationMembership()
     {
         await Authenticate();
@@ -208,7 +208,7 @@ public sealed class SponsorManagerTests : IDisposable
         Assert.True(types.HasFlag(SponsorTypes.Team));
     }
 
-    [SecretsFact("GitHub:Token")]
+    [SecretsFact("GitHub:Token", "GitHub:Sponsorable", "SponsorLink:Sponsorable")]
     public async Task GetSponsorshipViaOrganizationEmail()
     {
         await Authenticate();
@@ -228,6 +228,8 @@ public sealed class SponsorManagerTests : IDisposable
 
         graph.Setup(x => x.QueryAsync(GraphQueries.ViewerEmails, It.IsAny<(string, object)[]>()))
             .ReturnsAsync(() => ["test@clarius.org"]);
+
+        services.GetRequiredService<IMemoryCache>().Set(nameof(SponsorsManager) + ".Sponsorable", new Account(configuration["SponsorLink:Sponsorable"]!, AccountType.Organization));
 
         var manager = new SponsorsManager(
             services.GetRequiredService<IOptions<SponsorLinkOptions>>(),

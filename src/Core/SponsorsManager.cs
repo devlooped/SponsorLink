@@ -6,7 +6,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
-using SharpYaml.Serialization;
+using SharpYaml;
 
 namespace Devlooped.Sponsors;
 
@@ -17,7 +17,6 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
     internal const string JwtCacheKey = nameof(SponsorsManager) + ".JWT";
     internal const string ManifestCacheKey = nameof(SponsorsManager) + ".Manifest";
 
-    static readonly Serializer serializer = new();
     readonly SponsorLinkOptions options = options.Value;
 
     Dictionary<string, Sponsor>? sponsors;
@@ -86,7 +85,7 @@ public partial class SponsorsManager(IOptions<SponsorLinkOptions> options,
     {
         var yaml = YamlRegex().Match(tier.Description)?.Groups["yaml"]?.Value;
         if (!string.IsNullOrEmpty(yaml) &&
-            serializer.Deserialize<Dictionary<string, string>>(yaml) is { } meta)
+            YamlSerializer.Deserialize<Dictionary<string, string>>(yaml) is { } meta)
         {
             foreach (var entry in meta)
             {

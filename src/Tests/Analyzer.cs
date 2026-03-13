@@ -36,7 +36,7 @@ public class TestSponsorLink : DiagnosticAnalyzer
 
 public class AnalyzerTests(ITestOutputHelper Output)
 {
-    [Fact]
+    [Fact(Skip = "Not doing SL analyzers anymore. OSMF now.")]
     public async Task CreateSponsorLinkAsync()
     {
         var test = new Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<TestSponsorLink, DefaultVerifier>();

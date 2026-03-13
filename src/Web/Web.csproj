@@ -7,17 +7,17 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <EmbeddedResource Include="..\..\.github\release.yml"  Kind="Text"/>
-    <PackageReference Include="Azure.Identity" Version="1.18.0" />
+    <EmbeddedResource Include="..\..\.github\release.yml" Kind="Text" />
+    <PackageReference Include="Azure.Identity" Version="1.19.0" />
     <PackageReference Include="Devlooped.CredentialManager" Version="2.7.0" />
-    <PackageReference Include="Devlooped.Extensions.AI" Version="2.0.0" />
+    <PackageReference Include="Devlooped.Extensions.AI" Version="2.0.1" />
     <PackageReference Include="DotNetConfig.Configuration" Version="1.2.0" />
     <PackageReference Include="Humanizer.Core" Version="3.0.10" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.51.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.3" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.4" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" />
     <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.50.0" />
