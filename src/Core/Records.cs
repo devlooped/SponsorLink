@@ -46,9 +46,24 @@ public record OpenSource(ConcurrentDictionary<string, HashSet<string>> Authors, 
     {
     }
 
+    public OrderedOpenSource ToOrdered() => new(
+        ToSortedDictionary(Authors, static values => values.Order(StringComparer.Ordinal).ToList()),
+        ToSortedDictionary(Repositories, static values => values.Order(StringComparer.Ordinal).ToList()),
+        ToSortedDictionary(Packages, static values => ToSortedDictionary(values, static value => value)));
+
     public OpenSourceSummary Summary => summary ??= new(Totals);
 
     public OpenSourceTotals Totals => totals ??= new(this);
+
+    static SortedDictionary<string, TValue> ToSortedDictionary<TSource, TValue>(IEnumerable<KeyValuePair<string, TSource>> source, Func<TSource, TValue> valueSelector)
+    {
+        var ordered = new SortedDictionary<string, TValue>(StringComparer.Ordinal);
+
+        foreach (var (key, value) in source)
+            ordered[key] = valueSelector(value);
+
+        return ordered;
+    }
 
     public class OpenSourceTotals(OpenSource source)
     {
@@ -64,6 +79,32 @@ public record OpenSource(ConcurrentDictionary<string, HashSet<string>> Authors, 
         public string Repositories => totals.Repositories.ToMetric(decimals: 1);
         public string Packages => totals.Packages.ToMetric(decimals: 1);
         public string Downloads => totals.Downloads.ToMetric(decimals: 1);
+    }
+
+    public record OrderedOpenSource(SortedDictionary<string, List<string>> Authors, SortedDictionary<string, List<string>> Repositories, SortedDictionary<string, SortedDictionary<string, long>> Packages)
+    {
+        OrderedOpenSourceSummary? summary;
+        OrderedOpenSourceTotals? totals;
+
+        public OrderedOpenSourceSummary Summary => summary ??= new(Totals);
+
+        public OrderedOpenSourceTotals Totals => totals ??= new(this);
+
+        public class OrderedOpenSourceTotals(OrderedOpenSource source)
+        {
+            public double Authors => source.Authors.Count;
+            public double Repositories => source.Repositories.Count;
+            public double Packages => source.Packages.Sum(x => x.Value.Count);
+            public double Downloads => source.Packages.Sum(x => x.Value.Sum(y => y.Value));
+        }
+
+        public class OrderedOpenSourceSummary(OrderedOpenSourceTotals totals)
+        {
+            public string Authors => totals.Authors.ToMetric(decimals: 1);
+            public string Repositories => totals.Repositories.ToMetric(decimals: 1);
+            public string Packages => totals.Packages.ToMetric(decimals: 1);
+            public string Downloads => totals.Downloads.ToMetric(decimals: 1);
+        }
     }
 }
 

@@ -502,7 +502,7 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                 });
             }
 
-            void PersistModel() => File.WriteAllText(fileName, JsonSerializer.Serialize(model, JsonOptions.Default));
+            void PersistModel() => File.WriteAllText(fileName, JsonSerializer.Serialize(model.ToOrdered(), JsonOptions.Default));
 
             if (settings.PackageId is { Length: > 0 } packageId)
             {
