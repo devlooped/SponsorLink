@@ -1,5 +1,9 @@
 # Changelog
 
+## [v2.0.13](https://github.com/devlooped/SponsorLink/tree/v2.0.13) (2026-03-13)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.12...v2.0.13)
+
 ## [v2.0.12](https://github.com/devlooped/SponsorLink/tree/v2.0.12) (2026-03-13)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.11...v2.0.12)
