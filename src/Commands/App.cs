@@ -9,6 +9,12 @@ namespace Devlooped.Sponsors;
 
 public static class App
 {
+    public static bool IsInteractive =>
+        !Console.IsInputRedirected &&
+        !Console.IsOutputRedirected &&
+        !Console.IsErrorRedirected &&
+        Environment.UserInteractive;
+
     public static CommandApp Create(out IServiceProvider services)
     {
         var collection = new ServiceCollection().ConfigureSponsors();

@@ -568,7 +568,10 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
         });
 
         var path = new FileInfo(fileName).FullName;
-        AnsiConsole.MarkupLine($"Total [lime]{model.Summary.Authors}[/] oss authors contributing to {model.Summary.Repositories} repos producing {model.Summary.Packages} packages with {model.Summary.Downloads} dl/day => [link={path}]{fileName}[/]");
+        if (App.IsInteractive)
+            AnsiConsole.MarkupLine($"Total [lime]{model.Summary.Authors}[/] oss authors contributing to {model.Summary.Repositories} repos producing {model.Summary.Packages} packages with {model.Summary.Downloads} dl/day => [link={path}]{fileName}[/]");
+        else
+            AnsiConsole.MarkupLine($"Total [lime]{model.Summary.Authors}[/] oss authors contributing to {model.Summary.Repositories} repos producing {model.Summary.Packages} packages with {model.Summary.Downloads} dl/day => [deepskyblue1]{fileName}[/]");
 
         return 0;
     }
