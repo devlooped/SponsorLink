@@ -340,7 +340,7 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
 
                             while (retries < 5)
                             {
-                                var html = await http.GetStringAsync($"https://www.nuget.org/packages/{id.Id}", cancellation);
+                                var html = await retry.ExecuteAsync(() => http.GetStringAsync($"https://www.nuget.org/packages/{id.Id}", cancellation));
                                 html = CleanSponsorshipUrlBug().Replace(html, "");
                                 var details = HtmlDocument.Load(new StringReader(html));
 

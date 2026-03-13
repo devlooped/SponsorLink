@@ -91,7 +91,7 @@ public static class App
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             AllowAutoRedirect = false,
         });
-        collection.AddHttpClient("NuGet").AddStandardResilienceHandler();
+        collection.AddHttpClient("NuGet");
 
         collection.AddTransient<ICommandInterceptor, ActivityCommandInterceptor>();
 
