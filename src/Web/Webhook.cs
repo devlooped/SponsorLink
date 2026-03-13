@@ -45,8 +45,9 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
     {
         await base.ProcessReleaseWebhookAsync(headers, payload, action, cancellationToken);
 
-        //if (await github.User.Current() is { } user && payload.Sender?.Login == user.Login)
-        //    return;
+        // No annoucement anywhere, no discussion, no sponsors, no nothing.
+        if (ReleaseAnnouncer.HasSkipAnnounce(payload.Release.Body))
+            return;
 
         if (action != ReleaseAction.Deleted &&
             payload.Repository?.Name != "sandbox" &&

@@ -62,7 +62,7 @@ public partial class ReleaseAnnouncer(
     /// <summary>The <paramref name="body"/> contains an HTML comment with a single X in it, to force publish even edited releases.</summary>
     public static bool HasForceAnnounce(string? body) => !string.IsNullOrEmpty(body) && ForceAnnounceExpr().IsMatch(body);
 
-    /// <summary>The <paramref name="body"/> contains an HTML comment with a single X in it, to force publish even edited releases.</summary>
+    /// <summary>The <paramref name="body"/> contains an HTML comment with a single !X in it, to skip announcing releases.</summary>
     public static bool HasSkipAnnounce(string? body) => !string.IsNullOrEmpty(body) && NoAnnounceExpr().IsMatch(body);
 
     [GeneratedRegex(@"\<!--\s+[xX]\s+--\>")]
