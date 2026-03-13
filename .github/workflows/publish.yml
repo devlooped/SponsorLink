@@ -67,6 +67,7 @@ jobs:
           path: bin/*
 
   deploy:
+    if: github.ref_type != 'tag'
     needs: build
     runs-on: ubuntu-latest
     steps:
