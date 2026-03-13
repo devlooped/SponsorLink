@@ -1,5 +1,21 @@
 # Changelog
 
+## [v2.0.11](https://github.com/devlooped/SponsorLink/tree/v2.0.11) (2026-03-13)
+
+[Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.10...v2.0.11)
+
+:sparkles: Implemented enhancements:
+
+- Mention active sponsors in releases [\#590](https://github.com/devlooped/SponsorLink/pull/590) (@kzu)
+
+:bug: Fixed bugs:
+
+- Workaround bug in nuget gallery for CLI nuget stats [\#634](https://github.com/devlooped/SponsorLink/pull/634) (@kzu)
+
+:twisted_rightwards_arrows: Merged:
+
+- Improve wording: indirect \> implicit sponsorships [\#571](https://github.com/devlooped/SponsorLink/pull/571) (@kzu)
+
 ## [v2.0.10](https://github.com/devlooped/SponsorLink/tree/v2.0.10) (2025-08-18)
 
 [Full Changelog](https://github.com/devlooped/SponsorLink/compare/v2.0.9...v2.0.10)
