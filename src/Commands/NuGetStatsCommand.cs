@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Devlooped.Web;
@@ -73,6 +74,9 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
         [Description("Specific package owner to fetch full stats for")]
         [CommandOption("--owner")]
         public string? Owner { get; set; }
+
+        [CommandOption("--package", IsHidden = true)]
+        public string? PackageId { get; set; }
 
         [Description("Only include OSS packages hosted on GitHub")]
         [DefaultValue(true)]
@@ -150,47 +154,64 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
         if (settings.Owner != null)
             baseUrl += $"q=owner%3A{settings.Owner}&";
 
-        await progress.StartAsync(async context =>
+        await progress.StartAsync(async progressContext =>
         {
-            while (true)
+            async Task<List<IPackageSearchMetadata>> GetMetadataAsync(string packageId)
             {
-                var listUrl = $"{baseUrl}page={index}";
-                AnsiConsole.MarkupLine($":globe_with_meridians: [aqua][link={listUrl}]packages#{index}[/][/]");
-                var listTask = context.AddTask($":backhand_index_pointing_right: [grey]Processing page[/] [aqua][link={listUrl}]#{index}[/][/][grey]. Total[/] [lime]{model.Authors.Count}[/] [grey]oss authors so far across[/] {model.Repositories.Count} [grey]repos[/]", false);
-                // Parse search page
-                var search = await retry.ExecuteAsync(() => Task.FromResult(HtmlDocument.Load(listUrl)));
-                var allIds = search.CssSelectElements(".package .package-by [data-owner]")
-                    .Select(x => new
-                    {
-                        Id = x.Attribute("data-package-id")?.Value ?? "",
-                        Owner = x.Attribute("data-owner")?.Value ?? "",
-                        Version = x.Attribute("data-package-version")?.Value ?? "",
-                    })
-                    .Where(x => x.Id != "" && x.Owner != "" && x.Version != "")
-                    .GroupBy(x => x.Id);
+                var metadata = (await retry.ExecuteAsync(() => resource.GetMetadataAsync(packageId, false, false, cache,
+                    NuGet.Common.NullLogger.Instance, CancellationToken.None))).Reverse().Take(MaxVersions).ToList();
 
-                if (!allIds.Any())
+                if (metadata.Count < MaxVersions)
                 {
-                    listTask.Description = $":stop_sign: [yellow]No more packages found on page {index}[/]";
-                    listTask.StopTask();
-                    break;
+                    var added = metadata.Select(x => x.Identity.Version).ToHashSet();
+
+                    // Only consider pre-release versions if there are no stable versions (yet).
+                    // This is more of an odd case of a popular long-running pre-release package.
+                    metadata.AddRange((await retry.ExecuteAsync(() => resource.GetMetadataAsync(packageId, true, false, cache,
+                        NuGet.Common.NullLogger.Instance, CancellationToken.None)))
+                        .Reverse()
+                        .Where(x => !added.Contains(x.Identity.Version))
+                        .Take(MaxVersions - added.Count)
+                        .ToList());
                 }
 
-                // Skip corp owners
-                var ids = (settings.Owner != null
-                        // Don't filter anything if we're fetching a specific owner
-                        ? allIds
-                        : allIds.Where(x => settings.Owner == null && !x.Any(i => SkippedOwners.Contains(i.Owner))))
-                    .Select(x => new PackageIdentity(x.Key, NuGetVersion.Parse(x.First().Version)))
-                    .ToList();
+                return metadata;
+            }
 
+            async Task<Dictionary<string, long>> GetSearchDownloadsAsync(string packageId, CancellationToken cancellationToken)
+            {
+                var queryUrl = $"https://api-v2v3search-0.nuget.org/query?q=id:{Uri.EscapeDataString(packageId)}&semVerLevel=2.0.0";
+                using var response = await http.GetAsync(queryUrl, cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                    return [];
+
+                await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                var result = await JsonSerializer.DeserializeAsync<NuGetSearchResponse>(stream, JsonOptions.Default, cancellationToken);
+                var package = result?.Data.FirstOrDefault(x => string.Equals(x.Id, packageId, StringComparison.OrdinalIgnoreCase));
+                if (package?.Versions == null)
+                    return [];
+
+                var downloads = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+                foreach (var version in package.Versions)
+                {
+                    if (string.IsNullOrEmpty(version.Version))
+                        continue;
+
+                    downloads[NuGetVersion.Parse(version.Version).ToNormalizedString()] = version.Downloads;
+                }
+
+                return downloads;
+            }
+
+            async Task ProcessPackagesAsync(ProgressTask listTask, IReadOnlyList<PackageIdentity> ids, CancellationToken cancellationToken)
+            {
                 listTask.MaxValue = ids.Count;
 
                 // packages that are inactive based on download count.
                 var inactive = 0;
                 // packages that do have sources in github
                 var sourced = 0;
-                var tasks = ids.Select(id => (context.AddTask($":hourglass_not_done: [deepskyblue1][link=https://nuget.org/packages/{id.Id}]{id.Id}[/][/]: processing", true), id));
+                var tasks = ids.Select(id => (progressContext.AddTask($":hourglass_not_done: [deepskyblue1][link=https://nuget.org/packages/{id.Id}]{id.Id}[/][/]: processing", true), id));
 
                 // Be gentle with nuget.org
                 var paralell = new ParallelOptions { MaxDegreeOfParallelism = 5 };
@@ -204,7 +225,7 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                     var link = $"[link=https://nuget.org/packages/{id.Id}]{id.Id}[/]";
                     try
                     {
-                        // This allows us to resume execution if we already have a serialized model containing 
+                        // This allows us to resume execution if we already have a serialized model containing
                         // the package id
                         if (model.Packages.Any(x => x.Value.ContainsKey(id.Id)))
                         {
@@ -212,12 +233,20 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                             return;
                         }
 
-                        string? repoUrl = null;
+                        var metadata = await GetMetadataAsync(id.Id);
+                        if (metadata.Count == 0)
+                        {
+                            task.Description = $":cross_mark: [yellow]{link}[/]: package metadata not found";
+                            return;
+                        }
+
+                        var version = metadata.First().Identity.Version;
+
                         string? ownerRepo = null;
                         // see https://learn.microsoft.com/en-us/nuget/api/package-base-address-resource#download-package-manifest-nuspec
-                        var nuspec = await http.GetAsync($"https://api.nuget.org/v3-flatcontainer/{id.Id.ToLowerInvariant()}/{id.Version.ToNormalizedString().ToLowerInvariant()}/{id.Id.ToLowerInvariant()}.nuspec", cancellation);
-                        // Try getting repo information from nuspec first. This can help 
-                        // avoid loading the package page altogether if we have already checked that repo 
+                        var nuspec = await http.GetAsync($"https://api.nuget.org/v3-flatcontainer/{id.Id.ToLowerInvariant()}/{version.ToNormalizedString().ToLowerInvariant()}/{id.Id.ToLowerInvariant()}.nuspec", cancellation);
+                        // Try getting repo information from nuspec first. This can help
+                        // avoid loading the package page altogether if we have already checked that repo
                         // for contributors.
                         if (nuspec.IsSuccessStatusCode)
                         {
@@ -239,8 +268,6 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                             if (!string.IsNullOrEmpty(repoMeta?.Url) &&
                                 Uri.TryCreate(repoMeta.Url, UriKind.Absolute, out var uri))
                             {
-                                repoUrl = repoMeta.Url;
-
                                 if (settings.GitHubOnly && uri.Host != "github.com")
                                 {
                                     task.Description = $":cross_mark: [yellow]{link}[/]: non GitHub source, skipping";
@@ -302,30 +329,14 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                             return;
                         }
 
-                        // Wrapped in a retry since this also failed sporadically
-                        var metadata = (await retry.ExecuteAsync(() => resource.GetMetadataAsync(id.Id, false, false, cache,
-                            NuGet.Common.NullLogger.Instance, CancellationToken.None))).Reverse().Take(MaxVersions).ToList();
-
-                        // We get max versions only, first stable (non-prerelease). If we don't get enough, we then append prerelease ones.
-                        if (metadata.Count < MaxVersions)
-                        {
-                            var added = metadata.Select(x => x.Identity.Version).ToHashSet();
-
-                            // Only consider pre-release versions if there are no stable versions (yet). 
-                            // This is more of an odd case of a popular long-running pre-release package.
-                            metadata.AddRange((await retry.ExecuteAsync(() => resource.GetMetadataAsync(id.Id, true, false, cache,
-                                NuGet.Common.NullLogger.Instance, CancellationToken.None)))
-                                .Reverse()
-                                .Where(x => !added.Contains(x.Identity.Version))
-                                .Take(MaxVersions - added.Count)
-                                .ToList());
-
-                            Debug.Assert(metadata.Count > 0, "Could not find any package versions?");
-                        }
-
-                        Debug.Assert(metadata.Last().Published != null);
-                        var updated = metadata.Where(x => x.Published.HasValue).Select(x => x.Published!.Value).Min();
-                        // At the moment, this will actually not result in an actual sum, since the download count is always null.
+                        var metadataByVersion = metadata.ToDictionary(
+                            x => x.Identity.Version.ToNormalizedString(),
+                            x => x,
+                            StringComparer.OrdinalIgnoreCase);
+                        var versionsWithDownloads = metadata
+                            .Where(x => x.DownloadCount is > 0)
+                            .Select(x => x.Identity.Version.ToNormalizedString())
+                            .ToHashSet(StringComparer.OrdinalIgnoreCase);
                         var downloads = metadata.Sum(x => x.DownloadCount);
                         sourced++;
 
@@ -333,9 +344,23 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                         // It may start working some day?
                         if (downloads == null || downloads == 0)
                         {
+                            task.Description = $":hourglass_not_done: [deepskyblue1]{link}[/]: getting download count from search API";
+
+                            foreach (var pair in await GetSearchDownloadsAsync(id.Id, cancellation))
+                            {
+                                if (!metadataByVersion.ContainsKey(pair.Key))
+                                    continue;
+
+                                downloads = (downloads ?? 0) + pair.Value;
+                                versionsWithDownloads.Add(pair.Key);
+                            }
+                        }
+
+                        if (downloads == null || downloads == 0)
+                        {
                             // Retry since at least https://www.nuget.org/packages/UnicornEngine.Unicorn failed once.
                             var retries = 0;
-                            var attemptPrefix = $":hourglass_not_done: [deepskyblue1]{link}[/]: getting download count for [cornsilk1]v{id.Version.ToNormalizedString()}[/]";
+                            var attemptPrefix = $":hourglass_not_done: [deepskyblue1]{link}[/]: getting download count for [cornsilk1]v{version.ToNormalizedString()}[/]";
                             task.Description = attemptPrefix;
 
                             while (retries < 5)
@@ -345,28 +370,41 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                                 var details = HtmlDocument.Load(new StringReader(html));
 
                                 // First determine if the package is active, so we can stop scraping when we reach the low-numbers
-                                // Get the row matching the latest version in the API (there can be prereleases, we don't want to consider those 
+                                // Get the row matching the latest version in the API (there can be prereleases, we don't want to consider those
                                 // which might have low download numbers)
-                                foreach (var label in metadata.Select(x => x.Identity.Version.ToNormalizedString().Truncate(30)).Distinct())
+                                foreach (var item in metadata
+                                    .Select(x => new
+                                    {
+                                        Version = x.Identity.Version.ToNormalizedString(),
+                                        Label = x.Identity.Version.ToNormalizedString().Truncate(30),
+                                    })
+                                    .DistinctBy(x => x.Version)
+                                    .Where(x => !versionsWithDownloads.Contains(x.Version)))
                                 {
                                     var row = details.CssSelectElements(".version-history table tbody tr")
                                         // See https://github.com/NuGet/NuGetGallery/blob/main/src/NuGetGallery/Views/Packages/DisplayPackage.cshtml#L922
-                                        .FirstOrDefault(x => x.CssSelectElement("td")?.Value.Trim() == label);
+                                        .FirstOrDefault(x => x.CssSelectElement($"td a[title='{item.Label}']") != null);
+
                                     if (row == null)
                                     {
-                                        task.Description = $":cross_mark: [yellow]{link}[/]: no version history found";
-                                        return;
+                                        // nuget.org only shows a handful of recent releases in the version table, so consider 
+                                        // the loop done once we don't get any more download stats. Note that we may stop short of the 
+                                        // actual package feed metadata, but that's ok because there's no more info to gather from the web.
+                                        break;
                                     }
 
                                     if (long.TryParse(row.CssSelectElements("td").Skip(1).First().Value.Trim(), NumberStyles.AllowThousands, ParseCulture, out var downloadsValue))
+                                    {
                                         downloads += downloadsValue;
+                                        versionsWithDownloads.Add(item.Version);
+                                    }
                                 }
 
                                 if (downloads != null && downloads > 0)
                                     break;
 
                                 retries++;
-                                task.Description = $":hourglass_not_done: [deepskyblue1]{link}[/]: getting download count for [cornsilk1]v{id.Version.ToNormalizedString()}[/] (retry #{retries})";
+                                task.Description = $":hourglass_not_done: [deepskyblue1]{link}[/]: getting download count for [cornsilk1]v{version.ToNormalizedString()}[/] (retry #{retries})";
                             }
 
                             if (downloads == null || downloads == 0)
@@ -377,7 +415,18 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                             }
                         }
 
-                        var daysSince = Convert.ToInt32(Math.Max(1, Math.Round((DateTimeOffset.UtcNow - updated).TotalDays)));
+                        var updatedVersions = metadata
+                            .Where(x => x.Published.HasValue && versionsWithDownloads.Contains(x.Identity.Version.ToNormalizedString()))
+                            .Select(x => x.Published!.Value)
+                            .ToList();
+                        if (updatedVersions.Count == 0)
+                        {
+                            task.Description = $":red_question_mark: [yellow]{link}[/]: no download history found";
+                            return;
+                        }
+
+                        var updatedAt = updatedVersions.Min();
+                        var daysSince = Convert.ToInt32(Math.Max(1, Math.Round((DateTimeOffset.UtcNow - updatedAt).TotalDays)));
                         var dailyDownloads = Convert.ToInt32(downloads / daysSince);
                         // We only consider the package "active" if it's got a minimum amount of downloads per day in the last x versions we consider.
                         // We don't filter inactive packages if we're fetching a specific owner.
@@ -449,11 +498,67 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
                         listTask.Increment(1);
                     }
                 });
+            }
+
+            void PersistModel() => File.WriteAllText(fileName, JsonSerializer.Serialize(model, JsonOptions.Default));
+
+            if (settings.PackageId is { Length: > 0 } packageId)
+            {
+                var packageUrl = $"https://www.nuget.org/packages/{packageId}";
+                AnsiConsole.MarkupLine($":globe_with_meridians: [aqua][link={packageUrl}]{packageId}[/][/] ");
+                var listTask = progressContext.AddTask($":backhand_index_pointing_right: [grey]Processing package[/] [aqua][link={packageUrl}]{packageId}[/][/][grey]. Total[/] [lime]{model.Authors.Count}[/] [grey]oss authors so far across[/] {model.Repositories.Count} [grey]repos[/]", false);
+
+                await ProcessPackagesAsync(listTask, [new(packageId, NuGetVersion.Parse("0.0.0"))], cancellation);
+
+                listTask.Description = $":hourglass_not_done: [grey]Finished package[/] [aqua]{packageId}[/][grey]. Persisting model...[/]";
+                lock (model)
+                {
+                    PersistModel();
+                }
+
+                listTask.Description = $":call_me_hand: [grey]Finished package[/] [aqua]{packageId}[/][grey]. Total[/] [lime]{model.Summary.Authors}[/] [grey]oss authors so far across[/] {model.Summary.Repositories} [grey]repos.[/]";
+                listTask.StopTask();
+                return;
+            }
+
+            while (true)
+            {
+                var listUrl = $"{baseUrl}page={index}";
+                AnsiConsole.MarkupLine($":globe_with_meridians: [aqua][link={listUrl}]packages#{index}[/][/]");
+                var listTask = progressContext.AddTask($":backhand_index_pointing_right: [grey]Processing page[/] [aqua][link={listUrl}]#{index}[/][/][grey]. Total[/] [lime]{model.Authors.Count}[/] [grey]oss authors so far across[/] {model.Repositories.Count} [grey]repos[/]", false);
+                // Parse search page
+                var search = await retry.ExecuteAsync(() => Task.FromResult(HtmlDocument.Load(listUrl)));
+                var allIds = search.CssSelectElements(".package .package-by [data-owner]")
+                    .Select(x => new
+                    {
+                        Id = x.Attribute("data-package-id")?.Value ?? "",
+                        Owner = x.Attribute("data-owner")?.Value ?? "",
+                        Version = x.Attribute("data-package-version")?.Value ?? "",
+                    })
+                    .Where(x => x.Id != "" && x.Owner != "" && x.Version != "")
+                    .GroupBy(x => x.Id);
+
+                if (!allIds.Any())
+                {
+                    listTask.Description = $":stop_sign: [yellow]No more packages found on page {index}[/]";
+                    listTask.StopTask();
+                    break;
+                }
+
+                // Skip corp owners
+                var ids = (settings.Owner != null
+                        // Don't filter anything if we're fetching a specific owner
+                        ? allIds
+                        : allIds.Where(x => settings.Owner == null && !x.Any(i => SkippedOwners.Contains(i.Owner))))
+                    .Select(x => new PackageIdentity(x.Key, NuGetVersion.Parse(x.First().Version)))
+                    .ToList();
+
+                await ProcessPackagesAsync(listTask, ids, cancellation);
 
                 listTask.Description = $":hourglass_not_done: [grey]Finished page[/] [aqua]#{index}[/][grey]. Persisting model...[/]";
                 lock (model)
                 {
-                    File.WriteAllText(fileName, JsonSerializer.Serialize(model, JsonOptions.Default));
+                    PersistModel();
                 }
 
                 listTask.Description = $":call_me_hand: [grey]Finished page[/] [aqua]#{index}[/][grey]. Total[/] [lime]{model.Summary.Authors}[/] [grey]oss authors so far across[/] {model.Summary.Repositories} [grey]repos.[/]";
@@ -474,4 +579,12 @@ public partial class NuGetStatsCommand(Config config, IGraphQueryClient graph, I
         data-sponsorship-url=""[^"]*""
         """)]
     private static partial Regex CleanSponsorshipUrlBug();
+
+    sealed record NuGetSearchResponse([property: JsonPropertyName("data")] NuGetSearchPackage[] Data);
+    sealed record NuGetSearchPackage(
+        [property: JsonPropertyName("id")] string Id,
+        [property: JsonPropertyName("versions")] NuGetSearchVersion[] Versions);
+    sealed record NuGetSearchVersion(
+        [property: JsonPropertyName("version")] string Version,
+        [property: JsonPropertyName("downloads")] long Downloads);
 }

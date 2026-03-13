@@ -6,7 +6,9 @@ using Microsoft.CodeAnalysis.Testing;
 
 namespace Devlooped.Tests;
 
+#pragma warning disable RS1038 // Compiler extensions should be implemented in assemblies with compiler-provided references
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
+#pragma warning restore RS1038 // Compiler extensions should be implemented in assemblies with compiler-provided references
 public class TestSponsorLink : DiagnosticAnalyzer
 {
     static DiagnosticDescriptor descriptor = new("IDE001", "IDE", "IDE", "Design", DiagnosticSeverity.Warning, true, customTags: ["CompilationEnd"]);
