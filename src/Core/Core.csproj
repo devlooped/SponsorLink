@@ -13,7 +13,7 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
     <PackageReference Include="NuGetizer" Version="1.4.7" PrivateAssets="all" />
     <PackageReference Include="Octokit" Version="14.0.0" />
-    <PackageReference Include="Scriban" Version="6.5.7" />
+    <PackageReference Include="Scriban" Version="6.5.8" />
     <PackageReference Include="Std.UriTemplate" Version="2.0.8" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.5" />
     <PackageReference Include="SharpYaml" Version="3.4.0" />
