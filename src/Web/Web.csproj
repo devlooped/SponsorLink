@@ -35,8 +35,8 @@
     <PackageReference Include="ThisAssembly.Resources" Version="2.1.2" PrivateAssets="all" />
     <PackageReference Include="xAI" Version="2.0.3" />
     <PackageReference Include="YamlPeek" Version="1.0.1" />
-    <PackageReference Include="Microsoft.Extensions.AI" Version="10.4.0" />
-    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.4.0" />
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.4.1" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.4.1" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.27.0" />
   </ItemGroup>
   <ItemGroup>
