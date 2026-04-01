@@ -64,13 +64,6 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
         await base.ProcessReleaseWebhookAsync(headers, payload, action, cancellationToken);
 
-        // No annoucement anywhere, no discussion, no sponsors, no nothing.
-        if (ReleaseAnnouncer.HasSkipAnnounce(payload.Release.Body))
-        {
-            logger.LogInformation("Skipping release {Tag}: body contains skip-announce marker", payload.Release.TagName);
-            return;
-        }
-
         if (action == ReleaseAction.Deleted)
         {
             logger.LogDebug("Skipping sponsor injection for deleted release {Tag}", payload.Release.TagName);
@@ -200,8 +193,10 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                                 TargetCommitish = payload.Release.TargetCommitish
                             });
 
-                        logger.LogInformation("Created release {Url}, creating discussion", release.HtmlUrl);
-                        await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
+                        logger.LogInformation("Created release {Url}{Skip}", release.HtmlUrl,
+                            ReleaseAnnouncer.HasSkipAnnounce(newBody) ? ", skipping discussion (skip-announce)" : ", creating discussion");
+                        if (!ReleaseAnnouncer.HasSkipAnnounce(newBody))
+                            await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
                     }
                     else
                     {
@@ -214,8 +209,15 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
                         if (action == ReleaseAction.Published)
                         {
-                            logger.LogInformation("Release {Tag} was published, creating discussion", payload.Release.TagName);
-                            await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
+                            if (!ReleaseAnnouncer.HasSkipAnnounce(newBody))
+                            {
+                                logger.LogInformation("Release {Tag} was published, creating discussion", payload.Release.TagName);
+                                await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
+                            }
+                            else
+                            {
+                                logger.LogInformation("Release {Tag} was published, skipping discussion (skip-announce)", payload.Release.TagName);
+                            }
                         }
                         else
                         {
@@ -254,6 +256,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         // Enqueue release announcement to X/Twitter
         if ((action == ReleaseAction.Published || ReleaseAnnouncer.HasForceAnnounce(payload.Release.Body)) &&
             !payload.Release.Draft &&
+            !ReleaseAnnouncer.HasSkipAnnounce(payload.Release.Body) &&
             payload.Repository is { } announcementRepo &&
             !string.IsNullOrEmpty(payload.Release.Body))
         {
