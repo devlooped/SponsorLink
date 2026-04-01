@@ -10,13 +10,13 @@
     <PackageReference Include="Humanizer.Core" Version="3.0.10" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.5" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.17.0" />
     <PackageReference Include="NuGetizer" Version="1.4.7" PrivateAssets="all" />
     <PackageReference Include="Octokit" Version="14.0.0" />
-    <PackageReference Include="Scriban" Version="6.5.7" />
+    <PackageReference Include="Scriban" Version="7.0.6" />
     <PackageReference Include="Std.UriTemplate" Version="2.0.8" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.5" />
-    <PackageReference Include="SharpYaml" Version="3.4.0" />
+    <PackageReference Include="SharpYaml" Version="3.7.0" />
     <PackageReference Include="Devlooped.JQ" Version="1.8.1.1" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.1.2" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.Constants" Version="2.1.2" PrivateAssets="all" />
@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.19.0" />
+    <PackageReference Include="Azure.Identity" Version="1.20.0" />
     <None Update="@(None)" CopyToOutputDirectory="PreserveNewest" />
     <InternalsVisibleTo Include="Devlooped.Sponsors.Commands;Tests;Web" />
   </ItemGroup>
