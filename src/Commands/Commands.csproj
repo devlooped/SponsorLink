@@ -19,8 +19,8 @@
     <PackageReference Include="NuGet.Protocol" Version="7.3.0" />
     <PackageReference Include="NuGetizer" Version="1.4.7" PrivateAssets="all" />
     <PackageReference Include="Polly" Version="8.6.6" />
-    <PackageReference Include="Spectre.Console.Cli" Version="0.53.1" />
-    <PackageReference Include="Spectre.Console.Json" Version="0.54.0" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.55.0" />
+    <PackageReference Include="Spectre.Console.Json" Version="0.55.0" />
     <PackageReference Include="Devlooped.CredentialManager" Version="2.7.0" />
     <PackageReference Include="DotNetConfig" Version="1.2.0" />
     <PackageReference Include="DotNetConfig.Configuration" Version="1.2.0" />
