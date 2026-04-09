@@ -33,7 +33,7 @@
     <PackageReference Include="Octokit.Webhooks.AzureFunctions" Version="3.2.1" />
     <PackageReference Include="ThisAssembly.Constants" Version="2.1.2" PrivateAssets="all" />
     <PackageReference Include="ThisAssembly.Resources" Version="2.1.2" PrivateAssets="all" />
-    <PackageReference Include="xAI" Version="2.0.4" />
+    <PackageReference Include="xAI" Version="2.0.5" />
     <PackageReference Include="YamlPeek" Version="1.0.1" />
     <PackageReference Include="Microsoft.Extensions.AI" Version="10.4.1" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.4.1" />
