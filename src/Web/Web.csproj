@@ -8,7 +8,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <EmbeddedResource Include="..\..\.github\release.yml" Kind="Text" />
-    <PackageReference Include="Azure.Identity" Version="1.20.0" />
+    <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="Devlooped.CredentialManager" Version="2.7.0" />
     <PackageReference Include="Devlooped.Extensions.AI" Version="2.0.3" />
     <PackageReference Include="DotNetConfig.Configuration" Version="1.2.0" />
