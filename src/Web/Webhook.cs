@@ -254,7 +254,12 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         }
 
         // Enqueue release announcement to X/Twitter
-        if ((action == ReleaseAction.Published || ReleaseAnnouncer.HasForceAnnounce(payload.Release.Body)) &&
+        if (payload.Release.Draft && ReleaseAnnouncer.HasForceAnnounce(payload.Release.Body))
+        {
+            logger.LogDebug("Skipping force-announce for {Repo}/{Tag}: release is still a draft and will be re-announced when published",
+                payload.Repository?.FullName, payload.Release.TagName);
+        }
+        else if ((action == ReleaseAction.Published || ReleaseAnnouncer.HasForceAnnounce(payload.Release.Body)) &&
             !payload.Release.Draft &&
             !ReleaseAnnouncer.HasSkipAnnounce(payload.Release.Body) &&
             payload.Repository is { } announcementRepo &&
