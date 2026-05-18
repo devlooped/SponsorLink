@@ -64,6 +64,7 @@ jobs:
         with:
           name: pkg
           path: bin/*
+          retention-days: 1
 
   deploy:
     if: github.ref == 'refs/heads/main'
