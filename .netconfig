@@ -35,8 +35,8 @@
 	weak
 [file "src/Directory.Build.targets"]
 	url = https://github.com/devlooped/oss/blob/main/src/Directory.Build.targets
-	sha = dcd5f0a9a00a5b0c23d41a71dcc66ea41dc5f75d
-	etag = 2cca66d8a1adbae24dc2efee53a55fa09949242eb35b86c5fd66425da18c6107
+	sha = 3a758f47e8955c15a016b3db08f383781cbdee26
+	etag = 22005ab28676aa6d790171003057c81fe4ceec01251626385a3dcef3417ae3cd
 	weak
 [file ".github/dependabot.yml"]
 	url = https://github.com/devlooped/oss/blob/main/.github/dependabot.yml
