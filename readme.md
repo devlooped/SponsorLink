@@ -124,6 +124,11 @@ An announcement is posted when **all** of the following are true:
 
 - The release is not a draft.
 - The release body is not empty.
+- The tag is not a NuGet pre-release (for example `1.0.0-beta` or `v2.0.0-rc.1`), 
+  **or** the [force-announce marker](#html-comment-markers) is present. Pre-release 
+  is determined by parsing the tag as a NuGet version (a leading `v` is ignored); 
+  GitHub's pre-release checkbox is not used. This gate applies to both the X 
+  announcement and the GitHub discussion.
 - The release body contains at least one recognized section title (see below), 
   **or** the [force-announce marker](#html-comment-markers) is present.
 - The release body does not contain the [skip-announce marker](#html-comment-markers).
@@ -145,7 +150,7 @@ HTML comment markers can be placed anywhere in the release body:
 | Marker | Effect |
 |---|---|
 | `<!-- !x -->` | **Skip** — suppresses the X announcement (and the GitHub discussion) for this release, even if it would otherwise qualify. |
-| `<!-- x -->` | **Force** — publishes the announcement regardless of whether the release was just published or was edited after the fact. Useful for announcing an edited release that was initially skipped. |
+| `<!-- x -->` | **Force** — publishes the announcement (X and the GitHub discussion) even if the release was edited after the fact or is a NuGet pre-release. Useful for announcing an edited or pre-release that would otherwise be skipped. |
 | `<!-- nosponsors -->` | **Skip sponsors** — does not inject the sponsors section. Drafts are still published. |
 
 The X markers are case-insensitive (`<!-- !X -->` and `<!-- X -->` are equivalent) and 

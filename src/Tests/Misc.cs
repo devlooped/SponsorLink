@@ -53,6 +53,37 @@ public partial class Misc(ITestOutputHelper output)
             """));
     }
 
+    [Theory]
+    [InlineData("1.0.0", false)]
+    [InlineData("v1.0.0", false)]
+    [InlineData("V1.0.0", false)]
+    [InlineData("1.0.0+build", false)]
+    [InlineData("1.0.0-beta", true)]
+    [InlineData("v1.0.0-beta", true)]
+    [InlineData("1.0.0-rc.1", true)]
+    [InlineData("v2.0.0-preview.1", true)]
+    [InlineData("1.0.0-beta.1+build", true)]
+    [InlineData("not-a-version", false)]
+    [InlineData("v", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void IsPrerelease_ParsesNuGetVersionLabel(string? tagName, bool expected) =>
+        Assert.Equal(expected, ReleaseAnnouncer.IsPrerelease(tagName));
+
+    [Theory]
+    [InlineData("1.0.0", "", true)]
+    [InlineData("v1.0.0", "notes", true)]
+    [InlineData("1.0.0-beta", "", false)]
+    [InlineData("v1.0.0-rc.1", "changelog", false)]
+    [InlineData("v1.0.0-rc.1", "<!-- x -->", true)]
+    [InlineData("1.0.0-beta", "<!-- X -->", true)]
+    [InlineData("1.0.0-beta", "<!-- !x -->", false)]
+    [InlineData("1.0.0", "<!-- !x -->", false)]
+    [InlineData("1.0.0-beta", "<!-- x -->\n<!-- !x -->", false)]
+    [InlineData("v1.0.0", "<!-- x -->", true)]
+    public void ShouldAnnounce_SkipsPrereleaseUnlessForce(string tagName, string body, bool expected) =>
+        Assert.Equal(expected, ReleaseAnnouncer.ShouldAnnounce(tagName, body));
+
     public record TypedConfig
     {
         public required string Bar { get; init; }

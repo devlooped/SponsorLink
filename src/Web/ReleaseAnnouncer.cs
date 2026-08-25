@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Azure.Data.Tables;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using NuGet.Versioning;
 using SharpYaml;
 
 namespace Devlooped.Sponsors;
@@ -65,6 +66,31 @@ public partial class ReleaseAnnouncer(
     /// <summary>The <paramref name="body"/> contains an HTML comment with a single !X in it, to skip announcing releases.</summary>
     public static bool HasSkipAnnounce(string? body) => !string.IsNullOrEmpty(body) && NoAnnounceExpr().IsMatch(body);
 
+    /// <summary>
+    /// Whether <paramref name="tagName"/> is a NuGet pre-release (has a version label such as
+    /// <c>beta</c>, <c>rc.1</c>). A leading <c>v</c>/<c>V</c> is stripped. Tags that do not parse
+    /// as a NuGet version are not treated as pre-releases.
+    /// </summary>
+    public static bool IsPrerelease(string? tagName)
+    {
+        if (string.IsNullOrWhiteSpace(tagName))
+            return false;
+
+        var value = tagName.Trim();
+        if (value.Length > 1 && value[0] is 'v' or 'V' && char.IsAsciiDigit(value[1]))
+            value = value[1..];
+
+        return NuGetVersion.TryParse(value, out var version) && version.IsPrerelease;
+    }
+
+    /// <summary>
+    /// Whether this release should be announced on GitHub discussions and X.
+    /// The skip-announce marker always suppresses. Pre-release tags are skipped
+    /// unless the force-announce marker is present.
+    /// </summary>
+    public static bool ShouldAnnounce(string? tagName, string? body) =>
+        !HasSkipAnnounce(body) && (!IsPrerelease(tagName) || HasForceAnnounce(body));
+
     [GeneratedRegex(@"\<!--\s+[xX]\s+--\>")]
     private static partial Regex ForceAnnounceExpr();
 
@@ -88,6 +114,12 @@ public partial class ReleaseAnnouncer(
         if (NoAnnounceExpr().IsMatch(body))
         {
             logger.LogWarning("Release body contains no-announce marker. Skipping announcement for {Owner}/{Repo}@{Tag}.", owner, repo, tagName);
+            return false;
+        }
+
+        if (IsPrerelease(tagName) && !HasForceAnnounce(body))
+        {
+            logger.LogWarning("Release {Owner}/{Repo}@{Tag} is a pre-release. Skipping announcement unless force-announce marker is present.", owner, repo, tagName);
             return false;
         }
 

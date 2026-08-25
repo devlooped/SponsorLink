@@ -102,8 +102,8 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                         logger.LogInformation("Release {Tag} is a draft — publishing without sponsor section", payload.Release.TagName);
                         var release = await RecreateAsPublishedAsync(nosponsorsRepo, payload, body);
                         logger.LogInformation("Created release {Url}{Skip}", release.HtmlUrl,
-                            ReleaseAnnouncer.HasSkipAnnounce(body) ? ", skipping discussion (skip-announce)" : ", creating discussion");
-                        if (!ReleaseAnnouncer.HasSkipAnnounce(body))
+                            DiscussionSkipSuffix(release.TagName, body));
+                        if (ReleaseAnnouncer.ShouldAnnounce(release.TagName, body))
                             await CreateReleaseDiscussion(release, body, nosponsorsRepo, cancellationToken);
                     }
                 }
@@ -194,8 +194,8 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                             var release = await RecreateAsPublishedAsync(repo, payload, newBody);
 
                             logger.LogInformation("Created release {Url}{Skip}", release.HtmlUrl,
-                                ReleaseAnnouncer.HasSkipAnnounce(newBody) ? ", skipping discussion (skip-announce)" : ", creating discussion");
-                            if (!ReleaseAnnouncer.HasSkipAnnounce(newBody))
+                                DiscussionSkipSuffix(release.TagName, newBody));
+                            if (ReleaseAnnouncer.ShouldAnnounce(release.TagName, newBody))
                                 await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
                         }
                         else
@@ -209,14 +209,15 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
                             if (action == ReleaseAction.Published)
                             {
-                                if (!ReleaseAnnouncer.HasSkipAnnounce(newBody))
+                                if (ReleaseAnnouncer.ShouldAnnounce(release.TagName, newBody))
                                 {
                                     logger.LogInformation("Release {Tag} was published, creating discussion", payload.Release.TagName);
                                     await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
                                 }
                                 else
                                 {
-                                    logger.LogInformation("Release {Tag} was published, skipping discussion (skip-announce)", payload.Release.TagName);
+                                    logger.LogInformation("Release {Tag} was published, skipping discussion ({Reason})",
+                                        payload.Release.TagName, AnnounceSkipReason(release.TagName, newBody));
                                 }
                             }
                             else
@@ -262,7 +263,7 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         }
         else if ((action == ReleaseAction.Published || ReleaseAnnouncer.HasForceAnnounce(payload.Release.Body)) &&
             !payload.Release.Draft &&
-            !ReleaseAnnouncer.HasSkipAnnounce(payload.Release.Body) &&
+            ReleaseAnnouncer.ShouldAnnounce(payload.Release.TagName, payload.Release.Body) &&
             payload.Repository is { } announcementRepo &&
             !string.IsNullOrEmpty(payload.Release.Body))
         {
@@ -288,10 +289,12 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
         }
         else
         {
-            logger.LogDebug("Skipping release announcement queue for {Tag}: action={Action}, draft={Draft}, hasBody={HasBody}, forceAnnounce={Force}",
+            logger.LogDebug("Skipping release announcement queue for {Tag}: action={Action}, draft={Draft}, hasBody={HasBody}, forceAnnounce={Force}, prerelease={Prerelease}, skipReason={SkipReason}",
                 payload.Release.TagName, action, payload.Release.Draft,
                 !string.IsNullOrEmpty(payload.Release.Body),
-                ReleaseAnnouncer.HasForceAnnounce(payload.Release.Body));
+                ReleaseAnnouncer.HasForceAnnounce(payload.Release.Body),
+                ReleaseAnnouncer.IsPrerelease(payload.Release.TagName),
+                AnnounceSkipReason(payload.Release.TagName, payload.Release.Body));
         }
     }
 
@@ -705,4 +708,14 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
     [GeneratedRegex(@"\(https://github.com/(?<login>[^\)]+)\)")]
     private static partial Regex LoginExpr();
+
+    static string DiscussionSkipSuffix(string tagName, string? body) =>
+        ReleaseAnnouncer.ShouldAnnounce(tagName, body)
+            ? ", creating discussion"
+            : $", skipping discussion ({AnnounceSkipReason(tagName, body)})";
+
+    static string AnnounceSkipReason(string? tagName, string? body) =>
+        ReleaseAnnouncer.HasSkipAnnounce(body) ? "skip-announce" :
+        ReleaseAnnouncer.IsPrerelease(tagName) ? "prerelease" :
+        "skipped";
 }

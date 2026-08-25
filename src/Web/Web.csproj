@@ -25,6 +25,7 @@
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.4.0" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.17.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="NuGet.Versioning" Version="7.3.0" />
     <PackageReference Include="Octokit" Version="14.0.0" />
     <PackageReference Include="Devlooped.JQSharp" Version="1.0.1" />
     <PackageReference Include="SharpYaml" Version="3.7.0" />
