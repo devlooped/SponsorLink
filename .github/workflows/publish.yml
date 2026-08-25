@@ -84,7 +84,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: ⚙ func 4.x
-        run: npm i -g azure-functions-core-tools@4 --unsafe-perm true  
+        run: npm i -g azure-functions-core-tools@4.13.1 --unsafe-perm true
 
       - name: 🚀 deploy
         working-directory: src/Web
