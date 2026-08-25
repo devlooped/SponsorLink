@@ -140,15 +140,16 @@ defined in [`.github/release.yml`](.github/release.yml), which is synchronized f
 
 ### HTML Comment Markers
 
-Two special HTML comment markers can be placed anywhere in the release body:
+HTML comment markers can be placed anywhere in the release body:
 
 | Marker | Effect |
 |---|---|
-| `<!-- !x -->` | **Skip** — suppresses the announcement for this release, even if it would otherwise qualify. |
-| `<!-- x -->` | **Force** — publishes the announcement regardless of whether the release was just published or was edited after the fact. Useful for announcing an edited release that was initially skipped. |
+| `<!-- !x -->` | **Skip** â€” suppresses the X announcement (and the GitHub discussion) for this release, even if it would otherwise qualify. |
+| `<!-- x -->` | **Force** â€” publishes the announcement regardless of whether the release was just published or was edited after the fact. Useful for announcing an edited release that was initially skipped. |
+| `<!-- nosponsors -->` | **Skip sponsors** â€” does not inject the sponsors section. Drafts are still published. |
 
-Markers are case-insensitive (`<!-- !X -->` and `<!-- X -->` are equivalent) and 
-tolerate surrounding whitespace inside the comment.
+The X markers are case-insensitive (`<!-- !X -->` and `<!-- X -->` are equivalent) and 
+tolerate surrounding whitespace inside the comment. `<!-- nosponsors -->` is matched exactly.
 
 ### Configuration
 
@@ -170,7 +171,7 @@ Azure Key Vault, or `appsettings.json`).
 |---|---|---|
 | `AI:Clients:Grok:Endpoint` | xAI API base URL. | `https://api.x.ai/v1` |
 | `AI:Clients:Grok:ModelId` | Model to use for summarization. | `grok-4-1-fast-non-reasoning` |
-| `AI:Clients:Grok:ApiKey` | xAI API key (secret). | — |
+| `AI:Clients:Grok:ApiKey` | xAI API key (secret). | ï¿½ |
 
 When `AI:Clients:Grok:ApiKey` is absent the summarizer is disabled and no 
 announcements are posted.

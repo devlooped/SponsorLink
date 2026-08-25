@@ -94,33 +94,45 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                 if (body.Contains("<!-- nosponsors -->"))
                 {
                     logger.LogInformation("Skipping sponsor section injection for release {Tag}: body contains nosponsors marker", payload.Release.TagName);
-                    return;
+
+                    // nosponsors only skips the sponsor section. Drafts still need to be
+                    // published: the org convention is that this webhook turns drafts live.
+                    if (payload.Release.Draft && payload.Repository is { } nosponsorsRepo)
+                    {
+                        logger.LogInformation("Release {Tag} is a draft — publishing without sponsor section", payload.Release.TagName);
+                        var release = await RecreateAsPublishedAsync(nosponsorsRepo, payload, body);
+                        logger.LogInformation("Created release {Url}{Skip}", release.HtmlUrl,
+                            ReleaseAnnouncer.HasSkipAnnounce(body) ? ", skipping discussion (skip-announce)" : ", creating discussion");
+                        if (!ReleaseAnnouncer.HasSkipAnnounce(body))
+                            await CreateReleaseDiscussion(release, body, nosponsorsRepo, cancellationToken);
+                    }
                 }
-
-                const string startMarker = "<!-- sponsors -->";
-                const string endMarker = "<!-- /sponsors -->";
-
-                logger.LogDebug("Fetching sponsors markdown for release {Tag}", payload.Release.TagName);
-                // Get sponsors markdown
-                using var http = new HttpClient();
-                var sponsorsMarkdown = await http.GetStringAsync("https://github.com/devlooped/sponsors/raw/refs/heads/main/sponsors.md", cancellationToken);
-                if (string.IsNullOrWhiteSpace(sponsorsMarkdown))
+                else
                 {
-                    logger.LogWarning("Sponsors markdown was empty, skipping sponsor section injection for release {Tag}", payload.Release.TagName);
-                    return;
-                }
+                    const string startMarker = "<!-- sponsors -->";
+                    const string endMarker = "<!-- /sponsors -->";
 
-                var logins = LoginExpr().Matches(sponsorsMarkdown)
-                    .Select(x => x.Groups["login"].Value)
-                    .Where(x => !string.IsNullOrEmpty(x))
-                    .Select(x => "@" + x)
-                    .Distinct()
-                    .ToList();
+                    logger.LogDebug("Fetching sponsors markdown for release {Tag}", payload.Release.TagName);
+                    // Get sponsors markdown
+                    using var http = new HttpClient();
+                    var sponsorsMarkdown = await http.GetStringAsync("https://github.com/devlooped/sponsors/raw/refs/heads/main/sponsors.md", cancellationToken);
+                    if (string.IsNullOrWhiteSpace(sponsorsMarkdown))
+                    {
+                        logger.LogWarning("Sponsors markdown was empty, skipping sponsor section injection for release {Tag}", payload.Release.TagName);
+                        return;
+                    }
 
-                logger.LogDebug("Found {Count} sponsors for release {Tag}: {Logins}", logins.Count, payload.Release.TagName, string.Join(", ", logins));
+                    var logins = LoginExpr().Matches(sponsorsMarkdown)
+                        .Select(x => x.Groups["login"].Value)
+                        .Where(x => !string.IsNullOrEmpty(x))
+                        .Select(x => "@" + x)
+                        .Distinct()
+                        .ToList();
 
-                var newSection =
-                    $"""
+                    logger.LogDebug("Found {Count} sponsors for release {Tag}: {Logins}", logins.Count, payload.Release.TagName, string.Join(", ", logins));
+
+                    var newSection =
+                        $"""
                     <!-- avoid this section by leaving a nosponsors tag -->
                     ## Sponsors
 
@@ -129,38 +141,38 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                     Thanks 💜
                     """;
 
-                // NOTE: no need to append the images since GH already does this by showing them in a 
-                // Contributors generated section.
-                // {string.Concat(sponsorsMarkdown.ReplaceLineEndings().Replace(Environment.NewLine, ""))}
+                    // NOTE: no need to append the images since GH already does this by showing them in a 
+                    // Contributors generated section.
+                    // {string.Concat(sponsorsMarkdown.ReplaceLineEndings().Replace(Environment.NewLine, ""))}
 
-                // In case we want to split into rows of X max icons instead...
-                //+ string.Join(
-                //    Environment.NewLine,
-                //    sponsorsMarkdown.ReplaceLineEndings()
-                //        .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                //        .Batch(15)
-                //        .Select(batch => string.Concat(batch.Select(s => s.Trim())).Trim()));
+                    // In case we want to split into rows of X max icons instead...
+                    //+ string.Join(
+                    //    Environment.NewLine,
+                    //    sponsorsMarkdown.ReplaceLineEndings()
+                    //        .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    //        .Batch(15)
+                    //        .Select(batch => string.Concat(batch.Select(s => s.Trim())).Trim()));
 
-                var before = body;
-                var after = "";
+                    var before = body;
+                    var after = "";
 
-                var start = body.IndexOf(startMarker, StringComparison.Ordinal);
-                if (start > 0)
-                {
-                    logger.LogDebug("Found existing sponsors section in release {Tag}, will replace it", payload.Release.TagName);
-                    // Build the updated body preserving the markers
-                    before = body[..start];
-                    var end = body.IndexOf(endMarker, start + startMarker.Length, StringComparison.Ordinal);
-                    if (end > 0)
-                        after = body[(end + endMarker.Length)..];
-                }
-                else
-                {
-                    logger.LogDebug("No existing sponsors section in release {Tag}, will append new section", payload.Release.TagName);
-                }
+                    var start = body.IndexOf(startMarker, StringComparison.Ordinal);
+                    if (start > 0)
+                    {
+                        logger.LogDebug("Found existing sponsors section in release {Tag}, will replace it", payload.Release.TagName);
+                        // Build the updated body preserving the markers
+                        before = body[..start];
+                        var end = body.IndexOf(endMarker, start + startMarker.Length, StringComparison.Ordinal);
+                        if (end > 0)
+                            after = body[(end + endMarker.Length)..];
+                    }
+                    else
+                    {
+                        logger.LogDebug("No existing sponsors section in release {Tag}, will append new section", payload.Release.TagName);
+                    }
 
-                var newBody =
-                    $"""
+                    var newBody =
+                        $"""
                     {before.Trim()}
 
                     {startMarker}
@@ -172,66 +184,55 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                     {after.Trim()}
                     """;
 
-                if (!string.Equals(newBody, body, StringComparison.Ordinal) && payload.Repository is { } repo)
-                {
-                    logger.LogInformation("Release body changed for {Repo}/{Tag}, updating release", repo.FullName, payload.Release.TagName);
-
-                    if (payload.Release.Draft)
+                    if (!string.Equals(newBody, body, StringComparison.Ordinal) && payload.Repository is { } repo)
                     {
-                        logger.LogInformation("Release {Tag} is a draft — deleting and recreating as non-draft with sponsor section", payload.Release.TagName);
-                        await github.Repository.Release.Delete(repo.Owner.Login, repo.Name, payload.Release.Id);
+                        logger.LogInformation("Release body changed for {Repo}/{Tag}, updating release", repo.FullName, payload.Release.TagName);
 
-                        var tagName = payload.Release.TagName.StartsWith("unnamedtag") ? payload.Release.Name : payload.Release.TagName;
-                        logger.LogDebug("Creating new release for {Repo} with tag {Tag}", repo.FullName, tagName);
-                        var release = await github.Repository.Release.Create(repo.Owner.Login, repo.Name,
-                            new NewRelease(tagName)
-                            {
-                                Name = payload.Release.Name,
-                                Body = newBody,
-                                Draft = false,
-                                Prerelease = payload.Release.Prerelease,
-                                TargetCommitish = payload.Release.TargetCommitish
-                            });
-
-                        logger.LogInformation("Created release {Url}{Skip}", release.HtmlUrl,
-                            ReleaseAnnouncer.HasSkipAnnounce(newBody) ? ", skipping discussion (skip-announce)" : ", creating discussion");
-                        if (!ReleaseAnnouncer.HasSkipAnnounce(newBody))
-                            await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
-                    }
-                    else
-                    {
-                        logger.LogDebug("Editing existing non-draft release {Tag} in {Repo} to add sponsor section", payload.Release.TagName, repo.FullName);
-                        var release = await github.Repository.Release.Edit(repo.Owner.Login, repo.Name, payload.Release.Id,
-                            new ReleaseUpdate
-                            {
-                                Body = newBody
-                            });
-
-                        if (action == ReleaseAction.Published)
+                        if (payload.Release.Draft)
                         {
+                            logger.LogInformation("Release {Tag} is a draft — deleting and recreating as non-draft with sponsor section", payload.Release.TagName);
+                            var release = await RecreateAsPublishedAsync(repo, payload, newBody);
+
+                            logger.LogInformation("Created release {Url}{Skip}", release.HtmlUrl,
+                                ReleaseAnnouncer.HasSkipAnnounce(newBody) ? ", skipping discussion (skip-announce)" : ", creating discussion");
                             if (!ReleaseAnnouncer.HasSkipAnnounce(newBody))
-                            {
-                                logger.LogInformation("Release {Tag} was published, creating discussion", payload.Release.TagName);
                                 await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
-                            }
-                            else
-                            {
-                                logger.LogInformation("Release {Tag} was published, skipping discussion (skip-announce)", payload.Release.TagName);
-                            }
                         }
                         else
                         {
-                            logger.LogDebug("Release {Tag} action was {Action}, skipping discussion creation", payload.Release.TagName, action);
+                            logger.LogDebug("Editing existing non-draft release {Tag} in {Repo} to add sponsor section", payload.Release.TagName, repo.FullName);
+                            var release = await github.Repository.Release.Edit(repo.Owner.Login, repo.Name, payload.Release.Id,
+                                new ReleaseUpdate
+                                {
+                                    Body = newBody
+                                });
+
+                            if (action == ReleaseAction.Published)
+                            {
+                                if (!ReleaseAnnouncer.HasSkipAnnounce(newBody))
+                                {
+                                    logger.LogInformation("Release {Tag} was published, creating discussion", payload.Release.TagName);
+                                    await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
+                                }
+                                else
+                                {
+                                    logger.LogInformation("Release {Tag} was published, skipping discussion (skip-announce)", payload.Release.TagName);
+                                }
+                            }
+                            else
+                            {
+                                logger.LogDebug("Release {Tag} action was {Action}, skipping discussion creation", payload.Release.TagName, action);
+                            }
                         }
                     }
-                }
-                else if (string.Equals(newBody, body, StringComparison.Ordinal))
-                {
-                    logger.LogDebug("Release {Tag} body unchanged after sponsor injection, skipping update", payload.Release.TagName);
-                }
-                else
-                {
-                    logger.LogDebug("Release {Tag} has no repository info, skipping update", payload.Release.TagName);
+                    else if (string.Equals(newBody, body, StringComparison.Ordinal))
+                    {
+                        logger.LogDebug("Release {Tag} body unchanged after sponsor injection, skipping update", payload.Release.TagName);
+                    }
+                    else
+                    {
+                        logger.LogDebug("Release {Tag} has no repository info, skipping update", payload.Release.TagName);
+                    }
                 }
             }
             catch (Exception e)
@@ -292,6 +293,23 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                 !string.IsNullOrEmpty(payload.Release.Body),
                 ReleaseAnnouncer.HasForceAnnounce(payload.Release.Body));
         }
+    }
+
+    async Task<Octokit.Release> RecreateAsPublishedAsync(Octokit.Webhooks.Models.Repository repo, ReleaseEvent payload, string body)
+    {
+        await github.Repository.Release.Delete(repo.Owner.Login, repo.Name, payload.Release.Id);
+
+        var tagName = payload.Release.TagName.StartsWith("unnamedtag") ? payload.Release.Name : payload.Release.TagName;
+        logger.LogDebug("Creating new release for {Repo} with tag {Tag}", repo.FullName, tagName);
+        return await github.Repository.Release.Create(repo.Owner.Login, repo.Name,
+            new NewRelease(tagName)
+            {
+                Name = payload.Release.Name,
+                Body = body,
+                Draft = false,
+                Prerelease = payload.Release.Prerelease,
+                TargetCommitish = payload.Release.TargetCommitish
+            });
     }
 
     async Task CreateReleaseDiscussion(Octokit.Release release, string content, Octokit.Webhooks.Models.Repository repo, CancellationToken cancellationToken)
