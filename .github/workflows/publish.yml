@@ -83,8 +83,17 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      # npm is broken: 4.14.0 shrinkwrap hits a private Azure Artifacts feed (E401),
+      # and 4.13.1/4.13.2 CDN blobs 404. Install the GitHub release zip instead.
       - name: ⚙ func 4.x
-        run: npm i -g azure-functions-core-tools@4.13.1 --unsafe-perm true
+        env:
+          FUNC_VERSION: 4.14.0
+        run: |
+          curl -fsSL "https://github.com/Azure/azure-functions-core-tools/releases/download/${FUNC_VERSION}/Azure.Functions.Cli.linux-x64.${FUNC_VERSION}.zip" -o /tmp/func.zip
+          mkdir -p "$HOME/azure-functions-cli"
+          unzip -q /tmp/func.zip -d "$HOME/azure-functions-cli"
+          chmod +x "$HOME/azure-functions-cli/func"
+          echo "$HOME/azure-functions-cli" >> "$GITHUB_PATH"
 
       - name: 🚀 deploy
         working-directory: src/Web
