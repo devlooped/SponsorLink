@@ -184,55 +184,59 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
                     {after.Trim()}
                     """;
 
-                    if (!string.Equals(newBody, body, StringComparison.Ordinal) && payload.Repository is { } repo)
+                    var bodyChanged = !string.Equals(newBody, body, StringComparison.Ordinal);
+                    if (payload.Repository is not { } repo)
+                    {
+                        logger.LogDebug("Release {Tag} has no repository info, skipping update", payload.Release.TagName);
+                    }
+                    else if (payload.Release.Draft)
+                    {
+                        // Drafts are how this org publishes. An already-correct sponsor
+                        // section must not leave the draft sitting on the releases page.
+                        if (bodyChanged)
+                            logger.LogInformation("Release body changed for {Repo}/{Tag}, updating release", repo.FullName, payload.Release.TagName);
+                        else
+                            logger.LogInformation("Release {Tag} sponsor section is already current — publishing the draft anyway", payload.Release.TagName);
+
+                        logger.LogInformation("Release {Tag} is a draft — deleting and recreating as non-draft with sponsor section", payload.Release.TagName);
+                        var release = await RecreateAsPublishedAsync(repo, payload, newBody);
+
+                        logger.LogInformation("Created release {Url}{Skip}", release.HtmlUrl,
+                            DiscussionSkipSuffix(release.TagName, newBody));
+                        if (ReleaseAnnouncer.ShouldAnnounce(release.TagName, newBody))
+                            await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
+                    }
+                    else if (bodyChanged)
                     {
                         logger.LogInformation("Release body changed for {Repo}/{Tag}, updating release", repo.FullName, payload.Release.TagName);
-
-                        if (payload.Release.Draft)
-                        {
-                            logger.LogInformation("Release {Tag} is a draft — deleting and recreating as non-draft with sponsor section", payload.Release.TagName);
-                            var release = await RecreateAsPublishedAsync(repo, payload, newBody);
-
-                            logger.LogInformation("Created release {Url}{Skip}", release.HtmlUrl,
-                                DiscussionSkipSuffix(release.TagName, newBody));
-                            if (ReleaseAnnouncer.ShouldAnnounce(release.TagName, newBody))
-                                await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
-                        }
-                        else
-                        {
-                            logger.LogDebug("Editing existing non-draft release {Tag} in {Repo} to add sponsor section", payload.Release.TagName, repo.FullName);
-                            var release = await github.Repository.Release.Edit(repo.Owner.Login, repo.Name, payload.Release.Id,
-                                new ReleaseUpdate
-                                {
-                                    Body = newBody
-                                });
-
-                            if (action == ReleaseAction.Published)
+                        logger.LogDebug("Editing existing non-draft release {Tag} in {Repo} to add sponsor section", payload.Release.TagName, repo.FullName);
+                        var release = await github.Repository.Release.Edit(repo.Owner.Login, repo.Name, payload.Release.Id,
+                            new ReleaseUpdate
                             {
-                                if (ReleaseAnnouncer.ShouldAnnounce(release.TagName, newBody))
-                                {
-                                    logger.LogInformation("Release {Tag} was published, creating discussion", payload.Release.TagName);
-                                    await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
-                                }
-                                else
-                                {
-                                    logger.LogInformation("Release {Tag} was published, skipping discussion ({Reason})",
-                                        payload.Release.TagName, AnnounceSkipReason(release.TagName, newBody));
-                                }
+                                Body = newBody
+                            });
+
+                        if (action == ReleaseAction.Published)
+                        {
+                            if (ReleaseAnnouncer.ShouldAnnounce(release.TagName, newBody))
+                            {
+                                logger.LogInformation("Release {Tag} was published, creating discussion", payload.Release.TagName);
+                                await CreateReleaseDiscussion(release, newBody, repo, cancellationToken);
                             }
                             else
                             {
-                                logger.LogDebug("Release {Tag} action was {Action}, skipping discussion creation", payload.Release.TagName, action);
+                                logger.LogInformation("Release {Tag} was published, skipping discussion ({Reason})",
+                                    payload.Release.TagName, AnnounceSkipReason(release.TagName, newBody));
                             }
                         }
-                    }
-                    else if (string.Equals(newBody, body, StringComparison.Ordinal))
-                    {
-                        logger.LogDebug("Release {Tag} body unchanged after sponsor injection, skipping update", payload.Release.TagName);
+                        else
+                        {
+                            logger.LogDebug("Release {Tag} action was {Action}, skipping discussion creation", payload.Release.TagName, action);
+                        }
                     }
                     else
                     {
-                        logger.LogDebug("Release {Tag} has no repository info, skipping update", payload.Release.TagName);
+                        logger.LogDebug("Release {Tag} body unchanged after sponsor injection, skipping update", payload.Release.TagName);
                     }
                 }
             }
@@ -300,19 +304,54 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
 
     async Task<Octokit.Release> RecreateAsPublishedAsync(Octokit.Webhooks.Models.Repository repo, ReleaseEvent payload, string body)
     {
+        // Resolve the tag before deleting. A null or placeholder tag used to throw
+        // after the draft was already gone, so the releases page ended up empty.
+        var tagName = DraftRelease.ResolvePublishTag(payload.Release.TagName, payload.Release.Name);
+        if (tagName is null)
+        {
+            logger.LogError("Draft release {Id} in {Repo} has no usable tag (tag={Tag}, name={Name}). Leaving the draft in place.",
+                payload.Release.Id, repo.FullName, payload.Release.TagName, payload.Release.Name);
+            throw new InvalidOperationException($"Draft release {payload.Release.Id} in {repo.FullName} has no usable tag name.");
+        }
+
         await github.Repository.Release.Delete(repo.Owner.Login, repo.Name, payload.Release.Id);
 
-        var tagName = payload.Release.TagName.StartsWith("unnamedtag") ? payload.Release.Name : payload.Release.TagName;
         logger.LogDebug("Creating new release for {Repo} with tag {Tag}", repo.FullName, tagName);
-        return await github.Repository.Release.Create(repo.Owner.Login, repo.Name,
-            new NewRelease(tagName)
+        try
+        {
+            return await github.Repository.Release.Create(repo.Owner.Login, repo.Name,
+                new NewRelease(tagName)
+                {
+                    Name = payload.Release.Name,
+                    Body = body,
+                    Draft = false,
+                    Prerelease = payload.Release.Prerelease,
+                    TargetCommitish = payload.Release.TargetCommitish
+                });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to publish {Repo} tag {Tag} after deleting draft {Id}. Restoring the draft.",
+                repo.FullName, tagName, payload.Release.Id);
+            try
             {
-                Name = payload.Release.Name,
-                Body = body,
-                Draft = false,
-                Prerelease = payload.Release.Prerelease,
-                TargetCommitish = payload.Release.TargetCommitish
-            });
+                await github.Repository.Release.Create(repo.Owner.Login, repo.Name,
+                    new NewRelease(tagName)
+                    {
+                        Name = payload.Release.Name,
+                        Body = body,
+                        Draft = true,
+                        Prerelease = payload.Release.Prerelease,
+                        TargetCommitish = payload.Release.TargetCommitish
+                    });
+            }
+            catch (Exception restore)
+            {
+                logger.LogError(restore, "Failed to restore draft {Tag} in {Repo} after publish failed.", tagName, repo.FullName);
+            }
+
+            throw;
+        }
     }
 
     async Task CreateReleaseDiscussion(Octokit.Release release, string content, Octokit.Webhooks.Models.Repository repo, CancellationToken cancellationToken)
