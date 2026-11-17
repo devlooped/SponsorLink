@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -81,7 +81,12 @@ public partial class Misc(ITestOutputHelper output)
     [InlineData("1.0.0", "<!-- !x -->", false)]
     [InlineData("1.0.0-beta", "<!-- x -->\n<!-- !x -->", false)]
     [InlineData("v1.0.0", "<!-- x -->", true)]
-    public void ShouldAnnounce_SkipsPrereleaseUnlessForce(string tagName, string body, bool expected) =>
+    [InlineData("ci", "", false)]
+    [InlineData("ci", "Rolling build", false)]
+    [InlineData("ci", "<!-- x -->", true)]
+    [InlineData("ci", "<!-- x -->\n<!-- !x -->", false)]
+    [InlineData("", "", false)]
+    public void ShouldAnnounce_SkipsNonStableUnlessForce(string tagName, string body, bool expected) =>
         Assert.Equal(expected, ReleaseAnnouncer.ShouldAnnounce(tagName, body));
 
     public record TypedConfig

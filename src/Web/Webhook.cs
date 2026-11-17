@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -756,5 +756,6 @@ public partial class Webhook(SponsorsManager manager, SponsoredIssues issues, IC
     static string AnnounceSkipReason(string? tagName, string? body) =>
         ReleaseAnnouncer.HasSkipAnnounce(body) ? "skip-announce" :
         ReleaseAnnouncer.IsPrerelease(tagName) ? "prerelease" :
+        !ReleaseAnnouncer.IsStableVersion(tagName) ? "not a version" :
         "skipped";
 }
