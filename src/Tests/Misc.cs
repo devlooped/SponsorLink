@@ -87,7 +87,17 @@ public partial class Misc(ITestOutputHelper output)
     [InlineData("ci", "<!-- x -->\n<!-- !x -->", false)]
     [InlineData("", "", false)]
     public void ShouldAnnounce_SkipsNonStableUnlessForce(string tagName, string body, bool expected) =>
-        Assert.Equal(expected, ReleaseAnnouncer.ShouldAnnounce(tagName, body));
+        Assert.Equal(expected, ReleaseAnnouncer.ShouldAnnounce(tagName, false, body));
+
+    [Theory]
+    [InlineData("1.0.0", "", false)]
+    [InlineData("v1.0.0", "notes", false)]
+    [InlineData("ci", "", false)]
+    [InlineData("1.0.0", "<!-- x -->", true)]
+    [InlineData("ci", "<!-- X -->", true)]
+    [InlineData("1.0.0", "<!-- x -->\n<!-- !x -->", false)]
+    public void ShouldAnnounce_SkipsGitHubPrereleaseUnlessForce(string tagName, string body, bool expected) =>
+        Assert.Equal(expected, ReleaseAnnouncer.ShouldAnnounce(tagName, true, body));
 
     public record TypedConfig
     {

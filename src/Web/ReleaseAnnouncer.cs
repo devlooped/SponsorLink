@@ -98,12 +98,13 @@ public partial class ReleaseAnnouncer(
 
     /// <summary>
     /// Whether this release should be announced on GitHub discussions and X.
-    /// The skip-announce marker always suppresses. Only stable version tags are announced
-    /// by default: pre-release tags and tags that are not versions (such as a rolling <c>ci</c>)
-    /// need the force-announce marker.
+    /// The skip-announce marker always suppresses. Only stable releases with a stable version tag
+    /// are announced by default: releases marked as pre-release on GitHub (<paramref name="prerelease"/>),
+    /// pre-release tags and tags that are not versions (such as a rolling <c>ci</c>) need the
+    /// force-announce marker.
     /// </summary>
-    public static bool ShouldAnnounce(string? tagName, string? body) =>
-        !HasSkipAnnounce(body) && (IsStableVersion(tagName) || HasForceAnnounce(body));
+    public static bool ShouldAnnounce(string? tagName, bool prerelease, string? body) =>
+        !HasSkipAnnounce(body) && ((!prerelease && IsStableVersion(tagName)) || HasForceAnnounce(body));
 
     [GeneratedRegex(@"\<!--\s+[xX]\s+--\>")]
     private static partial Regex ForceAnnounceExpr();
